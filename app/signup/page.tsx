@@ -1,214 +1,166 @@
 'use client'
 
-import dynamic from 'next/dynamic'
-import ScrollReveal from '@/components/ScrollReveal'
+import { useState } from 'react'
+import { createClient } from '@/utils/supabase/client'
 
-const Hero3D = dynamic(() => import('@/components/Hero3D'), { ssr: false })
+const ROLES = [
+  {
+    id: 'buyer',
+    label: 'Buyer',
+    desc: 'Browse designs and order custom 3D prints delivered home.',
+    color: '#10B981',
+    bg: '#ECFDF5',
+  },
+  {
+    id: 'designer',
+    label: 'Designer',
+    desc: 'Upload 3D model files and earn royalties on every print.',
+    color: '#FF6B35',
+    bg: '#FFF1EB',
+  },
+  {
+    id: 'printer_owner',
+    label: 'Printer Owner',
+    desc: 'List your idle printer and earn 70% on every completed order.',
+    color: '#3B82F6',
+    bg: '#EFF6FF',
+  },
+]
 
-export default function Home() {
+type Step = 'role' | 'email' | 'otp'
+
+export default function SignupPage() {
+  const supabase = createClient()
+  const [step, setStep] = useState<Step>('role')
+  const [role, setRole] = useState('')
+  const [email, setEmail] = useState('')
+  const [otp, setOtp] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+  const [info, setInfo] = useState('')
+
+  const handleSendOtp = async () => {
+    if (!email) return setError('Please enter your email')
+    setError('')
+    setLoading(true)
+    const { error: err } = await supabase.auth.signInWithOtp({
+      email,
+      options: { shouldCreateUser: true },
+    })
+    setLoading(false)
+    if (err) return setError(err.message)
+    setInfo(`OTP sent to ${email}. Check your inbox.`)
+    setStep('otp')
+  }
+
+  const handleVerifyOtp = async () => {
+    if (!otp) return setError('Please enter the OTP')
+    setError('')
+    setLoading(true)
+    const { data, error: err } = await supabase.auth.verifyOtp({
+      email,
+      token: otp,
+      type: 'email',
+    })
+    if (err) { setLoading(false); return setError(err.message) }
+
+    if (data.user) {
+      await supabase.from('profiles').upsert({
+        id: data.user.id,
+        email: data.user.email,
+        role,
+        created_at: new Date().toISOString(),
+      })
+    }
+    setLoading(false)
+    window.location.href = `/dashboard/${role === 'printer_owner' ? 'printer-owner' : role}`
+  }
+
+  const s: Record<string, React.CSSProperties> = {
+    page: { minHeight: '100vh', background: '#0F172A', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '24px 16px' },
+    card: { background: '#1E293B', borderRadius: 16, padding: '40px 36px', width: '100%', maxWidth: 480, border: '1px solid #334155' },
+    logo: { fontSize: 22, fontWeight: 700, color: '#fff', marginBottom: 28, textAlign: 'center' as const },
+    logoAccent: { color: '#FF6B35' },
+    title: { fontSize: 22, fontWeight: 700, color: '#fff', marginBottom: 6, textAlign: 'center' as const },
+    sub: { fontSize: 14, color: '#94A3B8', textAlign: 'center' as const, marginBottom: 28 },
+    label: { fontSize: 13, fontWeight: 500, color: '#94A3B8', marginBottom: 6, display: 'block' },
+    input: { width: '100%', background: '#0F172A', border: '1px solid #334155', borderRadius: 8, padding: '11px 14px', fontSize: 15, color: '#fff', outline: 'none', marginBottom: 16, boxSizing: 'border-box' as const },
+    btn: { width: '100%', background: '#FF6B35', color: '#fff', border: 'none', borderRadius: 8, padding: '13px 0', fontSize: 15, fontWeight: 600, cursor: 'pointer', marginTop: 4 },
+    btnDisabled: { opacity: 0.5, cursor: 'not-allowed' },
+    error: { background: '#FEF2F2', color: '#991B1B', borderRadius: 8, padding: '10px 14px', fontSize: 13, marginBottom: 14 },
+    info: { background: '#ECFDF5', color: '#065F46', borderRadius: 8, padding: '10px 14px', fontSize: 13, marginBottom: 14 },
+    back: { background: 'none', border: 'none', color: '#94A3B8', fontSize: 13, cursor: 'pointer', marginTop: 14, display: 'block', textAlign: 'center' as const, width: '100%' },
+    loginLink: { textAlign: 'center' as const, marginTop: 20, fontSize: 13, color: '#94A3B8' },
+  }
+
   return (
-    <main>
-      {/* NAVBAR */}
-      <nav className="navbar">
-        <div className="navbar-inner">
-          <div className="navbar-logo">
-            Print<span className="navbar-logo-accent">Hive</span>
-          </div>
-          <div className="navbar-links">
-            <a className="navbar-link" href="#roles">How it works</a>
-            <a className="navbar-link" href="#journey">Order journey</a>
-            <a href="/signup" className="btn btn-primary btn-sm">Get Started</a>
-          </div>
-        </div>
-      </nav>
+    <div style={s.page}>
+      <div style={s.card}>
+        <div style={s.logo}>Print<span style={s.logoAccent}>Hive</span></div>
 
-      {/* HERO */}
-      <section className="hero">
-        <div className="hero-inner">
-          <div>
-            <div className="hero-eyebrow">● Live marketplace beta</div>
-            <h1 className="hero-title">
-              From <span>digital design</span> to your doorstep.
-            </h1>
-            <p className="hero-subtitle">
-              PrintHive connects designers, idle 3D printer owners, and buyers
-              in one trusted flow — with escrow payments and AI-verified
-              quality on every order.
-            </p>
-            <div className="hero-actions">
-              <a href="/signup" className="btn btn-primary btn-lg">Browse Designs</a>
-              <a href="/signup" className="btn btn-outline btn-lg" style={{ borderColor: 'rgba(148,163,184,0.4)', color: '#fff' }}>
-                Become a Printer Owner
-              </a>
-            </div>
-
-            <div className="hero-stats">
-              <div>
-                <div className="hero-stat-value">70%</div>
-                <div className="hero-stat-label">Goes to printer owners</div>
+        {step === 'role' && (
+          <>
+            <div style={s.title}>Join PrintHive</div>
+            <div style={s.sub}>Choose how you want to use the platform</div>
+            {ROLES.map((r) => (
+              <div
+                key={r.id}
+                onClick={() => setRole(r.id)}
+                style={{
+                  border: role === r.id ? `2px solid ${r.color}` : '1px solid #334155',
+                  borderRadius: 12, padding: '14px 16px', cursor: 'pointer',
+                  display: 'flex', alignItems: 'flex-start', gap: 14,
+                  marginBottom: 10, background: role === r.id ? '#0F172A' : 'transparent',
+                  transition: 'all 0.15s',
+                }}
+              >
+                <div style={{ width: 44, height: 44, borderRadius: 10, background: r.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 22 }}>
+                  {r.id === 'buyer' ? '🛍️' : r.id === 'designer' ? '✏️' : '🖨️'}
+                </div>
+                <div>
+                  <div style={{ fontSize: 15, fontWeight: 600, color: '#fff', marginBottom: 2 }}>{r.label}</div>
+                  <div style={{ fontSize: 13, color: '#94A3B8', lineHeight: 1.5 }}>{r.desc}</div>
+                </div>
               </div>
-              <div>
-                <div className="hero-stat-value">15%</div>
-                <div className="hero-stat-label">Designer royalty</div>
-              </div>
-              <div>
-                <div className="hero-stat-value">100%</div>
-                <div className="hero-stat-label">Escrow protected</div>
-              </div>
+            ))}
+            <button style={{ ...s.btn, ...(role ? {} : s.btnDisabled) }} disabled={!role} onClick={() => setStep('email')}>
+              Continue
+            </button>
+            <div style={s.loginLink}>
+              Already have an account? <a href="/login" style={{ color: '#FF6B35' }}>Log in</a>
             </div>
-          </div>
+          </>
+        )}
 
-          <Hero3D />
-        </div>
-      </section>
+        {step === 'email' && (
+          <>
+            <div style={s.title}>Enter your email</div>
+            <div style={s.sub}>We will send you a one-time code — no password needed.</div>
+            {error && <div style={s.error}>{error}</div>}
+            <label style={s.label}>Email address</label>
+            <input style={s.input} type="email" placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleSendOtp()} />
+            <button style={{ ...s.btn, ...(loading ? s.btnDisabled : {}) }} disabled={loading} onClick={handleSendOtp}>
+              {loading ? 'Sending…' : 'Send OTP'}
+            </button>
+            <button style={s.back} onClick={() => setStep('role')}>← Back</button>
+          </>
+        )}
 
-      {/* ROLES */}
-      <section id="roles" className="section container">
-        <ScrollReveal>
-          <div className="section-eyebrow">Three sides, one platform</div>
-          <h2 className="section-heading">Everyone brings something different</h2>
-          <p className="section-subheading">
-            No platform today connects all three sides of 3D printing in one
-            trusted flow. That gap is what PrintHive fills.
-          </p>
-        </ScrollReveal>
-
-        <div className="roles-grid">
-          <ScrollReveal delay={0}>
-            <div className="role-card">
-              <div className="role-icon" style={{ backgroundColor: 'var(--color-primary-tint)' }}>
-                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--color-primary)" strokeWidth="2">
-                  <path d="M12 19l7-7 3 3-7 7-3-3z" />
-                  <path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z" />
-                  <path d="M2 2l7.586 7.586" />
-                </svg>
-              </div>
-              <div className="role-card-title">Designer</div>
-              <p className="role-card-text">
-                Upload STL/3MF files, set your price, and earn a 15% royalty
-                every time someone orders a print of your design. Never touch
-                a printer.
-              </p>
-            </div>
-          </ScrollReveal>
-
-          <ScrollReveal delay={120}>
-            <div className="role-card">
-              <div className="role-icon" style={{ backgroundColor: 'var(--color-info-bg)' }}>
-                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--color-info)" strokeWidth="2">
-                  <rect x="6" y="2" width="12" height="8" rx="1" />
-                  <path d="M6 18h12a2 2 0 002-2v-4a2 2 0 00-2-2H6a2 2 0 00-2 2v4a2 2 0 002 2z" />
-                  <rect x="8" y="18" width="8" height="4" />
-                </svg>
-              </div>
-              <div className="role-card-title">Printer Owner</div>
-              <p className="role-card-text">
-                Turn your idle printer into income. List your specs and
-                location, accept nearby jobs, and get paid 70% per completed
-                order.
-              </p>
-            </div>
-          </ScrollReveal>
-
-          <ScrollReveal delay={240}>
-            <div className="role-card">
-              <div className="role-icon" style={{ backgroundColor: 'var(--color-success-bg)' }}>
-                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--color-success)" strokeWidth="2">
-                  <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" />
-                  <path d="M3 6h18" />
-                  <path d="M16 10a4 4 0 01-8 0" />
-                </svg>
-              </div>
-              <div className="role-card-title">Buyer</div>
-              <p className="role-card-text">
-                No printer, no CAD skills, no problem. Browse a design, pick
-                material and color, and track it live until it lands on your
-                doorstep.
-              </p>
-            </div>
-          </ScrollReveal>
-        </div>
-      </section>
-
-      {/* ORDER JOURNEY */}
-      <section id="journey" className="section container" style={{ paddingTop: 0 }}>
-        <ScrollReveal>
-          <div className="section-eyebrow">How an order works</div>
-          <h2 className="section-heading">Escrow-backed, AI-verified, start to finish</h2>
-          <p className="section-subheading">
-            Money is held safely until the buyer confirms delivery — no one
-            gets paid on trust alone.
-          </p>
-        </ScrollReveal>
-
-        <div className="journey-strip">
-          {[
-            ['01', 'Browse & customize', 'Pick a design, material, color, and size.'],
-            ['02', 'Match nearby', 'See printer owners on a live map by price and rating.'],
-            ['03', 'Pay into escrow', 'Funds are held safely, not released yet.'],
-            ['04', 'Print & verify', 'AI checks the finished print against the reference file.'],
-            ['05', 'Deliver & release', 'Buyer confirms — payment splits 70/15/15 automatically.'],
-          ].map(([num, title, text], i) => (
-            <ScrollReveal key={num} delay={i * 100}>
-              <div className="journey-step">
-                <div className="journey-step-number">{num}</div>
-                <div className="journey-step-title">{title}</div>
-                <div className="journey-step-text">{text}</div>
-              </div>
-            </ScrollReveal>
-          ))}
-        </div>
-      </section>
-
-      {/* CTA BAND */}
-      <section className="container" style={{ paddingBottom: 'var(--space-16)' }}>
-        <ScrollReveal>
-          <div className="cta-band">
-            <h2 className="cta-band-title">Ready to put your printer to work?</h2>
-            <p className="cta-band-text">
-              Join PrintHive today — sign up in seconds with just an email
-              OTP, no password to remember.
-            </p>
-            <a href="/signup" className="btn btn-primary btn-lg">Create your account</a>
-          </div>
-        </ScrollReveal>
-      </section>
-
-      {/* FOOTER */}
-      <footer className="footer">
-        <div className="footer-inner">
-          <div className="footer-grid">
-            <div>
-              <div className="navbar-logo" style={{ marginBottom: 'var(--space-3)' }}>
-                Print<span className="navbar-logo-accent">Hive</span>
-              </div>
-              <p style={{ fontSize: 'var(--text-sm)', maxWidth: 260 }}>
-                The trusted marketplace connecting designers, printer owners,
-                and buyers.
-              </p>
-            </div>
-            <div>
-              <div className="footer-heading">Platform</div>
-              <a className="footer-link" href="#roles">How it works</a>
-              <a className="footer-link" href="/signup">Sign up</a>
-            </div>
-            <div>
-              <div className="footer-heading">For</div>
-              <a className="footer-link" href="/signup">Designers</a>
-              <a className="footer-link" href="/signup">Printer Owners</a>
-              <a className="footer-link" href="/signup">Buyers</a>
-            </div>
-            <div>
-              <div className="footer-heading">Project</div>
-              <a className="footer-link" href="#">B.Sc. IT Final Year</a>
-            </div>
-          </div>
-          <div className="footer-bottom">
-            <span>© 2026 PrintHive. Built as a final year project.</span>
-            <span>Made with Next.js + Supabase</span>
-          </div>
-        </div>
-      </footer>
-    </main>
+        {step === 'otp' && (
+          <>
+            <div style={s.title}>Check your inbox</div>
+            <div style={s.sub}>Enter the 6-digit code sent to {email}</div>
+            {info && <div style={s.info}>{info}</div>}
+            {error && <div style={s.error}>{error}</div>}
+            <label style={s.label}>One-time code</label>
+            <input style={{ ...s.input, letterSpacing: 6, fontSize: 22, textAlign: 'center' }} type="text" placeholder="000000" maxLength={6} value={otp} onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))} onKeyDown={(e) => e.key === 'Enter' && handleVerifyOtp()} />
+            <button style={{ ...s.btn, ...(loading ? s.btnDisabled : {}) }} disabled={loading} onClick={handleVerifyOtp}>
+              {loading ? 'Verifying…' : 'Verify & Create Account'}
+            </button>
+            <button style={s.back} onClick={() => { setStep('email'); setOtp(''); setError(''); setInfo('') }}>← Resend code</button>
+          </>
+        )}
+      </div>
+    </div>
   )
 }
