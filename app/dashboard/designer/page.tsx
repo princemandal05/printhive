@@ -1,5 +1,6 @@
 import { createClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
+import Link from 'next/link'
 
 export default async function DesignerDashboard() {
   const supabase = await createClient()
@@ -71,7 +72,7 @@ export default async function DesignerDashboard() {
         <div style={s.section}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
             <div style={s.sectionTitle}>My Designs</div>
-            <button style={s.btn}>+ Upload Design</button>
+            <Link href="/dashboard/designer/upload" style={{ ...s.btn, display: 'inline-block', textDecoration: 'none' }}>+ Upload Design</Link>
           </div>
           <div style={s.emptyState}>
             <div style={{ fontSize: 32, marginBottom: 8 }}>🖨️</div>
@@ -81,8 +82,19 @@ export default async function DesignerDashboard() {
         </div>
 
         <div style={s.section}>
-          <div style={s.sectionTitle}>Recent Earnings</div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+            <div style={s.sectionTitle}>Recent Earnings</div>
+            <Link href="/dashboard/designer/earnings" style={{ color: '#FF6B35', fontSize: 13, fontWeight: 600, textDecoration: 'none' }}>View all →</Link>
+          </div>
           <div style={s.emptyState}>Royalties from orders will appear here</div>
+        </div>
+
+        <div style={s.section}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+            <div style={s.sectionTitle}>Custom Design Requests</div>
+            <Link href="/requests" style={{ color: '#FF6B35', fontSize: 13, fontWeight: 600, textDecoration: 'none' }}>Browse open requests →</Link>
+          </div>
+          <div style={s.emptyState}>Bid on buyer briefs to win custom design jobs</div>
         </div>
       </div>
     </div>
