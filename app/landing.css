@@ -1,0 +1,311 @@
+/* ==========================================================================
+   PRINTHIVE — LANDING / MARKETING PAGE STYLES
+   Extends the design tokens defined in globals.css (:root variables).
+   Import this file in app/layout.tsx alongside globals.css.
+   ========================================================================== */
+
+/* Display typeface — set via next/font/google in layout.tsx as --font-display */
+.hero-title,
+.section-heading,
+.feature-title,
+.step-number,
+.cta-band .section-heading,
+.navbar-logo,
+.hero-stat-value {
+  font-family: var(--font-display), var(--font-sans);
+}
+
+.section-eyebrow {
+  display: inline-block;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: var(--text-xs);
+  font-weight: var(--font-semibold);
+  color: var(--color-primary);
+  margin-bottom: var(--space-3);
+}
+
+.section-heading {
+  font-size: var(--text-3xl);
+  font-weight: var(--font-bold);
+  color: var(--color-slate-950);
+  line-height: var(--leading-tight);
+  letter-spacing: -0.01em;
+}
+
+.section-subheading {
+  font-size: var(--text-md);
+  color: var(--color-slate-600);
+  line-height: var(--leading-relaxed);
+  max-width: 640px;
+}
+
+.section-center {
+  text-align: center;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Scroll-reveal animation (used by <ScrollReveal>) */
+.reveal {
+  opacity: 0;
+  transform: translateY(28px);
+  transition: opacity 0.7s ease, transform 0.7s ease;
+}
+.reveal-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* --------------------------------------------------------------------------
+   AMBIENT ORBS — the floating-orb motif from the hero, threaded through
+   the rest of the page at low opacity so the 3D atmosphere doesn't stop
+   after the hero. Place a <div> with these classes inside any section
+   that has position: relative and overflow: hidden.
+   -------------------------------------------------------------------------- */
+.ambient-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(1px);
+  pointer-events: none;
+  z-index: 0;
+  animation: orb-drift 14s ease-in-out infinite;
+}
+
+.ambient-orb-primary {
+  background: radial-gradient(circle at 30% 30%, var(--color-primary-hover), var(--color-primary-active));
+  opacity: 0.16;
+}
+
+.ambient-orb-success {
+  background: radial-gradient(circle at 30% 30%, #34D399, var(--color-success));
+  opacity: 0.14;
+}
+
+.ambient-orb-info {
+  background: radial-gradient(circle at 30% 30%, #60A5FA, var(--color-info));
+  opacity: 0.14;
+}
+
+@keyframes orb-drift {
+  0%, 100% { transform: translate(0, 0); }
+  50% { transform: translate(18px, -22px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ambient-orb { animation: none; }
+}
+
+/* Section wrapper needed to host ambient orbs without overflowing layout */
+.orb-field {
+  position: relative;
+  overflow: hidden;
+}
+
+/* Subtle gradient mesh for light sections, to echo the hero's atmosphere */
+.mesh-bg {
+  position: relative;
+}
+.mesh-bg::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 12% 20%, rgba(255, 107, 53, 0.07), transparent 40%),
+    radial-gradient(circle at 88% 15%, rgba(59, 130, 246, 0.06), transparent 38%),
+    radial-gradient(circle at 50% 90%, rgba(16, 185, 129, 0.05), transparent 42%);
+  pointer-events: none;
+  z-index: 0;
+}
+.mesh-bg > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* Hero section */
+.hero {
+  background: radial-gradient(circle at 15% 20%, #1E293B 0%, var(--color-slate-950) 55%);
+  color: var(--color-white);
+  padding: var(--space-20) 0 var(--space-16);
+  overflow: hidden;
+}
+
+.hero-grid {
+  display: grid;
+  grid-template-columns: 1.1fr 1fr;
+  gap: var(--space-12);
+  align-items: center;
+}
+
+.hero-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  background-color: rgba(255, 107, 53, 0.12);
+  border: 1px solid rgba(255, 107, 53, 0.3);
+  color: var(--color-primary);
+  font-size: var(--text-xs);
+  font-weight: var(--font-semibold);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border-radius: var(--radius-full);
+  padding: var(--space-2) var(--space-4);
+  margin-bottom: var(--space-5);
+}
+
+.hero-title {
+  font-size: var(--text-4xl);
+  font-weight: var(--font-bold);
+  line-height: var(--leading-tight);
+  color: var(--color-white);
+  margin-bottom: var(--space-5);
+  letter-spacing: -0.015em;
+}
+
+.hero-title-accent {
+  color: var(--color-primary);
+}
+
+.hero-subtitle {
+  font-size: var(--text-md);
+  color: var(--color-slate-400);
+  line-height: var(--leading-relaxed);
+  max-width: 520px;
+  margin-bottom: var(--space-8);
+}
+
+.hero-actions {
+  display: flex;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+  margin-bottom: var(--space-10);
+}
+
+.hero-stats {
+  display: flex;
+  gap: var(--space-8);
+  flex-wrap: wrap;
+}
+
+.hero-stat-value {
+  font-size: var(--text-2xl);
+  font-weight: var(--font-bold);
+  color: var(--color-white);
+}
+
+.hero-stat-label {
+  font-size: var(--text-xs);
+  color: var(--color-slate-400);
+  margin-top: 2px;
+}
+
+.hero-3d-canvas {
+  width: 100%;
+  height: 420px;
+}
+
+/* Generic marketing feature / role / step cards — depth via layered
+   shadow + glow instead of a flat border */
+.feature-card {
+  position: relative;
+  background-color: var(--color-white);
+  border: 1px solid rgba(15, 23, 42, 0.06);
+  border-radius: var(--radius-lg);
+  padding: var(--space-6);
+  height: 100%;
+  box-shadow:
+    0 1px 2px rgba(15, 23, 42, 0.04),
+    0 8px 24px rgba(15, 23, 42, 0.06);
+  transition: box-shadow 280ms ease, transform 280ms ease, border-color 280ms ease;
+}
+.feature-card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(255, 107, 53, 0.35);
+  box-shadow:
+    0 2px 4px rgba(15, 23, 42, 0.05),
+    0 16px 40px rgba(15, 23, 42, 0.10),
+    0 0 0 1px rgba(255, 107, 53, 0.08),
+    0 0 32px rgba(255, 107, 53, 0.12);
+}
+
+.feature-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  margin-bottom: var(--space-4);
+}
+
+.feature-icon-primary { background-color: var(--color-primary-tint); }
+.feature-icon-success { background-color: var(--color-success-bg); }
+.feature-icon-info    { background-color: var(--color-info-bg); }
+.feature-icon-warning { background-color: var(--color-warning-bg); }
+
+.feature-title {
+  font-size: var(--text-md);
+  font-weight: var(--font-semibold);
+  color: var(--color-slate-950);
+  margin-bottom: var(--space-2);
+}
+
+.feature-text {
+  font-size: var(--text-sm);
+  color: var(--color-slate-600);
+  line-height: var(--leading-relaxed);
+}
+
+/* Numbered step cards (How it works) — gradient + glow ring */
+.step-card {
+  position: relative;
+  padding: var(--space-6) var(--space-6) var(--space-6) 0;
+}
+
+.step-number {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-full);
+  background: linear-gradient(135deg, var(--color-slate-800), var(--color-slate-950));
+  color: var(--color-white);
+  font-size: var(--text-sm);
+  font-weight: var(--font-bold);
+  margin-bottom: var(--space-4);
+  box-shadow:
+    0 4px 12px rgba(15, 23, 42, 0.25),
+    0 0 0 4px rgba(255, 107, 53, 0.08);
+}
+
+/* Dark CTA band */
+.cta-band {
+  position: relative;
+  background: radial-gradient(circle at 20% 20%, #1E293B 0%, var(--color-slate-950) 60%);
+  border-radius: var(--radius-xl);
+  padding: var(--space-12) var(--space-8);
+  text-align: center;
+  color: var(--color-white);
+  overflow: hidden;
+}
+
+.cta-band .section-heading {
+  color: var(--color-white);
+}
+
+.cta-band .section-subheading {
+  color: var(--color-slate-400);
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .hero-grid { grid-template-columns: 1fr; }
+  .hero-title { font-size: var(--text-3xl); }
+  .hero-3d-canvas { height: 280px; order: -1; }
+  .hero-stats { gap: var(--space-6); }
+  .ambient-orb { display: none; }
+}
