@@ -12,6 +12,13 @@ const ROLES = [
     bg: '#ECFDF5',
   },
   {
+    id: 'seller',
+    label: 'Seller',
+    desc: 'Open a store and sell ready-made 3D printed products.',
+    color: '#8B5CF6',
+    bg: '#F5F3FF',
+  },
+  {
     id: 'designer',
     label: 'Designer',
     desc: 'Upload 3D model files and earn royalties on every print.',
@@ -115,7 +122,7 @@ export default function SignupPage() {
                 }}
               >
                 <div style={{ width: 44, height: 44, borderRadius: 10, background: r.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 22 }}>
-                  {r.id === 'buyer' ? '🛍️' : r.id === 'designer' ? '✏️' : '🖨️'}
+                  {r.id === 'buyer' ? '🛍️' : r.id === 'seller' ? '🏬' : r.id === 'designer' ? '✏️' : '🖨️'}
                 </div>
                 <div>
                   <div style={{ fontSize: 15, fontWeight: 600, color: '#fff', marginBottom: 2 }}>{r.label}</div>
