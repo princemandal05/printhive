@@ -1,40 +1,31 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
-
-const CART_ITEMS = [
-  {
-    id: 'p1',
-    name: 'Geometric Planter Set (3)',
-    price: 649,
-    quantity: 2,
-  },
-  {
-    id: 'p3',
-    name: 'Articulated Dragon (Painted)',
-    price: 899,
-    quantity: 1,
-  },
-]
+import { useStore } from '@/lib/cart-context'
 
 export default function CheckoutPage() {
+  const router = useRouter()
+  const { cart, cartSubtotal, clearCart } = useStore()
   const [paymentMethod, setPaymentMethod] = useState('upi')
+  const [placing, setPlacing] = useState(false)
 
-  const subtotal = useMemo(
-    () =>
-      CART_ITEMS.reduce(
-        (sum, item) => sum + item.price * item.quantity,
-        0
-      ),
-    []
-  )
-
+  const subtotal = cartSubtotal
   const shipping = subtotal > 1500 ? 0 : 99
   const tax = Math.round(subtotal * 0.18)
   const total = subtotal + shipping + tax
+
+  const handlePlaceOrder = async () => {
+    // Replace with: create rows in the `orders` table via Supabase (one per
+    // seller), then open Razorpay checkout for `total`, held in escrow.
+    setPlacing(true)
+    await new Promise((res) => setTimeout(res, 900))
+    clearCart()
+    router.push('/orders')
+  }
 
   return (
     <main>
@@ -238,7 +229,7 @@ export default function CheckoutPage() {
                 marginBottom: '30px',
               }}
             >
-              {CART_ITEMS.map((item) => (
+              {cart.map((item) => (
                 <div
                   key={item.id}
                   style={{
@@ -385,8 +376,10 @@ export default function CheckoutPage() {
                 width: '100%',
                 marginBottom: '16px',
               }}
+              disabled={placing || cart.length === 0}
+              onClick={handlePlaceOrder}
             >
-              Place Order
+              {placing ? 'Placing order…' : 'Place Order'}
             </button>
 
             <Link

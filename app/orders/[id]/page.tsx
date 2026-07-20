@@ -15,14 +15,26 @@ const MOCK_ORDER = {
   quantity: 1,
   total: 495,
   printer: { name: 'Rohan\u2019s PrintLab', rating: 4.9 },
-  status: 'printing' as 'pending' | 'printing' | 'shipped' | 'delivered',
+  status: 'manufacturing' as
+    | 'confirmed'
+    | 'printer_assigned'
+    | 'manufacturing'
+    | 'quality_check'
+    | 'packaging'
+    | 'shipped'
+    | 'out_for_delivery'
+    | 'delivered',
   placedAt: '9 Jul 2026, 2:40 PM',
 }
 
 const STEPS: { key: typeof MOCK_ORDER.status; label: string }[] = [
-  { key: 'pending', label: 'Order confirmed' },
-  { key: 'printing', label: 'Printing' },
+  { key: 'confirmed', label: 'Order confirmed' },
+  { key: 'printer_assigned', label: 'Printer assigned' },
+  { key: 'manufacturing', label: 'Manufacturing' },
+  { key: 'quality_check', label: 'Quality inspection' },
+  { key: 'packaging', label: 'Packaging' },
   { key: 'shipped', label: 'Shipped' },
+  { key: 'out_for_delivery', label: 'Out for delivery' },
   { key: 'delivered', label: 'Delivered' },
 ]
 
@@ -61,7 +73,7 @@ export default function OrderTrackingPage() {
         <div className="card" style={{ marginBottom: 'var(--space-6)' }}>
           <div className="card-header">
             <div className="card-title">Printer owner</div>
-            <span className={`badge status-${order.status}`}>{order.status}</span>
+            <span className={`badge status-${order.status}`}>{order.status.replace(/_/g, ' ')}</span>
           </div>
           <div className="flex items-center gap-3">
             <div className="avatar">{order.printer.name.charAt(0)}</div>
@@ -86,7 +98,7 @@ export default function OrderTrackingPage() {
           </p>
         </div>
 
-        {order.status === 'shipped' && (
+        {order.status === 'out_for_delivery' && (
           <button className="btn btn-primary btn-block btn-lg">
             Confirm delivery & release payment
           </button>

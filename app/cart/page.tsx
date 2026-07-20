@@ -1,86 +1,20 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
-
-type CartItem = {
-  id: string
-  name: string
-  seller: string
-  price: number
-  quantity: number
-  stock: number
-  image: string
-}
-
-const INITIAL_CART: CartItem[] = [
-  {
-    id: 'p1',
-    name: 'Geometric Planter Set (3)',
-    seller: 'UrbanPrint Co.',
-    price: 649,
-    quantity: 2,
-    stock: 18,
-    image: '',
-  },
-  {
-    id: 'p3',
-    name: 'Articulated Dragon (Painted)',
-    seller: 'MiniMakers',
-    price: 899,
-    quantity: 1,
-    stock: 6,
-    image: '',
-  },
-]
+import { useStore } from '@/lib/cart-context'
 
 export default function CartPage() {
-  const [cartItems, setCartItems] =
-    useState<CartItem[]>(INITIAL_CART)
-
+  const router = useRouter()
+  const { cart, updateCartQuantity, removeFromCart, addToWishlist, cartSubtotal } = useStore()
   const [coupon, setCoupon] = useState('')
 
-  const updateQuantity = (
-    id: string,
-    quantity: number
-  ) => {
-    setCartItems((items) =>
-      items.map((item) =>
-        item.id === id
-          ? {
-              ...item,
-              quantity: Math.max(
-                1,
-                Math.min(quantity, item.stock)
-              ),
-            }
-          : item
-      )
-    )
-  }
-
-  const removeItem = (id: string) => {
-    setCartItems((items) =>
-      items.filter((item) => item.id !== id)
-    )
-  }
-
-  const subtotal = useMemo(
-    () =>
-      cartItems.reduce(
-        (sum, item) =>
-          sum + item.price * item.quantity,
-        0
-      ),
-    [cartItems]
-  )
-
+  const subtotal = cartSubtotal
   const shipping = subtotal > 1500 ? 0 : 99
-
   const tax = Math.round(subtotal * 0.18)
-
   const total = subtotal + shipping + tax
 
   return (
@@ -112,7 +46,7 @@ export default function CartPage() {
           proceeding to checkout.
         </p>
 
-        {cartItems.length === 0 ? (
+        {cart.length === 0 ? (
           <div
             className="empty-state"
             style={{
@@ -169,7 +103,7 @@ export default function CartPage() {
 
             <div>
 
-              {cartItems.map((item) => (
+              {cart.map((item) => (
 
                 <div
                   key={item.id}
@@ -241,7 +175,7 @@ export default function CartPage() {
                         ₹{item.price}
                       </div>
 
-                                            <div
+                      <div
                         style={{
                           display: 'flex',
                           justifyContent: 'space-between',
@@ -262,7 +196,7 @@ export default function CartPage() {
                           <button
                             className="btn"
                             onClick={() =>
-                              updateQuantity(
+                              updateCartQuantity(
                                 item.id,
                                 item.quantity - 1
                               )
@@ -284,7 +218,7 @@ export default function CartPage() {
                           <button
                             className="btn"
                             onClick={() =>
-                              updateQuantity(
+                              updateCartQuantity(
                                 item.id,
                                 item.quantity + 1
                               )
@@ -303,14 +237,18 @@ export default function CartPage() {
                         >
                           <button
                             className="btn btn-secondary"
+                            onClick={() => {
+                              addToWishlist({ id: item.id, name: item.name, price: item.price, type: 'product' })
+                              removeFromCart(item.id)
+                            }}
                           >
-                            ♡ Wishlist
+                            ♡ Move to Wishlist
                           </button>
 
                           <button
                             className="btn btn-secondary"
                             onClick={() =>
-                              removeItem(item.id)
+                              removeFromCart(item.id)
                             }
                           >
                             Remove
@@ -470,6 +408,7 @@ export default function CartPage() {
                   width: '100%',
                   marginTop: '24px',
                 }}
+                onClick={() => router.push('/checkout')}
               >
                 Proceed to Checkout
               </button>

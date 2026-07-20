@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react'
 import Link from 'next/link'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
+import { useStore } from '@/lib/cart-context'
 
 type Product = {
   id: string
@@ -112,6 +113,7 @@ const STATS = [
 ]
 
 export default function ShopPage() {
+  const { addToCart, addToWishlist, isInWishlist } = useStore()
   const [search, setSearch] = useState('')
   const [category, setCategory] = useState('All')
   const [sort, setSort] = useState('popular')
@@ -218,7 +220,7 @@ export default function ShopPage() {
           ))}
         </div>
 
-                {/* Search & Filters */}
+        {/* Search & Filters */}
 
         <div
           className="glass-card"
@@ -422,7 +424,7 @@ export default function ShopPage() {
           </p>
         </div>
 
-                {filtered.length > 0 ? (
+        {filtered.length > 0 ? (
           <div
             style={{
               display: "grid",
@@ -498,7 +500,7 @@ export default function ShopPage() {
 
                   <div
                     style={{
-                      color: "var(--color-text-muted)",
+                      color: "var(--color-slate-400)",
                       marginBottom: "10px",
                     }}
                   >
@@ -563,14 +565,24 @@ export default function ShopPage() {
                         flex: 1,
                       }}
                       className="btn btn-primary"
+                      onClick={(e) => {
+                        e.preventDefault()
+                        e.stopPropagation()
+                        addToCart({ id: product.id, name: product.name, price: product.price, seller: product.seller, stock: product.stock }, 1)
+                      }}
                     >
                       Buy Now
                     </button>
 
                     <button
                       className="btn btn-secondary"
+                      onClick={(e) => {
+                        e.preventDefault()
+                        e.stopPropagation()
+                        addToWishlist({ id: product.id, name: product.name, price: product.price, type: 'product' })
+                      }}
                     >
-                      ♡
+                      {isInWishlist(product.id) ? '♥' : '♡'}
                     </button>
                   </div>
 
@@ -678,4 +690,3 @@ export default function ShopPage() {
     </main>
   )
 }
-

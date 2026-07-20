@@ -2,9 +2,10 @@
 
 import { useMemo, useState } from 'react'
 import Link from 'next/link'
-import { useParams } from 'next/navigation'
+import { useParams, useRouter } from 'next/navigation'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
+import { useStore } from '@/lib/cart-context'
 
 type Product = {
   id: string
@@ -68,6 +69,8 @@ const PRODUCTS: Product[] = [
 
 export default function ProductDetailsPage() {
   const params = useParams()
+  const router = useRouter()
+  const { addToCart, addToWishlist, isInWishlist } = useStore()
 
   const product = useMemo(
     () => PRODUCTS.find((p) => p.id === params.id),
@@ -75,6 +78,7 @@ export default function ProductDetailsPage() {
   )
 
   const [quantity, setQuantity] = useState(1)
+  const [justAdded, setJustAdded] = useState(false)
 
   if (!product) {
     return (
@@ -247,7 +251,7 @@ export default function ProductDetailsPage() {
               {product.description}
             </p>
 
-                        {/* Quantity */}
+            {/* Quantity */}
 
             <div
               style={{
@@ -325,6 +329,10 @@ export default function ProductDetailsPage() {
                 style={{
                   flex: 1,
                 }}
+                onClick={() => {
+                  addToCart({ id: product.id, name: product.name, price: product.price, seller: product.seller, stock: product.stock }, quantity)
+                  router.push('/checkout')
+                }}
               >
                 Buy Now
               </button>
@@ -334,12 +342,21 @@ export default function ProductDetailsPage() {
                 style={{
                   flex: 1,
                 }}
+                onClick={() => {
+                  addToCart({ id: product.id, name: product.name, price: product.price, seller: product.seller, stock: product.stock }, quantity)
+                  setJustAdded(true)
+                  setTimeout(() => setJustAdded(false), 1800)
+                }}
               >
-                Add to Cart
+                {justAdded ? 'Added ✓' : 'Add to Cart'}
               </button>
 
-              <button className="btn btn-secondary">
-                ♡ Wishlist
+              <button
+                className="btn btn-secondary"
+                onClick={() => addToWishlist({ id: product.id, name: product.name, price: product.price, type: 'product' })}
+                disabled={isInWishlist(product.id)}
+              >
+                {isInWishlist(product.id) ? '♥ In Wishlist' : '♡ Wishlist'}
               </button>
             </div>
 
@@ -517,7 +534,7 @@ export default function ProductDetailsPage() {
           </div>
         </section>
 
-                {/* Customer Reviews */}
+        {/* Customer Reviews */}
 
         <section
           style={{

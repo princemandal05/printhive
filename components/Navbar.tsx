@@ -1,12 +1,17 @@
+'use client'
+
 import Link from 'next/link'
+import { useStore } from '@/lib/cart-context'
 
 const NAV_LINKS = [
-  { href: '/browse', label: 'Browse' },
+  { href: '/shop', label: 'Shop' },
+  { href: '/browse', label: 'Designs' },
   { href: '/requests', label: 'Custom requests' },
-  { href: '/#how-it-works', label: 'How it works' },
 ]
 
 export default function Navbar() {
+  const { cartCount, wishlist } = useStore()
+
   return (
     <header className="navbar">
       <div className="navbar-inner">
@@ -23,6 +28,14 @@ export default function Navbar() {
         </nav>
 
         <div className="flex items-center gap-4">
+          <Link href="/wishlist" className="navbar-link" style={{ position: 'relative' }} aria-label="Wishlist">
+            ♡
+            {wishlist.length > 0 && <span style={navBadgeStyle}>{wishlist.length}</span>}
+          </Link>
+          <Link href="/cart" className="navbar-link" style={{ position: 'relative' }} aria-label="Cart">
+            🛒
+            {cartCount > 0 && <span style={navBadgeStyle}>{cartCount}</span>}
+          </Link>
           <Link href="/login" className="navbar-link">
             Log in
           </Link>
@@ -33,4 +46,21 @@ export default function Navbar() {
       </div>
     </header>
   )
+}
+
+const navBadgeStyle: React.CSSProperties = {
+  position: 'absolute',
+  top: -6,
+  right: -10,
+  background: 'var(--color-primary)',
+  color: '#fff',
+  fontSize: 10,
+  fontWeight: 700,
+  borderRadius: 99,
+  minWidth: 16,
+  height: 16,
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  padding: '0 4px',
 }
