@@ -1,5 +1,6 @@
 import { createClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
+import Link from 'next/link'
 
 export default async function BuyerDashboard() {
   const supabase = await createClient()
@@ -34,6 +35,7 @@ export default async function BuyerDashboard() {
     sectionTitle: { fontSize: 16, fontWeight: 600, color: '#0F172A', marginBottom: 16 },
     emptyState: { textAlign: 'center' as const, padding: '40px 0', color: '#94A3B8', fontSize: 14 },
     btn: { background: '#FF6B35', color: '#fff', border: 'none', borderRadius: 8, padding: '10px 20px', fontSize: 14, fontWeight: 600, cursor: 'pointer' },
+    btnOutline: { background: 'transparent', color: '#0F172A', border: '1px solid #E2E8F0', borderRadius: 8, padding: '10px 20px', fontSize: 14, fontWeight: 600, cursor: 'pointer' },
     signoutBtn: { background: 'none', border: 'none', color: '#94A3B8', fontSize: 13, cursor: 'pointer' },
   }
 
@@ -70,8 +72,8 @@ export default async function BuyerDashboard() {
 
         <div style={s.section}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-            <div style={s.sectionTitle}>Browse Designs</div>
-            <button style={s.btn}>Explore Marketplace</button>
+            <div style={s.sectionTitle}>My Orders</div>
+            <Link href="/orders" style={{ color: '#FF6B35', fontSize: 13, fontWeight: 600, textDecoration: 'none' }}>View all →</Link>
           </div>
           <div style={s.emptyState}>
             <div style={{ fontSize: 32, marginBottom: 8 }}>🛍️</div>
@@ -81,8 +83,30 @@ export default async function BuyerDashboard() {
         </div>
 
         <div style={s.section}>
-          <div style={s.sectionTitle}>Saved Collections</div>
-          <div style={s.emptyState}>Designs you save will appear here</div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+            <div style={s.sectionTitle}>Browse</div>
+            <div style={{ display: 'flex', gap: 12 }}>
+              <Link href="/shop" style={{ ...s.btn, display: 'inline-block', textDecoration: 'none' }}>Shop products</Link>
+              <Link href="/browse" style={{ ...s.btnOutline, display: 'inline-block', textDecoration: 'none' }}>Browse designs</Link>
+            </div>
+          </div>
+          <div style={s.emptyState}>Discover ready-made products or order a custom 3D print</div>
+        </div>
+
+        <div style={s.section}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+            <div style={s.sectionTitle}>Saved Collections</div>
+            <Link href="/wishlist" style={{ color: '#FF6B35', fontSize: 13, fontWeight: 600, textDecoration: 'none' }}>View wishlist →</Link>
+          </div>
+          <div style={s.emptyState}>Designs and products you save will appear here</div>
+        </div>
+
+        <div style={s.section}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+            <div style={s.sectionTitle}>Can&apos;t find what you need?</div>
+            <Link href="/requests/new" style={{ ...s.btnOutline, display: 'inline-block', textDecoration: 'none' }}>Post a custom request</Link>
+          </div>
+          <div style={s.emptyState}>Describe what you need and let designers bid on it</div>
         </div>
       </div>
     </div>

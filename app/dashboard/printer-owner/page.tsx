@@ -1,5 +1,6 @@
 import { createClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
+import Link from 'next/link'
 
 export default async function PrinterOwnerDashboard() {
   const supabase = await createClient()
@@ -91,7 +92,7 @@ export default async function PrinterOwnerDashboard() {
         <div style={s.section}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
             <div style={s.sectionTitle}>My Printers</div>
-            <button style={s.btn}>+ Register Printer</button>
+            <Link href="/dashboard/printer-owner/register" style={{ ...s.btn, display: 'inline-block', textDecoration: 'none' }}>+ Register Printer</Link>
           </div>
           <div style={s.emptyState}>No printers registered yet. Add your machine to start accepting orders.</div>
         </div>
