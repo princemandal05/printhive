@@ -72,7 +72,7 @@ export default async function BuyerDashboard() {
         <div style={s.section}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
             <div style={s.sectionTitle}>Browse Designs</div>
-            <button style={s.btn}>Explore Marketplace</button>
+            <Link href="/shop" style={{ ...s.btn, display: 'inline-block', textDecoration: 'none' }}>Explore Marketplace</Link>
           </div>
           <div style={s.emptyState}>
             <div style={{ fontSize: 32, marginBottom: 8 }}>🛍️</div>
