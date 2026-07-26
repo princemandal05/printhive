@@ -1,14 +1,10 @@
 import { createClient } from '@/utils/supabase/server'
+import { requireRole } from '@/utils/supabase/require-role'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 
 export default async function DesignerDashboard() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
-
-  const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single()
-  if (profile?.role !== 'designer') redirect('/login')
+  const { user } = await requireRole('designer')
 
   const handleSignOut = async () => {
     'use server'

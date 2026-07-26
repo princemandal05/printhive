@@ -1,5 +1,4 @@
-import { createClient } from '@/utils/supabase/server'
-import { redirect } from 'next/navigation'
+import { requireRole } from '@/utils/supabase/require-role'
 
 // Mock earnings — replace with a Supabase query against an `earnings` /
 // `order_line_items` table filtered by designer_id, summed by month.
@@ -11,12 +10,7 @@ const MOCK_TRANSACTIONS = [
 ]
 
 export default async function DesignerEarningsPage() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
-
-  const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single()
-  if (profile?.role !== 'designer') redirect('/login')
+  await requireRole('designer')
 
   const totalEarnings = MOCK_TRANSACTIONS.reduce((sum, t) => sum + t.amount, 0)
 

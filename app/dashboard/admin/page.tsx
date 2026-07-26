@@ -1,4 +1,5 @@
 import { createClient } from '@/utils/supabase/server'
+import { requireRole } from '@/utils/supabase/require-role'
 import { redirect } from 'next/navigation'
 
 // Mock data — replace with Supabase queries aggregating across
@@ -21,12 +22,7 @@ const MOCK_COMPLAINTS = [
 ]
 
 export default async function AdminDashboard() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
-
-  const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single()
-  if (profile?.role !== 'admin') redirect('/login')
+  const { user } = await requireRole('admin')
 
   const handleSignOut = async () => {
     'use server'

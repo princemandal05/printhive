@@ -1,75 +1,52 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 import { createClient } from '@/utils/supabase/client'
 
 const ROLES = [
-  {
-    id: 'buyer',
-    label: 'Buyer',
-    desc: 'Browse designs and order custom 3D prints delivered home.',
-    color: '#10B981',
-    bg: '#ECFDF5',
-  },
-  {
-    id: 'seller',
-    label: 'Seller',
-    desc: 'Open a store and sell ready-made 3D printed products.',
-    color: '#8B5CF6',
-    bg: '#F5F3FF',
-  },
-  {
-    id: 'designer',
-    label: 'Designer',
-    desc: 'Upload 3D model files and earn royalties on every print.',
-    color: '#FF6B35',
-    bg: '#FFF1EB',
-  },
-  {
-    id: 'printer_owner',
-    label: 'Printer Owner',
-    desc: 'List your idle printer and earn 70% on every completed order.',
-    color: '#3B82F6',
-    bg: '#EFF6FF',
-  },
+  { id: 'buyer', label: 'Buyer', desc: 'Browse designs and order custom 3D prints delivered home.', color: '#10B981', bg: '#ECFDF5' },
+  { id: 'seller', label: 'Seller', desc: 'Open a store and sell ready-made 3D printed products.', color: '#8B5CF6', bg: '#F5F3FF' },
+  { id: 'designer', label: 'Designer', desc: 'Upload 3D model files and earn royalties on every print.', color: '#FF6B35', bg: '#FFF1EB' },
+  { id: 'printer_owner', label: 'Printer Owner', desc: 'List your idle printer and earn 70% on every completed order.', color: '#3B82F6', bg: '#EFF6FF' },
 ]
 
-type Step = 'role' | 'email' | 'otp'
+const DASHBOARD_PATH: Record<string, string> = {
+  buyer: '/dashboard/buyer',
+  seller: '/dashboard/seller',
+  designer: '/dashboard/designer',
+  printer_owner: '/dashboard/printer-owner',
+}
+
+type Step = 'role' | 'details' | 'check-email'
 
 export default function SignupPage() {
   const supabase = createClient()
   const [step, setStep] = useState<Step>('role')
   const [role, setRole] = useState('')
   const [email, setEmail] = useState('')
-  const [otp, setOtp] = useState('')
+  const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  const [info, setInfo] = useState('')
 
-  const handleSendOtp = async () => {
-    if (!email) return setError('Please enter your email')
+  const passwordTooShort = password.length > 0 && password.length < 8
+  const passwordsMismatch = confirmPassword.length > 0 && password !== confirmPassword
+
+  const handleSignup = async () => {
+    if (!email || !password || !confirmPassword) return setError('Please fill in every field')
+    if (password.length < 8) return setError('Password must be at least 8 characters')
+    if (password !== confirmPassword) return setError('Passwords do not match')
+
     setError('')
     setLoading(true)
-    const { error: err } = await supabase.auth.signInWithOtp({
-      email,
-      options: { shouldCreateUser: true },
-    })
-    setLoading(false)
-    if (err) return setError(err.message)
-    setInfo(`OTP sent to ${email}. Check your inbox.`)
-    setStep('otp')
-  }
 
-  const handleVerifyOtp = async () => {
-    if (!otp) return setError('Please enter the OTP')
-    setError('')
-    setLoading(true)
-    const { data, error: err } = await supabase.auth.verifyOtp({
-      email,
-      token: otp,
-      type: 'email',
-    })
-    if (err) { setLoading(false); return setError(err.message) }
+    const { data, error: err } = await supabase.auth.signUp({ email, password })
+    if (err) {
+      setLoading(false)
+      return setError(err.message)
+    }
 
     if (data.user) {
       await supabase.from('profiles').upsert({
@@ -79,8 +56,16 @@ export default function SignupPage() {
         created_at: new Date().toISOString(),
       })
     }
+
     setLoading(false)
-    window.location.href = `/dashboard/${role === 'printer_owner' ? 'printer-owner' : role}`
+
+    if (data.session) {
+      // Email confirmation is off in this Supabase project — log straight in
+      window.location.href = DASHBOARD_PATH[role] ?? '/'
+    } else {
+      // Email confirmation is required before a session is issued
+      setStep('check-email')
+    }
   }
 
   const s: Record<string, React.CSSProperties> = {
@@ -92,6 +77,10 @@ export default function SignupPage() {
     sub: { fontSize: 14, color: '#94A3B8', textAlign: 'center' as const, marginBottom: 28 },
     label: { fontSize: 13, fontWeight: 500, color: '#94A3B8', marginBottom: 6, display: 'block' },
     input: { width: '100%', background: '#0F172A', border: '1px solid #334155', borderRadius: 8, padding: '11px 14px', fontSize: 15, color: '#fff', outline: 'none', marginBottom: 16, boxSizing: 'border-box' as const },
+    passwordWrap: { position: 'relative' as const, marginBottom: 16 },
+    toggleBtn: { position: 'absolute' as const, right: 12, top: 12, background: 'none', border: 'none', color: '#94A3B8', fontSize: 12, cursor: 'pointer', fontWeight: 600 },
+    hint: { fontSize: 12, color: '#64748B', marginTop: -12, marginBottom: 16 },
+    hintError: { fontSize: 12, color: '#F87171', marginTop: -12, marginBottom: 16 },
     btn: { width: '100%', background: '#FF6B35', color: '#fff', border: 'none', borderRadius: 8, padding: '13px 0', fontSize: 15, fontWeight: 600, cursor: 'pointer', marginTop: 4 },
     btnDisabled: { opacity: 0.5, cursor: 'not-allowed' },
     error: { background: '#FEF2F2', color: '#991B1B', borderRadius: 8, padding: '10px 14px', fontSize: 13, marginBottom: 14 },
@@ -130,41 +119,67 @@ export default function SignupPage() {
                 </div>
               </div>
             ))}
-            <button style={{ ...s.btn, ...(role ? {} : s.btnDisabled) }} disabled={!role} onClick={() => setStep('email')}>
+            <button style={{ ...s.btn, ...(role ? {} : s.btnDisabled) }} disabled={!role} onClick={() => setStep('details')}>
               Continue
             </button>
             <div style={s.loginLink}>
-              Already have an account? <a href="/login" style={{ color: '#FF6B35' }}>Log in</a>
+              Already have an account? <Link href="/login" style={{ color: '#FF6B35' }}>Log in</Link>
             </div>
           </>
         )}
 
-        {step === 'email' && (
+        {step === 'details' && (
           <>
-            <div style={s.title}>Enter your email</div>
-            <div style={s.sub}>We will send you a one-time code — no password needed.</div>
+            <div style={s.title}>Create your account</div>
+            <div style={s.sub}>Signing up as a {ROLES.find((r) => r.id === role)?.label}</div>
             {error && <div style={s.error}>{error}</div>}
+
             <label style={s.label}>Email address</label>
-            <input style={s.input} type="email" placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleSendOtp()} />
-            <button style={{ ...s.btn, ...(loading ? s.btnDisabled : {}) }} disabled={loading} onClick={handleSendOtp}>
-              {loading ? 'Sending…' : 'Send OTP'}
+            <input style={s.input} type="email" placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} />
+
+            <label style={s.label}>Password</label>
+            <div style={s.passwordWrap}>
+              <input
+                style={{ ...s.input, marginBottom: 0, paddingRight: 56 }}
+                type={showPassword ? 'text' : 'password'}
+                placeholder="At least 8 characters"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+              <button type="button" style={s.toggleBtn} onClick={() => setShowPassword((v) => !v)}>
+                {showPassword ? 'Hide' : 'Show'}
+              </button>
+            </div>
+            {passwordTooShort && <div style={s.hintError}>Password must be at least 8 characters</div>}
+
+            <label style={s.label}>Confirm password</label>
+            <input
+              style={s.input}
+              type={showPassword ? 'text' : 'password'}
+              placeholder="Re-enter your password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleSignup()}
+            />
+            {passwordsMismatch && <div style={s.hintError}>Passwords do not match</div>}
+
+            <button style={{ ...s.btn, ...(loading ? s.btnDisabled : {}) }} disabled={loading} onClick={handleSignup}>
+              {loading ? 'Creating account…' : 'Create account'}
             </button>
-            <button style={s.back} onClick={() => setStep('role')}>← Back</button>
+            <button style={s.back} onClick={() => { setStep('role'); setError('') }}>← Back</button>
           </>
         )}
 
-        {step === 'otp' && (
+        {step === 'check-email' && (
           <>
             <div style={s.title}>Check your inbox</div>
-            <div style={s.sub}>Enter the 6-digit code sent to {email}</div>
-            {info && <div style={s.info}>{info}</div>}
-            {error && <div style={s.error}>{error}</div>}
-            <label style={s.label}>One-time code</label>
-            <input style={{ ...s.input, letterSpacing: 6, fontSize: 22, textAlign: 'center' }} type="text" placeholder="000000" maxLength={6} value={otp} onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))} onKeyDown={(e) => e.key === 'Enter' && handleVerifyOtp()} />
-            <button style={{ ...s.btn, ...(loading ? s.btnDisabled : {}) }} disabled={loading} onClick={handleVerifyOtp}>
-              {loading ? 'Verifying…' : 'Verify & Create Account'}
-            </button>
-            <button style={s.back} onClick={() => { setStep('email'); setOtp(''); setError(''); setInfo('') }}>← Resend code</button>
+            <div style={s.info}>
+              We sent a confirmation link to <strong>{email}</strong>. Click it to
+              activate your account, then come back and log in.
+            </div>
+            <Link href="/login" style={{ ...s.btn, display: 'block', textAlign: 'center', textDecoration: 'none', boxSizing: 'border-box' }}>
+              Go to login
+            </Link>
           </>
         )}
       </div>
