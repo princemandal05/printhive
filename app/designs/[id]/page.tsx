@@ -16,16 +16,22 @@ export default async function DesignDetailPage({ params }: { params: Promise<{ i
 
   if (error || !design) notFound()
 
-  const { data: reviews } = await supabase
+  const { data: rawReviews } = await supabase
     .from('reviews')
     .select('rating, review_text, buyer:profiles(full_name), order:orders!inner(design_id)')
     .eq('order.design_id', id)
     .order('created_at', { ascending: false })
 
+  const reviews = (rawReviews ?? []).map((r: any) => ({
+    rating: r.rating,
+    review_text: r.review_text,
+    buyer: Array.isArray(r.buyer) ? r.buyer[0] ?? null : r.buyer,
+  }))
+
   return (
     <main>
       <Navbar />
-      <DesignDetailClient design={design} reviews={reviews ?? []} />
+      <DesignDetailClient design={design} reviews={reviews} />
       <Footer />
     </main>
   )

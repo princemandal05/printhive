@@ -1,5 +1,6 @@
 import { createClient } from './server'
 import { redirect } from 'next/navigation'
+import { cookies } from 'next/headers'
 
 export type Role = 'buyer' | 'seller' | 'designer' | 'printer_owner' | 'admin'
 
@@ -11,21 +12,24 @@ export const DASHBOARD_PATH: Record<Role, string> = {
   admin: '/dashboard/admin',
 }
 
-/**
- * Server-side guard for dashboard pages. Use at the top of every
- * dashboard page (and every sub-page under it) — do not rely on
- * middleware alone, since middleware only checks "is anyone logged
- * in", not "is this the right role for this page".
- *
- *   const { user, profile } = await requireRole('seller')
- *
- * - Not logged in           -> redirected to /login
- * - Logged in, wrong role   -> redirected to THEIR OWN dashboard
- *   (never back to /login — they're already authenticated, sending
- *   them to login again is confusing)
- * - Logged in, no role yet  -> redirected to /signup to finish setup
- */
 export async function requireRole(role: Role) {
+  const cookieStore = await cookies()
+  const guestRole = cookieStore.get('printhive_guest_role')?.value
+
+  if (guestRole) {
+    const user = {
+      id: `guest-${guestRole}`,
+      email: `guest_${guestRole}@printhive.demo`,
+    }
+    const profile = {
+      id: user.id,
+      email: user.email,
+      role: guestRole,
+      full_name: `Guest ${guestRole.replace('_', ' ').toUpperCase()}`,
+    }
+    return { supabase: null as any, user: user as any, profile }
+  }
+
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 

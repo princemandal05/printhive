@@ -2,7 +2,6 @@ import Link from 'next/link'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 import Hero3D from '@/components/Hero3D'
-import ScrollReveal from '@/components/ScrollReveal'
 
 const PROBLEMS = [
   {
@@ -103,7 +102,7 @@ export default function Home() {
 
       {/* PROBLEM STATEMENT */}
       <section className="container section">
-        <ScrollReveal>
+        <div>
           <div className="section-eyebrow section-center">The problem</div>
           <h2 className="section-heading section-center" style={{ marginBottom: 'var(--space-3)' }}>
             Three gaps. One missing platform.
@@ -113,17 +112,15 @@ export default function Home() {
             ecosystem together — so PrintHive was built to close all three
             gaps at once.
           </p>
-        </ScrollReveal>
+        </div>
 
         <div className="grid grid-cols-3 gap-6">
-          {PROBLEMS.map((p, i) => (
-            <ScrollReveal key={p.title} delay={i * 100}>
-              <div className="feature-card">
-                <div className={`feature-icon ${p.iconClass}`}>{p.icon}</div>
-                <div className="feature-title">{p.title}</div>
-                <div className="feature-text">{p.text}</div>
-              </div>
-            </ScrollReveal>
+          {PROBLEMS.map((p) => (
+            <div key={p.title} className="feature-card">
+              <div className={`feature-icon ${p.iconClass}`}>{p.icon}</div>
+              <div className="feature-title">{p.title}</div>
+              <div className="feature-text">{p.text}</div>
+            </div>
           ))}
         </div>
       </section>
@@ -131,22 +128,20 @@ export default function Home() {
       {/* HOW IT WORKS */}
       <section id="how-it-works" className="container section" style={{ background: 'var(--color-slate-100)', maxWidth: 'none', borderRadius: 'var(--radius-xl)' }}>
         <div style={{ maxWidth: 'var(--container-max)', margin: '0 auto', padding: '0 var(--space-6)' }}>
-          <ScrollReveal>
+          <div>
             <div className="section-eyebrow section-center">How it works</div>
             <h2 className="section-heading section-center" style={{ marginBottom: 'var(--space-10)' }}>
               From idea to doorstep, in four steps
             </h2>
-          </ScrollReveal>
+          </div>
 
           <div className="grid grid-cols-4 gap-6">
             {STEPS.map((step, i) => (
-              <ScrollReveal key={step.title} delay={i * 100}>
-                <div className="step-card">
-                  <div className="step-number">{i + 1}</div>
-                  <div className="feature-title">{step.title}</div>
-                  <div className="feature-text">{step.text}</div>
-                </div>
-              </ScrollReveal>
+              <div key={step.title} className="step-card">
+                <div className="step-number">{i + 1}</div>
+                <div className="feature-title">{step.title}</div>
+                <div className="feature-text">{step.text}</div>
+              </div>
             ))}
           </div>
         </div>
@@ -154,22 +149,20 @@ export default function Home() {
 
       {/* FEATURES */}
       <section className="container section">
-        <ScrollReveal>
+        <div>
           <div className="section-eyebrow section-center">What&apos;s inside</div>
           <h2 className="section-heading section-center" style={{ marginBottom: 'var(--space-10)' }}>
             Built for trust, speed, and fair pay
           </h2>
-        </ScrollReveal>
+        </div>
 
         <div className="grid grid-cols-3 gap-6">
-          {FEATURES.map((f, i) => (
-            <ScrollReveal key={f.title} delay={(i % 3) * 100}>
-              <div className="feature-card">
-                <div className={`feature-icon ${f.iconClass}`}>{f.icon}</div>
-                <div className="feature-title">{f.title}</div>
-                <div className="feature-text">{f.text}</div>
-              </div>
-            </ScrollReveal>
+          {FEATURES.map((f) => (
+            <div key={f.title} className="feature-card">
+              <div className={`feature-icon ${f.iconClass}`}>{f.icon}</div>
+              <div className="feature-title">{f.title}</div>
+              <div className="feature-text">{f.text}</div>
+            </div>
           ))}
         </div>
       </section>
@@ -206,20 +199,18 @@ export default function Home() {
 
       {/* FINAL CTA */}
       <section className="container section-sm">
-        <ScrollReveal>
-          <div className="cta-band">
-            <h2 className="section-heading" style={{ marginBottom: 'var(--space-3)' }}>
-              Ready to print something real?
-            </h2>
-            <p className="section-subheading" style={{ marginBottom: 'var(--space-8)' }}>
-              Join PrintHive today — no printer, no CAD software, no
-              hassle.
-            </p>
-            <Link href="/signup" className="btn btn-primary btn-lg">
-              Create your free account
-            </Link>
-          </div>
-        </ScrollReveal>
+        <div className="cta-band">
+          <h2 className="section-heading" style={{ marginBottom: 'var(--space-3)' }}>
+            Ready to print something real?
+          </h2>
+          <p className="section-subheading" style={{ marginBottom: 'var(--space-8)' }}>
+            Join PrintHive today — no printer, no CAD software, no
+            hassle.
+          </p>
+          <Link href="/signup" className="btn btn-primary btn-lg">
+            Create your free account
+          </Link>
+        </div>
       </section>
 
       <Footer />

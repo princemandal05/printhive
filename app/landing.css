@@ -66,30 +66,37 @@
 .ambient-orb {
   position: absolute;
   border-radius: 50%;
-  filter: blur(1px);
+  filter: blur(60px);
   pointer-events: none;
   z-index: 0;
-  animation: orb-drift 14s ease-in-out infinite;
+  animation: orb-drift 12s ease-in-out infinite alternate;
 }
 
 .ambient-orb-primary {
-  background: radial-gradient(circle at 30% 30%, var(--color-primary-hover), var(--color-primary-active));
-  opacity: 0.16;
+  width: 380px;
+  height: 380px;
+  background: radial-gradient(circle at 30% 30%, #FF6B35, #E85A2A);
+  opacity: 0.28;
 }
 
 .ambient-orb-success {
-  background: radial-gradient(circle at 30% 30%, #34D399, var(--color-success));
-  opacity: 0.14;
+  width: 320px;
+  height: 320px;
+  background: radial-gradient(circle at 30% 30%, #34D399, #10B981);
+  opacity: 0.22;
 }
 
 .ambient-orb-info {
-  background: radial-gradient(circle at 30% 30%, #60A5FA, var(--color-info));
-  opacity: 0.14;
+  width: 350px;
+  height: 350px;
+  background: radial-gradient(circle at 30% 30%, #60A5FA, #3B82F6);
+  opacity: 0.25;
 }
 
 @keyframes orb-drift {
-  0%, 100% { transform: translate(0, 0); }
-  50% { transform: translate(18px, -22px); }
+  0% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(25px, -30px) scale(1.08); }
+  100% { transform: translate(-15px, 20px) scale(0.95); }
 }
 
 @media (prefers-reduced-motion: reduce) {
