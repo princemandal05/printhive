@@ -10,20 +10,6 @@
    1. CSS VARIABLES (DESIGN TOKENS)
    -------------------------------------------------------------------------- */
 :root {
-  /* Brand */
-  --color-primary: #FF6B35;
-  --color-primary-hover: #FF8C5A;
-  --color-primary-tint: #FFF1EB;
-  --color-primary-active: #E85A2A;
-
-  /* Neutrals / Slate scale */
-  --color-slate-950: #0F172A;
-  --color-slate-800: #1E293B;
-  --color-slate-600: #475569;
-  --color-slate-400: #94A3B8;
-  --color-slate-100: #F1F5F9;
-  --color-white: #FFFFFF;
-
   /* Semantic / Status */
   --color-success: #10B981;
   --color-success-bg: #ECFDF5;
@@ -33,10 +19,6 @@
   --color-info-bg: #EFF6FF;
   --color-error: #EF4444;
   --color-error-bg: #FEF2F2;
-
-  /* Borders */
-  --color-border-light: #E2E8F0;
-  --color-border-strong: #CBD5E1;
 
   /* Typography */
   --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
@@ -104,6 +86,77 @@
   --z-overlay: 400;
   --z-modal: 500;
   --z-toast: 600;
+}
+
+:root,
+[data-theme="light"] {
+  --bg-canvas: #f7f3eb;
+  --bg-card: #ffffff;
+  --bg-card-hover: #f2ece1;
+  --text-main: #18181b;
+  --text-sub: #52525b;
+  --border-color: #e4ded4;
+
+  --color-primary: #ea580c;
+  --color-primary-hover: #c2410c;
+  --color-primary-tint: #fff7ed;
+  --color-primary-active: #9a3412;
+
+  --color-slate-950: #18181b;
+  --color-slate-800: #27272a;
+  --color-slate-600: #52525b;
+  --color-slate-400: #71717a;
+  --color-slate-100: #ffffff;
+  --color-white: #ffffff;
+
+  --color-border-light: #e4ded4;
+  --color-border-strong: #d4d4d8;
+}
+
+[data-theme="dark"] {
+  --bg-canvas: #0f0f11;
+  --bg-card: #18181b;
+  --bg-card-hover: #27272a;
+  --text-main: #f4f4f5;
+  --text-sub: #a1a1aa;
+  --border-color: #27272a;
+
+  --color-primary: #f97316;
+  --color-primary-hover: #ea580c;
+  --color-primary-tint: #431407;
+  --color-primary-active: #c2410c;
+
+  --color-slate-950: #f4f4f5;
+  --color-slate-800: #e4e4e7;
+  --color-slate-600: #a1a1aa;
+  --color-slate-400: #71717a;
+  --color-slate-100: #18181b;
+  --color-white: #18181b;
+
+  --color-border-light: #27272a;
+  --color-border-strong: #3f3f46;
+}
+
+body {
+  background-color: var(--bg-canvas);
+  color: var(--text-main);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.ateion-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 16px;
+  border-radius: 9999px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  background: rgba(234, 88, 12, 0.12);
+  color: #ea580c;
+  border: 1px solid rgba(234, 88, 12, 0.3);
+  box-shadow: 0 2px 10px rgba(234, 88, 12, 0.1);
 }
 
 /* --------------------------------------------------------------------------
@@ -255,6 +308,7 @@ p {
 .line-clamp-2 {
   display: -webkit-box;
   -webkit-line-clamp: 2;
+  line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
@@ -262,6 +316,7 @@ p {
 .line-clamp-3 {
   display: -webkit-box;
   -webkit-line-clamp: 3;
+  line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
@@ -1237,6 +1292,62 @@ p {
   .auth-card { padding: var(--space-6); }
   h1 { font-size: var(--text-2xl); }
   .modal { max-width: 100%; }
+}
+
+/* --------------------------------------------------------------------------
+   26. NEOMORPHIC FUTURISTIC DESIGN SYSTEM UTILITIES
+   -------------------------------------------------------------------------- */
+.neomorph-card {
+  background: var(--bg-card);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-xl);
+  color: var(--text-main);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.neomorph-card:hover {
+  transform: translateY(-4px);
+  border-color: #ea580c;
+  box-shadow: 0 10px 30px rgba(234, 88, 12, 0.15);
+}
+
+.gradient-text {
+  background: linear-gradient(135deg, #FFFFFF 30%, #10B981 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.gradient-text-gold {
+  background: linear-gradient(135deg, #FFFFFF 30%, #F59E0B 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.gradient-text-cyan {
+  background: linear-gradient(135deg, #FFFFFF 30%, #38BDF8 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.neon-ring {
+  box-shadow: 0 0 15px rgba(16, 185, 129, 0.35), inset 0 0 15px rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.5);
+}
+
+.neon-ring-emerald {
+  box-shadow: 0 0 20px rgba(16, 185, 129, 0.4), inset 0 0 10px rgba(16, 185, 129, 0.15);
+  border: 1px solid rgba(16, 185, 129, 0.5);
+}
+
+.neon-ring-gold {
+  box-shadow: 0 0 20px rgba(245, 158, 11, 0.35), inset 0 0 10px rgba(245, 158, 11, 0.15);
+  border: 1px solid rgba(245, 158, 11, 0.5);
 }
 
 /* --------------------------------------------------------------------------

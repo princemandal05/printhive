@@ -16,113 +16,204 @@ type PrinterOwner = {
   materials: string[]
   maxVolume: string
   status: 'available' | 'busy'
+  lat: number
+  lng: number
 }
 
 const PRINTERS: PrinterOwner[] = [
   {
     id: 'p1',
-    name: 'Rohan’s PrintLab',
-    location: 'Andheri West, Mumbai',
-    distance: '1.2 km',
+    name: 'Connaught Precision Hub',
+    location: 'Connaught Place, New Delhi',
+    distance: '1.2 km away',
     rating: 4.9,
     completedOrders: 142,
     machines: ['Bambu Lab X1-Carbon', 'Ender 3 V2'],
     materials: ['PLA', 'PETG', 'ABS', 'TPU'],
     maxVolume: '256 x 256 x 256 mm',
     status: 'available',
+    lat: 28.6315,
+    lng: 77.2167,
   },
   {
     id: 'p2',
-    name: 'Bandra MakerSpace',
-    location: 'Bandra West, Mumbai',
-    distance: '3.4 km',
-    rating: 4.8,
+    name: 'Indiranagar 3D Studio',
+    location: 'Indiranagar, Bengaluru',
+    distance: '2.4 km away',
+    rating: 5.0,
     completedOrders: 98,
-    machines: ['Prusa MK4', 'Elegoo Saturn 3 (Resin)'],
+    machines: ['Prusa MK4 dual-color', 'Elegoo Saturn 3'],
     materials: ['PLA', 'Resin (8K Detail)', 'PETG'],
     maxVolume: '250 x 210 x 220 mm',
     status: 'available',
+    lat: 12.9784,
+    lng: 77.6408,
   },
   {
     id: 'p3',
-    name: 'Powai TechStudio',
-    location: 'Powai, Mumbai',
-    distance: '6.1 km',
-    rating: 4.7,
-    completedOrders: 65,
-    machines: ['Voron 2.4', 'Bambu P1S'],
-    materials: ['ABS', 'ASA', 'Nylon', 'PLA'],
+    name: 'Bandra Resin Lab',
+    location: 'Bandra West, Mumbai',
+    distance: '0.8 km away',
+    rating: 4.95,
+    completedOrders: 176,
+    machines: ['Formlabs Form 3+ Resin', 'Bambu P1S'],
+    materials: ['ABS', 'ASA', 'Tough Resin', 'PLA'],
     maxVolume: '300 x 300 x 300 mm',
     status: 'busy',
+    lat: 19.0596,
+    lng: 72.8295,
   },
 ]
 
 export default function PrinterDirectoryPage() {
   const [filterMaterial, setFilterMaterial] = useState('All')
+  const [selectedHub, setSelectedHub] = useState<PrinterOwner>(PRINTERS[0])
+
+  const filteredPrinters = filterMaterial === 'All'
+    ? PRINTERS
+    : PRINTERS.filter((p) => p.materials.includes(filterMaterial))
 
   return (
-    <main style={{ minHeight: '100vh', background: '#0b0f19', color: '#f8fafc' }}>
+    <main style={{ minHeight: '100vh', transition: 'background 0.3s ease' }}>
       <Navbar />
 
       <section className="container section-sm" style={{ maxWidth: 1200, margin: '0 auto', padding: '40px 20px' }}>
-        <div style={{ color: '#38bdf8', textTransform: 'uppercase', letterSpacing: 1.5, fontSize: 12, fontWeight: 700 }}>
-          Distributed Micro-Factories
+        <div className="ateion-pill" style={{ marginBottom: 12 }}>
+          📍 Leaflet GPS Matching
         </div>
-        <h1 style={{ fontSize: 36, fontWeight: 800, marginBottom: 8, background: 'linear-gradient(135deg, #fff 0%, #cbd5e1 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-          Nearby Printer Owners
+        <h1 style={{ fontSize: 36, fontWeight: 900, marginBottom: 8, color: 'var(--text-main)' }}>
+          Nearby Verified 3D Printer Hubs
         </h1>
-        <p style={{ color: '#94a3b8', fontSize: 16, marginBottom: 32, maxWidth: 680 }}>
-          Leaflet GPS matching pairs your order with verified 3D printer hubs near your pincode for fast, low-carbon local delivery.
+        <p style={{ color: 'var(--text-sub)', fontSize: 16, marginBottom: 32, maxWidth: 680 }}>
+          Leaflet GPS matching connects your 3D orders to verified local printer owners near your pincode for fast, low-carbon doorstep delivery.
         </p>
 
-        {/* Leaflet GPS Map Placeholder UI */}
+        {/* INTERACTIVE LEAFLET MAP MOCKUP WIDGET */}
         <div
           style={{
-            height: 300,
-            borderRadius: 16,
-            background: 'radial-gradient(circle at center, #1e293b 0%, #0f172a 100%)',
-            border: '1px solid rgba(255, 255, 255, 0.1)',
+            height: 340,
+            borderRadius: 24,
+            background: 'var(--bg-card)',
+            border: '1px solid var(--border-color)',
             marginBottom: 40,
             position: 'relative',
             overflow: 'hidden',
+            boxShadow: '0 10px 30px rgba(0,0,0,0.05)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            boxShadow: 'inset 0 0 50px rgba(0,0,0,0.5)',
           }}
         >
-          {/* Simulated Map Grid lines */}
-          <div style={{ position: 'absolute', inset: 0, backgroundImage: 'radial-gradient(#38bdf8 1px, transparent 1px)', backgroundSize: '24px 24px', opacity: 0.2 }} />
+          {/* Grid lines background texture */}
+          <div className="grid-pattern-bg" style={{ position: 'absolute', inset: 0, opacity: 0.6 }} />
 
-          {/* Map Location Pins */}
-          <div style={{ position: 'absolute', top: '30%', left: '25%', textAlign: 'center' }}>
-            <div style={{ fontSize: 24, filter: 'drop-shadow(0 4px 10px rgba(56,189,248,0.8))' }}>📍</div>
-            <div style={{ fontSize: 11, background: '#0f172a', padding: '2px 6px', borderRadius: 4, color: '#38bdf8', fontWeight: 700 }}>Rohan (1.2 km)</div>
-          </div>
-          <div style={{ position: 'absolute', top: '55%', left: '60%', textAlign: 'center' }}>
-            <div style={{ fontSize: 24, filter: 'drop-shadow(0 4px 10px rgba(255,107,53,0.8))' }}>📍</div>
-            <div style={{ fontSize: 11, background: '#0f172a', padding: '2px 6px', borderRadius: 4, color: '#ff6b35', fontWeight: 700 }}>Bandra (3.4 km)</div>
-          </div>
+          {/* Interactive Map Pin 1 */}
+          <button
+            type="button"
+            onClick={() => setSelectedHub(PRINTERS[0])}
+            style={{
+              position: 'absolute',
+              top: '32%',
+              left: '22%',
+              background: selectedHub.id === 'p1' ? '#ea580c' : 'var(--bg-card)',
+              color: selectedHub.id === 'p1' ? '#fff' : 'var(--text-main)',
+              padding: '8px 14px',
+              borderRadius: 99,
+              border: '2px solid #ea580c',
+              fontSize: 12,
+              fontWeight: 800,
+              cursor: 'pointer',
+              boxShadow: '0 6px 20px rgba(234,88,12,0.3)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+              transition: 'all 0.2s',
+            }}
+          >
+            <span>📍</span>
+            <span>Connaught Hub (1.2 km)</span>
+          </button>
 
-          <div style={{ position: 'relative', background: 'rgba(15, 23, 42, 0.85)', backdropFilter: 'blur(8px)', padding: '12px 24px', borderRadius: 12, border: '1px solid rgba(255,255,255,0.1)', textAlign: 'center' }}>
-            <span style={{ fontSize: 14, fontWeight: 700, color: '#fff' }}>🗺️ Interactive GPS Leaflet Map Active</span>
-            <div style={{ fontSize: 12, color: '#94a3b8', marginTop: 2 }}>Showing 3 active printer hubs near your current location</div>
+          {/* Interactive Map Pin 2 */}
+          <button
+            type="button"
+            onClick={() => setSelectedHub(PRINTERS[1])}
+            style={{
+              position: 'absolute',
+              top: '55%',
+              left: '52%',
+              background: selectedHub.id === 'p2' ? '#ea580c' : 'var(--bg-card)',
+              color: selectedHub.id === 'p2' ? '#fff' : 'var(--text-main)',
+              padding: '8px 14px',
+              borderRadius: 99,
+              border: '2px solid #ea580c',
+              fontSize: 12,
+              fontWeight: 800,
+              cursor: 'pointer',
+              boxShadow: '0 6px 20px rgba(234,88,12,0.3)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+              transition: 'all 0.2s',
+            }}
+          >
+            <span>📍</span>
+            <span>Indiranagar Studio (2.4 km)</span>
+          </button>
+
+          {/* Interactive Map Pin 3 */}
+          <button
+            type="button"
+            onClick={() => setSelectedHub(PRINTERS[2])}
+            style={{
+              position: 'absolute',
+              top: '25%',
+              left: '72%',
+              background: selectedHub.id === 'p3' ? '#ea580c' : 'var(--bg-card)',
+              color: selectedHub.id === 'p3' ? '#fff' : 'var(--text-main)',
+              padding: '8px 14px',
+              borderRadius: 99,
+              border: '2px solid #ea580c',
+              fontSize: 12,
+              fontWeight: 800,
+              cursor: 'pointer',
+              boxShadow: '0 6px 20px rgba(234,88,12,0.3)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+              transition: 'all 0.2s',
+            }}
+          >
+            <span>📍</span>
+            <span>Bandra Resin Lab (0.8 km)</span>
+          </button>
+
+          {/* Selected Hub Overlay Info Pill */}
+          <div style={{ position: 'absolute', bottom: 20, left: 20, right: 20, background: 'var(--bg-card)', backdropFilter: 'blur(16px)', padding: '14px 20px', borderRadius: 16, border: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div>
+              <div style={{ fontSize: 15, fontWeight: 800, color: 'var(--text-main)' }}>{selectedHub.name} ({selectedHub.location})</div>
+              <div style={{ fontSize: 13, color: 'var(--text-sub)' }}>Machines: {selectedHub.machines.join(', ')} • Rating: {selectedHub.rating} ★</div>
+            </div>
+            <Link href="/print-on-demand" className="btn btn-primary" style={{ background: '#ea580c', color: '#fff', padding: '8px 18px', borderRadius: 99, fontWeight: 700, fontSize: 13, textDecoration: 'none' }}>
+              Assign Job →
+            </Link>
           </div>
         </div>
 
-        {/* Filter Bar */}
+        {/* Material Filter Tabs */}
         <div style={{ display: 'flex', gap: 10, marginBottom: 28, flexWrap: 'wrap' }}>
-          {['All', 'PLA', 'PETG', 'ABS', 'Resin (8K Detail)'].map((mat) => (
+          {['All', 'PLA', 'PETG', 'ABS', 'Resin'].map((mat) => (
             <button
               key={mat}
+              type="button"
               onClick={() => setFilterMaterial(mat)}
               style={{
-                padding: '8px 16px',
-                borderRadius: 8,
-                border: 'none',
-                background: filterMaterial === mat ? '#ff6b35' : '#1e293b',
-                color: '#fff',
-                fontWeight: 600,
+                padding: '8px 18px',
+                borderRadius: 99,
+                border: '1px solid var(--border-color)',
+                background: filterMaterial === mat ? '#ea580c' : 'var(--bg-card)',
+                color: filterMaterial === mat ? '#fff' : 'var(--text-main)',
+                fontWeight: 700,
                 fontSize: 13,
                 cursor: 'pointer',
               }}
@@ -132,82 +223,49 @@ export default function PrinterDirectoryPage() {
           ))}
         </div>
 
-        {/* Printer Owners Cards */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))', gap: 24 }}>
-          {PRINTERS.filter((p) => filterMaterial === 'All' || p.materials.includes(filterMaterial)).map((p) => (
+        {/* Directory Grid */}
+        <div className="grid grid-cols-3 gap-6">
+          {filteredPrinters.map((p) => (
             <div
               key={p.id}
               style={{
-                background: 'rgba(30, 41, 59, 0.7)',
-                backdropFilter: 'blur(12px)',
-                border: '1px solid rgba(255, 255, 255, 0.1)',
-                borderRadius: 16,
+                background: 'var(--bg-card)',
+                border: '1px solid var(--border-color)',
+                borderRadius: 20,
                 padding: 24,
+                boxShadow: '0 4px 20px rgba(0,0,0,0.03)',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between',
               }}
             >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: '#ea580c' }}>📍 {p.distance}</span>
+                  <span style={{ background: p.status === 'available' ? 'rgba(16,185,129,0.12)' : 'rgba(245,158,11,0.12)', color: p.status === 'available' ? '#10B981' : '#F59E0B', padding: '3px 10px', borderRadius: 99, fontSize: 11, fontWeight: 700 }}>
+                    {p.status === 'available' ? 'Available' : 'Busy'}
+                  </span>
+                </div>
+                <h3 style={{ fontSize: 18, fontWeight: 800, color: 'var(--text-main)', marginBottom: 4 }}>{p.name}</h3>
+                <div style={{ fontSize: 13, color: 'var(--text-sub)', marginBottom: 16 }}>{p.location}</div>
+
+                <div style={{ fontSize: 13, color: 'var(--text-sub)', marginBottom: 8 }}>
+                  <strong>Machines:</strong> {p.machines.join(', ')}
+                </div>
+                <div style={{ fontSize: 13, color: 'var(--text-sub)', marginBottom: 16 }}>
+                  <strong>Build Volume:</strong> {p.maxVolume}
+                </div>
+              </div>
+
+              <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
-                  <h3 style={{ fontSize: 18, fontWeight: 700, color: '#fff', marginBottom: 4 }}>{p.name}</h3>
-                  <div style={{ fontSize: 13, color: '#94a3b8' }}>📍 {p.location} ({p.distance})</div>
+                  <span style={{ fontWeight: 800, color: 'var(--text-main)', fontSize: 14 }}>{p.rating} ★</span>
+                  <span style={{ fontSize: 12, color: 'var(--text-sub)', marginLeft: 4 }}>({p.completedOrders} jobs)</span>
                 </div>
-                <span
-                  style={{
-                    padding: '4px 10px',
-                    borderRadius: 99,
-                    fontSize: 11,
-                    fontWeight: 700,
-                    background: p.status === 'available' ? 'rgba(16, 185, 129, 0.15)' : 'rgba(245, 158, 11, 0.15)',
-                    color: p.status === 'available' ? '#10b981' : '#f59e0b',
-                  }}
-                >
-                  ● {p.status.toUpperCase()}
-                </span>
+                <Link href="/print-on-demand" style={{ color: '#ea580c', fontWeight: 700, fontSize: 13, textDecoration: 'none' }}>
+                  Select Hub →
+                </Link>
               </div>
-
-              <div style={{ display: 'flex', gap: 12, marginBottom: 16, fontSize: 13, color: '#cbd5e1' }}>
-                <span>★ <strong style={{ color: '#fbbf24' }}>{p.rating}</strong></span>
-                <span>·</span>
-                <span><strong>{p.completedOrders}</strong> orders fulfilled</span>
-              </div>
-
-              <div style={{ marginBottom: 16 }}>
-                <div style={{ fontSize: 12, fontWeight: 600, color: '#64748b', marginBottom: 6 }}>MACHINES:</div>
-                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                  {p.machines.map((m) => (
-                    <span key={m} style={{ background: '#0f172a', color: '#38bdf8', padding: '4px 10px', borderRadius: 6, fontSize: 12 }}>
-                      🖨️ {m}
-                    </span>
-                  ))}
-                </div>
-              </div>
-
-              <div style={{ marginBottom: 20 }}>
-                <div style={{ fontSize: 12, fontWeight: 600, color: '#64748b', marginBottom: 6 }}>SUPPORTED MATERIALS:</div>
-                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                  {p.materials.map((m) => (
-                    <span key={m} style={{ background: '#0f172a', color: '#cbd5e1', padding: '4px 10px', borderRadius: 6, fontSize: 12 }}>
-                      {m}
-                    </span>
-                  ))}
-                </div>
-              </div>
-
-              <Link
-                href="/print-on-demand"
-                style={{
-                  display: 'block',
-                  textAlign: 'center',
-                  padding: '12px 0',
-                  background: 'linear-gradient(135deg, #ff6b35 0%, #f97316 100%)',
-                  color: '#fff',
-                  borderRadius: 10,
-                  fontSize: 14,
-                  fontWeight: 700,
-                  textDecoration: 'none',
-                }}
-              >
-                Send Order to this Hub →
-              </Link>
             </div>
           ))}
         </div>

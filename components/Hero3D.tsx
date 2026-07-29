@@ -16,57 +16,59 @@ export default function Hero3D() {
 
     const scene = new THREE.Scene()
     const camera = new THREE.PerspectiveCamera(45, aspect, 0.1, 100)
-    camera.position.set(0, 0.6, 5)
+    camera.position.set(0, 0.4, 4.8)
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true })
     renderer.setSize(width, height)
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
     container.appendChild(renderer.domElement)
 
-    const ambient = new THREE.AmbientLight(0xffffff, 0.9)
+    const ambient = new THREE.AmbientLight(0xffffff, 1.0)
     scene.add(ambient)
 
-    const keyLight = new THREE.PointLight(0xff6b35, 3.0, 20)
+    // Key Light: Brand Terracotta Amber
+    const keyLight = new THREE.PointLight(0xea580c, 3.2, 20)
     keyLight.position.set(3, 3, 4)
     scene.add(keyLight)
 
-    const rimLight = new THREE.PointLight(0xffffff, 1.8, 20)
+    // Rim Light: Emerald Cyber Glow
+    const rimLight = new THREE.PointLight(0x10b981, 2.4, 20)
     rimLight.position.set(-4, -2, -2)
     scene.add(rimLight)
 
     const group = new THREE.Group()
 
-    // Core solid geometry (PrintHive Orange)
-    const coreGeo = new THREE.IcosahedronGeometry(1.1, 1)
+    // Core solid geometry (PrintHive Brand Amber / Terracotta)
+    const coreGeo = new THREE.IcosahedronGeometry(1.05, 1)
     const coreMat = new THREE.MeshStandardMaterial({
-      color: 0xff6b35,
-      roughness: 0.25,
+      color: 0xea580c,
+      roughness: 0.2,
       metalness: 0.3,
       flatShading: true,
     })
     const core = new THREE.Mesh(coreGeo, coreMat)
     group.add(core)
 
-    // Sleek Silver Wireframe Outer Shell
-    const wireGeo = new THREE.IcosahedronGeometry(1.38, 1)
+    // Sleek Emerald Wireframe Outer Shell
+    const wireGeo = new THREE.IcosahedronGeometry(1.32, 1)
     const wireMat = new THREE.MeshBasicMaterial({
-      color: 0x94a3b8,
+      color: 0x10b981,
       wireframe: true,
       transparent: true,
-      opacity: 0.25,
+      opacity: 0.4,
     })
     const wire = new THREE.Mesh(wireGeo, wireMat)
     group.add(wire)
 
-    // Orbiting monochrome nodes (Clean Silver)
-    const nodeColors = [0xffffff, 0xcbd5e1, 0x94a3b8]
+    // Orbiting nodes contained strictly inside the frame (radius 1.6)
+    const nodeColors = [0xea580c, 0x10b981, 0x38bdf8]
     const nodes: THREE.Mesh[] = []
     nodeColors.forEach((color, i) => {
-      const geo = new THREE.SphereGeometry(0.12, 16, 16)
-      const mat = new THREE.MeshStandardMaterial({ color, roughness: 0.3, metalness: 0.5 })
+      const geo = new THREE.SphereGeometry(0.1, 16, 16)
+      const mat = new THREE.MeshStandardMaterial({ color, roughness: 0.2, metalness: 0.4 })
       const node = new THREE.Mesh(geo, mat)
       const angle = (i / nodeColors.length) * Math.PI * 2
-      node.position.set(Math.cos(angle) * 2.2, Math.sin(angle * 1.3) * 0.6, Math.sin(angle) * 2.2)
+      node.position.set(Math.cos(angle) * 1.6, Math.sin(angle * 1.2) * 0.4, Math.sin(angle) * 1.6)
       nodes.push(node)
       group.add(node)
     })
@@ -74,18 +76,18 @@ export default function Hero3D() {
     scene.add(group)
 
     let frameId: number
-    const clock = new THREE.Clock()
+    const startTime = performance.now()
 
     const animate = () => {
-      const t = clock.getElapsedTime()
+      const t = (performance.now() - startTime) / 1000
       group.rotation.y = t * 0.35
       core.rotation.x = t * 0.18
       wire.rotation.y = -t * 0.2
       nodes.forEach((node, i) => {
         const angle = (i / nodes.length) * Math.PI * 2 + t * 0.5
-        node.position.x = Math.cos(angle) * 2.2
-        node.position.z = Math.sin(angle) * 2.2
-        node.position.y = Math.sin(t + i) * 0.4
+        node.position.x = Math.cos(angle) * 1.6
+        node.position.z = Math.sin(angle) * 1.6
+        node.position.y = Math.sin(t + i) * 0.35
       })
       group.position.y = Math.sin(t * 0.8) * 0.08
 
@@ -120,12 +122,14 @@ export default function Hero3D() {
       className="hero-3d-canvas"
       style={{
         width: '100%',
-        height: 420,
-        minHeight: 420,
+        height: 400,
+        minHeight: 400,
         position: 'relative',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
+        overflow: 'hidden',
+        borderRadius: 20,
       }}
     />
   )
