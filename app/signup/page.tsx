@@ -33,7 +33,7 @@ export default function SignupPage() {
   const supabase = createClient()
 
   const [step, setStep] = useState<'role' | 'details' | 'security'>('role')
-  const [role, setRole] = useState('')
+  const [role, setRole] = useState('buyer')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
@@ -68,10 +68,8 @@ export default function SignupPage() {
     setError('')
     setLoading(true)
 
-    // Clear guest cookies
     document.cookie = 'printhive_guest_role=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT'
 
-    // Save security question & answer in raw_user_meta_data and profiles table
     const { data, error: err } = await supabase.auth.signUp({
       email,
       password,
@@ -107,7 +105,6 @@ export default function SignupPage() {
       }
     }
 
-    // Save security question & answer in localStorage for fallback
     localStorage.setItem(`sec_q_${email.toLowerCase().trim()}`, securityQuestion)
     localStorage.setItem(`sec_a_${email.toLowerCase().trim()}`, securityAnswer.trim().toLowerCase())
 
@@ -116,7 +113,6 @@ export default function SignupPage() {
     if (data.session) {
       window.location.href = DASHBOARD_PATH[role] ?? '/'
     } else {
-      // Immediate sign-in with password for seamless authentication
       const { data: signInData } = await supabase.auth.signInWithPassword({ email, password })
       if (signInData?.session) {
         window.location.href = DASHBOARD_PATH[role] ?? '/'
@@ -134,24 +130,23 @@ export default function SignupPage() {
   }
 
   const s: Record<string, React.CSSProperties> = {
-    page: { minHeight: '100vh', background: 'var(--bg-canvas, #0F172A)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '24px 16px' },
-    card: { background: 'var(--bg-card, #1E293B)', borderRadius: 20, padding: '40px 36px', width: '100%', maxWidth: 480, border: '1px solid var(--border-color, #334155)', boxShadow: '0 12px 40px rgba(0,0,0,0.2)' },
-    logo: { fontSize: 24, fontWeight: 900, color: 'var(--text-main, #fff)', marginBottom: 24, textAlign: 'center' as const },
-    logoAccent: { color: '#ea580c' },
-    title: { fontSize: 22, fontWeight: 800, color: 'var(--text-main, #fff)', marginBottom: 6, textAlign: 'center' as const },
-    sub: { fontSize: 14, color: 'var(--text-sub, #94A3B8)', textAlign: 'center' as const, marginBottom: 28 },
-    label: { fontSize: 13, fontWeight: 600, color: 'var(--text-main, #94A3B8)', marginBottom: 6, display: 'block' },
-    input: { width: '100%', background: 'var(--bg-card-hover, #0F172A)', border: '1px solid var(--border-color, #334155)', borderRadius: 10, padding: '12px 14px', fontSize: 15, color: 'var(--text-main, #fff)', outline: 'none', marginBottom: 16, boxSizing: 'border-box' as const },
-    select: { width: '100%', background: 'var(--bg-card-hover, #0F172A)', border: '1px solid var(--border-color, #334155)', borderRadius: 10, padding: '12px 14px', fontSize: 14, color: 'var(--text-main, #fff)', outline: 'none', marginBottom: 16, boxSizing: 'border-box' as const },
-    passwordWrap: { position: 'relative' as const, marginBottom: 16 },
-    toggleBtn: { position: 'absolute' as const, right: 12, top: 14, background: 'none', border: 'none', color: '#ea580c', fontSize: 12, cursor: 'pointer', fontWeight: 700 },
-    hintError: { fontSize: 12, color: '#F87171', marginTop: -12, marginBottom: 16 },
-    btn: { width: '100%', background: '#ea580c', color: '#fff', border: 'none', borderRadius: 12, padding: '13px 0', fontSize: 15, fontWeight: 800, cursor: 'pointer', marginTop: 4 },
-    btnDisabled: { opacity: 0.5, cursor: 'not-allowed' },
-    error: { background: 'rgba(239,68,68,0.15)', color: '#F87171', borderRadius: 10, padding: '12px 14px', fontSize: 13, marginBottom: 16, border: '1px solid rgba(239,68,68,0.3)' },
-    info: { background: 'rgba(16,185,129,0.12)', color: '#10B981', borderRadius: 10, padding: '14px', fontSize: 13, marginBottom: 16, border: '1px solid rgba(16,185,129,0.3)', lineHeight: 1.6 },
-    back: { background: 'none', border: 'none', color: 'var(--text-sub, #94A3B8)', fontSize: 13, cursor: 'pointer', marginTop: 14, display: 'block', textAlign: 'center' as const, width: '100%', fontWeight: 600 },
-    loginLink: { textAlign: 'center' as const, marginTop: 20, fontSize: 13, color: 'var(--text-sub, #94A3B8)' },
+    page: { minHeight: '100vh', background: '#FAF8F5', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '32px 16px', fontFamily: 'inherit' },
+    card: { background: '#FFFFFF', borderRadius: 24, padding: '44px 40px', width: '100%', maxWidth: 480, border: '1px solid #E2E8F0', boxShadow: '0 20px 60px rgba(0, 0, 0, 0.06)' },
+    logo: { fontSize: 26, fontWeight: 900, color: '#0F172A', marginBottom: 24, textAlign: 'center' as const, letterSpacing: '-0.5px' },
+    logoAccent: { color: '#FF6B35' },
+    title: { fontSize: 22, fontWeight: 800, color: '#0F172A', marginBottom: 6, textAlign: 'center' as const },
+    sub: { fontSize: 14, color: '#64748B', textAlign: 'center' as const, marginBottom: 28 },
+    label: { fontSize: 13, fontWeight: 700, color: '#334155', marginBottom: 6, display: 'block' },
+    input: { width: '100%', background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 12, padding: '13px 16px', fontSize: 15, color: '#0F172A', outline: 'none', marginBottom: 18, boxSizing: 'border-box' as const, transition: 'all 0.2s' },
+    select: { width: '100%', background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 12, padding: '13px 16px', fontSize: 14, color: '#0F172A', outline: 'none', marginBottom: 18, boxSizing: 'border-box' as const },
+    passwordWrap: { position: 'relative' as const, marginBottom: 18 },
+    toggleBtn: { position: 'absolute' as const, right: 14, top: 15, background: 'none', border: 'none', color: '#FF6B35', fontSize: 12, cursor: 'pointer', fontWeight: 800 },
+    hintError: { fontSize: 12, color: '#EF4444', marginTop: -14, marginBottom: 16, fontWeight: 600 },
+    btn: { width: '100%', background: 'linear-gradient(135deg, #FF6B35 0%, #F97316 100%)', color: '#FFFFFF', border: 'none', borderRadius: 12, padding: '14px 0', fontSize: 15, fontWeight: 800, cursor: 'pointer', marginTop: 4, boxShadow: '0 8px 24px rgba(255, 107, 53, 0.35)', transition: 'all 0.2s' },
+    btnDisabled: { opacity: 0.5, cursor: 'not-allowed', boxShadow: 'none' },
+    error: { background: '#FEF2F2', color: '#991B1B', borderRadius: 12, padding: '12px 16px', fontSize: 13, marginBottom: 18, border: '1px solid #FCA5A5', fontWeight: 600 },
+    back: { background: 'none', border: 'none', color: '#64748B', fontSize: 13, cursor: 'pointer', marginTop: 16, display: 'block', textAlign: 'center' as const, width: '100%', fontWeight: 700 },
+    loginLink: { textAlign: 'center' as const, marginTop: 22, fontSize: 13, color: '#64748B' },
   }
 
   return (
@@ -163,35 +158,39 @@ export default function SignupPage() {
           <>
             <div style={s.title}>Join PrintHive</div>
             <div style={s.sub}>Choose how you want to use the platform</div>
-            {ROLES.map((r) => (
-              <div
-                key={r.id}
-                onClick={() => setRole(r.id)}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 16,
-                  padding: '16px 18px',
-                  borderRadius: 14,
-                  border: `2px solid ${role === r.id ? '#ea580c' : 'var(--border-color, #334155)'}`,
-                  background: role === r.id ? 'rgba(234, 88, 12, 0.08)' : 'var(--bg-card-hover, #0F172A)',
-                  marginBottom: 12,
-                  cursor: 'pointer',
-                  transition: 'all 0.2s',
-                }}
-              >
-                <div style={{ fontSize: 24 }}>{r.icon}</div>
-                <div>
-                  <div style={{ fontWeight: 800, fontSize: 15, color: 'var(--text-main, #fff)' }}>{r.label}</div>
-                  <div style={{ fontSize: 12, color: 'var(--text-sub, #94A3B8)' }}>{r.desc}</div>
+            {ROLES.map((r) => {
+              const isSelected = role === r.id
+              return (
+                <div
+                  key={r.id}
+                  onClick={() => setRole(r.id)}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 16,
+                    padding: '16px 18px',
+                    borderRadius: 14,
+                    border: `2px solid ${isSelected ? '#FF6B35' : '#E2E8F0'}`,
+                    background: isSelected ? 'rgba(255, 107, 53, 0.05)' : '#F8FAFC',
+                    marginBottom: 12,
+                    cursor: 'pointer',
+                    transition: 'all 0.2s',
+                    boxShadow: isSelected ? '0 4px 14px rgba(255, 107, 53, 0.12)' : 'none',
+                  }}
+                >
+                  <div style={{ fontSize: 26 }}>{r.icon}</div>
+                  <div>
+                    <div style={{ fontWeight: 800, fontSize: 15, color: '#0F172A' }}>{r.label}</div>
+                    <div style={{ fontSize: 12, color: '#64748B', lineHeight: 1.4 }}>{r.desc}</div>
+                  </div>
                 </div>
-              </div>
-            ))}
+              )
+            })}
             <button style={{ ...s.btn, ...(role ? {} : s.btnDisabled) }} disabled={!role} onClick={() => setStep('details')}>
-              Continue
+              Continue →
             </button>
             <div style={s.loginLink}>
-              Already have an account? <Link href="/login" style={{ color: '#ea580c', fontWeight: 700 }}>Log in</Link>
+              Already have an account? <Link href="/login" style={{ color: '#FF6B35', fontWeight: 800, textDecoration: 'none' }}>Log in</Link>
             </div>
           </>
         )}
@@ -251,7 +250,7 @@ export default function SignupPage() {
               onChange={(e) => setSecurityQuestion(e.target.value)}
             >
               {SECURITY_QUESTIONS.map((q) => (
-                <option key={q} value={q} style={{ background: '#0F172A', color: '#fff' }}>
+                <option key={q} value={q} style={{ background: '#FFF', color: '#0F172A' }}>
                   {q}
                 </option>
               ))}
