@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import OpenStreetMap, { MapLocation } from '@/components/OpenStreetMap'
 
 const MATERIALS = ['PLA', 'PETG', 'ABS', 'TPU (Flexible)', 'Resin']
 
@@ -11,21 +12,34 @@ export default function RegisterPrinterForm() {
   const [buildVolume, setBuildVolume] = useState('')
   const [materials, setMaterials] = useState<string[]>(['PLA'])
   const [address, setAddress] = useState('')
+  const [lat, setLat] = useState(28.6315)
+  const [lng, setLng] = useState(77.2167)
   const [submitting, setSubmitting] = useState(false)
 
   const toggleMaterial = (m: string) => {
     setMaterials((prev) => (prev.includes(m) ? prev.filter((x) => x !== m) : [...prev, m]))
   }
 
+  const handleLocationPicked = (pickedLat: number, pickedLng: number) => {
+    setLat(Number(pickedLat.toFixed(5)))
+    setLng(Number(pickedLng.toFixed(5)))
+  }
+
   const handleSubmit = async () => {
-    // Replace with:
-    // 1. Geocode `address` to lat/lng (or capture GPS directly)
-    // 2. Insert a row into the `printers` table via Supabase
-    // 3. Plot the new marker on the Leaflet.js / OpenStreetMap layer
     setSubmitting(true)
     await new Promise((res) => setTimeout(res, 900))
     router.push('/dashboard/printer-owner')
   }
+
+  const pickerLocations: MapLocation[] = [
+    {
+      id: 'pin-1',
+      name: model || 'New Printer Hub Pin',
+      location: address || 'Selected Coordinates',
+      lat,
+      lng,
+    },
+  ]
 
   const s: Record<string, React.CSSProperties> = {
     page: { minHeight: '100vh', background: '#F1F5F9' },
@@ -45,7 +59,7 @@ export default function RegisterPrinterForm() {
       <div style={s.body}>
         <h1 className="section-heading" style={{ marginBottom: 'var(--space-2)' }}>Register your printer</h1>
         <p className="text-sm text-muted" style={{ marginBottom: 'var(--space-8)' }}>
-          List your machine so nearby buyers can send you print jobs.
+          List your machine on OpenStreetMap so nearby buyers can send you print jobs.
         </p>
 
         <div className="card" style={{ marginBottom: 'var(--space-6)' }}>
@@ -53,12 +67,12 @@ export default function RegisterPrinterForm() {
 
           <div className="form-group">
             <label className="label label-required">Printer model</label>
-            <input className="input" placeholder="e.g. Creality Ender 3 V3" value={model} onChange={(e) => setModel(e.target.value)} />
+            <input className="input" placeholder="e.g. Bambu Lab X1-Carbon" value={model} onChange={(e) => setModel(e.target.value)} />
           </div>
 
           <div className="form-group">
             <label className="label">Build volume (mm)</label>
-            <input className="input" placeholder="e.g. 220 x 220 x 250" value={buildVolume} onChange={(e) => setBuildVolume(e.target.value)} />
+            <input className="input" placeholder="e.g. 256 x 256 x 256" value={buildVolume} onChange={(e) => setBuildVolume(e.target.value)} />
           </div>
 
           <div className="form-group">
@@ -80,7 +94,7 @@ export default function RegisterPrinterForm() {
         </div>
 
         <div className="card" style={{ marginBottom: 'var(--space-6)' }}>
-          <div className="card-header"><div className="card-title">Location</div></div>
+          <div className="card-header"><div className="card-title">Location & OpenStreetMap GPS Pin</div></div>
           <div className="form-group">
             <label className="label label-required">Address</label>
             <textarea
@@ -89,20 +103,23 @@ export default function RegisterPrinterForm() {
               value={address}
               onChange={(e) => setAddress(e.target.value)}
             />
-            <span className="help-text">Shown as an approximate pin on the buyer&apos;s map — exact address stays private</span>
+            <span className="help-text">Click on the OpenStreetMap below to set your hub pin coordinates:</span>
           </div>
-          {/* Replace this block with an embedded Leaflet.js map for pin placement */}
-          <div
-            className="flex items-center justify-center"
-            style={{
-              height: 200,
-              borderRadius: 'var(--radius-md)',
-              background: 'linear-gradient(135deg, var(--color-slate-100), var(--color-border-light))',
-              color: 'var(--color-slate-400)',
-              fontSize: 'var(--text-sm)',
-            }}
-          >
-            Map preview appears here once address is geocoded
+
+          {/* Interactive OpenStreetMap Location Picker */}
+          <div style={{ borderRadius: 16, overflow: 'hidden', border: '1px solid var(--border-color)', marginBottom: 12 }}>
+            <OpenStreetMap
+              locations={pickerLocations}
+              isPicker={true}
+              onLocationPicked={handleLocationPicked}
+              center={[lat, lng]}
+              zoom={13}
+              height="240px"
+            />
+          </div>
+
+          <div style={{ fontSize: 12, color: 'var(--text-sub)', background: 'var(--bg-card-hover)', padding: '8px 12px', borderRadius: 8 }}>
+            📍 GPS Pin Coordinates: <strong>{lat}, {lng}</strong>
           </div>
         </div>
 
@@ -111,7 +128,7 @@ export default function RegisterPrinterForm() {
           disabled={submitting || !model || !address}
           onClick={handleSubmit}
         >
-          {submitting ? 'Registering…' : 'Register printer'}
+          {submitting ? 'Registering…' : 'Register printer on OpenStreetMap'}
         </button>
       </div>
     </div>

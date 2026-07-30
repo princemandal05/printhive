@@ -4,20 +4,12 @@ import { useState } from 'react'
 import Link from 'next/link'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
+import OpenStreetMap, { MapLocation } from '@/components/OpenStreetMap'
 
-type PrinterOwner = {
-  id: string
-  name: string
-  location: string
-  distance: string
-  rating: number
+type PrinterOwner = MapLocation & {
   completedOrders: number
-  machines: string[]
-  materials: string[]
   maxVolume: string
   status: 'available' | 'busy'
-  lat: number
-  lng: number
 }
 
 const PRINTERS: PrinterOwner[] = [
@@ -71,7 +63,7 @@ export default function PrinterDirectoryPage() {
 
   const filteredPrinters = filterMaterial === 'All'
     ? PRINTERS
-    : PRINTERS.filter((p) => p.materials.includes(filterMaterial))
+    : PRINTERS.filter((p) => p.materials?.includes(filterMaterial))
 
   return (
     <main style={{ minHeight: '100vh', transition: 'background 0.3s ease' }}>
@@ -79,7 +71,7 @@ export default function PrinterDirectoryPage() {
 
       <section className="container section-sm" style={{ maxWidth: 1200, margin: '0 auto', padding: '40px 20px' }}>
         <div className="ateion-pill" style={{ marginBottom: 12 }}>
-          📍 Leaflet GPS Matching
+          📍 OpenStreetMap & Leaflet GPS Matching
         </div>
         <h1 style={{ fontSize: 36, fontWeight: 900, marginBottom: 8, color: 'var(--text-main)' }}>
           Nearby Verified 3D Printer Hubs
@@ -88,134 +80,34 @@ export default function PrinterDirectoryPage() {
           Leaflet GPS matching connects your 3D orders to verified local printer owners near your pincode for fast, low-carbon doorstep delivery.
         </p>
 
-        {/* INTERACTIVE LEAFLET MAP MOCKUP WIDGET */}
-        <div
-          style={{
-            height: 340,
-            borderRadius: 24,
-            background: 'var(--bg-card)',
-            border: '1px solid var(--border-color)',
-            marginBottom: 40,
-            position: 'relative',
-            overflow: 'hidden',
-            boxShadow: '0 10px 30px rgba(0,0,0,0.05)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          {/* Grid lines background texture */}
-          <div className="grid-pattern-bg" style={{ position: 'absolute', inset: 0, opacity: 0.6 }} />
-
-          {/* Interactive Map Pin 1 */}
-          <button
-            type="button"
-            onClick={() => setSelectedHub(PRINTERS[0])}
-            style={{
-              position: 'absolute',
-              top: '32%',
-              left: '22%',
-              background: selectedHub.id === 'p1' ? '#ea580c' : 'var(--bg-card)',
-              color: selectedHub.id === 'p1' ? '#fff' : 'var(--text-main)',
-              padding: '8px 14px',
-              borderRadius: 99,
-              border: '2px solid #ea580c',
-              fontSize: 12,
-              fontWeight: 800,
-              cursor: 'pointer',
-              boxShadow: '0 6px 20px rgba(234,88,12,0.3)',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 6,
-              transition: 'all 0.2s',
-            }}
-          >
-            <span>📍</span>
-            <span>Connaught Hub (1.2 km)</span>
-          </button>
-
-          {/* Interactive Map Pin 2 */}
-          <button
-            type="button"
-            onClick={() => setSelectedHub(PRINTERS[1])}
-            style={{
-              position: 'absolute',
-              top: '55%',
-              left: '52%',
-              background: selectedHub.id === 'p2' ? '#ea580c' : 'var(--bg-card)',
-              color: selectedHub.id === 'p2' ? '#fff' : 'var(--text-main)',
-              padding: '8px 14px',
-              borderRadius: 99,
-              border: '2px solid #ea580c',
-              fontSize: 12,
-              fontWeight: 800,
-              cursor: 'pointer',
-              boxShadow: '0 6px 20px rgba(234,88,12,0.3)',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 6,
-              transition: 'all 0.2s',
-            }}
-          >
-            <span>📍</span>
-            <span>Indiranagar Studio (2.4 km)</span>
-          </button>
-
-          {/* Interactive Map Pin 3 */}
-          <button
-            type="button"
-            onClick={() => setSelectedHub(PRINTERS[2])}
-            style={{
-              position: 'absolute',
-              top: '25%',
-              left: '72%',
-              background: selectedHub.id === 'p3' ? '#ea580c' : 'var(--bg-card)',
-              color: selectedHub.id === 'p3' ? '#fff' : 'var(--text-main)',
-              padding: '8px 14px',
-              borderRadius: 99,
-              border: '2px solid #ea580c',
-              fontSize: 12,
-              fontWeight: 800,
-              cursor: 'pointer',
-              boxShadow: '0 6px 20px rgba(234,88,12,0.3)',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 6,
-              transition: 'all 0.2s',
-            }}
-          >
-            <span>📍</span>
-            <span>Bandra Resin Lab (0.8 km)</span>
-          </button>
-
-          {/* Selected Hub Overlay Info Pill */}
-          <div style={{ position: 'absolute', bottom: 20, left: 20, right: 20, background: 'var(--bg-card)', backdropFilter: 'blur(16px)', padding: '14px 20px', borderRadius: 16, border: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div>
-              <div style={{ fontSize: 15, fontWeight: 800, color: 'var(--text-main)' }}>{selectedHub.name} ({selectedHub.location})</div>
-              <div style={{ fontSize: 13, color: 'var(--text-sub)' }}>Machines: {selectedHub.machines.join(', ')} • Rating: {selectedHub.rating} ★</div>
-            </div>
-            <Link href="/print-on-demand" className="btn btn-primary" style={{ background: '#ea580c', color: '#fff', padding: '8px 18px', borderRadius: 99, fontWeight: 700, fontSize: 13, textDecoration: 'none' }}>
-              Assign Job →
-            </Link>
-          </div>
+        {/* REAL LEAFLET OPENSTREETMAP WIDGET */}
+        <div style={{ marginBottom: 40, border: '1px solid var(--border-color)', borderRadius: 24, overflow: 'hidden', boxShadow: '0 10px 30px rgba(0,0,0,0.05)' }}>
+          <OpenStreetMap
+            locations={filteredPrinters}
+            selectedId={selectedHub.id}
+            onSelectLocation={(loc) => setSelectedHub(loc as PrinterOwner)}
+            height="380px"
+          />
         </div>
 
-        {/* Material Filter Tabs */}
-        <div style={{ display: 'flex', gap: 10, marginBottom: 28, flexWrap: 'wrap' }}>
-          {['All', 'PLA', 'PETG', 'ABS', 'Resin'].map((mat) => (
+        {/* Material Filter Pill Bar */}
+        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 32, alignItems: 'center' }}>
+          <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-sub)' }}>Filter Material:</span>
+          {['All', 'PLA', 'PETG', 'ABS', 'Resin (8K Detail)', 'TPU'].map((mat) => (
             <button
               key={mat}
               type="button"
               onClick={() => setFilterMaterial(mat)}
               style={{
-                padding: '8px 18px',
+                padding: '6px 14px',
                 borderRadius: 99,
-                border: '1px solid var(--border-color)',
+                border: filterMaterial === mat ? '1px solid #ea580c' : '1px solid var(--border-color)',
                 background: filterMaterial === mat ? '#ea580c' : 'var(--bg-card)',
                 color: filterMaterial === mat ? '#fff' : 'var(--text-main)',
-                fontWeight: 700,
                 fontSize: 13,
+                fontWeight: 700,
                 cursor: 'pointer',
+                transition: 'all 0.2s',
               }}
             >
               {mat}
@@ -223,51 +115,90 @@ export default function PrinterDirectoryPage() {
           ))}
         </div>
 
-        {/* Directory Grid */}
-        <div className="grid grid-cols-3 gap-6">
-          {filteredPrinters.map((p) => (
-            <div
-              key={p.id}
-              style={{
-                background: 'var(--bg-card)',
-                border: '1px solid var(--border-color)',
-                borderRadius: 20,
-                padding: 24,
-                boxShadow: '0 4px 20px rgba(0,0,0,0.03)',
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'space-between',
-              }}
-            >
-              <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
-                  <span style={{ fontSize: 13, fontWeight: 700, color: '#ea580c' }}>📍 {p.distance}</span>
-                  <span style={{ background: p.status === 'available' ? 'rgba(16,185,129,0.12)' : 'rgba(245,158,11,0.12)', color: p.status === 'available' ? '#10B981' : '#F59E0B', padding: '3px 10px', borderRadius: 99, fontSize: 11, fontWeight: 700 }}>
-                    {p.status === 'available' ? 'Available' : 'Busy'}
-                  </span>
-                </div>
-                <h3 style={{ fontSize: 18, fontWeight: 800, color: 'var(--text-main)', marginBottom: 4 }}>{p.name}</h3>
-                <div style={{ fontSize: 13, color: 'var(--text-sub)', marginBottom: 16 }}>{p.location}</div>
+        {/* Selected Hub Card & Directory Grid */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: 32, alignItems: 'start' }}>
+          {/* Selected Active Hub Panel */}
+          <div style={{ background: 'var(--bg-card)', padding: 28, borderRadius: 24, border: '2px solid #ea580c', boxShadow: '0 10px 30px rgba(234,88,12,0.1)' }}>
+            <div style={{ fontSize: 12, textTransform: 'uppercase', color: '#ea580c', fontWeight: 800, letterSpacing: 1, marginBottom: 8 }}>
+              Selected Hub Pin:
+            </div>
+            <h2 style={{ fontSize: 22, fontWeight: 900, color: 'var(--text-main)', marginBottom: 4 }}>
+              {selectedHub.name}
+            </h2>
+            <div style={{ fontSize: 13, color: 'var(--text-sub)', marginBottom: 16 }}>
+              📍 {selectedHub.location} ({selectedHub.distance})
+            </div>
 
-                <div style={{ fontSize: 13, color: 'var(--text-sub)', marginBottom: 8 }}>
-                  <strong>Machines:</strong> {p.machines.join(', ')}
-                </div>
-                <div style={{ fontSize: 13, color: 'var(--text-sub)', marginBottom: 16 }}>
-                  <strong>Build Volume:</strong> {p.maxVolume}
-                </div>
+            <div style={{ display: 'flex', gap: 12, marginBottom: 20 }}>
+              <div style={{ background: 'rgba(16,185,129,0.1)', color: '#10B981', padding: '6px 12px', borderRadius: 10, fontSize: 13, fontWeight: 800 }}>
+                ★ {selectedHub.rating} Rating
               </div>
-
-              <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div>
-                  <span style={{ fontWeight: 800, color: 'var(--text-main)', fontSize: 14 }}>{p.rating} ★</span>
-                  <span style={{ fontSize: 12, color: 'var(--text-sub)', marginLeft: 4 }}>({p.completedOrders} jobs)</span>
-                </div>
-                <Link href="/print-on-demand" style={{ color: '#ea580c', fontWeight: 700, fontSize: 13, textDecoration: 'none' }}>
-                  Select Hub →
-                </Link>
+              <div style={{ background: 'var(--bg-card-hover)', color: 'var(--text-main)', padding: '6px 12px', borderRadius: 10, fontSize: 13, fontWeight: 700 }}>
+                📦 {selectedHub.completedOrders} Orders
               </div>
             </div>
-          ))}
+
+            <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-main)', marginBottom: 8 }}>
+              Available Machines:
+            </div>
+            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 20 }}>
+              {selectedHub.machines?.map((m) => (
+                <span key={m} style={{ background: 'var(--bg-card-hover)', border: '1px solid var(--border-color)', padding: '4px 10px', borderRadius: 8, fontSize: 12, color: 'var(--text-main)' }}>
+                  {m}
+                </span>
+              ))}
+            </div>
+
+            <Link
+              href="/print-on-demand"
+              style={{ display: 'block', textAlign: 'center', background: '#ea580c', color: '#fff', padding: '14px', borderRadius: 99, fontWeight: 800, textDecoration: 'none', boxShadow: '0 4px 16px rgba(234,88,12,0.35)' }}
+            >
+              Order 3D Print From This Hub →
+            </Link>
+          </div>
+
+          {/* Directory List */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            {filteredPrinters.map((printer) => {
+              const isSelected = printer.id === selectedHub.id
+              return (
+                <div
+                  key={printer.id}
+                  onClick={() => setSelectedHub(printer)}
+                  style={{
+                    background: 'var(--bg-card)',
+                    padding: 24,
+                    borderRadius: 20,
+                    border: isSelected ? '2px solid #ea580c' : '1px solid var(--border-color)',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    transition: 'all 0.2s',
+                  }}
+                >
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
+                      <h3 style={{ fontSize: 18, fontWeight: 800, color: 'var(--text-main)', margin: 0 }}>{printer.name}</h3>
+                      <span style={{ background: printer.status === 'available' ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.15)', color: printer.status === 'available' ? '#10B981' : '#EF4444', padding: '2px 8px', borderRadius: 99, fontSize: 11, fontWeight: 800 }}>
+                        {printer.status === 'available' ? 'Online • Ready' : 'Busy'}
+                      </span>
+                    </div>
+                    <div style={{ fontSize: 13, color: 'var(--text-sub)' }}>
+                      📍 {printer.location} • <strong style={{ color: '#ea580c' }}>{printer.distance}</strong>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    style={{ background: isSelected ? '#ea580c' : 'var(--bg-card-hover)', color: isSelected ? '#fff' : 'var(--text-main)', border: '1px solid var(--border-color)', padding: '10px 18px', borderRadius: 99, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}
+                  >
+                    {isSelected ? 'Selected' : 'View on Map'}
+                  </button>
+                </div>
+              )
+            })}
+          </div>
         </div>
       </section>
 
