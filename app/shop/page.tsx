@@ -1,6 +1,7 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useMemo, useState, Suspense } from 'react'
+import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
@@ -112,6 +113,27 @@ const STATS = [
   },
 ]
 
+function ShopReviewBanner() {
+  const searchParams = useSearchParams()
+  const isReviewed = searchParams?.get('reviewed') === 'true'
+
+  if (!isReviewed) return null
+
+  return (
+    <div style={{ background: 'rgba(16,185,129,0.12)', border: '1px solid #10B981', padding: '18px 24px', borderRadius: 20, marginBottom: 28, display: 'flex', alignItems: 'center', gap: 16 }}>
+      <div style={{ fontSize: 32 }}>🎉</div>
+      <div>
+        <div style={{ fontSize: 16, fontWeight: 900, color: '#10B981', marginBottom: 2 }}>
+          Thank You For Your Review!
+        </div>
+        <div style={{ fontSize: 13, color: 'var(--text-sub)' }}>
+          Your rating and feedback have been published. Explore more trending 3D models and products below!
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function ShopPage() {
   const { addToCart, addToWishlist, isInWishlist } = useStore()
   const [search, setSearch] = useState('')
@@ -155,6 +177,9 @@ export default function ShopPage() {
       <Navbar />
 
       <section className="container section-sm">
+        <Suspense fallback={null}>
+          <ShopReviewBanner />
+        </Suspense>
 
         <div className="section-eyebrow">
           PrintHive Marketplace

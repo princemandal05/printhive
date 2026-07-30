@@ -20,8 +20,8 @@ export default function LeaveReviewPage() {
     e.preventDefault()
     setSubmitting(true)
     await new Promise((res) => setTimeout(res, 800))
-    // Redirect to Amazon/Flipkart style order details with reviewed success toast
-    router.push(`/orders/${orderId}?reviewed=true`)
+    // Redirect to Shop Page for further actions with review success banner
+    router.push('/shop?reviewed=true')
   }
 
   return (
