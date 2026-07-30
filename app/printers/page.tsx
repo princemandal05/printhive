@@ -134,12 +134,43 @@ const INDIAN_PRINTER_HUBS: PrinterOwner[] = [
     lat: 23.0225,
     lng: 72.5714,
   },
+  {
+    id: 'p9',
+    name: 'Cyber City Rapid Lab',
+    location: 'Cyber City, Gurugram',
+    city: 'Delhi NCR',
+    distance: '4.2 km away',
+    rating: 4.94,
+    completedOrders: 210,
+    machines: ['Bambu Lab X1-Carbon', 'Formlabs Form 3B'],
+    materials: ['PLA', 'ABS', 'Resin (Medical Grade)'],
+    maxVolume: '256 x 256 x 256 mm',
+    status: 'available',
+    lat: 28.495,
+    lng: 77.089,
+  },
+  {
+    id: 'p10',
+    name: 'Koramangala Prototyping Hub',
+    location: 'Koramangala, Bengaluru',
+    city: 'Bengaluru',
+    distance: '3.8 km away',
+    rating: 4.89,
+    completedOrders: 130,
+    machines: ['Prusa XL Multi-Tool', 'Bambu P1P'],
+    materials: ['PLA', 'PETG', 'Flex TPU'],
+    maxVolume: '360 x 360 x 360 mm',
+    status: 'available',
+    lat: 12.9352,
+    lng: 77.6245,
+  },
 ]
 
 export default function PrinterDirectoryPage() {
   const [filterCity, setFilterCity] = useState('All')
   const [filterMaterial, setFilterMaterial] = useState('All')
   const [selectedHub, setSelectedHub] = useState<PrinterOwner>(INDIAN_PRINTER_HUBS[0])
+  const [visibleCount, setVisibleCount] = useState(6)
 
   const filteredPrinters = INDIAN_PRINTER_HUBS.filter((p) => {
     const matchesCity = filterCity === 'All' || p.city === filterCity
@@ -147,28 +178,30 @@ export default function PrinterDirectoryPage() {
     return matchesCity && matchesMaterial
   })
 
+  const displayedPrinters = filteredPrinters.slice(0, visibleCount)
+
   return (
     <main style={{ minHeight: '100vh', transition: 'background 0.3s ease' }}>
       <Navbar />
 
       <section className="container section-sm" style={{ maxWidth: 1200, margin: '0 auto', padding: '40px 20px' }}>
         <div className="ateion-pill" style={{ marginBottom: 12 }}>
-          🇮🇳 India OpenStreetMap & Leaflet GPS Matching
+          🇮🇳 India OpenStreetMap Only
         </div>
         <h1 style={{ fontSize: 36, fontWeight: 900, marginBottom: 8, color: 'var(--text-main)' }}>
           Verified 3D Printer Hubs Across India
         </h1>
         <p style={{ color: 'var(--text-sub)', fontSize: 16, marginBottom: 32, maxWidth: 720 }}>
-          OpenStreetMap GPS matching connects your 3D orders to verified local printer owners in New Delhi, Mumbai, Bengaluru, Hyderabad, Chennai, Kolkata, Pune & Ahmedabad for fast, low-carbon doorstep delivery.
+          OpenStreetMap GPS matching strictly centered over India. As more printer hubs join PrintHive across Indian cities, the directory dynamically extends down the page with live sticky navigation.
         </p>
 
-        {/* REAL LEAFLET OPENSTREETMAP INDIA MAP WIDGET */}
+        {/* INDIA OPENSTREETMAP MAP WIDGET */}
         <div style={{ marginBottom: 36, border: '1px solid var(--border-color)', borderRadius: 24, overflow: 'hidden', boxShadow: '0 10px 30px rgba(0,0,0,0.05)' }}>
           <OpenStreetMap
             locations={filteredPrinters}
             selectedId={selectedHub.id}
             onSelectLocation={(loc) => setSelectedHub(loc as PrinterOwner)}
-            center={[20.5937, 78.9629]} // Centered on India Map
+            center={[20.5937, 78.9629]} // Strictly India Center
             zoom={5}
             height="440px"
           />
@@ -183,7 +216,7 @@ export default function PrinterDirectoryPage() {
               <button
                 key={city}
                 type="button"
-                onClick={() => setFilterCity(city)}
+                onClick={() => { setFilterCity(city); setVisibleCount(6) }}
                 style={{
                   padding: '6px 14px',
                   borderRadius: 99,
@@ -208,7 +241,7 @@ export default function PrinterDirectoryPage() {
               <button
                 key={mat}
                 type="button"
-                onClick={() => setFilterMaterial(mat)}
+                onClick={() => { setFilterMaterial(mat); setVisibleCount(6) }}
                 style={{
                   padding: '5px 12px',
                   borderRadius: 8,
@@ -227,9 +260,9 @@ export default function PrinterDirectoryPage() {
           </div>
         </div>
 
-        {/* Selected Hub Card & Directory Grid */}
+        {/* Selected Hub Card (Sticky Left Column) & Directory Grid (Longer Growing Right Column) */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: 32, alignItems: 'start' }}>
-          {/* Selected Active Hub Panel */}
+          {/* STICKY ACTIVE PANEL (Remains fixed at top as list grows down page) */}
           <div style={{ background: 'var(--bg-card)', padding: 28, borderRadius: 24, border: '2px solid #ea580c', boxShadow: '0 10px 30px rgba(234,88,12,0.1)', position: 'sticky', top: 90 }}>
             <div style={{ fontSize: 12, textTransform: 'uppercase', color: '#ea580c', fontWeight: 800, letterSpacing: 1, marginBottom: 8 }}>
               Active Map Selection:
@@ -269,9 +302,18 @@ export default function PrinterDirectoryPage() {
             </Link>
           </div>
 
-          {/* Directory List */}
+          {/* Directory List (Grows Longer as Printers Increase) */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            {filteredPrinters.map((printer) => {
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+              <span style={{ fontSize: 14, fontWeight: 800, color: 'var(--text-main)' }}>
+                Showing {displayedPrinters.length} of {filteredPrinters.length} Verified Printer Hubs
+              </span>
+              <span style={{ fontSize: 12, color: 'var(--text-sub)' }}>
+                Sorted by Proximity & Rating
+              </span>
+            </div>
+
+            {displayedPrinters.map((printer) => {
               const isSelected = printer.id === selectedHub.id
               return (
                 <div
@@ -287,6 +329,7 @@ export default function PrinterDirectoryPage() {
                     justifyContent: 'space-between',
                     alignItems: 'center',
                     transition: 'all 0.2s',
+                    boxShadow: isSelected ? '0 6px 20px rgba(234,88,12,0.12)' : 'none',
                   }}
                 >
                   <div>
@@ -310,6 +353,29 @@ export default function PrinterDirectoryPage() {
                 </div>
               )
             })}
+
+            {/* Load More Button when Printer Hubs grow */}
+            {visibleCount < filteredPrinters.length && (
+              <button
+                type="button"
+                onClick={() => setVisibleCount((prev) => prev + 4)}
+                style={{
+                  width: '100%',
+                  background: 'var(--bg-card)',
+                  color: '#ea580c',
+                  border: '2px dashed #ea580c',
+                  borderRadius: 16,
+                  padding: '16px',
+                  fontSize: 14,
+                  fontWeight: 800,
+                  cursor: 'pointer',
+                  marginTop: 12,
+                  transition: 'all 0.2s',
+                }}
+              >
+                Load More Verified Printer Hubs in India ↓
+              </button>
+            )}
           </div>
         </div>
       </section>

@@ -29,11 +29,11 @@ export default function OpenStreetMap({
   locations,
   selectedId,
   onSelectLocation,
-  center = [20.5937, 78.9629], // Default India Center
+  center = [20.5937, 78.9629], // Default Center of India
   zoom = 5,
   isPicker = false,
   onLocationPicked,
-  height = '360px',
+  height = '420px',
 }: OpenStreetMapProps) {
   const mapRef = useRef<HTMLDivElement>(null)
   const mapInstanceRef = useRef<any>(null)
@@ -66,20 +66,32 @@ export default function OpenStreetMap({
     document.head.appendChild(script)
   }, [])
 
-  // 2. Initialize Leaflet Map once loaded
+  // 2. Initialize Leaflet Map restricted strictly to India
   useEffect(() => {
     if (!loaded || !mapRef.current || mapInstanceRef.current) return
     const L = (window as any).L
     if (!L) return
 
-    // Initialize map
-    const map = L.map(mapRef.current).setView(center, zoom)
+    // Define Strict India Geographic Bounds
+    const indiaBounds = L.latLngBounds(
+      L.latLng(6.5, 68.0),   // South-West India
+      L.latLng(35.5, 97.5)   // North-East India
+    )
+
+    // Initialize map bounded strictly to India
+    const map = L.map(mapRef.current, {
+      maxBounds: indiaBounds,
+      maxBoundsViscosity: 1.0, // Prevents panning outside India
+      minZoom: 4,
+      maxZoom: 18,
+    }).setView(center, zoom)
+
     mapInstanceRef.current = map
 
     // Add OpenStreetMap Tile Layer
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19,
-      attribution: '© <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors | PrintHive GPS',
+      attribution: '© <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors | PrintHive India GPS',
     }).addTo(map)
 
     // Handle map click for picker mode
@@ -112,29 +124,27 @@ export default function OpenStreetMap({
 
     if (locations.length === 0) return
 
-    const bounds = L.latLngBounds([])
-
-    // Custom Icon Generator
+    // Custom India Marker Icon Generator
     const createCustomIcon = (isSelected: boolean) =>
       L.divIcon({
         className: 'custom-leaflet-marker',
         html: `<div style="
-          background: ${isSelected ? '#FF6B35' : '#1E293B'};
+          background: ${isSelected ? '#FF6B35' : '#0F172A'};
           color: #fff;
           border: 2px solid #fff;
           border-radius: 50%;
-          width: 32px;
-          height: 32px;
+          width: 34px;
+          height: 34px;
           display: flex;
           align-items: center;
           justify-content: center;
           font-size: 16px;
-          box-shadow: 0 4px 12px rgba(0,0,0,0.4);
-          transform: scale(${isSelected ? 1.2 : 1});
+          box-shadow: 0 4px 14px rgba(0,0,0,0.4);
+          transform: scale(${isSelected ? 1.25 : 1});
           transition: transform 0.2s;
         ">🖨️</div>`,
-        iconSize: [32, 32],
-        iconAnchor: [16, 16],
+        iconSize: [34, 34],
+        iconAnchor: [17, 17],
       })
 
     locations.forEach((loc) => {
@@ -159,14 +169,13 @@ export default function OpenStreetMap({
       })
 
       markersRef.current.push(marker)
-      bounds.extend([loc.lat, loc.lng])
     })
 
-    // Fit map to bounds if multiple locations exist
-    if (locations.length > 1 && !isPicker) {
-      map.fitBounds(bounds, { padding: [40, 40] })
-    } else if (locations.length === 1) {
-      map.setView([locations[0].lat, locations[0].lng], 13)
+    if (selectedId) {
+      const activeLoc = locations.find((l) => l.id === selectedId)
+      if (activeLoc) {
+        map.setView([activeLoc.lat, activeLoc.lng], 11, { animate: true })
+      }
     }
   }, [loaded, locations, selectedId])
 
@@ -174,7 +183,7 @@ export default function OpenStreetMap({
     <div style={{ position: 'relative', width: '100%', height, borderRadius: 20, overflow: 'hidden' }}>
       {!loaded && (
         <div style={{ position: 'absolute', inset: 0, background: 'var(--bg-card)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-sub)', fontSize: 14, fontWeight: 700 }}>
-          🗺️ Loading OpenStreetMap & Leaflet Engine...
+          🇮🇳 Loading India OpenStreetMap Engine...
         </div>
       )}
       <div ref={mapRef} style={{ width: '100%', height: '100%' }} />
