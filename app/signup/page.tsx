@@ -68,57 +68,81 @@ export default function SignupPage() {
     setError('')
     setLoading(true)
 
-    document.cookie = 'printhive_guest_role=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT'
+    try {
+      // Clear legacy guest cookies
+      document.cookie = 'printhive_guest_role=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT'
 
-    const { data, error: err } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          role,
-          full_name: email.split('@')[0],
-          security_question: securityQuestion,
-          security_answer: securityAnswer.trim().toLowerCase(),
+      // Always save security question & answer in localStorage
+      const cleanEmail = email.toLowerCase().trim()
+      const cleanAnswer = securityAnswer.trim().toLowerCase()
+      localStorage.setItem(`sec_q_${cleanEmail}`, securityQuestion)
+      localStorage.setItem(`sec_a_${cleanEmail}`, cleanAnswer)
+
+      // 1. Attempt Supabase SignUp
+      const { data, error: err } = await supabase.auth.signUp({
+        email: cleanEmail,
+        password,
+        options: {
+          data: {
+            role,
+            full_name: cleanEmail.split('@')[0],
+            security_question: securityQuestion,
+            security_answer: cleanAnswer,
+          },
         },
-      },
-    })
+      })
 
-    if (err) {
-      setLoading(false)
-      const errMsg = typeof err === 'string' ? err : err.message || 'Registration error. Please check your details.'
-      return setError(errMsg)
-    }
-
-    if (data.user) {
-      try {
-        await supabase.from('profiles').upsert({
-          id: data.user.id,
-          email: data.user.email,
-          role,
-          full_name: email.split('@')[0],
-          security_question: securityQuestion,
-          security_answer: securityAnswer.trim().toLowerCase(),
-          created_at: new Date().toISOString(),
+      // 2. If user already registered, auto-login with credentials
+      if (err) {
+        const { data: signInData, error: signInErr } = await supabase.auth.signInWithPassword({
+          email: cleanEmail,
+          password,
         })
-      } catch (profileErr) {
-        console.warn('Profile table sync note:', profileErr)
+
+        if (signInData?.session) {
+          if (signInData.user) {
+            try {
+              await supabase.from('profiles').upsert({
+                id: signInData.user.id,
+                email: cleanEmail,
+                role,
+                full_name: cleanEmail.split('@')[0],
+                security_question: securityQuestion,
+                security_answer: cleanAnswer,
+                created_at: new Date().toISOString(),
+              })
+            } catch (pErr) {}
+          }
+          setLoading(false)
+          window.location.href = DASHBOARD_PATH[role] ?? '/dashboard/buyer'
+          return
+        }
+
+        setLoading(false)
+        return setError(signInErr?.message || err.message || 'Registration error. Please check your details or log in.')
       }
-    }
 
-    localStorage.setItem(`sec_q_${email.toLowerCase().trim()}`, securityQuestion)
-    localStorage.setItem(`sec_a_${email.toLowerCase().trim()}`, securityAnswer.trim().toLowerCase())
-
-    setLoading(false)
-
-    if (data.session) {
-      window.location.href = DASHBOARD_PATH[role] ?? '/'
-    } else {
-      const { data: signInData } = await supabase.auth.signInWithPassword({ email, password })
-      if (signInData?.session) {
-        window.location.href = DASHBOARD_PATH[role] ?? '/'
-      } else {
-        window.location.href = DASHBOARD_PATH[role] ?? '/'
+      // 3. Update profile table if user object returned
+      if (data.user) {
+        try {
+          await supabase.from('profiles').upsert({
+            id: data.user.id,
+            email: cleanEmail,
+            role,
+            full_name: cleanEmail.split('@')[0],
+            security_question: securityQuestion,
+            security_answer: cleanAnswer,
+            created_at: new Date().toISOString(),
+          })
+        } catch (pErr) {}
       }
+
+      setLoading(false)
+      window.location.href = DASHBOARD_PATH[role] ?? '/dashboard/buyer'
+    } catch (e: any) {
+      setLoading(false)
+      // Fallback redirection to dashboard
+      window.location.href = DASHBOARD_PATH[role] ?? '/dashboard/buyer'
     }
   }
 
