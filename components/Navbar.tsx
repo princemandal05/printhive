@@ -104,6 +104,7 @@ export default function Navbar() {
           <div style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'var(--bg-card-hover)', padding: '4px 6px', borderRadius: 99, border: '1px solid var(--border-color)' }}>
             <button
               type="button"
+              suppressHydrationWarning
               onClick={() => router.back()}
               style={navArrowBtnStyle}
               title="Go Back (Google Navigation)"
@@ -113,6 +114,7 @@ export default function Navbar() {
             </button>
             <button
               type="button"
+              suppressHydrationWarning
               onClick={() => router.forward()}
               style={navArrowBtnStyle}
               title="Go Forward (Google Navigation)"
@@ -158,6 +160,7 @@ export default function Navbar() {
           {/* Theme Switcher Button */}
           <button
             type="button"
+            suppressHydrationWarning
             onClick={toggleTheme}
             style={{ background: 'var(--bg-card-hover)', border: '1px solid var(--border-color)', borderRadius: 99, width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: 16, transition: 'all 0.2s' }}
             title={`Switch to ${theme === 'light' ? 'Dark' : 'Light'} Mode`}
