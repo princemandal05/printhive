@@ -11,7 +11,7 @@ export default function CheckoutPage() {
   const router = useRouter()
   const { cart, cartSubtotal, clearCart } = useStore()
 
-  // Payment Selection State (Amazon Style Accordion Dropdown)
+  // Payment Selection State (Amazon Style Automatic Dropdown)
   const [paymentCategory, setPaymentCategory] = useState<'upi' | 'card' | 'netbanking' | 'cod'>('upi')
   const [upiOption, setUpiOption] = useState<'gpay' | 'phonepe' | 'paytm' | 'vpa'>('gpay')
   const [vpaId, setVpaId] = useState('')
@@ -89,7 +89,7 @@ export default function CheckoutPage() {
 
       <section className="container section-sm" style={{ maxWidth: 1200, margin: '0 auto', padding: '40px 20px' }}>
         <div className="ateion-pill" style={{ marginBottom: 12 }}>
-          🛒 Amazon-Style Dropdown Checkout
+          🛒 Amazon-Style Automatic Dropdown Checkout
         </div>
 
         <h1 style={{ fontSize: 34, fontWeight: 900, marginBottom: 8, color: 'var(--text-main)' }}>
@@ -97,7 +97,7 @@ export default function CheckoutPage() {
         </h1>
 
         <p style={{ color: 'var(--text-sub)', marginBottom: 36, fontSize: 15 }}>
-          All transactions are protected by Razorpay Escrow. Click any payment dropdown option below to expand details.
+          All transactions are protected by Razorpay Escrow. Selecting any payment method automatically opens its dropdown drawer.
         </p>
 
         <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 32, alignItems: 'start' }}>
@@ -120,19 +120,16 @@ export default function CheckoutPage() {
               </div>
             </div>
 
-            {/* 2. Amazon-Style Expanding Accordion Dropdown */}
+            {/* 2. Amazon-Style Automatic Dropdown Accordion */}
             <div style={{ background: 'var(--bg-card)', borderRadius: 20, border: '1px solid var(--border-color)', overflow: 'hidden', boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
-              <div style={{ padding: '20px 28px', borderBottom: '1px solid var(--border-color)', background: 'var(--bg-card-hover)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ padding: '20px 28px', borderBottom: '1px solid var(--border-color)', background: 'var(--bg-card-hover)' }}>
                 <h2 style={{ fontSize: 18, fontWeight: 800, color: 'var(--text-main)', margin: 0 }}>
-                  2. Choose Payment Method (Interactive Dropdown)
+                  2. Choose Payment Method
                 </h2>
-                <span style={{ fontSize: 12, background: 'rgba(234, 88, 12, 0.12)', color: '#ea580c', padding: '4px 10px', borderRadius: 99, fontWeight: 700 }}>
-                  Click to Expand
-                </span>
               </div>
 
-              {/* DROPDOWN OPTION 1: UPI */}
-              <div style={{ borderBottom: '1px solid var(--border-color)', transition: 'all 0.3s ease' }}>
+              {/* AUTOMATIC DROPDOWN OPTION 1: UPI */}
+              <div style={{ borderBottom: '1px solid var(--border-color)' }}>
                 <div
                   onClick={() => setPaymentCategory('upi')}
                   style={{
@@ -154,27 +151,17 @@ export default function CheckoutPage() {
                       style={{ accentColor: '#ea580c', width: 18, height: 18, cursor: 'pointer' }}
                     />
                     <div>
-                      <div style={{ fontSize: 15, fontWeight: 800, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <span>📱 UPI (Google Pay / PhonePe / Paytm / Any UPI ID)</span>
-                        {paymentCategory === 'upi' && (
-                          <span style={{ background: '#ea580c', color: '#fff', fontSize: 10, fontWeight: 800, padding: '2px 8px', borderRadius: 99 }}>
-                            SELECTED
-                          </span>
-                        )}
+                      <div style={{ fontSize: 15, fontWeight: 800, color: 'var(--text-main)' }}>
+                        📱 UPI (Google Pay / PhonePe / Paytm / Any UPI ID)
                       </div>
                       <div style={{ fontSize: 12, color: 'var(--text-sub)', marginTop: 2 }}>
                         Pay instantly from your bank account using any UPI App
                       </div>
                     </div>
                   </div>
-
-                  {/* Dropdown Indicator */}
-                  <div style={{ color: '#ea580c', fontSize: 13, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <span>{paymentCategory === 'upi' ? 'Collapse ▲' : 'Expand Dropdown ▼'}</span>
-                  </div>
                 </div>
 
-                {/* Animated Dropdown Drawer */}
+                {/* Automatically Dropdown Drawer when Selected */}
                 {paymentCategory === 'upi' && (
                   <div style={{ padding: '0 28px 24px 60px', background: 'rgba(234,88,12,0.03)', borderTop: '1px dashed rgba(234,88,12,0.2)' }}>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 14 }}>
@@ -220,8 +207,8 @@ export default function CheckoutPage() {
                 )}
               </div>
 
-              {/* DROPDOWN OPTION 2: CREDIT OR DEBIT CARD */}
-              <div style={{ borderBottom: '1px solid var(--border-color)', transition: 'all 0.3s ease' }}>
+              {/* AUTOMATIC DROPDOWN OPTION 2: CREDIT OR DEBIT CARD */}
+              <div style={{ borderBottom: '1px solid var(--border-color)' }}>
                 <div
                   onClick={() => setPaymentCategory('card')}
                   style={{
@@ -243,27 +230,17 @@ export default function CheckoutPage() {
                       style={{ accentColor: '#ea580c', width: 18, height: 18, cursor: 'pointer' }}
                     />
                     <div>
-                      <div style={{ fontSize: 15, fontWeight: 800, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <span>💳 Credit or Debit Card</span>
-                        {paymentCategory === 'card' && (
-                          <span style={{ background: '#ea580c', color: '#fff', fontSize: 10, fontWeight: 800, padding: '2px 8px', borderRadius: 99 }}>
-                            SELECTED
-                          </span>
-                        )}
+                      <div style={{ fontSize: 15, fontWeight: 800, color: 'var(--text-main)' }}>
+                        💳 Credit or Debit Card
                       </div>
                       <div style={{ fontSize: 12, color: 'var(--text-sub)', marginTop: 2 }}>
                         Visa, Mastercard, RuPay, Maestro & Diners Club
                       </div>
                     </div>
                   </div>
-
-                  {/* Dropdown Indicator */}
-                  <div style={{ color: '#ea580c', fontSize: 13, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <span>{paymentCategory === 'card' ? 'Collapse ▲' : 'Expand Dropdown ▼'}</span>
-                  </div>
                 </div>
 
-                {/* Animated Dropdown Drawer */}
+                {/* Automatically Dropdown Drawer when Selected */}
                 {paymentCategory === 'card' && (
                   <div style={{ padding: '0 28px 24px 60px', background: 'rgba(234,88,12,0.03)', borderTop: '1px dashed rgba(234,88,12,0.2)' }}>
                     <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr', gap: 14, maxWidth: 460, marginTop: 14 }}>
@@ -315,8 +292,8 @@ export default function CheckoutPage() {
                 )}
               </div>
 
-              {/* DROPDOWN OPTION 3: NET BANKING */}
-              <div style={{ borderBottom: '1px solid var(--border-color)', transition: 'all 0.3s ease' }}>
+              {/* AUTOMATIC DROPDOWN OPTION 3: NET BANKING */}
+              <div style={{ borderBottom: '1px solid var(--border-color)' }}>
                 <div
                   onClick={() => setPaymentCategory('netbanking')}
                   style={{
@@ -338,27 +315,17 @@ export default function CheckoutPage() {
                       style={{ accentColor: '#ea580c', width: 18, height: 18, cursor: 'pointer' }}
                     />
                     <div>
-                      <div style={{ fontSize: 15, fontWeight: 800, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <span>🏦 Net Banking</span>
-                        {paymentCategory === 'netbanking' && (
-                          <span style={{ background: '#ea580c', color: '#fff', fontSize: 10, fontWeight: 800, padding: '2px 8px', borderRadius: 99 }}>
-                            SELECTED
-                          </span>
-                        )}
+                      <div style={{ fontSize: 15, fontWeight: 800, color: 'var(--text-main)' }}>
+                        🏦 Net Banking
                       </div>
                       <div style={{ fontSize: 12, color: 'var(--text-sub)', marginTop: 2 }}>
                         All major Indian retail & corporate banks
                       </div>
                     </div>
                   </div>
-
-                  {/* Dropdown Indicator */}
-                  <div style={{ color: '#ea580c', fontSize: 13, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <span>{paymentCategory === 'netbanking' ? 'Collapse ▲' : 'Expand Dropdown ▼'}</span>
-                  </div>
                 </div>
 
-                {/* Animated Dropdown Drawer */}
+                {/* Automatically Dropdown Drawer when Selected */}
                 {paymentCategory === 'netbanking' && (
                   <div style={{ padding: '0 28px 24px 60px', background: 'rgba(234,88,12,0.03)', borderTop: '1px dashed rgba(234,88,12,0.2)' }}>
                     <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-sub)', marginBottom: 6, display: 'block', marginTop: 14 }}>Choose your bank:</label>
@@ -378,8 +345,8 @@ export default function CheckoutPage() {
                 )}
               </div>
 
-              {/* DROPDOWN OPTION 4: PAY ON DELIVERY (COD) */}
-              <div style={{ transition: 'all 0.3s ease' }}>
+              {/* AUTOMATIC DROPDOWN OPTION 4: PAY ON DELIVERY (COD) */}
+              <div>
                 <div
                   onClick={() => setPaymentCategory('cod')}
                   style={{
@@ -401,27 +368,17 @@ export default function CheckoutPage() {
                       style={{ accentColor: '#ea580c', width: 18, height: 18, cursor: 'pointer' }}
                     />
                     <div>
-                      <div style={{ fontSize: 15, fontWeight: 800, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <span>🚚 Pay on Delivery (Cash / UPI at Doorstep)</span>
-                        {paymentCategory === 'cod' && (
-                          <span style={{ background: '#ea580c', color: '#fff', fontSize: 10, fontWeight: 800, padding: '2px 8px', borderRadius: 99 }}>
-                            SELECTED
-                          </span>
-                        )}
+                      <div style={{ fontSize: 15, fontWeight: 800, color: 'var(--text-main)' }}>
+                        🚚 Pay on Delivery (Cash / UPI at Doorstep)
                       </div>
                       <div style={{ fontSize: 12, color: 'var(--text-sub)', marginTop: 2 }}>
                         Pay cash or scan QR upon inspecting physical 3D print quality
                       </div>
                     </div>
                   </div>
-
-                  {/* Dropdown Indicator */}
-                  <div style={{ color: '#ea580c', fontSize: 13, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <span>{paymentCategory === 'cod' ? 'Collapse ▲' : 'Expand Dropdown ▼'}</span>
-                  </div>
                 </div>
 
-                {/* Animated Dropdown Drawer */}
+                {/* Automatically Dropdown Drawer when Selected */}
                 {paymentCategory === 'cod' && (
                   <div style={{ padding: '0 28px 24px 60px', background: 'rgba(234,88,12,0.03)', borderTop: '1px dashed rgba(234,88,12,0.2)' }}>
                     <div style={{ background: 'var(--bg-card)', padding: 16, borderRadius: 14, border: '1px solid var(--border-color)', maxWidth: 400, marginTop: 14 }}>
