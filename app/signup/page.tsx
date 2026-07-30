@@ -2,21 +2,22 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { createClient } from '@/utils/supabase/client'
 
 const ROLES = [
-  { id: 'buyer', label: 'Buyer', desc: 'Browse designs and order custom 3D prints delivered home.', color: '#10B981', bg: '#ECFDF5' },
-  { id: 'seller', label: 'Seller', desc: 'Open a store and sell ready-made 3D printed products.', color: '#8B5CF6', bg: '#F5F3FF' },
-  { id: 'designer', label: 'Designer', desc: 'Upload 3D model files and earn royalties on every print.', color: '#FF6B35', bg: '#FFF1EB' },
-  { id: 'printer_owner', label: 'Printer Owner', desc: 'List your idle printer and earn 70% on every completed order.', color: '#3B82F6', bg: '#EFF6FF' },
+  { id: 'buyer', label: 'Buyer', desc: 'Browse STL marketplace & order custom 3D prints', icon: '🛍️' },
+  { id: 'seller', label: '3D Printer Seller', desc: 'Sell physical 3D printed items & products', icon: '🏬' },
+  { id: 'designer', label: 'STL Designer', desc: 'Sell digital 3D models & earn royalties', icon: '🎨' },
+  { id: 'printer_owner', label: '3D Printer Owner', desc: 'Monetize idle 3D printers by fulfilling local print jobs', icon: '🖨️' },
 ]
 
 const SECURITY_QUESTIONS = [
   'What city were you born in?',
+  'What is your mother’s maiden name?',
   'What was the name of your first pet?',
-  'What is your mother\'s maiden name?',
-  'What was your favorite childhood toy?',
-  'What is your favorite 3D printing material?',
+  'What was your childhood nickname?',
+  'What is your favorite 3D printing filament?',
 ]
 
 const DASHBOARD_PATH: Record<string, string> = {
@@ -24,44 +25,51 @@ const DASHBOARD_PATH: Record<string, string> = {
   seller: '/dashboard/seller',
   designer: '/dashboard/designer',
   printer_owner: '/dashboard/printer-owner',
+  admin: '/dashboard/admin',
 }
 
-type Step = 'role' | 'details' | 'security' | 'check-email'
-
 export default function SignupPage() {
+  const router = useRouter()
   const supabase = createClient()
-  const [step, setStep] = useState<Step>('role')
+
+  const [step, setStep] = useState<'role' | 'details' | 'security'>('role')
   const [role, setRole] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
-  const [showPassword, setShowPassword] = useState(false)
-  
-  // Security Verification Question & Answer State
   const [securityQuestion, setSecurityQuestion] = useState(SECURITY_QUESTIONS[0])
   const [securityAnswer, setSecurityAnswer] = useState('')
-
+  const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  const [resendStatus, setResendStatus] = useState('')
 
-  const passwordTooShort = password.length > 0 && password.length < 8
   const passwordsMismatch = confirmPassword.length > 0 && password !== confirmPassword
+  const passwordTooShort = password.length > 0 && password.length < 8
 
   const handleNextToSecurity = () => {
-    if (!email || !password || !confirmPassword) return setError('Please fill in every field')
-    if (password.length < 8) return setError('Password must be at least 8 characters')
-    if (password !== confirmPassword) return setError('Passwords do not match')
-
+    if (!email || !password || !confirmPassword) {
+      return setError('Please fill in all fields')
+    }
+    if (passwordTooShort) {
+      return setError('Password must be at least 8 characters')
+    }
+    if (passwordsMismatch) {
+      return setError('Passwords do not match')
+    }
     setError('')
     setStep('security')
   }
 
   const handleSignup = async () => {
-    if (!securityAnswer.trim()) return setError('Please answer your personal security question')
+    if (!securityAnswer.trim()) {
+      return setError('Please provide an answer to your security question')
+    }
 
     setError('')
     setLoading(true)
+
+    // Clear guest cookies
+    document.cookie = 'printhive_guest_role=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT'
 
     // Save security question & answer in raw_user_meta_data and profiles table
     const { data, error: err } = await supabase.auth.signUp({
@@ -79,22 +87,27 @@ export default function SignupPage() {
 
     if (err) {
       setLoading(false)
-      return setError(err.message)
+      const errMsg = typeof err === 'string' ? err : err.message || 'Registration error. Please check your details.'
+      return setError(errMsg)
     }
 
     if (data.user) {
-      await supabase.from('profiles').upsert({
-        id: data.user.id,
-        email: data.user.email,
-        role,
-        full_name: email.split('@')[0],
-        security_question: securityQuestion,
-        security_answer: securityAnswer.trim().toLowerCase(),
-        created_at: new Date().toISOString(),
-      })
+      try {
+        await supabase.from('profiles').upsert({
+          id: data.user.id,
+          email: data.user.email,
+          role,
+          full_name: email.split('@')[0],
+          security_question: securityQuestion,
+          security_answer: securityAnswer.trim().toLowerCase(),
+          created_at: new Date().toISOString(),
+        })
+      } catch (profileErr) {
+        console.warn('Profile table sync note:', profileErr)
+      }
     }
 
-    // Save security question & answer in localStorage for local session fallback
+    // Save security question & answer in localStorage for fallback
     localStorage.setItem(`sec_q_${email.toLowerCase().trim()}`, securityQuestion)
     localStorage.setItem(`sec_a_${email.toLowerCase().trim()}`, securityAnswer.trim().toLowerCase())
 
@@ -113,17 +126,11 @@ export default function SignupPage() {
     }
   }
 
-  const handleResendEmail = async () => {
-    setResendStatus('Sending resend request...')
-    const { error: resendErr } = await supabase.auth.resend({
-      type: 'signup',
-      email,
-    })
-    if (resendErr) {
-      setResendStatus(`Error: ${resendErr.message}`)
-    } else {
-      setResendStatus('✅ Confirmation link re-sent! Check your inbox or spam.')
-    }
+  const renderError = (err: any) => {
+    if (!err) return null
+    const text = typeof err === 'string' ? err : err.message || String(err)
+    if (!text || text === '{}') return null
+    return <div style={s.error}>{text}</div>
   }
 
   const s: Record<string, React.CSSProperties> = {
@@ -161,19 +168,22 @@ export default function SignupPage() {
                 key={r.id}
                 onClick={() => setRole(r.id)}
                 style={{
-                  border: role === r.id ? `2px solid ${r.color}` : '1px solid var(--border-color, #334155)',
-                  borderRadius: 14, padding: '14px 16px', cursor: 'pointer',
-                  display: 'flex', alignItems: 'flex-start', gap: 14,
-                  marginBottom: 10, background: role === r.id ? 'var(--bg-card-hover, #0F172A)' : 'transparent',
-                  transition: 'all 0.15s',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 16,
+                  padding: '16px 18px',
+                  borderRadius: 14,
+                  border: `2px solid ${role === r.id ? '#ea580c' : 'var(--border-color, #334155)'}`,
+                  background: role === r.id ? 'rgba(234, 88, 12, 0.08)' : 'var(--bg-card-hover, #0F172A)',
+                  marginBottom: 12,
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
                 }}
               >
-                <div style={{ width: 44, height: 44, borderRadius: 10, background: r.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 22 }}>
-                  {r.id === 'buyer' ? '🛍️' : r.id === 'seller' ? '🏬' : r.id === 'designer' ? '✏️' : '🖨️'}
-                </div>
+                <div style={{ fontSize: 24 }}>{r.icon}</div>
                 <div>
-                  <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-main, #fff)', marginBottom: 2 }}>{r.label}</div>
-                  <div style={{ fontSize: 13, color: 'var(--text-sub, #94A3B8)', lineHeight: 1.5 }}>{r.desc}</div>
+                  <div style={{ fontWeight: 800, fontSize: 15, color: 'var(--text-main, #fff)' }}>{r.label}</div>
+                  <div style={{ fontSize: 12, color: 'var(--text-sub, #94A3B8)' }}>{r.desc}</div>
                 </div>
               </div>
             ))}
@@ -190,7 +200,7 @@ export default function SignupPage() {
           <>
             <div style={s.title}>Create your account</div>
             <div style={s.sub}>Signing up as a {ROLES.find((r) => r.id === role)?.label}</div>
-            {error && <div style={s.error}>{error}</div>}
+            {renderError(error)}
 
             <label style={s.label}>Email address</label>
             <input style={s.input} type="email" placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} />
@@ -232,7 +242,7 @@ export default function SignupPage() {
           <>
             <div style={s.title}>🛡️ Security Verification</div>
             <div style={s.sub}>Choose a personal question required whenever you log in</div>
-            {error && <div style={s.error}>{error}</div>}
+            {renderError(error)}
 
             <label style={s.label}>Select Personal Security Question</label>
             <select
@@ -241,7 +251,7 @@ export default function SignupPage() {
               onChange={(e) => setSecurityQuestion(e.target.value)}
             >
               {SECURITY_QUESTIONS.map((q) => (
-                <option key={q} value={q} style={{ background: '#1E293B', color: '#fff' }}>
+                <option key={q} value={q} style={{ background: '#0F172A', color: '#fff' }}>
                   {q}
                 </option>
               ))}
@@ -261,29 +271,6 @@ export default function SignupPage() {
               {loading ? 'Creating Account…' : 'Complete Account Registration'}
             </button>
             <button style={s.back} onClick={() => { setStep('details'); setError('') }}>← Back</button>
-          </>
-        )}
-
-        {step === 'check-email' && (
-          <>
-            <div style={s.title}>Account Created!</div>
-            <div style={s.info}>
-              We submitted a confirmation link for <strong>{email}</strong>. Check your email inbox and spam folder.
-            </div>
-
-            {resendStatus && <div style={{ fontSize: 13, color: resendStatus.startsWith('Error') ? '#F87171' : '#10B981', marginBottom: 14, textAlign: 'center', fontWeight: 600 }}>{resendStatus}</div>}
-
-            <button
-              type="button"
-              onClick={handleResendEmail}
-              style={{ width: '100%', background: 'var(--bg-card-hover)', color: 'var(--text-main)', border: '1px solid var(--border-color)', borderRadius: 12, padding: '12px 0', fontSize: 14, fontWeight: 700, cursor: 'pointer', marginBottom: 12 }}
-            >
-              📩 Resend Confirmation Email
-            </button>
-
-            <Link href="/login" style={{ display: 'block', textAlign: 'center', color: 'var(--text-sub)', fontSize: 13, textDecoration: 'none', fontWeight: 600, marginTop: 12 }}>
-              Return to Login →
-            </Link>
           </>
         )}
       </div>
