@@ -6,10 +6,10 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/utils/supabase/client'
 
 const ROLES = [
-  { id: 'buyer', label: 'Buyer', desc: 'Browse STL marketplace & order custom 3D prints', icon: '🛍️' },
-  { id: 'seller', label: '3D Printer Seller', desc: 'Sell physical 3D printed items & products', icon: '🏬' },
-  { id: 'designer', label: 'STL Designer', desc: 'Sell digital 3D models & earn royalties', icon: '🎨' },
-  { id: 'printer_owner', label: '3D Printer Owner', desc: 'Monetize idle 3D printers by fulfilling local print jobs', icon: '🖨️' },
+  { id: 'buyer', label: 'Buyer', desc: 'Order custom 3D prints & shop physical products', icon: '🛍️' },
+  { id: 'seller', label: 'Seller', desc: 'Sell physical 3D printed items in the marketplace', icon: '🏬' },
+  { id: 'designer', label: '3D Designer', desc: 'Upload STL files & earn royalties on print orders', icon: '🎨' },
+  { id: 'printer_owner', label: '3D Printer Owner', desc: 'Monetize your 3D printers with nearby local jobs', icon: '🖨️' },
 ]
 
 const SECURITY_QUESTIONS = [
