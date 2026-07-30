@@ -103,13 +103,11 @@ export default function SignupPage() {
     if (data.session) {
       window.location.href = DASHBOARD_PATH[role] ?? '/'
     } else {
-      // Try immediate sign-in with password or set instant session fallback
+      // Immediate sign-in with password for seamless authentication
       const { data: signInData } = await supabase.auth.signInWithPassword({ email, password })
       if (signInData?.session) {
         window.location.href = DASHBOARD_PATH[role] ?? '/'
       } else {
-        // Auto-login session cookie so registration never blocks local dev
-        document.cookie = `printhive_guest_role=${role}; path=/; max-age=86400`
         window.location.href = DASHBOARD_PATH[role] ?? '/'
       }
     }
@@ -126,11 +124,6 @@ export default function SignupPage() {
     } else {
       setResendStatus('✅ Confirmation link re-sent! Check your inbox or spam.')
     }
-  }
-
-  const handleInstantDemoLogin = () => {
-    document.cookie = `printhive_guest_role=${role}; path=/; max-age=86400`
-    window.location.href = DASHBOARD_PATH[role] ?? '/'
   }
 
   const s: Record<string, React.CSSProperties> = {
@@ -288,15 +281,7 @@ export default function SignupPage() {
               📩 Resend Confirmation Email
             </button>
 
-            <button
-              type="button"
-              onClick={handleInstantDemoLogin}
-              style={{ width: '100%', background: '#ea580c', color: '#fff', border: 'none', borderRadius: 12, padding: '13px 0', fontSize: 14, fontWeight: 800, cursor: 'pointer', marginBottom: 14 }}
-            >
-              ⚡ Instant Demo Access (Bypass SMTP)
-            </button>
-
-            <Link href="/login" style={{ display: 'block', textAlign: 'center', color: 'var(--text-sub)', fontSize: 13, textDecoration: 'none', fontWeight: 600 }}>
+            <Link href="/login" style={{ display: 'block', textAlign: 'center', color: 'var(--text-sub)', fontSize: 13, textDecoration: 'none', fontWeight: 600, marginTop: 12 }}>
               Return to Login →
             </Link>
           </>

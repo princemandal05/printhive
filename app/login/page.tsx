@@ -13,14 +13,6 @@ const DASHBOARD_PATH: Record<string, string> = {
   admin: '/dashboard/admin',
 }
 
-const GUEST_ROLES = [
-  { id: 'buyer', label: 'Guest Buyer', icon: '🛍️', color: '#10B981' },
-  { id: 'seller', label: 'Guest Seller', icon: '🏬', color: '#8B5CF6' },
-  { id: 'designer', label: 'Guest Designer', icon: '🎨', color: '#FF6B35' },
-  { id: 'printer_owner', label: 'Guest Printer Owner', icon: '🖨️', color: '#3B82F6' },
-  { id: 'admin', label: 'Guest Admin', icon: '🛡️', color: '#EF4444' },
-]
-
 export default function LoginPage() {
   const router = useRouter()
   const supabase = createClient()
@@ -88,20 +80,9 @@ export default function LoginPage() {
     window.location.href = targetRedirect
   }
 
-  const handleGuestLogin = (roleId: string) => {
-    document.cookie = `printhive_guest_role=${roleId}; path=/; max-age=${7 * 24 * 60 * 60}`
-    const targetPath = DASHBOARD_PATH[roleId] ?? '/dashboard/buyer'
-
-    // Challenge with a security question for guest login as well
-    setTargetRedirect(targetPath)
-    setChallengeQuestion('What is your favorite 3D printing material?')
-    setExpectedAnswer('pla')
-    setStep('security-challenge')
-  }
-
   const s: Record<string, React.CSSProperties> = {
     page: { minHeight: '100vh', background: '#0F172A', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '24px 16px' },
-    card: { background: '#1E293B', borderRadius: 20, padding: '36px 32px', width: '100%', maxWidth: 460, border: '1px solid #334155', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)' },
+    card: { background: '#1E293B', borderRadius: 20, padding: '36px 32px', width: '100%', maxWidth: 440, border: '1px solid #334155', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)' },
     logo: { fontSize: 24, fontWeight: 900, color: '#fff', marginBottom: 20, textAlign: 'center' as const },
     logoAccent: { color: '#FF6B35' },
     title: { fontSize: 20, fontWeight: 800, color: '#fff', marginBottom: 4, textAlign: 'center' as const },
@@ -115,12 +96,7 @@ export default function LoginPage() {
     btnDisabled: { opacity: 0.5, cursor: 'not-allowed' },
     error: { background: 'rgba(239,68,68,0.15)', color: '#F87171', borderRadius: 10, padding: '10px 14px', fontSize: 13, marginBottom: 14, border: '1px solid rgba(239,68,68,0.3)' },
     forgotLink: { color: '#FF6B35', fontSize: 13, fontWeight: 600 },
-    signupLink: { textAlign: 'center' as const, marginTop: 18, fontSize: 13, color: '#94A3B8' },
-    guestBox: { marginTop: 24, paddingTop: 20, borderTop: '1px solid #334155' },
-    guestTitle: { fontSize: 12, fontWeight: 800, color: '#38BDF8', letterSpacing: 1, textTransform: 'uppercase' as const, marginBottom: 4, textAlign: 'center' as const },
-    guestSub: { fontSize: 12, color: '#94A3B8', textAlign: 'center' as const, marginBottom: 14 },
-    guestGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: 8 },
-    guestBtn: { padding: '10px 8px', borderRadius: 10, border: '1px solid #334155', background: '#0F172A', color: '#fff', fontSize: 12, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, transition: 'border 0.2s' },
+    signupLink: { textAlign: 'center' as const, marginTop: 20, fontSize: 13, color: '#94A3B8' },
   }
 
   return (
@@ -131,7 +107,7 @@ export default function LoginPage() {
         {step === 'credentials' && (
           <>
             <div style={s.title}>Welcome back</div>
-            <div style={s.sub}>Log in with your account or explore as a Guest</div>
+            <div style={s.sub}>Log in with your account credentials</div>
 
             {error && <div style={s.error}>{error}</div>}
 
@@ -166,31 +142,11 @@ export default function LoginPage() {
             </div>
 
             <button style={{ ...s.btn, ...(loading ? s.btnDisabled : {}) }} disabled={loading} onClick={handleCredentialsSubmit}>
-              {loading ? 'Verifying…' : 'Continue →'}
+              {loading ? 'Verifying Credentials…' : 'Continue →'}
             </button>
 
             <div style={s.signupLink}>
               New to PrintHive? <Link href="/signup" style={{ color: '#FF6B35', fontWeight: 700 }}>Create account</Link>
-            </div>
-
-            {/* Instant Guest / Demo Login Section */}
-            <div style={s.guestBox}>
-              <div style={s.guestTitle}>⚡ Instant Guest / Demo Mode</div>
-              <div style={s.guestSub}>Click any role below to test security verification:</div>
-
-              <div style={s.guestGrid}>
-                {GUEST_ROLES.map((r) => (
-                  <button
-                    key={r.id}
-                    type="button"
-                    style={{ ...s.guestBtn, borderColor: r.color }}
-                    onClick={() => handleGuestLogin(r.id)}
-                  >
-                    <span>{r.icon}</span>
-                    <span>{r.label.replace('Guest ', '')}</span>
-                  </button>
-                ))}
-              </div>
             </div>
           </>
         )}
@@ -198,7 +154,7 @@ export default function LoginPage() {
         {step === 'security-challenge' && (
           <>
             <div style={s.title}>🛡️ 2-Step Security Verification</div>
-            <div style={s.sub}>Answer your personal security question to log in</div>
+            <div style={s.sub}>Answer your personal security question to complete log in</div>
 
             {error && <div style={s.error}>{error}</div>}
 
@@ -209,11 +165,6 @@ export default function LoginPage() {
               <div style={{ fontSize: 15, fontWeight: 700, color: '#fff' }}>
                 {challengeQuestion}
               </div>
-              {expectedAnswer === 'pla' && (
-                <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 4 }}>
-                  (Demo answer: <strong>pla</strong>)
-                </div>
-              )}
             </div>
 
             <div style={{ marginBottom: 20 }}>

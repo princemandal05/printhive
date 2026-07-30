@@ -81,16 +81,6 @@ export default function Navbar() {
     document.documentElement.setAttribute('data-theme', savedTheme)
 
     async function loadSession() {
-      const cookies = document.cookie.split('; ')
-      const guestCookie = cookies.find((row) => row.startsWith('printhive_guest_role='))?.split('=')[1]
-
-      if (guestCookie) {
-        if (!active) return
-        setUserRole(guestCookie)
-        setDashboardHref(DASHBOARD_PATH[guestCookie] ?? '/dashboard/buyer')
-        return
-      }
-
       const { data: { user } } = await supabase.auth.getUser()
       if (!active) return
       if (!user) {

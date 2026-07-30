@@ -30,13 +30,6 @@ export async function middleware(request: NextRequest) {
   // Check if requested path is explicitly public
   const isPublicPath = PUBLIC_PATHS.includes(pathname)
 
-  // Check for Guest Login cookie
-  const guestRole = request.cookies.get('printhive_guest_role')?.value
-
-  if (guestRole) {
-    return response
-  }
-
   // Check Supabase session
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
