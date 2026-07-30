@@ -30,6 +30,7 @@ export default function SignupPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [resendStatus, setResendStatus] = useState('')
 
   const passwordTooShort = password.length > 0 && password.length < 8
   const passwordsMismatch = confirmPassword.length > 0 && password !== confirmPassword
@@ -42,7 +43,18 @@ export default function SignupPage() {
     setError('')
     setLoading(true)
 
-    const { data, error: err } = await supabase.auth.signUp({ email, password })
+    // Sign up with role and name in raw_user_meta_data for the handle_new_user trigger
+    const { data, error: err } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          role,
+          full_name: email.split('@')[0],
+        },
+      },
+    })
+
     if (err) {
       setLoading(false)
       return setError(err.message)
@@ -53,6 +65,7 @@ export default function SignupPage() {
         id: data.user.id,
         email: data.user.email,
         role,
+        full_name: email.split('@')[0],
         created_at: new Date().toISOString(),
       })
     }
@@ -63,30 +76,48 @@ export default function SignupPage() {
       // Email confirmation is off in this Supabase project — log straight in
       window.location.href = DASHBOARD_PATH[role] ?? '/'
     } else {
-      // Email confirmation is required before a session is issued
+      // Email confirmation is required
       setStep('check-email')
     }
   }
 
+  const handleResendEmail = async () => {
+    setResendStatus('Sending resend request...')
+    const { error: resendErr } = await supabase.auth.resend({
+      type: 'signup',
+      email,
+    })
+    if (resendErr) {
+      setResendStatus(`Error: ${resendErr.message}`)
+    } else {
+      setResendStatus('✅ Confirmation link re-sent! Check your inbox or spam.')
+    }
+  }
+
+  const handleInstantDemoLogin = () => {
+    // Bypass unconfigured SMTP server for instant local dev testing
+    document.cookie = `printhive_guest_role=${role}; path=/; max-age=86400`
+    window.location.href = DASHBOARD_PATH[role] ?? '/'
+  }
+
   const s: Record<string, React.CSSProperties> = {
-    page: { minHeight: '100vh', background: '#0F172A', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '24px 16px' },
-    card: { background: '#1E293B', borderRadius: 16, padding: '40px 36px', width: '100%', maxWidth: 480, border: '1px solid #334155' },
-    logo: { fontSize: 22, fontWeight: 700, color: '#fff', marginBottom: 28, textAlign: 'center' as const },
-    logoAccent: { color: '#FF6B35' },
-    title: { fontSize: 22, fontWeight: 700, color: '#fff', marginBottom: 6, textAlign: 'center' as const },
-    sub: { fontSize: 14, color: '#94A3B8', textAlign: 'center' as const, marginBottom: 28 },
-    label: { fontSize: 13, fontWeight: 500, color: '#94A3B8', marginBottom: 6, display: 'block' },
-    input: { width: '100%', background: '#0F172A', border: '1px solid #334155', borderRadius: 8, padding: '11px 14px', fontSize: 15, color: '#fff', outline: 'none', marginBottom: 16, boxSizing: 'border-box' as const },
+    page: { minHeight: '100vh', background: 'var(--bg-canvas, #0F172A)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '24px 16px' },
+    card: { background: 'var(--bg-card, #1E293B)', borderRadius: 20, padding: '40px 36px', width: '100%', maxWidth: 480, border: '1px solid var(--border-color, #334155)', boxShadow: '0 12px 40px rgba(0,0,0,0.2)' },
+    logo: { fontSize: 24, fontWeight: 900, color: 'var(--text-main, #fff)', marginBottom: 24, textAlign: 'center' as const },
+    logoAccent: { color: '#ea580c' },
+    title: { fontSize: 22, fontWeight: 800, color: 'var(--text-main, #fff)', marginBottom: 6, textAlign: 'center' as const },
+    sub: { fontSize: 14, color: 'var(--text-sub, #94A3B8)', textAlign: 'center' as const, marginBottom: 28 },
+    label: { fontSize: 13, fontWeight: 600, color: 'var(--text-main, #94A3B8)', marginBottom: 6, display: 'block' },
+    input: { width: '100%', background: 'var(--bg-card-hover, #0F172A)', border: '1px solid var(--border-color, #334155)', borderRadius: 10, padding: '12px 14px', fontSize: 15, color: 'var(--text-main, #fff)', outline: 'none', marginBottom: 16, boxSizing: 'border-box' as const },
     passwordWrap: { position: 'relative' as const, marginBottom: 16 },
-    toggleBtn: { position: 'absolute' as const, right: 12, top: 12, background: 'none', border: 'none', color: '#94A3B8', fontSize: 12, cursor: 'pointer', fontWeight: 600 },
-    hint: { fontSize: 12, color: '#64748B', marginTop: -12, marginBottom: 16 },
+    toggleBtn: { position: 'absolute' as const, right: 12, top: 14, background: 'none', border: 'none', color: '#ea580c', fontSize: 12, cursor: 'pointer', fontWeight: 700 },
     hintError: { fontSize: 12, color: '#F87171', marginTop: -12, marginBottom: 16 },
-    btn: { width: '100%', background: '#FF6B35', color: '#fff', border: 'none', borderRadius: 8, padding: '13px 0', fontSize: 15, fontWeight: 600, cursor: 'pointer', marginTop: 4 },
+    btn: { width: '100%', background: '#ea580c', color: '#fff', border: 'none', borderRadius: 12, padding: '13px 0', fontSize: 15, fontWeight: 800, cursor: 'pointer', marginTop: 4 },
     btnDisabled: { opacity: 0.5, cursor: 'not-allowed' },
-    error: { background: '#FEF2F2', color: '#991B1B', borderRadius: 8, padding: '10px 14px', fontSize: 13, marginBottom: 14 },
-    info: { background: '#ECFDF5', color: '#065F46', borderRadius: 8, padding: '10px 14px', fontSize: 13, marginBottom: 14 },
-    back: { background: 'none', border: 'none', color: '#94A3B8', fontSize: 13, cursor: 'pointer', marginTop: 14, display: 'block', textAlign: 'center' as const, width: '100%' },
-    loginLink: { textAlign: 'center' as const, marginTop: 20, fontSize: 13, color: '#94A3B8' },
+    error: { background: 'rgba(239,68,68,0.15)', color: '#F87171', borderRadius: 10, padding: '12px 14px', fontSize: 13, marginBottom: 16, border: '1px solid rgba(239,68,68,0.3)' },
+    info: { background: 'rgba(16,185,129,0.12)', color: '#10B981', borderRadius: 10, padding: '14px', fontSize: 13, marginBottom: 16, border: '1px solid rgba(16,185,129,0.3)', lineHeight: 1.6 },
+    back: { background: 'none', border: 'none', color: 'var(--text-sub, #94A3B8)', fontSize: 13, cursor: 'pointer', marginTop: 14, display: 'block', textAlign: 'center' as const, width: '100%', fontWeight: 600 },
+    loginLink: { textAlign: 'center' as const, marginTop: 20, fontSize: 13, color: 'var(--text-sub, #94A3B8)' },
   }
 
   return (
@@ -103,10 +134,10 @@ export default function SignupPage() {
                 key={r.id}
                 onClick={() => setRole(r.id)}
                 style={{
-                  border: role === r.id ? `2px solid ${r.color}` : '1px solid #334155',
-                  borderRadius: 12, padding: '14px 16px', cursor: 'pointer',
+                  border: role === r.id ? `2px solid ${r.color}` : '1px solid var(--border-color, #334155)',
+                  borderRadius: 14, padding: '14px 16px', cursor: 'pointer',
                   display: 'flex', alignItems: 'flex-start', gap: 14,
-                  marginBottom: 10, background: role === r.id ? '#0F172A' : 'transparent',
+                  marginBottom: 10, background: role === r.id ? 'var(--bg-card-hover, #0F172A)' : 'transparent',
                   transition: 'all 0.15s',
                 }}
               >
@@ -114,8 +145,8 @@ export default function SignupPage() {
                   {r.id === 'buyer' ? '🛍️' : r.id === 'seller' ? '🏬' : r.id === 'designer' ? '✏️' : '🖨️'}
                 </div>
                 <div>
-                  <div style={{ fontSize: 15, fontWeight: 600, color: '#fff', marginBottom: 2 }}>{r.label}</div>
-                  <div style={{ fontSize: 13, color: '#94A3B8', lineHeight: 1.5 }}>{r.desc}</div>
+                  <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-main, #fff)', marginBottom: 2 }}>{r.label}</div>
+                  <div style={{ fontSize: 13, color: 'var(--text-sub, #94A3B8)', lineHeight: 1.5 }}>{r.desc}</div>
                 </div>
               </div>
             ))}
@@ -123,7 +154,7 @@ export default function SignupPage() {
               Continue
             </button>
             <div style={s.loginLink}>
-              Already have an account? <Link href="/login" style={{ color: '#FF6B35' }}>Log in</Link>
+              Already have an account? <Link href="/login" style={{ color: '#ea580c', fontWeight: 700 }}>Log in</Link>
             </div>
           </>
         )}
@@ -172,13 +203,31 @@ export default function SignupPage() {
 
         {step === 'check-email' && (
           <>
-            <div style={s.title}>Check your inbox</div>
+            <div style={s.title}>Account Created!</div>
             <div style={s.info}>
-              We sent a confirmation link to <strong>{email}</strong>. Click it to
-              activate your account, then come back and log in.
+              We submitted a confirmation link for <strong>{email}</strong>. Check your email inbox and spam folder.
             </div>
-            <Link href="/login" style={{ ...s.btn, display: 'block', textAlign: 'center', textDecoration: 'none', boxSizing: 'border-box' }}>
-              Go to login
+
+            {resendStatus && <div style={{ fontSize: 13, color: resendStatus.startsWith('Error') ? '#F87171' : '#10B981', marginBottom: 14, textAlign: 'center', fontWeight: 600 }}>{resendStatus}</div>}
+
+            <button
+              type="button"
+              onClick={handleResendEmail}
+              style={{ width: '100%', background: 'var(--bg-card-hover)', color: 'var(--text-main)', border: '1px solid var(--border-color)', borderRadius: 12, padding: '12px 0', fontSize: 14, fontWeight: 700, cursor: 'pointer', marginBottom: 12 }}
+            >
+              📩 Resend Confirmation Email
+            </button>
+
+            <button
+              type="button"
+              onClick={handleInstantDemoLogin}
+              style={{ width: '100%', background: '#ea580c', color: '#fff', border: 'none', borderRadius: 12, padding: '13px 0', fontSize: 14, fontWeight: 800, cursor: 'pointer', marginBottom: 14 }}
+            >
+              ⚡ Instant Demo Access (Bypass SMTP)
+            </button>
+
+            <Link href="/login" style={{ display: 'block', textAlign: 'center', color: 'var(--text-sub)', fontSize: 13, textDecoration: 'none', fontWeight: 600 }}>
+              Return to Login →
             </Link>
           </>
         )}
