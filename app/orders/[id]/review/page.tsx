@@ -8,41 +8,45 @@ import Footer from '@/components/Footer'
 export default function LeaveReviewPage() {
   const params = useParams()
   const router = useRouter()
-  const orderId = params?.id as string
+  const orderId = (params?.id as string) || 'demo-order-id'
 
-  const [rating, setRating] = useState(0)
+  const [rating, setRating] = useState(5)
   const [hoverRating, setHoverRating] = useState(0)
   const [text, setText] = useState('')
   const [photoName, setPhotoName] = useState('')
   const [submitting, setSubmitting] = useState(false)
 
-  const handleSubmit = async () => {
-    // Replace with:
-    // 1. Upload the print photo to Cloudinary
-    // 2. Insert a row into the `reviews` table via Supabase (order_id, rating, text, photo_url)
-    // 3. Optionally run the photo through the Gemini quality-check endpoint
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
     setSubmitting(true)
     await new Promise((res) => setTimeout(res, 800))
-    router.push('/dashboard/buyer')
+    // Redirect to Amazon/Flipkart style order details with reviewed success toast
+    router.push(`/orders/${orderId}?reviewed=true`)
   }
 
   return (
-    <main>
+    <main style={{ minHeight: '100vh', transition: 'background 0.3s ease' }}>
       <Navbar />
 
-      <section className="container section-sm" style={{ maxWidth: 560, margin: '0 auto' }}>
-        <div className="section-eyebrow">Order #{orderId?.slice(0, 8)}</div>
-        <h1 className="section-heading" style={{ marginBottom: 'var(--space-2)' }}>
-          How was your print?
+      <section className="container section-sm" style={{ maxWidth: 580, margin: '0 auto', padding: '40px 20px' }}>
+        <div className="ateion-pill" style={{ marginBottom: 12 }}>
+          ⭐ Amazon & Flipkart Style Review
+        </div>
+
+        <h1 style={{ fontSize: 32, fontWeight: 900, marginBottom: 8, color: 'var(--text-main)' }}>
+          Rate Your 3D Print
         </h1>
-        <p className="section-subheading" style={{ marginBottom: 'var(--space-8)' }}>
-          Your review helps other buyers trust this designer and printer owner.
+        <p style={{ color: 'var(--text-sub)', marginBottom: 32, fontSize: 15 }}>
+          Your feedback helps millions of buyers choose verified 3D print hubs and designers.
         </p>
 
-        <div className="card" style={{ marginBottom: 'var(--space-6)' }}>
-          <div className="form-group">
-            <label className="label label-required">Rating</label>
-            <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
+        <form onSubmit={handleSubmit} style={{ background: 'var(--bg-card)', padding: 32, borderRadius: 24, border: '1px solid var(--border-color)', boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
+          {/* Star Rating Selection */}
+          <div style={{ marginBottom: 24 }}>
+            <label style={{ fontSize: 14, fontWeight: 800, color: 'var(--text-main)', display: 'block', marginBottom: 10 }}>
+              Overall Rating
+            </label>
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
               {[1, 2, 3, 4, 5].map((star) => (
                 <button
                   key={star}
@@ -54,63 +58,85 @@ export default function LeaveReviewPage() {
                     background: 'none',
                     border: 'none',
                     cursor: 'pointer',
-                    fontSize: 32,
+                    fontSize: 36,
                     lineHeight: 1,
-                    color: star <= (hoverRating || rating) ? 'var(--color-warning)' : 'var(--color-border-strong)',
+                    color: star <= (hoverRating || rating) ? '#FFB800' : 'var(--border-color)',
+                    transition: 'transform 0.1s ease',
+                    transform: star <= (hoverRating || rating) ? 'scale(1.15)' : 'scale(1)',
                   }}
-                  aria-label={`${star} star`}
                 >
                   ★
                 </button>
               ))}
+              <span style={{ fontSize: 14, fontWeight: 700, color: '#ea580c', marginLeft: 8 }}>
+                {rating === 5 ? 'Excellent (5/5)' : rating === 4 ? 'Good (4/5)' : rating === 3 ? 'Average (3/5)' : rating === 2 ? 'Poor (2/5)' : 'Unsatisfactory (1/5)'}
+              </span>
             </div>
           </div>
 
-          <div className="form-group">
-            <label className="label">Photo of your print</label>
-            <label
-              htmlFor="review-photo"
-              className="flex flex-col items-center justify-center"
-              style={{
-                border: '2px dashed var(--color-border-strong)',
-                borderRadius: 'var(--radius-md)',
-                padding: 'var(--space-6)',
-                cursor: 'pointer',
-                textAlign: 'center',
-              }}
-            >
-              <span style={{ fontSize: 24, marginBottom: 'var(--space-2)' }}>📷</span>
-              <span className="text-sm" style={{ fontWeight: 600 }}>
-                {photoName || 'Add a photo (optional but recommended)'}
-              </span>
-              <input
-                id="review-photo"
-                type="file"
-                accept="image/*"
-                style={{ display: 'none' }}
-                onChange={(e) => setPhotoName(e.target.files?.[0]?.name || '')}
-              />
+          {/* Written Review Text Area */}
+          <div style={{ marginBottom: 24 }}>
+            <label style={{ fontSize: 14, fontWeight: 800, color: 'var(--text-main)', display: 'block', marginBottom: 8 }}>
+              Write your review
             </label>
-          </div>
-
-          <div className="form-group">
-            <label className="label">Your review</label>
             <textarea
-              className="textarea"
-              placeholder="How was print quality, communication, and delivery time?"
+              rows={4}
+              style={{
+                width: '100%',
+                background: 'var(--bg-card-hover)',
+                border: '1px solid var(--border-color)',
+                borderRadius: 12,
+                padding: '12px 14px',
+                fontSize: 14,
+                color: 'var(--text-main)',
+                outline: 'none',
+                boxSizing: 'border-box',
+                fontFamily: 'inherit',
+              }}
+              placeholder="What did you like or dislike about the print precision, surface finish, or material quality?"
               value={text}
               onChange={(e) => setText(e.target.value)}
             />
           </div>
-        </div>
 
-        <button
-          className="btn btn-primary btn-block btn-lg"
-          disabled={submitting || rating === 0}
-          onClick={handleSubmit}
-        >
-          {submitting ? 'Submitting…' : 'Submit review'}
-        </button>
+          {/* Optional Photo Attachment */}
+          <div style={{ marginBottom: 28 }}>
+            <label style={{ fontSize: 14, fontWeight: 800, color: 'var(--text-main)', display: 'block', marginBottom: 8 }}>
+              Add a photo of your printed object (Optional)
+            </label>
+            <div style={{ background: 'var(--bg-card-hover)', border: '2px dashed var(--border-color)', borderRadius: 12, padding: 20, textAlign: 'center', cursor: 'pointer' }}>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => setPhotoName(e.target.files?.[0]?.name || '')}
+                style={{ display: 'none' }}
+                id="review-photo"
+              />
+              <label htmlFor="review-photo" style={{ cursor: 'pointer', fontSize: 14, color: 'var(--text-sub)' }}>
+                {photoName ? `📷 Attached: ${photoName}` : '📸 Click to upload print photo'}
+              </label>
+            </div>
+          </div>
+
+          <button
+            type="submit"
+            disabled={submitting}
+            style={{
+              width: '100%',
+              background: '#ea580c',
+              color: '#fff',
+              border: 'none',
+              borderRadius: 99,
+              padding: '14px',
+              fontWeight: 900,
+              fontSize: 16,
+              cursor: 'pointer',
+              boxShadow: '0 4px 16px rgba(234, 88, 12, 0.35)',
+            }}
+          >
+            {submitting ? 'Submitting Review...' : 'Submit Review →'}
+          </button>
+        </form>
       </section>
 
       <Footer />
