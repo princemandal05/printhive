@@ -11,7 +11,7 @@ export default function CheckoutPage() {
   const router = useRouter()
   const { cart, cartSubtotal, clearCart } = useStore()
 
-  // Payment Selection State (Amazon Style)
+  // Payment Selection State (Amazon Style Accordion Dropdown)
   const [paymentCategory, setPaymentCategory] = useState<'upi' | 'card' | 'netbanking' | 'cod'>('upi')
   const [upiOption, setUpiOption] = useState<'gpay' | 'phonepe' | 'paytm' | 'vpa'>('gpay')
   const [vpaId, setVpaId] = useState('')
@@ -89,15 +89,15 @@ export default function CheckoutPage() {
 
       <section className="container section-sm" style={{ maxWidth: 1200, margin: '0 auto', padding: '40px 20px' }}>
         <div className="ateion-pill" style={{ marginBottom: 12 }}>
-          🛒 Amazon-Style Secure Payment
+          🛒 Amazon-Style Dropdown Checkout
         </div>
 
         <h1 style={{ fontSize: 34, fontWeight: 900, marginBottom: 8, color: 'var(--text-main)' }}>
           Select a Payment Method
         </h1>
 
-        <p style={{ color: 'var(--text-sub)', marginBottom: 32, fontSize: 15 }}>
-          All transactions are protected by Razorpay Escrow. Funds are released automatically only after physical delivery.
+        <p style={{ color: 'var(--text-sub)', marginBottom: 36, fontSize: 15 }}>
+          All transactions are protected by Razorpay Escrow. Click any payment dropdown option below to expand details.
         </p>
 
         <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 32, alignItems: 'start' }}>
@@ -120,53 +120,80 @@ export default function CheckoutPage() {
               </div>
             </div>
 
-            {/* 2. Amazon-Style Expanding Payment Accordion */}
+            {/* 2. Amazon-Style Expanding Accordion Dropdown */}
             <div style={{ background: 'var(--bg-card)', borderRadius: 20, border: '1px solid var(--border-color)', overflow: 'hidden', boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
-              <div style={{ padding: '20px 28px', borderBottom: '1px solid var(--border-color)', background: 'var(--bg-card-hover)' }}>
+              <div style={{ padding: '20px 28px', borderBottom: '1px solid var(--border-color)', background: 'var(--bg-card-hover)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <h2 style={{ fontSize: 18, fontWeight: 800, color: 'var(--text-main)', margin: 0 }}>
-                  2. Choose Payment Method
+                  2. Choose Payment Method (Interactive Dropdown)
                 </h2>
+                <span style={{ fontSize: 12, background: 'rgba(234, 88, 12, 0.12)', color: '#ea580c', padding: '4px 10px', borderRadius: 99, fontWeight: 700 }}>
+                  Click to Expand
+                </span>
               </div>
 
-              {/* PAYMENT OPTION 1: UPI */}
-              <div style={{ borderBottom: '1px solid var(--border-color)' }}>
-                <label style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '18px 28px', cursor: 'pointer', background: paymentCategory === 'upi' ? 'rgba(234,88,12,0.06)' : 'transparent' }}>
-                  <input
-                    type="radio"
-                    name="main_payment"
-                    checked={paymentCategory === 'upi'}
-                    onChange={() => setPaymentCategory('upi')}
-                    style={{ accentColor: '#ea580c', width: 18, height: 18 }}
-                  />
-                  <div>
-                    <div style={{ fontSize: 15, fontWeight: 800, color: 'var(--text-main)' }}>
-                      📱 UPI (Google Pay / PhonePe / Paytm / Any UPI ID)
-                    </div>
-                    <div style={{ fontSize: 12, color: 'var(--text-sub)', marginTop: 2 }}>
-                      Pay instantly from your bank account using any UPI App
+              {/* DROPDOWN OPTION 1: UPI */}
+              <div style={{ borderBottom: '1px solid var(--border-color)', transition: 'all 0.3s ease' }}>
+                <div
+                  onClick={() => setPaymentCategory('upi')}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '18px 28px',
+                    cursor: 'pointer',
+                    background: paymentCategory === 'upi' ? 'rgba(234,88,12,0.06)' : 'transparent',
+                    userSelect: 'none',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                    <input
+                      type="radio"
+                      name="main_payment"
+                      checked={paymentCategory === 'upi'}
+                      onChange={() => setPaymentCategory('upi')}
+                      style={{ accentColor: '#ea580c', width: 18, height: 18, cursor: 'pointer' }}
+                    />
+                    <div>
+                      <div style={{ fontSize: 15, fontWeight: 800, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <span>📱 UPI (Google Pay / PhonePe / Paytm / Any UPI ID)</span>
+                        {paymentCategory === 'upi' && (
+                          <span style={{ background: '#ea580c', color: '#fff', fontSize: 10, fontWeight: 800, padding: '2px 8px', borderRadius: 99 }}>
+                            SELECTED
+                          </span>
+                        )}
+                      </div>
+                      <div style={{ fontSize: 12, color: 'var(--text-sub)', marginTop: 2 }}>
+                        Pay instantly from your bank account using any UPI App
+                      </div>
                     </div>
                   </div>
-                </label>
 
+                  {/* Dropdown Indicator */}
+                  <div style={{ color: '#ea580c', fontSize: 13, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <span>{paymentCategory === 'upi' ? 'Collapse ▲' : 'Expand Dropdown ▼'}</span>
+                  </div>
+                </div>
+
+                {/* Animated Dropdown Drawer */}
                 {paymentCategory === 'upi' && (
-                  <div style={{ padding: '0 28px 24px 60px', background: 'rgba(234,88,12,0.03)' }}>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 8 }}>
-                      <label style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 14, color: 'var(--text-main)', cursor: 'pointer' }}>
+                  <div style={{ padding: '0 28px 24px 60px', background: 'rgba(234,88,12,0.03)', borderTop: '1px dashed rgba(234,88,12,0.2)' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 14 }}>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 14, color: 'var(--text-main)', cursor: 'pointer', fontWeight: 600 }}>
                         <input type="radio" name="upi_app" checked={upiOption === 'gpay'} onChange={() => setUpiOption('gpay')} style={{ accentColor: '#ea580c' }} />
                         <span>Google Pay (GPay)</span>
                       </label>
 
-                      <label style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 14, color: 'var(--text-main)', cursor: 'pointer' }}>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 14, color: 'var(--text-main)', cursor: 'pointer', fontWeight: 600 }}>
                         <input type="radio" name="upi_app" checked={upiOption === 'phonepe'} onChange={() => setUpiOption('phonepe')} style={{ accentColor: '#ea580c' }} />
                         <span>PhonePe</span>
                       </label>
 
-                      <label style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 14, color: 'var(--text-main)', cursor: 'pointer' }}>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 14, color: 'var(--text-main)', cursor: 'pointer', fontWeight: 600 }}>
                         <input type="radio" name="upi_app" checked={upiOption === 'paytm'} onChange={() => setUpiOption('paytm')} style={{ accentColor: '#ea580c' }} />
                         <span>Paytm UPI</span>
                       </label>
 
-                      <label style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 14, color: 'var(--text-main)', cursor: 'pointer' }}>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 14, color: 'var(--text-main)', cursor: 'pointer', fontWeight: 600 }}>
                         <input type="radio" name="upi_app" checked={upiOption === 'vpa'} onChange={() => setUpiOption('vpa')} style={{ accentColor: '#ea580c' }} />
                         <span>Enter VPA / UPI ID</span>
                       </label>
@@ -193,29 +220,53 @@ export default function CheckoutPage() {
                 )}
               </div>
 
-              {/* PAYMENT OPTION 2: CREDIT / DEBIT CARD */}
-              <div style={{ borderBottom: '1px solid var(--border-color)' }}>
-                <label style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '18px 28px', cursor: 'pointer', background: paymentCategory === 'card' ? 'rgba(234,88,12,0.06)' : 'transparent' }}>
-                  <input
-                    type="radio"
-                    name="main_payment"
-                    checked={paymentCategory === 'card'}
-                    onChange={() => setPaymentCategory('card')}
-                    style={{ accentColor: '#ea580c', width: 18, height: 18 }}
-                  />
-                  <div>
-                    <div style={{ fontSize: 15, fontWeight: 800, color: 'var(--text-main)' }}>
-                      💳 Credit or Debit Card
-                    </div>
-                    <div style={{ fontSize: 12, color: 'var(--text-sub)', marginTop: 2 }}>
-                      Visa, Mastercard, RuPay, Maestro & Diners Club
+              {/* DROPDOWN OPTION 2: CREDIT OR DEBIT CARD */}
+              <div style={{ borderBottom: '1px solid var(--border-color)', transition: 'all 0.3s ease' }}>
+                <div
+                  onClick={() => setPaymentCategory('card')}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '18px 28px',
+                    cursor: 'pointer',
+                    background: paymentCategory === 'card' ? 'rgba(234,88,12,0.06)' : 'transparent',
+                    userSelect: 'none',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                    <input
+                      type="radio"
+                      name="main_payment"
+                      checked={paymentCategory === 'card'}
+                      onChange={() => setPaymentCategory('card')}
+                      style={{ accentColor: '#ea580c', width: 18, height: 18, cursor: 'pointer' }}
+                    />
+                    <div>
+                      <div style={{ fontSize: 15, fontWeight: 800, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <span>💳 Credit or Debit Card</span>
+                        {paymentCategory === 'card' && (
+                          <span style={{ background: '#ea580c', color: '#fff', fontSize: 10, fontWeight: 800, padding: '2px 8px', borderRadius: 99 }}>
+                            SELECTED
+                          </span>
+                        )}
+                      </div>
+                      <div style={{ fontSize: 12, color: 'var(--text-sub)', marginTop: 2 }}>
+                        Visa, Mastercard, RuPay, Maestro & Diners Club
+                      </div>
                     </div>
                   </div>
-                </label>
 
+                  {/* Dropdown Indicator */}
+                  <div style={{ color: '#ea580c', fontSize: 13, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <span>{paymentCategory === 'card' ? 'Collapse ▲' : 'Expand Dropdown ▼'}</span>
+                  </div>
+                </div>
+
+                {/* Animated Dropdown Drawer */}
                 {paymentCategory === 'card' && (
-                  <div style={{ padding: '0 28px 24px 60px', background: 'rgba(234,88,12,0.03)' }}>
-                    <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr', gap: 14, maxWidth: 460, marginTop: 10 }}>
+                  <div style={{ padding: '0 28px 24px 60px', background: 'rgba(234,88,12,0.03)', borderTop: '1px dashed rgba(234,88,12,0.2)' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr', gap: 14, maxWidth: 460, marginTop: 14 }}>
                       <div style={{ gridColumn: 'span 3' }}>
                         <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-sub)', marginBottom: 4, display: 'block' }}>Card Number</label>
                         <input
@@ -256,7 +307,7 @@ export default function CheckoutPage() {
                       </div>
                     </div>
 
-                    <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: 'var(--text-sub)', marginTop: 14, cursor: 'pointer' }}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: 'var(--text-sub)', marginTop: 14, cursor: 'pointer', fontWeight: 600 }}>
                       <input type="checkbox" checked={saveCard} onChange={(e) => setSaveCard(e.target.checked)} style={{ accentColor: '#ea580c' }} />
                       <span>Save card for faster future checkouts</span>
                     </label>
@@ -264,29 +315,53 @@ export default function CheckoutPage() {
                 )}
               </div>
 
-              {/* PAYMENT OPTION 3: NET BANKING */}
-              <div style={{ borderBottom: '1px solid var(--border-color)' }}>
-                <label style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '18px 28px', cursor: 'pointer', background: paymentCategory === 'netbanking' ? 'rgba(234,88,12,0.06)' : 'transparent' }}>
-                  <input
-                    type="radio"
-                    name="main_payment"
-                    checked={paymentCategory === 'netbanking'}
-                    onChange={() => setPaymentCategory('netbanking')}
-                    style={{ accentColor: '#ea580c', width: 18, height: 18 }}
-                  />
-                  <div>
-                    <div style={{ fontSize: 15, fontWeight: 800, color: 'var(--text-main)' }}>
-                      🏦 Net Banking
-                    </div>
-                    <div style={{ fontSize: 12, color: 'var(--text-sub)', marginTop: 2 }}>
-                      All major Indian retail & corporate banks
+              {/* DROPDOWN OPTION 3: NET BANKING */}
+              <div style={{ borderBottom: '1px solid var(--border-color)', transition: 'all 0.3s ease' }}>
+                <div
+                  onClick={() => setPaymentCategory('netbanking')}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '18px 28px',
+                    cursor: 'pointer',
+                    background: paymentCategory === 'netbanking' ? 'rgba(234,88,12,0.06)' : 'transparent',
+                    userSelect: 'none',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                    <input
+                      type="radio"
+                      name="main_payment"
+                      checked={paymentCategory === 'netbanking'}
+                      onChange={() => setPaymentCategory('netbanking')}
+                      style={{ accentColor: '#ea580c', width: 18, height: 18, cursor: 'pointer' }}
+                    />
+                    <div>
+                      <div style={{ fontSize: 15, fontWeight: 800, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <span>🏦 Net Banking</span>
+                        {paymentCategory === 'netbanking' && (
+                          <span style={{ background: '#ea580c', color: '#fff', fontSize: 10, fontWeight: 800, padding: '2px 8px', borderRadius: 99 }}>
+                            SELECTED
+                          </span>
+                        )}
+                      </div>
+                      <div style={{ fontSize: 12, color: 'var(--text-sub)', marginTop: 2 }}>
+                        All major Indian retail & corporate banks
+                      </div>
                     </div>
                   </div>
-                </label>
 
+                  {/* Dropdown Indicator */}
+                  <div style={{ color: '#ea580c', fontSize: 13, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <span>{paymentCategory === 'netbanking' ? 'Collapse ▲' : 'Expand Dropdown ▼'}</span>
+                  </div>
+                </div>
+
+                {/* Animated Dropdown Drawer */}
                 {paymentCategory === 'netbanking' && (
-                  <div style={{ padding: '0 28px 24px 60px', background: 'rgba(234,88,12,0.03)' }}>
-                    <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-sub)', marginBottom: 6, display: 'block' }}>Choose your bank:</label>
+                  <div style={{ padding: '0 28px 24px 60px', background: 'rgba(234,88,12,0.03)', borderTop: '1px dashed rgba(234,88,12,0.2)' }}>
+                    <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-sub)', marginBottom: 6, display: 'block', marginTop: 14 }}>Choose your bank:</label>
                     <select
                       style={{ ...inputStyle, maxWidth: 360 }}
                       value={selectedBank}
@@ -303,35 +378,59 @@ export default function CheckoutPage() {
                 )}
               </div>
 
-              {/* PAYMENT OPTION 4: PAY ON DELIVERY (COD) */}
-              <div>
-                <label style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '18px 28px', cursor: 'pointer', background: paymentCategory === 'cod' ? 'rgba(234,88,12,0.06)' : 'transparent' }}>
-                  <input
-                    type="radio"
-                    name="main_payment"
-                    checked={paymentCategory === 'cod'}
-                    onChange={() => setPaymentCategory('cod')}
-                    style={{ accentColor: '#ea580c', width: 18, height: 18 }}
-                  />
-                  <div>
-                    <div style={{ fontSize: 15, fontWeight: 800, color: 'var(--text-main)' }}>
-                      🚚 Pay on Delivery (Cash / UPI at Doorstep)
-                    </div>
-                    <div style={{ fontSize: 12, color: 'var(--text-sub)', marginTop: 2 }}>
-                      Pay cash or scan QR upon inspecting physical 3D print quality
+              {/* DROPDOWN OPTION 4: PAY ON DELIVERY (COD) */}
+              <div style={{ transition: 'all 0.3s ease' }}>
+                <div
+                  onClick={() => setPaymentCategory('cod')}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '18px 28px',
+                    cursor: 'pointer',
+                    background: paymentCategory === 'cod' ? 'rgba(234,88,12,0.06)' : 'transparent',
+                    userSelect: 'none',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                    <input
+                      type="radio"
+                      name="main_payment"
+                      checked={paymentCategory === 'cod'}
+                      onChange={() => setPaymentCategory('cod')}
+                      style={{ accentColor: '#ea580c', width: 18, height: 18, cursor: 'pointer' }}
+                    />
+                    <div>
+                      <div style={{ fontSize: 15, fontWeight: 800, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <span>🚚 Pay on Delivery (Cash / UPI at Doorstep)</span>
+                        {paymentCategory === 'cod' && (
+                          <span style={{ background: '#ea580c', color: '#fff', fontSize: 10, fontWeight: 800, padding: '2px 8px', borderRadius: 99 }}>
+                            SELECTED
+                          </span>
+                        )}
+                      </div>
+                      <div style={{ fontSize: 12, color: 'var(--text-sub)', marginTop: 2 }}>
+                        Pay cash or scan QR upon inspecting physical 3D print quality
+                      </div>
                     </div>
                   </div>
-                </label>
 
+                  {/* Dropdown Indicator */}
+                  <div style={{ color: '#ea580c', fontSize: 13, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <span>{paymentCategory === 'cod' ? 'Collapse ▲' : 'Expand Dropdown ▼'}</span>
+                  </div>
+                </div>
+
+                {/* Animated Dropdown Drawer */}
                 {paymentCategory === 'cod' && (
-                  <div style={{ padding: '0 28px 24px 60px', background: 'rgba(234,88,12,0.03)' }}>
-                    <div style={{ background: 'var(--bg-card)', padding: 14, borderRadius: 12, border: '1px solid var(--border-color)', maxWidth: 380, marginBottom: 14 }}>
-                      <div style={{ fontSize: 12, fontWeight: 700, color: '#ea580c', marginBottom: 4 }}>Security Code Verification:</div>
-                      <div style={{ fontSize: 13, color: 'var(--text-sub)', marginBottom: 8 }}>
+                  <div style={{ padding: '0 28px 24px 60px', background: 'rgba(234,88,12,0.03)', borderTop: '1px dashed rgba(234,88,12,0.2)' }}>
+                    <div style={{ background: 'var(--bg-card)', padding: 16, borderRadius: 14, border: '1px solid var(--border-color)', maxWidth: 400, marginTop: 14 }}>
+                      <div style={{ fontSize: 12, fontWeight: 800, color: '#ea580c', marginBottom: 4 }}>Security Code Verification:</div>
+                      <div style={{ fontSize: 13, color: 'var(--text-sub)', marginBottom: 10 }}>
                         Type the 4-digit code shown below to confirm Pay on Delivery:
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-                        <div style={{ background: '#0F172A', color: '#10B981', padding: '6px 14px', borderRadius: 8, fontWeight: 900, letterSpacing: 4, fontSize: 18, userSelect: 'none' }}>
+                        <div style={{ background: '#0F172A', color: '#10B981', padding: '8px 16px', borderRadius: 10, fontWeight: 900, letterSpacing: 4, fontSize: 18, userSelect: 'none' }}>
                           7 3 9 1
                         </div>
                         <input
@@ -349,7 +448,7 @@ export default function CheckoutPage() {
             </div>
           </div>
 
-          {/* Amazon-Style Order Summary & Place Order Side Bar */}
+          {/* Order Summary Sidebar */}
           <div style={{ background: 'var(--bg-card)', padding: 28, borderRadius: 20, border: '1px solid var(--border-color)', boxShadow: '0 4px 20px rgba(0,0,0,0.04)', position: 'sticky', top: 90 }}>
             <button
               type="button"
