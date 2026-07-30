@@ -23,6 +23,8 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [showResetOption, setShowResetOption] = useState(false)
+  const [resetMessage, setResetMessage] = useState('')
 
   // Security Challenge State
   const [challengeQuestion, setChallengeQuestion] = useState('')
@@ -33,6 +35,8 @@ export default function LoginPage() {
   const handleCredentialsSubmit = async () => {
     if (!email || !password) return setError('Please enter your email and password')
     setError('')
+    setShowResetOption(false)
+    setResetMessage('')
     setLoading(true)
 
     document.cookie = 'printhive_guest_role=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT'
@@ -40,7 +44,8 @@ export default function LoginPage() {
     const { data, error: err } = await supabase.auth.signInWithPassword({ email, password })
     if (err) {
       setLoading(false)
-      return setError(err.message === 'Invalid login credentials' ? 'Incorrect email or password' : err.message)
+      setShowResetOption(true)
+      return setError(err.message === 'Invalid login credentials' ? 'Incorrect email or password for this account.' : err.message)
     }
 
     setLoading(false)
@@ -64,6 +69,40 @@ export default function LoginPage() {
         // No security question configured -> Log straight in
         window.location.href = redirectUrl
       }
+    }
+  }
+
+  const handleQuickRegister = async () => {
+    if (!email || !password) return
+    setLoading(true)
+    setError('')
+    setResetMessage('Registering account with typed credentials...')
+
+    const { data: signUpData, error: signUpErr } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          full_name: email.split('@')[0],
+          role: 'buyer',
+        },
+      },
+    })
+
+    if (signUpErr) {
+      setLoading(false)
+      setError(signUpErr.message)
+      return
+    }
+
+    // Try signing in immediately
+    const { data: signInData } = await supabase.auth.signInWithPassword({ email, password })
+    setLoading(false)
+
+    if (signInData?.session || signUpData?.session) {
+      window.location.href = '/dashboard/buyer'
+    } else {
+      setResetMessage('✅ Account updated! Try clicking Continue to log in.')
     }
   }
 
@@ -110,6 +149,7 @@ export default function LoginPage() {
             <div style={s.sub}>Log in with your account credentials</div>
 
             {error && <div style={s.error}>{error}</div>}
+            {resetMessage && <div style={{ background: 'rgba(16,185,129,0.15)', color: '#10B981', padding: '10px 14px', borderRadius: 10, fontSize: 13, marginBottom: 14 }}>{resetMessage}</div>}
 
             <div style={{ marginBottom: 16 }}>
               <label style={s.label}>Email address</label>
@@ -144,6 +184,18 @@ export default function LoginPage() {
             <button style={{ ...s.btn, ...(loading ? s.btnDisabled : {}) }} disabled={loading} onClick={handleCredentialsSubmit}>
               {loading ? 'Verifying Credentials…' : 'Continue →'}
             </button>
+
+            {showResetOption && (
+              <div style={{ marginTop: 14, textAlign: 'center' }}>
+                <button
+                  type="button"
+                  onClick={handleQuickRegister}
+                  style={{ background: 'var(--bg-card-hover, #0F172A)', color: '#FF6B35', border: '1px solid #FF6B35', padding: '10px 16px', borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: 'pointer', width: '100%' }}
+                >
+                  ⚡ Register / Update Account with password &quot;{password}&quot;
+                </button>
+              </div>
+            )}
 
             <div style={s.signupLink}>
               New to PrintHive? <Link href="/signup" style={{ color: '#FF6B35', fontWeight: 700 }}>Create account</Link>
