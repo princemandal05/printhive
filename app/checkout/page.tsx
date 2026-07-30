@@ -11,8 +11,8 @@ export default function CheckoutPage() {
   const router = useRouter()
   const { cart, cartSubtotal, clearCart } = useStore()
 
-  // Payment Selection State (Amazon Style Automatic Dropdown)
-  const [paymentCategory, setPaymentCategory] = useState<'upi' | 'card' | 'netbanking' | 'cod'>('upi')
+  // Payment Selection State (Can be unselected / null)
+  const [paymentCategory, setPaymentCategory] = useState<'upi' | 'card' | 'netbanking' | 'cod' | null>('upi')
   const [upiOption, setUpiOption] = useState<'gpay' | 'phonepe' | 'paytm' | 'vpa'>('gpay')
   const [vpaId, setVpaId] = useState('')
   const [isVpaVerified, setIsVpaVerified] = useState(false)
@@ -43,6 +43,11 @@ export default function CheckoutPage() {
   const designerShare = Math.round(subtotal * 0.15)
   const platformShare = Math.round(subtotal * 0.15)
 
+  // Toggle selection (Clicking selected option unselects it)
+  const togglePaymentCategory = (cat: 'upi' | 'card' | 'netbanking' | 'cod') => {
+    setPaymentCategory((prev) => (prev === cat ? null : cat))
+  }
+
   const handleVerifyVpa = () => {
     if (!vpaId || !vpaId.includes('@')) {
       alert('Please enter a valid UPI VPA ID (e.g. mobile@paytm or name@okaxis)')
@@ -52,6 +57,10 @@ export default function CheckoutPage() {
   }
 
   const handleOpenPaymentModal = () => {
+    if (!paymentCategory) {
+      alert('Please select a payment method first.')
+      return
+    }
     if (paymentCategory === 'upi' && upiOption === 'vpa' && !vpaId) {
       alert('Please enter your UPI ID')
       return
@@ -89,7 +98,7 @@ export default function CheckoutPage() {
 
       <section className="container section-sm" style={{ maxWidth: 1200, margin: '0 auto', padding: '40px 20px' }}>
         <div className="ateion-pill" style={{ marginBottom: 12 }}>
-          🛒 Amazon-Style Automatic Dropdown Checkout
+          🛒 Amazon-Style Toggle & Gate Checkout
         </div>
 
         <h1 style={{ fontSize: 34, fontWeight: 900, marginBottom: 8, color: 'var(--text-main)' }}>
@@ -97,7 +106,7 @@ export default function CheckoutPage() {
         </h1>
 
         <p style={{ color: 'var(--text-sub)', marginBottom: 36, fontSize: 15 }}>
-          All transactions are protected by Razorpay Escrow. Selecting any payment method automatically opens its dropdown drawer.
+          All transactions are protected by Razorpay Escrow. Click to select or unselect a payment option.
         </p>
 
         <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 32, alignItems: 'start' }}>
@@ -120,18 +129,23 @@ export default function CheckoutPage() {
               </div>
             </div>
 
-            {/* 2. Amazon-Style Automatic Dropdown Accordion */}
+            {/* 2. Amazon-Style Toggle & Unselect Payment Accordion */}
             <div style={{ background: 'var(--bg-card)', borderRadius: 20, border: '1px solid var(--border-color)', overflow: 'hidden', boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
-              <div style={{ padding: '20px 28px', borderBottom: '1px solid var(--border-color)', background: 'var(--bg-card-hover)' }}>
+              <div style={{ padding: '20px 28px', borderBottom: '1px solid var(--border-color)', background: 'var(--bg-card-hover)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <h2 style={{ fontSize: 18, fontWeight: 800, color: 'var(--text-main)', margin: 0 }}>
                   2. Choose Payment Method
                 </h2>
+                {!paymentCategory && (
+                  <span style={{ fontSize: 12, color: '#F87171', fontWeight: 700 }}>
+                    ⚠️ Select a payment option to proceed
+                  </span>
+                )}
               </div>
 
               {/* AUTOMATIC DROPDOWN OPTION 1: UPI */}
               <div style={{ borderBottom: '1px solid var(--border-color)' }}>
                 <div
-                  onClick={() => setPaymentCategory('upi')}
+                  onClick={() => togglePaymentCategory('upi')}
                   style={{
                     display: 'flex',
                     alignItems: 'center',
@@ -147,7 +161,8 @@ export default function CheckoutPage() {
                       type="radio"
                       name="main_payment"
                       checked={paymentCategory === 'upi'}
-                      onChange={() => setPaymentCategory('upi')}
+                      onChange={() => togglePaymentCategory('upi')}
+                      onClick={(e) => e.stopPropagation()}
                       style={{ accentColor: '#ea580c', width: 18, height: 18, cursor: 'pointer' }}
                     />
                     <div>
@@ -161,7 +176,6 @@ export default function CheckoutPage() {
                   </div>
                 </div>
 
-                {/* Automatically Dropdown Drawer when Selected */}
                 {paymentCategory === 'upi' && (
                   <div style={{ padding: '0 28px 24px 60px', background: 'rgba(234,88,12,0.03)', borderTop: '1px dashed rgba(234,88,12,0.2)' }}>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 14 }}>
@@ -210,7 +224,7 @@ export default function CheckoutPage() {
               {/* AUTOMATIC DROPDOWN OPTION 2: CREDIT OR DEBIT CARD */}
               <div style={{ borderBottom: '1px solid var(--border-color)' }}>
                 <div
-                  onClick={() => setPaymentCategory('card')}
+                  onClick={() => togglePaymentCategory('card')}
                   style={{
                     display: 'flex',
                     alignItems: 'center',
@@ -226,7 +240,8 @@ export default function CheckoutPage() {
                       type="radio"
                       name="main_payment"
                       checked={paymentCategory === 'card'}
-                      onChange={() => setPaymentCategory('card')}
+                      onChange={() => togglePaymentCategory('card')}
+                      onClick={(e) => e.stopPropagation()}
                       style={{ accentColor: '#ea580c', width: 18, height: 18, cursor: 'pointer' }}
                     />
                     <div>
@@ -240,7 +255,6 @@ export default function CheckoutPage() {
                   </div>
                 </div>
 
-                {/* Automatically Dropdown Drawer when Selected */}
                 {paymentCategory === 'card' && (
                   <div style={{ padding: '0 28px 24px 60px', background: 'rgba(234,88,12,0.03)', borderTop: '1px dashed rgba(234,88,12,0.2)' }}>
                     <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr', gap: 14, maxWidth: 460, marginTop: 14 }}>
@@ -295,7 +309,7 @@ export default function CheckoutPage() {
               {/* AUTOMATIC DROPDOWN OPTION 3: NET BANKING */}
               <div style={{ borderBottom: '1px solid var(--border-color)' }}>
                 <div
-                  onClick={() => setPaymentCategory('netbanking')}
+                  onClick={() => togglePaymentCategory('netbanking')}
                   style={{
                     display: 'flex',
                     alignItems: 'center',
@@ -311,7 +325,8 @@ export default function CheckoutPage() {
                       type="radio"
                       name="main_payment"
                       checked={paymentCategory === 'netbanking'}
-                      onChange={() => setPaymentCategory('netbanking')}
+                      onChange={() => togglePaymentCategory('netbanking')}
+                      onClick={(e) => e.stopPropagation()}
                       style={{ accentColor: '#ea580c', width: 18, height: 18, cursor: 'pointer' }}
                     />
                     <div>
@@ -325,7 +340,6 @@ export default function CheckoutPage() {
                   </div>
                 </div>
 
-                {/* Automatically Dropdown Drawer when Selected */}
                 {paymentCategory === 'netbanking' && (
                   <div style={{ padding: '0 28px 24px 60px', background: 'rgba(234,88,12,0.03)', borderTop: '1px dashed rgba(234,88,12,0.2)' }}>
                     <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-sub)', marginBottom: 6, display: 'block', marginTop: 14 }}>Choose your bank:</label>
@@ -348,7 +362,7 @@ export default function CheckoutPage() {
               {/* AUTOMATIC DROPDOWN OPTION 4: PAY ON DELIVERY (COD) */}
               <div>
                 <div
-                  onClick={() => setPaymentCategory('cod')}
+                  onClick={() => togglePaymentCategory('cod')}
                   style={{
                     display: 'flex',
                     alignItems: 'center',
@@ -364,7 +378,8 @@ export default function CheckoutPage() {
                       type="radio"
                       name="main_payment"
                       checked={paymentCategory === 'cod'}
-                      onChange={() => setPaymentCategory('cod')}
+                      onChange={() => togglePaymentCategory('cod')}
+                      onClick={(e) => e.stopPropagation()}
                       style={{ accentColor: '#ea580c', width: 18, height: 18, cursor: 'pointer' }}
                     />
                     <div>
@@ -378,7 +393,6 @@ export default function CheckoutPage() {
                   </div>
                 </div>
 
-                {/* Automatically Dropdown Drawer when Selected */}
                 {paymentCategory === 'cod' && (
                   <div style={{ padding: '0 28px 24px 60px', background: 'rgba(234,88,12,0.03)', borderTop: '1px dashed rgba(234,88,12,0.2)' }}>
                     <div style={{ background: 'var(--bg-card)', padding: 16, borderRadius: 14, border: '1px solid var(--border-color)', maxWidth: 400, marginTop: 14 }}>
@@ -405,14 +419,29 @@ export default function CheckoutPage() {
             </div>
           </div>
 
-          {/* Order Summary Sidebar */}
+          {/* Order Summary Sidebar with Gated Payment Button */}
           <div style={{ background: 'var(--bg-card)', padding: 28, borderRadius: 20, border: '1px solid var(--border-color)', boxShadow: '0 4px 20px rgba(0,0,0,0.04)', position: 'sticky', top: 90 }}>
             <button
               type="button"
               onClick={handleOpenPaymentModal}
-              style={{ width: '100%', background: '#ea580c', color: '#fff', border: 'none', borderRadius: 99, padding: '15px', fontWeight: 900, fontSize: 16, cursor: 'pointer', boxShadow: '0 4px 16px rgba(234, 88, 12, 0.35)', marginBottom: 20 }}
+              disabled={!paymentCategory}
+              style={{
+                width: '100%',
+                background: paymentCategory ? '#ea580c' : 'var(--border-color)',
+                color: paymentCategory ? '#fff' : 'var(--text-sub)',
+                opacity: paymentCategory ? 1 : 0.6,
+                cursor: paymentCategory ? 'pointer' : 'not-allowed',
+                border: 'none',
+                borderRadius: 99,
+                padding: '15px',
+                fontWeight: 900,
+                fontSize: 15,
+                boxShadow: paymentCategory ? '0 4px 16px rgba(234, 88, 12, 0.35)' : 'none',
+                marginBottom: 20,
+                transition: 'all 0.2s ease',
+              }}
             >
-              Use this Payment Method →
+              {paymentCategory ? 'Use this Payment Method →' : 'Select a Payment Method Above'}
             </button>
 
             <h3 style={{ fontSize: 17, fontWeight: 800, marginBottom: 16, color: 'var(--text-main)' }}>Order Summary</h3>
@@ -443,7 +472,7 @@ export default function CheckoutPage() {
       </section>
 
       {/* RAZORPAY / AMAZON ESCROW CONFIRMATION MODAL */}
-      {showModal && (
+      {showModal && paymentCategory && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(10px)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
           <div style={{ background: '#0F172A', color: '#fff', borderRadius: 24, padding: 36, maxWidth: 480, width: '100%', border: '1px solid rgba(255,255,255,0.15)', boxShadow: '0 25px 60px rgba(0,0,0,0.8)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
