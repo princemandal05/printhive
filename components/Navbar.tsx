@@ -6,15 +6,6 @@ import { useRouter, usePathname } from 'next/navigation'
 import { useStore } from '@/lib/cart-context'
 import { createClient } from '@/utils/supabase/client'
 
-const NAV_LINKS = [
-  { href: '/shop', label: 'Shop' },
-  { href: '/browse', label: 'Designs' },
-  { href: '/print-on-demand', label: 'Print File' },
-  { href: '/requests', label: 'Custom Briefs' },
-  { href: '/printers', label: 'Hubs' },
-  { href: '/designers', label: 'Creators' },
-]
-
 const DASHBOARD_PATH: Record<string, string> = {
   buyer: '/dashboard/buyer',
   seller: '/dashboard/seller',
@@ -23,15 +14,63 @@ const DASHBOARD_PATH: Record<string, string> = {
   admin: '/dashboard/admin',
 }
 
+const ROLE_LABELS: Record<string, string> = {
+  buyer: '🛍️ Buyer',
+  seller: '🏬 Seller',
+  designer: '🎨 Designer',
+  printer_owner: '🖨️ Printer Owner',
+  admin: '🛡️ Admin',
+}
+
+// Role-based Navigation Links
+const ROLE_NAV_LINKS: Record<string, { href: string; label: string }[]> = {
+  // Public / Logged out: ONLY Home and Shop
+  public: [
+    { href: '/', label: 'Home' },
+    { href: '/shop', label: 'Shop' },
+  ],
+  buyer: [
+    { href: '/', label: 'Home' },
+    { href: '/shop', label: 'Shop' },
+    { href: '/print-on-demand', label: 'Print File' },
+    { href: '/requests', label: 'Custom Briefs' },
+    { href: '/orders', label: 'My Orders' },
+  ],
+  seller: [
+    { href: '/', label: 'Home' },
+    { href: '/shop', label: 'Shop' },
+    { href: '/dashboard/seller', label: 'My Products' },
+    { href: '/dashboard/seller/products/new', label: '+ Add Product' },
+  ],
+  designer: [
+    { href: '/', label: 'Home' },
+    { href: '/shop', label: 'Shop' },
+    { href: '/browse', label: '3D Models' },
+    { href: '/dashboard/designer/upload', label: 'Upload Model' },
+    { href: '/dashboard/designer/earnings', label: 'Earnings' },
+  ],
+  printer_owner: [
+    { href: '/', label: 'Home' },
+    { href: '/shop', label: 'Shop' },
+    { href: '/printers', label: 'Nearby Hubs' },
+    { href: '/dashboard/printer-owner/register', label: 'Register Hub' },
+  ],
+  admin: [
+    { href: '/', label: 'Home' },
+    { href: '/shop', label: 'Shop' },
+    { href: '/printers', label: 'Hubs Directory' },
+    { href: '/dashboard/admin', label: 'Admin Overview' },
+  ],
+}
+
 export default function Navbar() {
-  const { cartCount, wishlist } = useStore()
+  const { cartCount } = useStore()
   const router = useRouter()
   const pathname = usePathname()
   const supabase = createClient()
 
+  const [userRole, setUserRole] = useState<string | null>(null)
   const [dashboardHref, setDashboardHref] = useState<string | null>(null)
-  const [guestRole, setGuestRole] = useState<string | null>(null)
-  const [checked, setChecked] = useState(false)
   const [theme, setTheme] = useState<'light' | 'dark'>('light')
 
   useEffect(() => {
@@ -47,23 +86,24 @@ export default function Navbar() {
 
       if (guestCookie) {
         if (!active) return
-        setGuestRole(guestCookie)
+        setUserRole(guestCookie)
         setDashboardHref(DASHBOARD_PATH[guestCookie] ?? '/dashboard/buyer')
-        setChecked(true)
         return
       }
 
       const { data: { user } } = await supabase.auth.getUser()
       if (!active) return
       if (!user) {
+        setUserRole(null)
         setDashboardHref(null)
-        setChecked(true)
         return
       }
+
       const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
       if (!active) return
-      setDashboardHref(profile?.role ? DASHBOARD_PATH[profile.role] ?? '/' : null)
-      setChecked(true)
+      const role = profile?.role || 'buyer'
+      setUserRole(role)
+      setDashboardHref(DASHBOARD_PATH[role] ?? '/dashboard/buyer')
     }
 
     loadSession()
@@ -88,65 +128,66 @@ export default function Navbar() {
   const handleSignOut = async () => {
     document.cookie = 'printhive_guest_role=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT'
     await supabase.auth.signOut()
+    setUserRole(null)
     setDashboardHref(null)
-    setGuestRole(null)
-    router.push('/')
+    router.push('/login')
     router.refresh()
   }
+
+  // Determine navigation links based on user authentication and role
+  const activeNavLinks = userRole && ROLE_NAV_LINKS[userRole] ? ROLE_NAV_LINKS[userRole] : ROLE_NAV_LINKS.public
 
   return (
     <header className="navbar" style={{ background: 'var(--bg-card)', backdropFilter: 'blur(20px)', borderBottom: '1px solid var(--border-color)', position: 'sticky', top: 0, zIndex: 100, transition: 'all 0.3s ease' }}>
       <div className="navbar-inner" style={{ maxWidth: 1240, margin: '0 auto', padding: '0 20px', height: 68, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         
-        {/* LEFT SECTION: GOOGLE-STYLE NAV ARROWS & LOGO */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          {/* Google Browser-Style Back & Forward Navigation Controls */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'var(--bg-card-hover)', padding: '4px 6px', borderRadius: 99, border: '1px solid var(--border-color)' }}>
+        {/* Left Side: Navigation Arrows + Logo */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+          {/* Google Chrome Browser Control Arrows */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'var(--bg-card-hover)', padding: '4px 8px', borderRadius: 99, border: '1px solid var(--border-color)' }}>
             <button
               type="button"
-              suppressHydrationWarning
               onClick={() => router.back()}
-              style={navArrowBtnStyle}
-              title="Go Back (Google Navigation)"
-              aria-label="Back"
+              title="Go Back"
+              style={{ background: 'transparent', border: 'none', color: 'var(--text-main)', fontSize: 14, fontWeight: 800, cursor: 'pointer', padding: '2px 6px', borderRadius: '50%' }}
+              suppressHydrationWarning
             >
               ←
             </button>
             <button
               type="button"
-              suppressHydrationWarning
               onClick={() => router.forward()}
-              style={navArrowBtnStyle}
-              title="Go Forward (Google Navigation)"
-              aria-label="Forward"
+              title="Go Forward"
+              style={{ background: 'transparent', border: 'none', color: 'var(--text-sub)', fontSize: 14, fontWeight: 800, cursor: 'pointer', padding: '2px 6px', borderRadius: '50%' }}
+              suppressHydrationWarning
             >
               →
             </button>
           </div>
 
-          <Link href="/" className="navbar-logo" style={{ fontSize: 20, fontWeight: 900, color: 'var(--text-main)', textDecoration: 'none', letterSpacing: '-0.02em', display: 'flex', alignItems: 'center', gap: 4 }}>
-            Print<span className="navbar-logo-accent" style={{ color: '#ea580c', textShadow: '0 0 10px rgba(234,88,12,0.3)' }}>Hive</span>
+          {/* Logo */}
+          <Link href="/" style={{ fontSize: 22, fontWeight: 900, textDecoration: 'none', color: 'var(--text-main)', letterSpacing: '-0.5px' }}>
+            Print<span style={{ color: '#ea580c' }}>Hive</span>
           </Link>
         </div>
 
-        {/* MIDDLE SECTION: MODERN FLOATING PILL NAV LINKS */}
-        <nav style={{ background: 'var(--bg-card-hover)', padding: '4px 8px', borderRadius: 99, border: '1px solid var(--border-color)', display: 'flex', gap: 4 }}>
-          {NAV_LINKS.map((link) => {
+        {/* Dynamic Role-Based Navigation Pill Menu */}
+        <nav style={{ background: 'var(--bg-card-hover)', border: '1px solid var(--border-color)', borderRadius: 99, padding: '4px 8px', display: 'flex', alignItems: 'center', gap: 4 }}>
+          {activeNavLinks.map((link) => {
             const isActive = pathname === link.href
             return (
               <Link
                 key={link.href}
                 href={link.href}
                 style={{
-                  color: isActive ? '#fff' : 'var(--text-sub)',
-                  background: isActive ? '#ea580c' : 'transparent',
                   padding: '8px 16px',
                   borderRadius: 99,
-                  textDecoration: 'none',
                   fontSize: 13,
-                  fontWeight: 700,
+                  fontWeight: isActive ? 800 : 600,
+                  color: isActive ? '#fff' : 'var(--text-main)',
+                  background: isActive ? '#ea580c' : 'transparent',
+                  textDecoration: 'none',
                   transition: 'all 0.2s ease',
-                  whiteSpace: 'nowrap',
                 }}
               >
                 {link.label}
@@ -155,85 +196,64 @@ export default function Navbar() {
           })}
         </nav>
 
-        {/* RIGHT SECTION: ACTIONS, WISHLIST, CART & GUEST AUTH */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-          {/* Theme Switcher Button */}
+        {/* Right Side Controls */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          {/* Theme Toggle */}
           <button
             type="button"
-            suppressHydrationWarning
             onClick={toggleTheme}
-            style={{ background: 'var(--bg-card-hover)', border: '1px solid var(--border-color)', borderRadius: 99, width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: 16, transition: 'all 0.2s' }}
-            title={`Switch to ${theme === 'light' ? 'Dark' : 'Light'} Mode`}
-            aria-label="Toggle Theme"
+            style={{ background: 'var(--bg-card-hover)', border: '1px solid var(--border-color)', borderRadius: '50%', width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: 16 }}
+            title="Toggle Light/Dark Theme"
+            suppressHydrationWarning
           >
-            {theme === 'light' ? '🌙' : '☀️'}
+            {theme === 'dark' ? '☀️' : '🌙'}
           </button>
 
-          <Link href="/wishlist" style={{ position: 'relative', color: 'var(--text-main)', textDecoration: 'none', fontSize: 18 }} aria-label="Wishlist">
-            ♡
-            {wishlist.length > 0 && <span style={navBadgeStyle}>{wishlist.length}</span>}
-          </Link>
-          
-          <Link href="/cart" style={{ position: 'relative', color: 'var(--text-main)', textDecoration: 'none', fontSize: 18 }} aria-label="Cart">
+          {/* Cart Icon */}
+          <Link
+            href="/cart"
+            style={{ position: 'relative', background: 'var(--bg-card-hover)', border: '1px solid var(--border-color)', borderRadius: '50%', width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none', color: 'var(--text-main)', fontSize: 15 }}
+          >
             🛒
-            {cartCount > 0 && <span style={navBadgeStyle}>{cartCount}</span>}
+            {cartCount > 0 && (
+              <span style={{ position: 'absolute', top: -4, right: -4, background: '#ea580c', color: '#fff', fontSize: 10, fontWeight: 900, borderRadius: 99, padding: '2px 6px', border: '2px solid var(--bg-card)' }}>
+                {cartCount}
+              </span>
+            )}
           </Link>
 
-          {!checked ? null : dashboardHref ? (
-            <>
-              <Link href={dashboardHref} style={{ color: '#ea580c', fontWeight: 800, textDecoration: 'none', fontSize: 13, background: 'rgba(234, 88, 12, 0.1)', padding: '6px 14px', borderRadius: 99, border: '1px solid rgba(234, 88, 12, 0.3)' }}>
-                {guestRole ? `Guest (${guestRole.replace('_', ' ')})` : 'Dashboard'}
+          {/* User Auth Buttons / Dashboard Role Badge */}
+          {userRole && dashboardHref ? (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <Link
+                href={dashboardHref}
+                style={{ background: '#ea580c', color: '#fff', padding: '8px 16px', borderRadius: 99, fontSize: 13, fontWeight: 800, textDecoration: 'none', boxShadow: '0 4px 14px rgba(234, 88, 12, 0.3)' }}
+              >
+                {ROLE_LABELS[userRole] || 'Dashboard'}
               </Link>
-              <button onClick={handleSignOut} style={{ background: 'var(--bg-card-hover)', color: 'var(--text-main)', border: '1px solid var(--border-color)', borderRadius: 99, padding: '6px 14px', fontSize: 13, cursor: 'pointer', fontWeight: 600 }}>
-                {guestRole ? 'Exit Guest' : 'Sign out'}
+              <button
+                type="button"
+                onClick={handleSignOut}
+                style={{ background: 'var(--bg-card-hover)', color: 'var(--text-sub)', border: '1px solid var(--border-color)', padding: '8px 14px', borderRadius: 99, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
+              >
+                Log out
               </button>
-            </>
+            </div>
           ) : (
-            <>
-              <Link href="/login" style={{ color: 'var(--text-sub)', textDecoration: 'none', fontSize: 13, fontWeight: 600 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <Link href="/login" style={{ color: 'var(--text-main)', fontSize: 14, fontWeight: 700, textDecoration: 'none', padding: '8px 14px' }}>
                 Log in
               </Link>
-              <Link href="/signup" style={{ background: '#ea580c', color: '#ffffff', textDecoration: 'none', padding: '8px 18px', borderRadius: 99, fontWeight: 800, fontSize: 13, boxShadow: '0 4px 14px rgba(234, 88, 12, 0.3)' }}>
+              <Link
+                href="/signup"
+                style={{ background: '#ea580c', color: '#fff', padding: '8px 18px', borderRadius: 99, fontSize: 14, fontWeight: 800, textDecoration: 'none', boxShadow: '0 4px 14px rgba(234, 88, 12, 0.3)' }}
+              >
                 Sign up
               </Link>
-            </>
+            </div>
           )}
         </div>
       </div>
     </header>
   )
-}
-
-const navArrowBtnStyle: React.CSSProperties = {
-  background: 'transparent',
-  border: 'none',
-  color: 'var(--text-main)',
-  width: 28,
-  height: 28,
-  borderRadius: 99,
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  fontSize: 14,
-  fontWeight: 800,
-  cursor: 'pointer',
-  transition: 'background 0.2s ease',
-}
-
-const navBadgeStyle: React.CSSProperties = {
-  position: 'absolute',
-  top: -6,
-  right: -10,
-  background: '#ea580c',
-  color: '#ffffff',
-  fontSize: 10,
-  fontWeight: 800,
-  borderRadius: 99,
-  minWidth: 16,
-  height: 16,
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  padding: '0 4px',
-  boxShadow: '0 0 8px rgba(234,88,12,0.5)',
 }
