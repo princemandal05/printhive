@@ -11,6 +11,14 @@ const ROLES = [
   { id: 'printer_owner', label: 'Printer Owner', desc: 'List your idle printer and earn 70% on every completed order.', color: '#3B82F6', bg: '#EFF6FF' },
 ]
 
+const SECURITY_QUESTIONS = [
+  'What city were you born in?',
+  'What was the name of your first pet?',
+  'What is your mother\'s maiden name?',
+  'What was your favorite childhood toy?',
+  'What is your favorite 3D printing material?',
+]
+
 const DASHBOARD_PATH: Record<string, string> = {
   buyer: '/dashboard/buyer',
   seller: '/dashboard/seller',
@@ -18,7 +26,7 @@ const DASHBOARD_PATH: Record<string, string> = {
   printer_owner: '/dashboard/printer-owner',
 }
 
-type Step = 'role' | 'details' | 'check-email'
+type Step = 'role' | 'details' | 'security' | 'check-email'
 
 export default function SignupPage() {
   const supabase = createClient()
@@ -28,6 +36,11 @@ export default function SignupPage() {
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
+  
+  // Security Verification Question & Answer State
+  const [securityQuestion, setSecurityQuestion] = useState(SECURITY_QUESTIONS[0])
+  const [securityAnswer, setSecurityAnswer] = useState('')
+
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [resendStatus, setResendStatus] = useState('')
@@ -35,15 +48,22 @@ export default function SignupPage() {
   const passwordTooShort = password.length > 0 && password.length < 8
   const passwordsMismatch = confirmPassword.length > 0 && password !== confirmPassword
 
-  const handleSignup = async () => {
+  const handleNextToSecurity = () => {
     if (!email || !password || !confirmPassword) return setError('Please fill in every field')
     if (password.length < 8) return setError('Password must be at least 8 characters')
     if (password !== confirmPassword) return setError('Passwords do not match')
 
     setError('')
+    setStep('security')
+  }
+
+  const handleSignup = async () => {
+    if (!securityAnswer.trim()) return setError('Please answer your personal security question')
+
+    setError('')
     setLoading(true)
 
-    // Sign up with role and name in raw_user_meta_data for the handle_new_user trigger
+    // Save security question & answer in raw_user_meta_data and profiles table
     const { data, error: err } = await supabase.auth.signUp({
       email,
       password,
@@ -51,6 +71,8 @@ export default function SignupPage() {
         data: {
           role,
           full_name: email.split('@')[0],
+          security_question: securityQuestion,
+          security_answer: securityAnswer.trim().toLowerCase(),
         },
       },
     })
@@ -66,17 +88,21 @@ export default function SignupPage() {
         email: data.user.email,
         role,
         full_name: email.split('@')[0],
+        security_question: securityQuestion,
+        security_answer: securityAnswer.trim().toLowerCase(),
         created_at: new Date().toISOString(),
       })
     }
 
+    // Save security question & answer in localStorage for local session fallback
+    localStorage.setItem(`sec_q_${email.toLowerCase().trim()}`, securityQuestion)
+    localStorage.setItem(`sec_a_${email.toLowerCase().trim()}`, securityAnswer.trim().toLowerCase())
+
     setLoading(false)
 
     if (data.session) {
-      // Email confirmation is off in this Supabase project — log straight in
       window.location.href = DASHBOARD_PATH[role] ?? '/'
     } else {
-      // Email confirmation is required
       setStep('check-email')
     }
   }
@@ -95,7 +121,6 @@ export default function SignupPage() {
   }
 
   const handleInstantDemoLogin = () => {
-    // Bypass unconfigured SMTP server for instant local dev testing
     document.cookie = `printhive_guest_role=${role}; path=/; max-age=86400`
     window.location.href = DASHBOARD_PATH[role] ?? '/'
   }
@@ -109,6 +134,7 @@ export default function SignupPage() {
     sub: { fontSize: 14, color: 'var(--text-sub, #94A3B8)', textAlign: 'center' as const, marginBottom: 28 },
     label: { fontSize: 13, fontWeight: 600, color: 'var(--text-main, #94A3B8)', marginBottom: 6, display: 'block' },
     input: { width: '100%', background: 'var(--bg-card-hover, #0F172A)', border: '1px solid var(--border-color, #334155)', borderRadius: 10, padding: '12px 14px', fontSize: 15, color: 'var(--text-main, #fff)', outline: 'none', marginBottom: 16, boxSizing: 'border-box' as const },
+    select: { width: '100%', background: 'var(--bg-card-hover, #0F172A)', border: '1px solid var(--border-color, #334155)', borderRadius: 10, padding: '12px 14px', fontSize: 14, color: 'var(--text-main, #fff)', outline: 'none', marginBottom: 16, boxSizing: 'border-box' as const },
     passwordWrap: { position: 'relative' as const, marginBottom: 16 },
     toggleBtn: { position: 'absolute' as const, right: 12, top: 14, background: 'none', border: 'none', color: '#ea580c', fontSize: 12, cursor: 'pointer', fontWeight: 700 },
     hintError: { fontSize: 12, color: '#F87171', marginTop: -12, marginBottom: 16 },
@@ -190,14 +216,50 @@ export default function SignupPage() {
               placeholder="Re-enter your password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleSignup()}
+              onKeyDown={(e) => e.key === 'Enter' && handleNextToSecurity()}
             />
             {passwordsMismatch && <div style={s.hintError}>Passwords do not match</div>}
 
-            <button style={{ ...s.btn, ...(loading ? s.btnDisabled : {}) }} disabled={loading} onClick={handleSignup}>
-              {loading ? 'Creating account…' : 'Create account'}
+            <button style={s.btn} onClick={handleNextToSecurity}>
+              Next: Security Question →
             </button>
             <button style={s.back} onClick={() => { setStep('role'); setError('') }}>← Back</button>
+          </>
+        )}
+
+        {step === 'security' && (
+          <>
+            <div style={s.title}>🛡️ Security Verification</div>
+            <div style={s.sub}>Choose a personal question required whenever you log in</div>
+            {error && <div style={s.error}>{error}</div>}
+
+            <label style={s.label}>Select Personal Security Question</label>
+            <select
+              style={s.select}
+              value={securityQuestion}
+              onChange={(e) => setSecurityQuestion(e.target.value)}
+            >
+              {SECURITY_QUESTIONS.map((q) => (
+                <option key={q} value={q} style={{ background: '#1E293B', color: '#fff' }}>
+                  {q}
+                </option>
+              ))}
+            </select>
+
+            <label style={s.label}>Your Personal Answer</label>
+            <input
+              style={s.input}
+              type="text"
+              placeholder="Enter your secret answer..."
+              value={securityAnswer}
+              onChange={(e) => setSecurityAnswer(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleSignup()}
+            />
+
+            <button style={{ ...s.btn, ...(loading ? s.btnDisabled : {}) }} disabled={loading} onClick={handleSignup}>
+              {loading ? 'Creating Account…' : 'Complete Account Registration'}
+            </button>
+            <button style={s.back} onClick={() => { setStep('details'); setError('') }}>← Back</button>
           </>
         )}
 
