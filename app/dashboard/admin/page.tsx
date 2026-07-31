@@ -57,8 +57,9 @@ export default function AdminDashboard() {
 
   const handleSignOut = async () => {
     document.cookie = 'printhive_guest_role=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT'
+    document.cookie = 'printhive_auth_role=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT'
     await supabase.auth.signOut()
-    router.push('/login')
+    window.location.href = '/'
   }
 
   const showToast = (msg: string) => {

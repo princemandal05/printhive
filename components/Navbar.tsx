@@ -129,11 +129,11 @@ export default function Navbar() {
 
   const handleSignOut = async () => {
     document.cookie = 'printhive_guest_role=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT'
+    document.cookie = 'printhive_auth_role=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT'
     await supabase.auth.signOut()
     setUserRole(null)
     setDashboardHref(null)
-    router.push('/login')
-    router.refresh()
+    window.location.href = '/'
   }
 
   // Determine navigation links based on user authentication and role

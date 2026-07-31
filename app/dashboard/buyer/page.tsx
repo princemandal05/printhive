@@ -1,6 +1,7 @@
 import { createClient } from '@/utils/supabase/server'
 import { requireRole } from '@/utils/supabase/require-role'
 import { redirect } from 'next/navigation'
+import { cookies } from 'next/headers'
 import Link from 'next/link'
 
 const ACTIVE_ORDERS = [

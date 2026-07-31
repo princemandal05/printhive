@@ -1,6 +1,7 @@
 import { createClient } from '@/utils/supabase/server'
 import { requireRole } from '@/utils/supabase/require-role'
 import { redirect } from 'next/navigation'
+import { cookies } from 'next/headers'
 import Link from 'next/link'
 
 const DEMO_DESIGNS = [
@@ -14,6 +15,9 @@ export default async function DesignerDashboard() {
 
   const handleSignOut = async () => {
     'use server'
+    const cookieStore = await cookies()
+    cookieStore.set('printhive_guest_role', '', { maxAge: 0, path: '/' })
+    cookieStore.set('printhive_auth_role', '', { maxAge: 0, path: '/' })
     const s = await createClient()
     await s.auth.signOut()
     redirect('/')
