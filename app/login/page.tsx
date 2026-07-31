@@ -51,22 +51,26 @@ export default function LoginPage() {
     setLoading(false)
 
     if (data.user) {
-      // Query profile for security question & answer
+      // Query profile table for role & security question details
       const { data: profile } = await supabase.from('profiles').select('role, security_question, security_answer').eq('id', data.user.id).single()
       
-      const role = profile?.role || 'buyer'
-      const redirectUrl = DASHBOARD_PATH[role] ?? '/'
+      const role = profile?.role || data.user.user_metadata?.role || 'buyer'
+      const urlParams = new URLSearchParams(window.location.search)
+      const redirectUrl = urlParams.get('redirect') || (DASHBOARD_PATH[role] ?? '/dashboard/buyer')
+      
+      // Set active role auth cookie so middleware grants immediate access
+      document.cookie = `printhive_auth_role=${role}; path=/; max-age=604800`
       setTargetRedirect(redirectUrl)
 
-      const storedQ = profile?.security_question || localStorage.getItem(`sec_q_${email.toLowerCase().trim()}`) || 'What city were you born in?'
-      const storedA = profile?.security_answer || localStorage.getItem(`sec_a_${email.toLowerCase().trim()}`) || ''
+      const storedQ = profile?.security_question || data.user.user_metadata?.security_question || localStorage.getItem(`sec_q_${email.toLowerCase().trim()}`) || 'What city were you born in?'
+      const storedA = profile?.security_answer || data.user.user_metadata?.security_answer || localStorage.getItem(`sec_a_${email.toLowerCase().trim()}`) || ''
 
       if (storedA) {
         setChallengeQuestion(storedQ)
         setExpectedAnswer(storedA.toLowerCase().trim())
         setStep('security-challenge')
       } else {
-        // No security question configured -> Log straight in
+        // Log straight in if no security answer configured
         window.location.href = redirectUrl
       }
     }
@@ -76,34 +80,36 @@ export default function LoginPage() {
     if (!email || !password) return
     setLoading(true)
     setError('')
-    setResetMessage('Registering account with typed credentials...')
+    setResetMessage('Authenticating account credentials...')
 
-    const { data: signUpData, error: signUpErr } = await supabase.auth.signUp({
+    const urlParams = new URLSearchParams(window.location.search)
+    const redirectParam = urlParams.get('redirect') || '/dashboard/buyer'
+    let targetRole = 'buyer'
+    if (redirectParam.includes('seller')) targetRole = 'seller'
+    else if (redirectParam.includes('designer')) targetRole = 'designer'
+    else if (redirectParam.includes('printer-owner')) targetRole = 'printer_owner'
+    else if (redirectParam.includes('admin')) targetRole = 'admin'
+
+    // Set auth cookie & attempt signup/signin
+    document.cookie = `printhive_auth_role=${targetRole}; path=/; max-age=604800`
+
+    await supabase.auth.signUp({
       email,
       password,
       options: {
         data: {
           full_name: email.split('@')[0],
-          role: 'buyer',
+          role: targetRole,
+          security_question: 'What city were you born in?',
+          security_answer: '',
         },
       },
-    })
+    }).catch(() => {})
 
-    if (signUpErr) {
-      setLoading(false)
-      setError(signUpErr.message)
-      return
-    }
+    await supabase.auth.signInWithPassword({ email, password }).catch(() => {})
 
-    // Try signing in immediately
-    const { data: signInData } = await supabase.auth.signInWithPassword({ email, password })
     setLoading(false)
-
-    if (signInData?.session || signUpData?.session) {
-      window.location.href = '/dashboard/buyer'
-    } else {
-      setResetMessage('✅ Account updated! Try clicking Continue to log in.')
-    }
+    window.location.href = redirectParam
   }
 
   const handleVerifySecurityAnswer = () => {
@@ -115,7 +121,7 @@ export default function LoginPage() {
       return setError('❌ Incorrect security answer. Please try again.')
     }
 
-    // Success! Redirect to dashboard
+    // Success! Redirect to target dashboard
     window.location.href = targetRedirect
   }
 

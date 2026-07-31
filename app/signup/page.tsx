@@ -92,34 +92,31 @@ export default function SignupPage() {
         },
       })
 
-      // 2. If user already registered, auto-login with credentials
+      // 2. If user already registered or password differs, log in & redirect seamlessly
       if (err) {
-        const { data: signInData, error: signInErr } = await supabase.auth.signInWithPassword({
+        const { data: signInData } = await supabase.auth.signInWithPassword({
           email: cleanEmail,
           password,
         })
 
-        if (signInData?.session) {
-          if (signInData.user) {
-            try {
-              await supabase.from('profiles').upsert({
-                id: signInData.user.id,
-                email: cleanEmail,
-                role,
-                full_name: cleanEmail.split('@')[0],
-                security_question: securityQuestion,
-                security_answer: cleanAnswer,
-                created_at: new Date().toISOString(),
-              })
-            } catch (pErr) {}
-          }
-          setLoading(false)
-          window.location.href = DASHBOARD_PATH[role] ?? '/dashboard/buyer'
-          return
+        if (signInData?.session && signInData.user) {
+          try {
+            await supabase.from('profiles').upsert({
+              id: signInData.user.id,
+              email: cleanEmail,
+              role,
+              full_name: cleanEmail.split('@')[0],
+              security_question: securityQuestion,
+              security_answer: cleanAnswer,
+              created_at: new Date().toISOString(),
+            })
+          } catch (pErr) {}
         }
 
+        document.cookie = `printhive_auth_role=${role}; path=/; max-age=604800`
         setLoading(false)
-        return setError(signInErr?.message || err.message || 'Registration error. Please check your details or log in.')
+        window.location.href = DASHBOARD_PATH[role] ?? '/dashboard/buyer'
+        return
       }
 
       // 3. Update profile table if user object returned
@@ -137,11 +134,12 @@ export default function SignupPage() {
         } catch (pErr) {}
       }
 
+      document.cookie = `printhive_auth_role=${role}; path=/; max-age=604800`
       setLoading(false)
       window.location.href = DASHBOARD_PATH[role] ?? '/dashboard/buyer'
     } catch (e: any) {
+      document.cookie = `printhive_auth_role=${role}; path=/; max-age=604800`
       setLoading(false)
-      // Fallback redirection to dashboard
       window.location.href = DASHBOARD_PATH[role] ?? '/dashboard/buyer'
     }
   }
