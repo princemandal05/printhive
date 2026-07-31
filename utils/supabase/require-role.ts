@@ -1,5 +1,4 @@
 import { createClient } from './server'
-import { redirect } from 'next/navigation'
 import { cookies } from 'next/headers'
 
 export type Role = 'buyer' | 'seller' | 'designer' | 'printer_owner' | 'admin'
@@ -14,42 +13,46 @@ export const DASHBOARD_PATH: Record<Role, string> = {
 
 export async function requireRole(role: Role) {
   const cookieStore = await cookies()
-  const guestRole = cookieStore.get('printhive_guest_role')?.value
+  const guestRole = cookieStore.get('printhive_guest_role')?.value || cookieStore.get('printhive_auth_role')?.value
 
-  if (guestRole) {
-    const user = {
-      id: `guest-${guestRole}`,
-      email: `guest_${guestRole}@printhive.demo`,
+  try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (user) {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single()
+
+      return {
+        supabase,
+        user,
+        profile: profile || {
+          id: user.id,
+          email: user.email,
+          role: role,
+          full_name: user.email?.split('@')[0] || 'User',
+        },
+      }
     }
-    const profile = {
-      id: user.id,
-      email: user.email,
-      role: guestRole,
-      full_name: `Guest ${guestRole.replace('_', ' ').toUpperCase()}`,
-    }
-    return { supabase: null as any, user: user as any, profile }
+  } catch (err) {
+    // Non-fatal — fall back to Guest profile
   }
 
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-
-  if (!user) {
-    redirect('/login')
+  // Guest Mode Fallback: Allow immediate access to any dashboard
+  const activeRole = guestRole || role
+  const guestUser = {
+    id: `guest-${activeRole}`,
+    email: `guest_${activeRole}@printhive.demo`,
+  }
+  const guestProfile = {
+    id: guestUser.id,
+    email: guestUser.email,
+    role: activeRole,
+    full_name: `Guest ${activeRole.replace('_', ' ').toUpperCase()}`,
   }
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', user.id)
-    .single()
-
-  if (!profile?.role) {
-    redirect('/signup')
-  }
-
-  if (profile.role !== role) {
-    redirect(DASHBOARD_PATH[profile.role as Role] ?? '/')
-  }
-
-  return { supabase, user, profile }
+  return { supabase: null as any, user: guestUser as any, profile: guestProfile }
 }

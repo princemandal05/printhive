@@ -11,76 +11,132 @@ type Product = {
   id: string
   name: string
   price: number
+  originalPrice?: number
   category: string
   rating: number
+  reviewsCount: number
   seller: string
   stock: number
+  image: string
   featured?: boolean
   trending?: boolean
   newest?: boolean
+  deliveryDays: string
 }
 
 const MOCK_PRODUCTS: Product[] = [
   {
     id: 'p1',
-    name: 'Geometric Planter Set (3)',
+    name: 'Geometric Planter Pot Collection (Set of 3)',
     price: 649,
+    originalPrice: 999,
     category: 'Home Décor',
-    rating: 4.7,
+    rating: 4.8,
+    reviewsCount: 142,
     seller: 'UrbanPrint Co.',
     stock: 18,
+    image: 'https://images.unsplash.com/photo-1485955900006-10f4d324d411?auto=format&fit=crop&w=600&q=80',
     featured: true,
     trending: true,
+    deliveryDays: 'Delivery in 2 Days',
   },
   {
     id: 'p2',
-    name: 'Low-Poly Desk Organizer',
-    price: 399,
+    name: 'Ergonomic Desk Headphone Stand v2',
+    price: 1299,
+    originalPrice: 1799,
     category: 'Office Accessories',
-    rating: 4.6,
-    seller: 'DeskWorks',
-    stock: 32,
+    rating: 4.9,
+    reviewsCount: 289,
+    seller: 'DeskWorks India',
+    stock: 4,
+    image: 'https://images.unsplash.com/photo-1612815150546-a3a1617296e8?auto=format&fit=crop&w=600&q=80',
     featured: true,
+    trending: true,
+    deliveryDays: 'Tomorrow, 4 PM',
   },
   {
     id: 'p3',
-    name: 'Articulated Dragon (Painted)',
+    name: 'Articulated Flexi Crystal Dragon (Ruby Red)',
     price: 899,
+    originalPrice: 1299,
     category: 'Toys & Miniatures',
     rating: 4.9,
-    seller: 'MiniMakers',
+    reviewsCount: 312,
+    seller: 'MiniMakers Lab',
     stock: 6,
+    image: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=600&q=80',
     trending: true,
+    deliveryDays: 'Delivery in 2 Days',
   },
   {
     id: 'p4',
-    name: 'Personalized Nameplate Set',
+    name: 'Personalized 3D Desk Nameplate & Clock',
     price: 549,
+    originalPrice: 799,
     category: 'Personalized Gifts',
     rating: 4.8,
-    seller: 'CustomCraft',
+    reviewsCount: 98,
+    seller: 'CustomCraft Studio',
     stock: 24,
+    image: 'https://images.unsplash.com/photo-1513519245088-0e12902e5a38?auto=format&fit=crop&w=600&q=80',
     newest: true,
+    deliveryDays: 'Delivery in 3 Days',
   },
   {
     id: 'p5',
-    name: 'Cosplay Helmet Shell',
+    name: 'Cyberpunk Helmet Visor & Shell Prop',
     price: 2499,
+    originalPrice: 3499,
     category: 'Cosplay Items',
-    rating: 4.9,
-    seller: 'PropForge',
+    rating: 5.0,
+    reviewsCount: 64,
+    seller: 'PropForge Hub',
     stock: 3,
+    image: 'https://images.unsplash.com/photo-1534447677768-be436bb09401?auto=format&fit=crop&w=600&q=80',
     featured: true,
+    deliveryDays: 'Delivery in 4 Days',
   },
   {
     id: 'p6',
-    name: 'Educational Solar System Kit',
+    name: 'Educational Planetary Orrery Solar Kit',
     price: 799,
+    originalPrice: 1199,
     category: 'Educational Kits',
     rating: 4.7,
-    seller: 'LearnLab',
+    reviewsCount: 88,
+    seller: 'LearnLab Additive',
     stock: 15,
+    image: 'https://images.unsplash.com/photo-1507679799987-c73779587ccf?auto=format&fit=crop&w=600&q=80',
     newest: true,
+    deliveryDays: 'Delivery in 2 Days',
+  },
+  {
+    id: 'p7',
+    name: 'Modular Cable Organizer Grid System',
+    price: 349,
+    originalPrice: 499,
+    category: 'Office Accessories',
+    rating: 4.8,
+    reviewsCount: 176,
+    seller: 'Delhi Print Hub',
+    stock: 45,
+    image: 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=600&q=80',
+    deliveryDays: 'Tomorrow, 2 PM',
+  },
+  {
+    id: 'p8',
+    name: 'Minimalist Hexagonal Wall Tile Art Set',
+    price: 899,
+    originalPrice: 1399,
+    category: 'Home Décor',
+    rating: 4.9,
+    reviewsCount: 204,
+    seller: 'Aesthetic Prints',
+    stock: 12,
+    image: 'https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&w=600&q=80',
+    featured: true,
+    deliveryDays: 'Delivery in 2 Days',
   },
 ]
 
@@ -95,22 +151,10 @@ const CATEGORIES = [
 ]
 
 const STATS = [
-  {
-    value: '25K+',
-    label: 'Products',
-  },
-  {
-    value: '850+',
-    label: 'Verified Sellers',
-  },
-  {
-    value: '15+',
-    label: 'Categories',
-  },
-  {
-    value: '4.9★',
-    label: 'Average Rating',
-  },
+  { value: '25K+', label: 'Ready-Made Products' },
+  { value: '850+', label: 'Verified Creators' },
+  { value: '15+', label: 'Print Categories' },
+  { value: '4.9★', label: 'Customer Rating' },
 ]
 
 function ShopReviewBanner() {
@@ -127,7 +171,7 @@ function ShopReviewBanner() {
           Thank You For Your Review!
         </div>
         <div style={{ fontSize: 13, color: 'var(--text-sub)' }}>
-          Your rating and feedback have been published. Explore more trending 3D models and products below!
+          Your rating and feedback have been published. Explore more trending 3D products below!
         </div>
       </div>
     </div>
@@ -135,580 +179,249 @@ function ShopReviewBanner() {
 }
 
 export default function ShopPage() {
-  const { addToCart, addToWishlist, isInWishlist } = useStore()
+  const { addToCart, addToWishlist, removeFromWishlist, isInWishlist } = useStore()
   const [search, setSearch] = useState('')
   const [category, setCategory] = useState('All')
   const [sort, setSort] = useState('popular')
+  const [toastMsg, setToastMsg] = useState('')
+
+  const handleAddToCart = (e: React.MouseEvent, p: Product) => {
+    e.preventDefault()
+    e.stopPropagation()
+    addToCart({
+      id: p.id,
+      name: p.name,
+      seller: p.seller,
+      price: p.price,
+      stock: p.stock,
+    })
+    setToastMsg(`🛒 Added "${p.name}" to cart!`)
+    setTimeout(() => setToastMsg(''), 3000)
+  }
+
+  const handleToggleWishlist = (e: React.MouseEvent, p: Product) => {
+    e.preventDefault()
+    e.stopPropagation()
+    const saved = isInWishlist(p.id)
+    if (saved) {
+      removeFromWishlist(p.id)
+      setToastMsg(`Removed "${p.name}" from wishlist`)
+    } else {
+      addToWishlist({
+        id: p.id,
+        name: p.name,
+        price: p.price,
+        type: 'product',
+      })
+      setToastMsg(`❤️ Saved "${p.name}" to Wishlist!`)
+    }
+    setTimeout(() => setToastMsg(''), 3000)
+  }
 
   const filtered = useMemo(() => {
-    const keyword = search.toLowerCase()
-
-    const list = MOCK_PRODUCTS.filter((product) => {
-      const matchesCategory =
-        category === 'All' || product.category === category
-
+    return MOCK_PRODUCTS.filter((p) => {
       const matchesSearch =
-        product.name.toLowerCase().includes(keyword) ||
-        product.seller.toLowerCase().includes(keyword) ||
-        product.category.toLowerCase().includes(keyword)
+        p.name.toLowerCase().includes(search.toLowerCase()) ||
+        p.seller.toLowerCase().includes(search.toLowerCase()) ||
+        p.category.toLowerCase().includes(search.toLowerCase())
 
-      return matchesCategory && matchesSearch
+      const matchesCategory = category === 'All' || p.category === category
+
+      return matchesSearch && matchesCategory
+    }).sort((a, b) => {
+      if (sort === 'rating') return b.rating - a.rating
+      if (sort === 'price-low') return a.price - b.price
+      if (sort === 'price-high') return b.price - a.price
+      return 0
     })
-
-    switch (sort) {
-      case 'price-low':
-        return [...list].sort((a, b) => a.price - b.price)
-
-      case 'price-high':
-        return [...list].sort((a, b) => b.price - a.price)
-
-      case 'rating':
-        return [...list].sort((a, b) => b.rating - a.rating)
-
-      default:
-        return list
-    }
   }, [search, category, sort])
 
-  const featuredProducts = MOCK_PRODUCTS.filter((p) => p.featured)
-
   return (
-    <main>
+    <main style={{ minHeight: '100vh', transition: 'background 0.3s ease' }}>
       <Navbar />
 
-      <section className="container section-sm">
+      <section className="container section" style={{ maxWidth: 1240, margin: '0 auto', padding: '24px 20px' }}>
         <Suspense fallback={null}>
           <ShopReviewBanner />
         </Suspense>
 
-        <div className="section-eyebrow">
-          PrintHive Marketplace
+        {/* TOAST ALERT NOTIFICATION */}
+        {toastMsg && (
+          <div style={{ position: 'fixed', bottom: 24, right: 24, zIndex: 1000, background: '#0F172A', color: '#fff', padding: '10px 20px', borderRadius: 12, fontSize: 13, fontWeight: 800, boxShadow: '0 8px 30px rgba(0,0,0,0.3)', border: '1px solid #FF6B35' }}>
+            {toastMsg}
+          </div>
+        )}
+
+        {/* HERO HEADER */}
+        <div style={{ marginBottom: 24 }}>
+          <div className="ateion-pill" style={{ marginBottom: 8, fontSize: 11, padding: '4px 12px' }}>
+            🛍️ Physical 3D Marketplace
+          </div>
+          <h1 style={{ fontSize: 26, fontWeight: 900, color: 'var(--text-main)', marginBottom: 6, letterSpacing: '-0.5px' }}>
+            Discover Premium 3D Printed Products
+          </h1>
+          <p style={{ color: 'var(--text-sub)', fontSize: 14, maxWidth: 680, lineHeight: 1.5 }}>
+            Browse ready-made physical 3D printed items from verified sellers & local print hubs. Escrow protected delivery right to your doorstep.
+          </p>
         </div>
 
-        <h1
-          className="section-heading"
-          style={{
-            marginBottom: 'var(--space-4)',
-            maxWidth: '900px',
-          }}
-        >
-          Discover Premium
-          <br />
-          3D Printed Products
-        </h1>
-
-        <p
-          className="section-subheading"
-          style={{
-            maxWidth: '760px',
-            marginBottom: 'var(--space-10)',
-          }}
-        >
-          Browse premium ready-made 3D printed products from verified
-          creators, independent makers and trusted businesses.
-          Discover home décor, engineering models, cosplay items,
-          educational kits and personalized gifts—all in one place.
-        </p>
-
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns:
-              'repeat(auto-fit,minmax(180px,1fr))',
-            gap: '20px',
-            marginBottom: '48px',
-          }}
-        >
+        {/* METRICS STATS BAR */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 14, marginBottom: 28 }}>
           {STATS.map((item) => (
-            <div
-              key={item.label}
-              className="glass-card"
-              style={{
-                padding: '24px',
-                textAlign: 'center',
-              }}
-            >
-              <h2
-                style={{
-                  fontSize: '2rem',
-                  color: 'var(--color-primary)',
-                  fontWeight: 700,
-                }}
-              >
-                {item.value}
-              </h2>
-
-              <p className="text-muted">
-                {item.label}
-              </p>
+            <div key={item.label} style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 16, padding: '16px 20px', textAlign: 'center', boxShadow: '0 2px 10px rgba(0,0,0,0.02)' }}>
+              <div style={{ fontSize: 22, color: '#FF6B35', fontWeight: 900 }}>{item.value}</div>
+              <div style={{ fontSize: 12, color: 'var(--text-sub)', fontWeight: 600, marginTop: 2 }}>{item.label}</div>
             </div>
           ))}
         </div>
 
-        {/* Search & Filters */}
-
-        <div
-          className="glass-card"
-          style={{
-            padding: "24px",
-            marginBottom: "48px",
-          }}
-        >
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "2fr 1fr",
-              gap: "20px",
-            }}
-          >
-            <input
-              type="text"
-              className="input"
-              placeholder="Search products, sellers or categories..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
+        {/* SEARCH & CATEGORY FILTER BAR */}
+        <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 24, padding: 24, marginBottom: 40, boxShadow: '0 8px 30px rgba(0,0,0,0.04)' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 16, marginBottom: 20 }}>
+            <div style={{ background: 'var(--bg-card-hover)', border: '1px solid var(--border-color)', borderRadius: 99, padding: '6px 20px', display: 'flex', alignItems: 'center', gap: 10 }}>
+              <span style={{ fontSize: 16 }}>🔍</span>
+              <input
+                type="text"
+                placeholder="Search products, sellers or categories..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                style={{ width: '100%', background: 'transparent', border: 'none', color: 'var(--text-main)', fontSize: 14, outline: 'none' }}
+              />
+            </div>
 
             <select
-              className="input"
               value={sort}
               onChange={(e) => setSort(e.target.value)}
+              style={{ background: 'var(--bg-card-hover)', border: '1px solid var(--border-color)', borderRadius: 99, padding: '0 20px', color: 'var(--text-main)', fontSize: 14, outline: 'none', fontWeight: 700, cursor: 'pointer' }}
             >
               <option value="popular">Most Popular</option>
               <option value="rating">Highest Rated</option>
-              <option value="price-low">Price : Low to High</option>
-              <option value="price-high">Price : High to Low</option>
+              <option value="price-low">Price: Low to High</option>
+              <option value="price-high">Price: High to Low</option>
             </select>
           </div>
 
-          <div
-            className="flex gap-2"
-            style={{
-              marginTop: "24px",
-              flexWrap: "wrap",
-            }}
-          >
-            {CATEGORIES.map((cat) => (
-              <button
-                key={cat}
-                onClick={() => setCategory(cat)}
-                className={`badge ${
-                  category === cat
-                    ? "badge-primary"
-                    : "badge-neutral"
-                }`}
-                style={{
-                  cursor: "pointer",
-                  border: "none",
-                  padding: "10px 18px",
-                }}
-              >
-                {cat}
-              </button>
-            ))}
+          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+            {CATEGORIES.map((cat) => {
+              const active = category === cat
+              return (
+                <button
+                  key={cat}
+                  onClick={() => setCategory(cat)}
+                  style={{
+                    padding: '8px 20px',
+                    borderRadius: 99,
+                    fontSize: 13,
+                    fontWeight: active ? 800 : 600,
+                    border: active ? '1px solid #FF6B35' : '1px solid var(--border-color)',
+                    background: active ? '#FF6B35' : 'var(--bg-card-hover)',
+                    color: active ? '#fff' : 'var(--text-main)',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s',
+                  }}
+                >
+                  {cat}
+                </button>
+              )
+            })}
           </div>
         </div>
 
-        {/* Featured Collection */}
-
-        <div style={{ marginBottom: "56px" }}>
-          <div className="section-eyebrow">
-            Featured Collection
-          </div>
-
-          <h2
-            style={{
-              fontSize: "2rem",
-              fontWeight: 700,
-              marginBottom: "20px",
-            }}
-          >
-            Editor's Picks
-          </h2>
-
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns:
-                "repeat(auto-fit,minmax(250px,1fr))",
-              gap: "24px",
-            }}
-          >
-            {featuredProducts.map((product) => (
+        {/* PRODUCT CATALOG GRID */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 28 }}>
+          {filtered.map((product) => {
+            const saved = isInWishlist(product.id)
+            return (
               <Link
                 key={product.id}
                 href={`/shop/${product.id}`}
-                className="glass-card"
                 style={{
-                  padding: "24px",
-                  textDecoration: "none",
-                  color: "inherit",
-                  transition: ".3s",
+                  background: 'var(--bg-card)',
+                  border: '1px solid var(--border-color)',
+                  borderRadius: 24,
+                  overflow: 'hidden',
+                  textDecoration: 'none',
+                  color: 'inherit',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  boxShadow: '0 8px 30px rgba(0,0,0,0.04)',
+                  transition: 'transform 0.2s, boxShadow 0.2s',
                 }}
               >
-                <div
-                  style={{
-                    height: "170px",
-                    borderRadius: "18px",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    marginBottom: "20px",
-                    background:
-                      "linear-gradient(135deg,var(--color-slate-100),var(--color-border-light))",
-                  }}
-                >
-                  <svg
-                    width="64"
-                    height="64"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="var(--color-slate-400)"
-                    strokeWidth="1.5"
+                {/* PHOTO CONTAINER */}
+                <div style={{ height: 210, width: '100%', position: 'relative', background: '#E2E8F0', overflow: 'hidden' }}>
+                  <img
+                    src={product.image}
+                    alt={product.name}
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  />
+                  
+                  {/* Category Pill */}
+                  <div style={{ position: 'absolute', top: 12, left: 12, background: 'rgba(15,23,42,0.85)', color: '#fff', fontSize: 11, fontWeight: 800, padding: '4px 12px', borderRadius: 99, backdropFilter: 'blur(4px)' }}>
+                    {product.category}
+                  </div>
+
+                  {/* Wishlist Heart Button */}
+                  <button
+                    type="button"
+                    onClick={(e) => handleToggleWishlist(e, product)}
+                    style={{ position: 'absolute', top: 12, right: 12, background: '#fff', border: 'none', borderRadius: '50%', width: 34, height: 34, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', boxShadow: '0 4px 12px rgba(0,0,0,0.15)', fontSize: 16 }}
+                    title="Save to Wishlist"
                   >
-                    <path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                  </svg>
+                    {saved ? '❤️' : '🤍'}
+                  </button>
+
+                  <div style={{ position: 'absolute', bottom: 12, left: 12, background: 'rgba(16,185,129,0.9)', color: '#fff', fontSize: 11, fontWeight: 800, padding: '3px 10px', borderRadius: 99 }}>
+                    ⚡ {product.deliveryDays}
+                  </div>
                 </div>
 
-                <span className="badge badge-primary">
-                  Featured
-                </span>
-
-                <h3
-                  style={{
-                    marginTop: "18px",
-                    fontSize: "1.15rem",
-                    fontWeight: 600,
-                  }}
-                >
-                  {product.name}
-                </h3>
-
-                <p
-                  className="text-muted"
-                  style={{
-                    marginTop: "10px",
-                  }}
-                >
-                  {product.seller}
-                </p>
-
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    marginTop: "20px",
-                  }}
-                >
-                  <strong
-                    style={{
-                      color: "var(--color-primary)",
-                      fontSize: "1.3rem",
-                    }}
-                  >
-                    ₹{product.price}
-                  </strong>
-
-                  <span className="rating">
-                    ★ {product.rating}
-                  </span>
-                </div>
-              </Link>
-            ))}
-          </div>
-        </div>
-
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            marginBottom: "24px",
-            flexWrap: "wrap",
-            gap: "16px",
-          }}
-        >
-          <div>
-            <div className="section-eyebrow">
-              Marketplace
-            </div>
-
-            <h2
-              style={{
-                fontSize: "2rem",
-                fontWeight: 700,
-              }}
-            >
-              Browse Products
-            </h2>
-          </div>
-
-          <p className="text-muted">
-            Showing {filtered.length} of {MOCK_PRODUCTS.length} products
-          </p>
-        </div>
-
-        {filtered.length > 0 ? (
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns:
-                "repeat(auto-fill,minmax(280px,1fr))",
-              gap: "28px",
-            }}
-          >
-            {filtered.map((product) => (
-              <Link
-                key={product.id}
-                href={`/shop/${product.id}`}
-                className="design-card"
-                style={{
-                  display: "block",
-                  textDecoration: "none",
-                  color: "inherit",
-                  transition: ".3s",
-                  overflow: "hidden",
-                }}
-              >
-                <div
-                  className="design-card-image"
-                  style={{
-                    height: "220px",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    background:
-                      "linear-gradient(135deg,var(--color-slate-100),var(--color-border-light))",
-                  }}
-                >
-                  <svg
-                    width="72"
-                    height="72"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="var(--color-slate-400)"
-                    strokeWidth="1.5"
-                  >
-                    <path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                  </svg>
-                </div>
-
-                <div className="design-card-body">
-
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                      marginBottom: "12px",
-                    }}
-                  >
-                    <span className="badge badge-primary">
-                      Verified Seller
-                    </span>
-
-                    <span className="rating">
-                      ★ {product.rating}
-                    </span>
-                  </div>
-
-                  <div
-                    className="design-card-title"
-                    style={{
-                      fontSize: "1.1rem",
-                      marginBottom: "10px",
-                    }}
-                  >
-                    {product.name}
-                  </div>
-
-                  <div
-                    style={{
-                      color: "var(--color-slate-400)",
-                      marginBottom: "10px",
-                    }}
-                  >
-                    {product.seller}
-                  </div>
-
-                  <div
-                    style={{
-                      display: "flex",
-                      gap: "8px",
-                      flexWrap: "wrap",
-                      marginBottom: "18px",
-                    }}
-                  >
-                    <span className="badge badge-neutral">
-                      {product.category}
-                    </span>
-
-                    {product.stock <= 5 && (
-                      <span className="badge badge-warning">
-                        Only {product.stock} left
-                      </span>
-                    )}
-                  </div>
-
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                      marginBottom: "20px",
-                    }}
-                  >
-                    <div
-                      className="design-card-price"
-                      style={{
-                        fontSize: "1.5rem",
-                        fontWeight: 700,
-                      }}
-                    >
-                      ₹{product.price}
+                {/* PRODUCT BODY */}
+                <div style={{ padding: 20, flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                  <div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                      <span style={{ fontSize: 12, color: 'var(--text-sub)', fontWeight: 600 }}>By {product.seller}</span>
+                      <span style={{ fontSize: 13, fontWeight: 800, color: '#D97706' }}>⭐ {product.rating} ({product.reviewsCount})</span>
                     </div>
 
-                    <span
-                      style={{
-                        color: "var(--color-success)",
-                        fontWeight: 600,
-                      }}
-                    >
-                      In Stock
-                    </span>
+                    <h3 style={{ fontSize: 17, fontWeight: 800, color: 'var(--text-main)', marginBottom: 12, lineHeight: 1.3, height: 44, overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      {product.name}
+                    </h3>
                   </div>
 
-                  <div
-                    style={{
-                      display: "flex",
-                      gap: "12px",
-                    }}
-                  >
-                    <button
-                      style={{
-                        flex: 1,
-                      }}
-                      className="btn btn-primary"
-                      onClick={(e) => {
-                        e.preventDefault()
-                        e.stopPropagation()
-                        addToCart({ id: product.id, name: product.name, price: product.price, seller: product.seller, stock: product.stock }, 1)
-                      }}
-                    >
-                      Buy Now
-                    </button>
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 14 }}>
+                      <span style={{ fontSize: 22, fontWeight: 900, color: 'var(--text-main)' }}>₹{product.price}</span>
+                      {product.originalPrice && (
+                        <span style={{ fontSize: 14, color: 'var(--text-sub)', textDecoration: 'line-through' }}>₹{product.originalPrice}</span>
+                      )}
+                      <span style={{ fontSize: 11, color: '#10B981', fontWeight: 800 }}>Save {Math.round(((product.originalPrice! - product.price) / product.originalPrice!) * 100)}%</span>
+                    </div>
 
                     <button
-                      className="btn btn-secondary"
-                      onClick={(e) => {
-                        e.preventDefault()
-                        e.stopPropagation()
-                        addToWishlist({ id: product.id, name: product.name, price: product.price, type: 'product' })
+                      type="button"
+                      onClick={(e) => handleAddToCart(e, product)}
+                      style={{
+                        width: '100%',
+                        background: '#FF6B35',
+                        color: '#fff',
+                        border: 'none',
+                        padding: '10px 18px',
+                        borderRadius: 12,
+                        fontSize: 13,
+                        fontWeight: 800,
+                        cursor: 'pointer',
+                        boxShadow: '0 4px 14px rgba(255,107,53,0.3)',
                       }}
                     >
-                      {isInWishlist(product.id) ? '♥' : '♡'}
+                      + Add to Cart
                     </button>
                   </div>
-
                 </div>
               </Link>
-            ))}
-          </div>
-        ) : (
-          <div
-            className="empty-state"
-            style={{
-              padding: "70px 30px",
-            }}
-          >
-            <svg
-              width="72"
-              height="72"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="var(--color-slate-400)"
-              strokeWidth="1.5"
-            >
-              <circle cx="11" cy="11" r="8" />
-              <path d="M21 21l-4.35-4.35" />
-            </svg>
-
-            <h2
-              style={{
-                marginTop: "24px",
-                marginBottom: "12px",
-              }}
-            >
-              No Products Found
-            </h2>
-
-            <p className="text-muted">
-              We couldn't find products matching your search.
-              Try another keyword or category.
-            </p>
-          </div>
-        )}
-
-        <section
-          className="glass-card"
-          style={{
-            marginTop: "80px",
-            padding: "60px",
-            textAlign: "center",
-          }}
-        >
-          <div className="section-eyebrow">
-            Stay Updated
-          </div>
-
-          <h2
-            style={{
-              fontSize: "2.2rem",
-              fontWeight: 700,
-              marginBottom: "20px",
-            }}
-          >
-            Never Miss New Designs
-          </h2>
-
-          <p
-            className="text-muted"
-            style={{
-              maxWidth: "650px",
-              margin: "0 auto 32px",
-            }}
-          >
-            Subscribe to receive new arrivals,
-            exclusive collections,
-            creator spotlights and future AI-powered
-            recommendations from PrintHive.
-          </p>
-
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "center",
-              gap: "16px",
-              flexWrap: "wrap",
-            }}
-          >
-            <input
-              type="email"
-              className="input"
-              placeholder="Enter your email"
-              style={{
-                maxWidth: "420px",
-                width: "100%",
-              }}
-            />
-
-            <button className="btn btn-primary">
-              Subscribe
-            </button>
-          </div>
-        </section>
-
+            )
+          })}
+        </div>
       </section>
 
       <Footer />

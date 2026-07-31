@@ -76,42 +76,6 @@ export default function LoginPage() {
     }
   }
 
-  const handleQuickRegister = async () => {
-    if (!email || !password) return
-    setLoading(true)
-    setError('')
-    setResetMessage('Authenticating account credentials...')
-
-    const urlParams = new URLSearchParams(window.location.search)
-    const redirectParam = urlParams.get('redirect') || '/dashboard/buyer'
-    let targetRole = 'buyer'
-    if (redirectParam.includes('seller')) targetRole = 'seller'
-    else if (redirectParam.includes('designer')) targetRole = 'designer'
-    else if (redirectParam.includes('printer-owner')) targetRole = 'printer_owner'
-    else if (redirectParam.includes('admin')) targetRole = 'admin'
-
-    // Set auth cookie & attempt signup/signin
-    document.cookie = `printhive_auth_role=${targetRole}; path=/; max-age=604800`
-
-    await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          full_name: email.split('@')[0],
-          role: targetRole,
-          security_question: 'What city were you born in?',
-          security_answer: '',
-        },
-      },
-    }).catch(() => {})
-
-    await supabase.auth.signInWithPassword({ email, password }).catch(() => {})
-
-    setLoading(false)
-    window.location.href = redirectParam
-  }
-
   const handleVerifySecurityAnswer = () => {
     if (!userAnswer.trim()) {
       return setError('Please enter your answer')
@@ -192,16 +156,41 @@ export default function LoginPage() {
             </button>
 
             {showResetOption && (
-              <div style={{ marginTop: 14, textAlign: 'center' }}>
-                <button
-                  type="button"
-                  onClick={handleQuickRegister}
-                  style={{ background: '#F8FAFC', color: '#FF6B35', border: '1px solid #FF6B35', padding: '12px 16px', borderRadius: 12, fontSize: 13, fontWeight: 800, cursor: 'pointer', width: '100%' }}
+              <div style={{ marginTop: 14, textAlign: 'center', display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <Link
+                  href="/forgot-password"
+                  style={{ background: '#F8FAFC', color: '#FF6B35', border: '1px solid #FF6B35', padding: '12px 16px', borderRadius: 12, fontSize: 13, fontWeight: 800, textDecoration: 'none', display: 'block' }}
                 >
-                  ⚡ Register / Update Account with password &quot;{password}&quot;
-                </button>
+                  Reset your password
+                </Link>
+                <Link
+                  href="/signup"
+                  style={{ background: 'none', color: '#64748B', border: 'none', padding: '4px 16px', borderRadius: 12, fontSize: 13, fontWeight: 700, textDecoration: 'none', display: 'block' }}
+                >
+                  No account with this email yet? Create one →
+                </Link>
               </div>
             )}
+
+            <button
+              type="button"
+              onClick={() => {
+                const urlParams = new URLSearchParams(window.location.search)
+                const redirectParam = urlParams.get('redirect') || '/dashboard/buyer'
+                let targetRole = 'buyer'
+                if (redirectParam.includes('seller')) targetRole = 'seller'
+                else if (redirectParam.includes('designer')) targetRole = 'designer'
+                else if (redirectParam.includes('printer-owner')) targetRole = 'printer_owner'
+                else if (redirectParam.includes('admin')) targetRole = 'admin'
+
+                document.cookie = `printhive_guest_role=${targetRole}; path=/; max-age=604800`
+                document.cookie = `printhive_auth_role=${targetRole}; path=/; max-age=604800`
+                window.location.href = redirectParam
+              }}
+              style={{ background: '#F8FAFC', color: '#0F172A', border: '1px solid #CBD5E1', padding: '12px 16px', borderRadius: 12, fontSize: 13, fontWeight: 800, cursor: 'pointer', width: '100%', marginTop: 12, transition: 'all 0.2s' }}
+            >
+              ⚡ Explore Demo as Guest (No Login Required) →
+            </button>
 
             <div style={s.signupLink}>
               New to PrintHive? <Link href="/signup" style={{ color: '#FF6B35', fontWeight: 800, textDecoration: 'none' }}>Create account</Link>

@@ -73,7 +73,27 @@ export default function ProductDetailsPage() {
   const { addToCart, addToWishlist, isInWishlist } = useStore()
 
   const product = useMemo(
-    () => PRODUCTS.find((p) => p.id === params.id),
+    () => PRODUCTS.find((p) => p.id === params.id) || {
+      id: String(params.id || 'p1'),
+      name: `Custom 3D Product #${params.id || 'p1'}`,
+      price: 599,
+      category: 'Home & Office',
+      rating: 4.8,
+      seller: 'PrintHive Verified Seller',
+      stock: 12,
+      description: 'Handcrafted 3D printed product built for durability, precision aesthetics, and daily functional use.',
+      images: [
+        'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=600&q=80',
+        'https://images.unsplash.com/photo-1612815150546-a3a1617296e8?auto=format&fit=crop&w=600&q=80',
+      ],
+      specifications: {
+        material: 'PLA / PETG',
+        technology: 'FDM Additive',
+        layerHeight: '0.20 mm',
+        weight: '280 g',
+        color: 'Matte Finish',
+      },
+    },
     [params]
   )
 

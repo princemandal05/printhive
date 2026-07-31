@@ -68,17 +68,16 @@ export default function SignupPage() {
     setError('')
     setLoading(true)
 
-    try {
-      // Clear legacy guest cookies
-      document.cookie = 'printhive_guest_role=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT'
+    const cleanEmail = email.toLowerCase().trim()
+    const cleanAnswer = securityAnswer.trim().toLowerCase()
 
-      // Always save security question & answer in localStorage
-      const cleanEmail = email.toLowerCase().trim()
-      const cleanAnswer = securityAnswer.trim().toLowerCase()
+    try {
+      // 1. Always save security question & answer in localStorage and clear guest cookies
+      document.cookie = 'printhive_guest_role=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT'
       localStorage.setItem(`sec_q_${cleanEmail}`, securityQuestion)
       localStorage.setItem(`sec_a_${cleanEmail}`, cleanAnswer)
 
-      // 1. Attempt Supabase SignUp
+      // 2. Attempt Supabase SignUp
       const { data, error: err } = await supabase.auth.signUp({
         email: cleanEmail,
         password,
@@ -92,14 +91,14 @@ export default function SignupPage() {
         },
       })
 
-      // 2. If user already registered or password differs, log in & redirect seamlessly
-      if (err) {
+      // 3. If user already registered or error returned, attempt auto-login
+      if (err || (data.user && data.user.identities && data.user.identities.length === 0)) {
         const { data: signInData } = await supabase.auth.signInWithPassword({
           email: cleanEmail,
           password,
         })
 
-        if (signInData?.session && signInData.user) {
+        if (signInData?.user) {
           try {
             await supabase.from('profiles').upsert({
               id: signInData.user.id,
@@ -108,7 +107,6 @@ export default function SignupPage() {
               full_name: cleanEmail.split('@')[0],
               security_question: securityQuestion,
               security_answer: cleanAnswer,
-              created_at: new Date().toISOString(),
             })
           } catch (pErr) {}
         }
@@ -119,7 +117,7 @@ export default function SignupPage() {
         return
       }
 
-      // 3. Update profile table if user object returned
+      // 4. Update profile table if user object returned
       if (data.user) {
         try {
           await supabase.from('profiles').upsert({
@@ -129,9 +127,13 @@ export default function SignupPage() {
             full_name: cleanEmail.split('@')[0],
             security_question: securityQuestion,
             security_answer: cleanAnswer,
-            created_at: new Date().toISOString(),
           })
         } catch (pErr) {}
+      }
+
+      // 5. Attempt auto-login if session token was not returned immediately
+      if (!data.session) {
+        await supabase.auth.signInWithPassword({ email: cleanEmail, password }).catch(() => {})
       }
 
       document.cookie = `printhive_auth_role=${role}; path=/; max-age=604800`

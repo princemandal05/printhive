@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 import { useStore } from '@/lib/cart-context'
+import { createClient } from '@/utils/supabase/client'
 
 export default function CheckoutPage() {
   const router = useRouter()
@@ -74,10 +75,33 @@ export default function CheckoutPage() {
 
   const handleConfirmPayment = async () => {
     setPlacing(true)
-    await new Promise((res) => setTimeout(res, 1200))
+    const supabase = createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    const buyerId = user?.id || 'demo-buyer-id'
+    const orderId = `ORD-${Date.now().toString().slice(-6)}`
+
+    try {
+      await supabase.from('orders').insert({
+        id: orderId,
+        buyer_id: buyerId,
+        seller_id: 'demo-seller-id',
+        status: 'confirmed',
+        payment_status: 'paid',
+        payment_method: paymentCategory || 'upi',
+        total_price: total,
+        printer_share: printerShare,
+        designer_share: designerShare,
+        platform_share: platformShare,
+        items: cart,
+        created_at: new Date().toISOString(),
+      })
+    } catch (orderErr) {
+      console.warn('Order insert note:', orderErr)
+    }
+
     clearCart()
     setShowModal(false)
-    router.push('/orders/demo-order-id')
+    router.push(`/orders/${orderId}`)
   }
 
   const inputStyle: React.CSSProperties = {

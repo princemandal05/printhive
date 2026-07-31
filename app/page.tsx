@@ -368,9 +368,17 @@ export default function Home() {
             <Link href="/signup" className="btn btn-primary btn-lg" style={{ background: '#ea580c', color: '#fff', padding: '14px 36px', borderRadius: 99, fontWeight: 800, textDecoration: 'none', boxShadow: '0 4px 16px rgba(234,88,12,0.35)' }}>
               Create Free Account →
             </Link>
-            <Link href="/login" className="btn btn-outline btn-lg" style={{ borderColor: 'var(--border-color)', color: 'var(--text-main)', padding: '14px 32px', borderRadius: 99, background: 'var(--bg-card-hover)', textDecoration: 'none', fontWeight: 600 }}>
+            <button
+              onClick={() => {
+                document.cookie = 'printhive_guest_role=buyer; path=/; max-age=604800'
+                document.cookie = 'printhive_auth_role=buyer; path=/; max-age=604800'
+                window.location.href = '/dashboard/buyer'
+              }}
+              className="btn btn-outline btn-lg"
+              style={{ borderColor: 'var(--border-color)', color: 'var(--text-main)', padding: '14px 32px', borderRadius: 99, background: 'var(--bg-card-hover)', textDecoration: 'none', fontWeight: 600, cursor: 'pointer' }}
+            >
               Try Demo / Guest Login
-            </Link>
+            </button>
           </div>
         </div>
       </section>

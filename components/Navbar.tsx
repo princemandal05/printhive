@@ -24,10 +24,15 @@ const ROLE_LABELS: Record<string, string> = {
 
 // Role-based Navigation Links
 const ROLE_NAV_LINKS: Record<string, { href: string; label: string }[]> = {
-  // Public / Logged out: ONLY Home and Shop
+  // Public / Logged out: Full Guest Access across all pages
   public: [
     { href: '/', label: 'Home' },
     { href: '/shop', label: 'Shop' },
+    { href: '/browse', label: '3D Models' },
+    { href: '/printers', label: 'Nearby Hubs' },
+    { href: '/print-on-demand', label: 'Print File' },
+    { href: '/requests', label: 'Custom Briefs' },
+    { href: '/designers', label: 'Designers' },
   ],
   buyer: [
     { href: '/', label: 'Home' },
@@ -82,18 +87,25 @@ export default function Navbar() {
 
     async function loadSession() {
       const { data: { user } } = await supabase.auth.getUser()
-      if (!active) return
-      if (!user) {
-        setUserRole(null)
-        setDashboardHref(null)
-        return
+      let role: string | null = null
+
+      if (user) {
+        const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+        role = profile?.role || 'buyer'
+      } else if (typeof document !== 'undefined') {
+        const guestMatch = document.cookie.match(/printhive_guest_role=([^;]+)/) || document.cookie.match(/printhive_auth_role=([^;]+)/)
+        role = guestMatch ? guestMatch[1] : null
       }
 
-      const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
       if (!active) return
-      const role = profile?.role || 'buyer'
-      setUserRole(role)
-      setDashboardHref(DASHBOARD_PATH[role] ?? '/dashboard/buyer')
+
+      if (role && DASHBOARD_PATH[role]) {
+        setUserRole(role)
+        setDashboardHref(DASHBOARD_PATH[role])
+      } else {
+        setUserRole(null)
+        setDashboardHref(null)
+      }
     }
 
     loadSession()
@@ -162,7 +174,7 @@ export default function Navbar() {
         </div>
 
         {/* Dynamic Role-Based Navigation Pill Menu */}
-        <nav style={{ background: 'var(--bg-card-hover)', border: '1px solid var(--border-color)', borderRadius: 99, padding: '4px 8px', display: 'flex', alignItems: 'center', gap: 4 }}>
+        <nav style={{ background: 'var(--bg-card-hover)', border: '1px solid var(--border-color)', borderRadius: 99, padding: '3px 4px', display: 'flex', alignItems: 'center', gap: 2 }}>
           {activeNavLinks.map((link) => {
             const isActive = pathname === link.href
             return (
@@ -170,14 +182,15 @@ export default function Navbar() {
                 key={link.href}
                 href={link.href}
                 style={{
-                  padding: '8px 16px',
+                  padding: isActive ? '5px 14px' : '5px 12px',
                   borderRadius: 99,
-                  fontSize: 13,
+                  fontSize: 12,
                   fontWeight: isActive ? 800 : 600,
                   color: isActive ? '#fff' : 'var(--text-main)',
                   background: isActive ? '#ea580c' : 'transparent',
                   textDecoration: 'none',
                   transition: 'all 0.2s ease',
+                  whiteSpace: 'nowrap',
                 }}
               >
                 {link.label}
@@ -212,14 +225,36 @@ export default function Navbar() {
             )}
           </Link>
 
-          {/* User Auth Buttons / Dashboard Role Badge */}
+          {/* User Auth Buttons / Dashboard Role Switcher Badge */}
           {userRole && dashboardHref ? (
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              {/* 1-Click Role Switcher Selector */}
+              <select
+                value={userRole}
+                onChange={(e) => {
+                  const newRole = e.target.value
+                  document.cookie = `printhive_guest_role=${newRole}; path=/; max-age=604800`
+                  document.cookie = `printhive_auth_role=${newRole}; path=/; max-age=604800`
+                  setUserRole(newRole)
+                  const targetHref = DASHBOARD_PATH[newRole] || '/dashboard/buyer'
+                  setDashboardHref(targetHref)
+                  router.push(targetHref)
+                }}
+                style={{ background: 'var(--bg-card-hover)', color: 'var(--text-main)', border: '1px solid var(--border-color)', padding: '6px 12px', borderRadius: 99, fontSize: 12, fontWeight: 800, cursor: 'pointer', outline: 'none' }}
+                title="Switch Active Role Experience"
+              >
+                <option value="buyer">🛍️ Buyer Mode</option>
+                <option value="seller">🏬 Seller Mode</option>
+                <option value="designer">🎨 Designer Mode</option>
+                <option value="printer_owner">🖨️ Printer Owner Mode</option>
+                <option value="admin">🛡️ Admin Mode</option>
+              </select>
+
               <Link
                 href={dashboardHref}
                 style={{ background: '#ea580c', color: '#fff', padding: '8px 16px', borderRadius: 99, fontSize: 13, fontWeight: 800, textDecoration: 'none', boxShadow: '0 4px 14px rgba(234, 88, 12, 0.3)' }}
               >
-                {ROLE_LABELS[userRole] || 'Dashboard'}
+                Dashboard →
               </Link>
               <button
                 type="button"

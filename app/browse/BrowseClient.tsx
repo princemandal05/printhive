@@ -11,113 +11,174 @@ const FALLBACK_CATEGORIES = ['Toys & Games', 'Home & Office', 'Home & Decor', 'P
 export default function BrowseClient({ designs }: { designs: DesignRow[] }) {
   const [search, setSearch] = useState('')
   const [category, setCategory] = useState('All')
+  const [sort, setSort] = useState('popular')
 
   const categories = useMemo(() => {
     const fromData = Array.from(new Set(designs.map((d) => d.category).filter(Boolean))) as string[]
     return ['All', ...(fromData.length ? fromData : FALLBACK_CATEGORIES)]
   }, [designs])
 
-  const filtered = designs.filter((d) => {
-    const matchesCategory = category === 'All' || d.category === category
-    const matchesSearch = d.title.toLowerCase().includes(search.toLowerCase())
-    return matchesCategory && matchesSearch
-  })
+  const filtered = useMemo(() => {
+    return designs
+      .filter((d) => {
+        const matchesCategory = category === 'All' || d.category === category
+        const matchesSearch =
+          d.title.toLowerCase().includes(search.toLowerCase()) ||
+          (d.designer?.full_name || '').toLowerCase().includes(search.toLowerCase())
+        return matchesCategory && matchesSearch
+      })
+      .sort((a, b) => {
+        if (sort === 'rating') return b.rating - a.rating
+        if (sort === 'price-low') return a.price - b.price
+        if (sort === 'price-high') return b.price - a.price
+        return 0
+      })
+  }, [designs, search, category, sort])
 
   return (
-    <main>
+    <main style={{ minHeight: '100vh' }}>
       <Navbar />
 
-      <section className="container section-sm">
-        <div className="section-eyebrow">Discover</div>
-        <h1 className="section-heading" style={{ marginBottom: 'var(--space-2)' }}>
-          Find your next print
-        </h1>
-        <p className="section-subheading" style={{ marginBottom: 'var(--space-8)' }}>
-          Every design here is ready to be printed near you. Pick one, customize
-          it, and we&apos;ll match you with a nearby printer owner.
-        </p>
+      <section className="container section" style={{ maxWidth: 1240, margin: '0 auto', padding: '40px 20px' }}>
+        {/* HERO HEADER */}
+        <div style={{ marginBottom: 36 }}>
+          <div className="ateion-pill" style={{ marginBottom: 12 }}>
+            🧊 3D STL & 3MF Digital Model Repository
+          </div>
+          <h1 style={{ fontSize: 36, fontWeight: 900, color: 'var(--text-main)', marginBottom: 8, letterSpacing: '-0.5px' }}>
+            Explore Interactive 3D Models & STL Files
+          </h1>
+          <p style={{ color: 'var(--text-sub)', fontSize: 16, maxWidth: 740, lineHeight: 1.6 }}>
+            Browse verified digital 3D models. Inspect wireframe geometry in 3D WebGL, estimate print slicing costs with Gemini AI, or order prints from local 3D hubs.
+          </p>
+        </div>
 
-        <div className="flex gap-4" style={{ marginBottom: 'var(--space-8)', flexWrap: 'wrap' }}>
-          <input
-            type="text"
-            className="input"
-            placeholder="Search designs..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            style={{ maxWidth: '320px' }}
-          />
-          <div className="flex gap-2" style={{ flexWrap: 'wrap' }}>
-            {categories.map((cat) => (
-              <button
-                key={cat}
-                onClick={() => setCategory(cat)}
-                className={`badge ${category === cat ? 'badge-primary' : 'badge-neutral'}`}
-                style={{ cursor: 'pointer', border: 'none', padding: '8px 16px', fontSize: 'var(--text-sm)' }}
-              >
-                {cat}
-              </button>
-            ))}
+        {/* SEARCH & FILTER CONTROLS */}
+        <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 24, padding: 24, marginBottom: 40, boxShadow: '0 8px 30px rgba(0,0,0,0.04)' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 16, marginBottom: 20 }}>
+            <div style={{ background: 'var(--bg-card-hover)', border: '1px solid var(--border-color)', borderRadius: 99, padding: '6px 20px', display: 'flex', alignItems: 'center', gap: 10 }}>
+              <span style={{ fontSize: 16 }}>🔍</span>
+              <input
+                type="text"
+                placeholder="Search 3D models, creators, or file types..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                style={{ width: '100%', background: 'transparent', border: 'none', color: 'var(--text-main)', fontSize: 14, outline: 'none' }}
+              />
+            </div>
+
+            <select
+              value={sort}
+              onChange={(e) => setSort(e.target.value)}
+              style={{ background: 'var(--bg-card-hover)', border: '1px solid var(--border-color)', borderRadius: 99, padding: '0 20px', color: 'var(--text-main)', fontSize: 14, outline: 'none', fontWeight: 700, cursor: 'pointer' }}
+            >
+              <option value="popular">Most Popular</option>
+              <option value="rating">Highest Rated</option>
+              <option value="price-low">Royalty: Low to High</option>
+              <option value="price-high">Royalty: High to Low</option>
+            </select>
+          </div>
+
+          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+            {categories.map((cat) => {
+              const active = category === cat
+              return (
+                <button
+                  key={cat}
+                  onClick={() => setCategory(cat)}
+                  style={{
+                    padding: '8px 20px',
+                    borderRadius: 99,
+                    fontSize: 13,
+                    fontWeight: active ? 800 : 600,
+                    border: active ? '1px solid #8B5CF6' : '1px solid var(--border-color)',
+                    background: active ? '#8B5CF6' : 'var(--bg-card-hover)',
+                    color: active ? '#fff' : 'var(--text-main)',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s',
+                  }}
+                >
+                  {cat}
+                </button>
+              )
+            })}
           </div>
         </div>
 
-        {designs.length === 0 ? (
-          <div className="empty-state">
-            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--color-slate-400)" strokeWidth="1.5">
-              <path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z" />
-            </svg>
-            <div className="empty-state-title">No designs published yet</div>
-            <p className="empty-state-text">Check back soon — designers are just getting started here.</p>
+        {/* 3D MODEL CARDS GRID */}
+        {filtered.length === 0 ? (
+          <div style={{ background: 'var(--bg-card)', border: '1px dashed var(--border-color)', borderRadius: 24, padding: 60, textAlign: 'center' }}>
+            <div style={{ fontSize: 48, marginBottom: 16 }}>🧊</div>
+            <h3 style={{ fontSize: 20, fontWeight: 800, color: 'var(--text-main)', marginBottom: 8 }}>No 3D Models Found</h3>
+            <p style={{ color: 'var(--text-sub)', fontSize: 14 }}>Try searching for &quot;Dragon&quot;, &quot;Organizer&quot;, or selecting &quot;All&quot; categories.</p>
           </div>
         ) : (
-          <>
-            <p className="text-sm text-muted" style={{ marginBottom: 'var(--space-4)' }}>
-              {filtered.length} {filtered.length === 1 ? 'design' : 'designs'} found
-            </p>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 28 }}>
+            {filtered.map((design) => (
+              <Link
+                key={design.id}
+                href={`/designs/${design.id}`}
+                style={{
+                  background: 'var(--bg-card)',
+                  border: '1px solid var(--border-color)',
+                  borderRadius: 24,
+                  overflow: 'hidden',
+                  textDecoration: 'none',
+                  color: 'inherit',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  boxShadow: '0 8px 30px rgba(0,0,0,0.04)',
+                  transition: 'transform 0.2s, boxShadow 0.2s',
+                }}
+              >
+                {/* 3D PREVIEW THUMBNAIL */}
+                <div style={{ height: 200, width: '100%', position: 'relative', background: '#0F172A', overflow: 'hidden' }}>
+                  <img
+                    src={design.thumbnail_url || 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=600&q=80'}
+                    alt={design.title}
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  />
 
-            {filtered.length > 0 ? (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 'var(--space-6)' }}>
-                {filtered.map((design) => (
-                  <Link key={design.id} href={`/designs/${design.id}`} className="design-card" style={{ display: 'block' }}>
-                    <div
-                      className="design-card-image"
-                      style={{
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        background: design.thumbnail_url
-                          ? `url(${design.thumbnail_url}) center/cover`
-                          : 'linear-gradient(135deg, var(--color-slate-100), var(--color-border-light))',
-                      }}
-                    >
-                      {!design.thumbnail_url && (
-                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--color-slate-400)" strokeWidth="1.5">
-                          <path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z" />
-                          <path d="M3.27 6.96L12 12.01l8.73-5.05" />
-                          <path d="M12 22.08V12" />
-                        </svg>
-                      )}
+                  {/* Category Pill */}
+                  <div style={{ position: 'absolute', top: 12, left: 12, background: 'rgba(139,92,246,0.9)', color: '#fff', fontSize: 11, fontWeight: 800, padding: '4px 12px', borderRadius: 99, backdropFilter: 'blur(4px)' }}>
+                    {design.category || '3D STL Model'}
+                  </div>
+
+                  {/* 3D Viewport Action Badge */}
+                  <div style={{ position: 'absolute', bottom: 12, right: 12, background: 'rgba(15,23,42,0.85)', color: '#fff', fontSize: 11, fontWeight: 800, padding: '4px 12px', borderRadius: 99, backdropFilter: 'blur(4px)', border: '1px solid rgba(255,255,255,0.2)' }}>
+                    Inspect 3D WebGL 🧊
+                  </div>
+                </div>
+
+                {/* CARD CONTENT BODY */}
+                <div style={{ padding: 20, flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                  <div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                      <span style={{ fontSize: 12, color: 'var(--text-sub)', fontWeight: 600 }}>By {design.designer?.full_name || 'PrintHive Designer'}</span>
+                      <span style={{ fontSize: 13, fontWeight: 800, color: '#D97706' }}>⭐ {design.rating} ({design.rating_count})</span>
                     </div>
-                    <div className="design-card-body">
-                      <div className="design-card-title">{design.title}</div>
-                      <div className="design-card-price">₹{design.price}</div>
-                      <div className="design-card-meta">
-                        <span className="rating">★ {design.rating || 'New'}</span>
-                        <span>·</span>
-                        <span>{design.designer?.full_name ?? 'PrintHive designer'}</span>
+
+                    <h3 style={{ fontSize: 17, fontWeight: 800, color: 'var(--text-main)', marginBottom: 12, lineHeight: 1.3, height: 44, overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      {design.title}
+                    </h3>
+                  </div>
+
+                  <div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 10 }}>
+                      <div>
+                        <div style={{ fontSize: 11, color: 'var(--text-sub)', fontWeight: 700, textTransform: 'uppercase' }}>Royalty Fee</div>
+                        <div style={{ fontSize: 20, fontWeight: 900, color: '#8B5CF6' }}>₹{design.price}</div>
+                      </div>
+
+                      <div style={{ background: '#F1F5F9', color: '#0F172A', padding: '8px 16px', borderRadius: 12, fontSize: 12, fontWeight: 800 }}>
+                        3D View →
                       </div>
                     </div>
-                  </Link>
-                ))}
-              </div>
-            ) : (
-              <div className="empty-state">
-                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--color-slate-400)" strokeWidth="1.5">
-                  <circle cx="11" cy="11" r="8" />
-                  <path d="M21 21l-4.35-4.35" />
-                </svg>
-                <div className="empty-state-title">No designs found</div>
-                <p className="empty-state-text">Try a different search term or category.</p>
-              </div>
-            )}
-          </>
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
         )}
       </section>
 

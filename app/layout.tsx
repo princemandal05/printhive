@@ -30,12 +30,12 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning className={`${spaceGrotesk.variable} ${sourceSans3.variable}`}>
       <body style={{ fontFamily: 'var(--font-body), sans-serif' }}>
         <Script
-          id="ateion-theme-init"
+          id="printhive-theme-init"
           strategy="beforeInteractive"
           dangerouslySetInnerHTML={{
             __html: `
               (function () {
-                var t = localStorage.getItem("ateion-theme");
+                var t = localStorage.getItem("printhive-theme") || localStorage.getItem("ateion-theme");
                 if (!t) t = "light";
                 document.documentElement.setAttribute("data-theme", t);
               })();
