@@ -361,9 +361,20 @@ export default function UploadDesignForm() {
                   <div style={{ fontSize: 16, fontWeight: 900, color: '#0F172A', marginBottom: 6 }}>{title || 'Model Title Preview'}</div>
                   <div style={{ fontSize: 12, color: '#64748B', marginBottom: 12 }}>Materials: {materials.join(', ')}</div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div style={{ fontSize: 18, fontWeight: 900, color: '#0F172A' }}>₹{price || 150}</div>
-                    <span style={{ background: '#8B5CF6', color: '#fff', padding: '4px 12px', borderRadius: 8, fontSize: 12, fontWeight: 800 }}>
-                      15% Royalty
+                    <div style={{ fontSize: 18, fontWeight: 900, color: pricingType === 'free' ? '#10B981' : '#0F172A' }}>
+                      {pricingType === 'free' ? 'Free (₹0)' : `₹${price || '0'}`}
+                    </div>
+                    <span
+                      style={{
+                        background: pricingType === 'free' ? '#10B981' : pricingType === 'one_time' ? '#0284C7' : '#8B5CF6',
+                        color: '#fff',
+                        padding: '4px 12px',
+                        borderRadius: 8,
+                        fontSize: 12,
+                        fontWeight: 800,
+                      }}
+                    >
+                      {pricingType === 'free' ? 'Open Source' : pricingType === 'one_time' ? 'Flat Price' : '15% Royalty'}
                     </span>
                   </div>
                 </div>
