@@ -3,7 +3,6 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { createClient } from '@/utils/supabase/client'
 
 const ROLES = [
   { id: 'buyer', label: 'Buyer', desc: 'Shop physical 3D items & order custom prints', icon: '🛍️' },
@@ -22,9 +21,8 @@ const DASHBOARD_PATH: Record<string, string> = {
 
 export default function SignupPage() {
   const router = useRouter()
-  const supabase = createClient()
 
-  const [step, setStep] = useState<'role' | 'details'>('role')
+  const [step, setStep] = useState<'role' | 'details' | 'check-email'>('role')
   const [role, setRole] = useState('buyer')
   const [fullName, setFullName] = useState('')
   const [email, setEmail] = useState('')
@@ -54,65 +52,54 @@ export default function SignupPage() {
     const cleanEmail = email.toLowerCase().trim()
     const cleanName = fullName.trim()
 
-    try {
-      // 1. Clear any guest role cookies so user is authenticated as real user
-      document.cookie = 'printhive_guest_role=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT'
+    // Clear any guest-browsing cookie so this becomes a real account, not a demo role.
+    document.cookie = 'printhive_guest_role=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT'
 
-      // 2. Call server-side Registration API to guarantee public.profiles insertion
-      await fetch('/api/auth/register', {
+    let res: Response
+    try {
+      res = await fetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: cleanEmail,
-          password,
-          fullName: cleanName,
-          role,
-        }),
-      }).catch((e) => console.warn('Reg API error:', e))
-
-      // 3. Attempt Client Supabase SignUp & Auto-Login
-      const { data } = await supabase.auth.signUp({
-        email: cleanEmail,
-        password,
-        options: {
-          data: {
-            role,
-            full_name: cleanName,
-          },
-        },
+        body: JSON.stringify({ email: cleanEmail, password, fullName: cleanName, role }),
       })
-
-      let userId = data?.user?.id
-
-      const { data: signInData } = await supabase.auth.signInWithPassword({
-        email: cleanEmail,
-        password,
-      })
-
-      if (signInData?.user) {
-        userId = signInData.user.id
-      }
-
-      if (userId) {
-        try {
-          await supabase.from('profiles').upsert({
-            id: userId,
-            email: cleanEmail,
-            role: role as any,
-            full_name: cleanName,
-          }, { onConflict: 'id' })
-        } catch (pErr) { }
-      }
-
-      // 4. Set active role cookie and redirect to dashboard
-      document.cookie = `printhive_auth_role=${role}; path=/; max-age=604800`
+    } catch (networkErr) {
       setLoading(false)
-      window.location.href = DASHBOARD_PATH[role] ?? '/dashboard/buyer'
-    } catch (catErr: any) {
-      document.cookie = `printhive_auth_role=${role}; path=/; max-age=604800`
-      setLoading(false)
-      window.location.href = DASHBOARD_PATH[role] ?? '/dashboard/buyer'
+      setError('Could not reach the server. Check your connection and try again.')
+      return
     }
+
+    let body: any = null
+    try {
+      body = await res.json()
+    } catch {
+      // ignore — handled by the !res.ok / !body.success checks below
+    }
+
+    if (!res.ok || !body?.success) {
+      setLoading(false)
+      let msg = 'Signup failed. Please try again.'
+      if (typeof body?.error === 'string' && body.error.trim() && body.error !== '{}') {
+        msg = body.error
+      } else if (typeof body?.error?.message === 'string' && body.error.message.trim()) {
+        msg = body.error.message
+      } else if (typeof body?.message === 'string' && body.message.trim()) {
+        msg = body.message
+      }
+      setError(msg)
+      return
+    }
+
+    setLoading(false)
+
+    if (body.needsEmailConfirmation) {
+      // No session yet — Supabase is requiring email confirmation before login.
+      setStep('check-email')
+      return
+    }
+
+    // A session was created and its cookies were set by the API route's
+    // Supabase client — the user is genuinely logged in now.
+    router.push(DASHBOARD_PATH[role] ?? '/dashboard/buyer')
   }
 
   const s: Record<string, React.CSSProperties> = {
@@ -254,6 +241,18 @@ export default function SignupPage() {
             >
               ← Change Role Selection
             </button>
+          </>
+        )}
+
+        {step === 'check-email' && (
+          <>
+            <div style={s.title}>Check your inbox</div>
+            <div style={s.sub}>
+              We sent a confirmation link to <strong>{email}</strong>. Click it, then come back and log in.
+            </div>
+            <Link href="/login" style={{ ...s.btn, display: 'block', textAlign: 'center', textDecoration: 'none', boxSizing: 'border-box' }}>
+              Go to Login
+            </Link>
           </>
         )}
       </div>
