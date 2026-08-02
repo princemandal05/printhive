@@ -82,33 +82,45 @@ export default function UploadDesignForm() {
     setSubmitting(true)
     setStatusMsg('🚀 Publishing 3D Model to PrintHive Creator Studio...')
 
+    const defaultStlUrl = '/models/demo.stl'
+    const fileUrl = cloudinaryFileUrl || defaultStlUrl
+    const previewUrl = 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=600&q=80'
+
+    const designPayload = {
+      title,
+      description: description || `Original 3D model ${title} designed for precision printing.`,
+      category,
+      materials,
+      pricing_type: pricingType,
+      price: pricingType === 'free' ? 0 : Number(price) || 0,
+      file_url: fileUrl,
+      preview_url: previewUrl,
+    }
+
     try {
-      const { data: { user } } = await supabase.auth.getUser()
-      const designerId = user?.id || 'demo-designer-id'
-
-      const defaultStlUrl = '/models/demo.stl'
-      const fileUrl = cloudinaryFileUrl || defaultStlUrl
-
-      await supabase.from('designs').insert({
-        designer_id: designerId,
-        title,
-        description: description || `Original 3D model ${title} designed for precision printing.`,
-        category,
-        materials,
-        pricing_type: pricingType,
-        price: pricingType === 'free' ? 0 : Number(price) || 0,
-        file_url: fileUrl,
-        preview_url: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=600&q=80',
-        status: 'published',
-        is_public: true,
-        created_at: new Date().toISOString(),
+      const res = await fetch('/api/designs/upload', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(designPayload),
       })
+      const data = await res.json()
+
+      // Also persist to localStorage for instant client rendering
+      const existingStr = localStorage.getItem('printhive_uploaded_designs') || '[]'
+      const existing = JSON.parse(existingStr)
+      const newDesignObj = data.design || {
+        id: `custom-${Date.now()}`,
+        ...designPayload,
+        status: 'published',
+      }
+      localStorage.setItem('printhive_uploaded_designs', JSON.stringify([newDesignObj, ...existing]))
     } catch (insertError: any) {
       console.warn('Design insert note:', insertError)
     }
 
     setSubmitting(false)
     router.push('/dashboard/designer')
+    router.refresh()
   }
 
   const inputStyle: React.CSSProperties = {

@@ -24,15 +24,10 @@ const ROLE_LABELS: Record<string, string> = {
 
 // Role-based Navigation Links
 const ROLE_NAV_LINKS: Record<string, { href: string; label: string }[]> = {
-  // Public / Logged out: Full Guest Access across all pages
+  // Public / Logged out: Only Home and Shop accessible without login
   public: [
     { href: '/', label: 'Home' },
     { href: '/shop', label: 'Shop' },
-    { href: '/browse', label: '3D Models' },
-    { href: '/printers', label: 'Nearby Hubs' },
-    { href: '/print-on-demand', label: 'Print File' },
-    { href: '/requests', label: 'Custom Briefs' },
-    { href: '/designers', label: 'Designers' },
   ],
   buyer: [
     { href: '/', label: 'Home' },
@@ -249,6 +244,14 @@ export default function Navbar() {
                 <option value="printer_owner">🖨️ Printer Owner Mode</option>
                 <option value="admin">🛡️ Admin Mode</option>
               </select>
+
+              <Link
+                href="/profile"
+                style={{ background: 'var(--bg-card-hover)', border: '1px solid var(--border-color)', color: 'var(--text-main)', padding: '6px 14px', borderRadius: 99, fontSize: 13, fontWeight: 800, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 6 }}
+                title="View & Edit My Profile"
+              >
+                👤 My Profile
+              </Link>
 
               <Link
                 href={dashboardHref}
