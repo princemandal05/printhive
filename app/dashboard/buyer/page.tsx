@@ -4,35 +4,6 @@ import { redirect } from 'next/navigation'
 import { cookies } from 'next/headers'
 import Link from 'next/link'
 
-const ACTIVE_ORDERS = [
-  {
-    id: 'ORD-89210',
-    item: 'Ergonomic Desk Headphone Stand',
-    seller: 'Delhi Precision 3D Hub (3.8 km away)',
-    price: 1299,
-    status: 'In Slicing & Manufacturing',
-    progress: 45,
-    eta: 'Tomorrow, 4:00 PM',
-    image: 'https://images.unsplash.com/photo-1612815150546-a3a1617296e8?auto=format&fit=crop&w=600&q=80',
-  },
-  {
-    id: 'ORD-89198',
-    item: 'Articulated Dragon V2 (Ruby Red)',
-    seller: 'Kolkata Additive Lab',
-    price: 799,
-    status: 'Delivered & Verified',
-    progress: 100,
-    eta: 'Delivered 29 Jul 2026',
-    image: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=600&q=80',
-  },
-]
-
-const FEATURED_PRODUCTS = [
-  { id: '1', title: 'Cyberpunk Helmet Prop', price: 2499, rating: 4.9, image: 'https://images.unsplash.com/photo-1534447677768-be436bb09401?auto=format&fit=crop&w=600&q=80', tag: 'Top Seller' },
-  { id: '2', title: 'Geometric Planter Pot Set', price: 549, rating: 4.8, image: 'https://images.unsplash.com/photo-1485955900006-10f4d324d411?auto=format&fit=crop&w=600&q=80', tag: 'Trending' },
-  { id: '3', title: 'Modular Cable Manager', price: 349, rating: 4.9, image: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=600&q=80', tag: 'Fast Ship' },
-]
-
 export default async function BuyerDashboard() {
   const { user } = await requireRole('buyer')
 
@@ -108,8 +79,8 @@ export default async function BuyerDashboard() {
               <div style={s.metricLabel}>Total Orders Placed</div>
               <span style={{ fontSize: 22 }}>📦</span>
             </div>
-            <div style={s.metricVal}>2 Orders</div>
-            <div style={{ fontSize: 12, color: '#10B981', marginTop: 8, fontWeight: 700 }}>1 Active in Print Queue</div>
+            <div style={s.metricVal}>0 Orders</div>
+            <div style={{ fontSize: 12, color: '#64748B', marginTop: 8, fontWeight: 600 }}>100% Order Tracking</div>
           </div>
 
           <div style={s.card}>
@@ -117,7 +88,7 @@ export default async function BuyerDashboard() {
               <div style={s.metricLabel}>Escrow Protection</div>
               <span style={{ fontSize: 22 }}>🔒</span>
             </div>
-            <div style={s.metricVal}>₹2,098</div>
+            <div style={s.metricVal}>₹0</div>
             <div style={{ fontSize: 12, color: '#2563EB', marginTop: 8, fontWeight: 700 }}>100% Razorpay Escrow Safe</div>
           </div>
 
@@ -126,8 +97,8 @@ export default async function BuyerDashboard() {
               <div style={s.metricLabel}>Nearby Printer Hubs</div>
               <span style={{ fontSize: 22 }}>📍</span>
             </div>
-            <div style={s.metricVal}>8 Hubs</div>
-            <div style={{ fontSize: 12, color: '#64748B', marginTop: 8, fontWeight: 600 }}>Within 15 km Delivery Radius</div>
+            <div style={s.metricVal}>0 Hubs</div>
+            <div style={{ fontSize: 12, color: '#64748B', marginTop: 8, fontWeight: 600 }}>GPS Matched Across India</div>
           </div>
 
           <div style={s.card}>
@@ -135,8 +106,8 @@ export default async function BuyerDashboard() {
               <div style={s.metricLabel}>Wishlist & Saved</div>
               <span style={{ fontSize: 22 }}>❤️</span>
             </div>
-            <div style={s.metricVal}>6 Models</div>
-            <div style={{ fontSize: 12, color: '#FF6B35', marginTop: 8, fontWeight: 700 }}>Ready for 1-Click Order</div>
+            <div style={s.metricVal}>0 Models</div>
+            <div style={{ fontSize: 12, color: '#FF6B35', marginTop: 8, fontWeight: 700 }}>Saved Favorite Products</div>
           </div>
         </div>
 
@@ -179,60 +150,23 @@ export default async function BuyerDashboard() {
             </Link>
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-            {ACTIVE_ORDERS.map((o) => (
-              <div key={o.id} style={{ background: '#F8FAFC', borderRadius: 16, border: '1px solid #E2E8F0', padding: 20, display: 'flex', gap: 20, alignItems: 'center', flexWrap: 'wrap' }}>
-                <img src={o.image} alt={o.item} style={{ width: 80, height: 80, borderRadius: 12, objectFit: 'cover' }} />
-                <div style={{ flex: 1, minWidth: 200 }}>
-                  <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginBottom: 4 }}>
-                    <span style={{ fontWeight: 900, fontSize: 15, color: '#0F172A' }}>{o.id}</span>
-                    <span style={{ fontSize: 12, background: o.progress === 100 ? '#ECFDF5' : '#FEF3C7', color: o.progress === 100 ? '#10B981' : '#D97706', padding: '2px 8px', borderRadius: 99, fontWeight: 800 }}>
-                      {o.status}
-                    </span>
-                  </div>
-                  <div style={{ fontSize: 16, fontWeight: 800, color: '#0F172A', marginBottom: 4 }}>{o.item}</div>
-                  <div style={{ fontSize: 13, color: '#64748B' }}>Hub: {o.seller} · ETA: {o.eta}</div>
-
-                  {/* Progress Bar */}
-                  <div style={{ width: '100%', height: 6, background: '#E2E8F0', borderRadius: 99, marginTop: 12, overflow: 'hidden' }}>
-                    <div style={{ width: `${o.progress}%`, height: '100%', background: 'linear-gradient(90deg, #FF6B35, #10B981)', borderRadius: 99 }} />
-                  </div>
-                </div>
-
-                <div style={{ textAlign: 'right' }}>
-                  <div style={{ fontSize: 20, fontWeight: 900, color: '#0F172A' }}>₹{o.price}</div>
-                  <Link
-                    href={`/orders/${o.id}`}
-                    style={{ background: '#FF6B35', color: '#fff', padding: '8px 16px', borderRadius: 10, fontWeight: 700, fontSize: 13, textDecoration: 'none', display: 'inline-block', marginTop: 8 }}
-                  >
-                    Track Order →
-                  </Link>
-                </div>
-              </div>
-            ))}
+          <div style={{ textAlign: 'center', padding: '40px 24px', background: '#F8FAFC', borderRadius: 16, border: '2px dashed #CBD5E1' }}>
+            <div style={{ fontSize: 36, marginBottom: 8 }}>🚚</div>
+            <div style={{ fontSize: 16, fontWeight: 900, color: '#0F172A', marginBottom: 4 }}>No Active Orders Found</div>
+            <div style={{ fontSize: 13, color: '#64748B', marginBottom: 16 }}>Your active purchases and print-on-demand jobs will track here in real time.</div>
+            <Link href="/shop" style={s.primaryBtn}>
+              🛒 Explore Shop Marketplace
+            </Link>
           </div>
         </div>
 
-        {/* TRENDING RECOMMENDATIONS */}
+        {/* SHOP DISCOVERY BANNER */}
         <div style={s.card}>
-          <div style={{ fontSize: 18, fontWeight: 900, color: '#0F172A', marginBottom: 20 }}>🔥 Trending Products For You</div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 20 }}>
-            {FEATURED_PRODUCTS.map((p) => (
-              <div key={p.id} style={{ background: '#F8FAFC', borderRadius: 16, border: '1px solid #E2E8F0', overflow: 'hidden' }}>
-                <img src={p.image} alt={p.title} style={{ width: '100%', height: 160, objectFit: 'cover' }} />
-                <div style={{ padding: 16 }}>
-                  <div style={{ fontSize: 11, fontWeight: 800, color: '#FF6B35', textTransform: 'uppercase', marginBottom: 4 }}>{p.tag}</div>
-                  <div style={{ fontSize: 15, fontWeight: 800, color: '#0F172A', marginBottom: 8 }}>{p.title}</div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div style={{ fontSize: 18, fontWeight: 900, color: '#0F172A' }}>₹{p.price}</div>
-                    <Link href={`/shop/${p.id}`} style={{ color: '#FF6B35', fontWeight: 800, fontSize: 13, textDecoration: 'none' }}>
-                      View Details →
-                    </Link>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
+          <div style={{ fontSize: 18, fontWeight: 900, color: '#0F172A', marginBottom: 6 }}>🛍️ Ready-Made 3D Marketplace</div>
+          <div style={{ fontSize: 13, color: '#64748B', marginBottom: 20 }}>Discover custom 3D printed items crafted by verified sellers across India.</div>
+          <Link href="/shop" style={{ background: '#0F172A', color: '#fff', padding: '12px 24px', borderRadius: 12, fontWeight: 800, textDecoration: 'none', display: 'inline-block' }}>
+            Open Ready-Made Shop →
+          </Link>
         </div>
       </div>
     </div>

@@ -117,10 +117,20 @@ export default function DesignerDashboardClient({ userEmail, initialDesigns, sig
               <span style={s.metricLabel}>Total Royalties Earned</span>
               <span style={{ fontSize: 20 }}>💰</span>
             </div>
-            <div style={s.metricVal}>₹18,450</div>
+            <div style={s.metricVal}>
+              ₹{designs.reduce((acc, d) => acc + (d.price ? Math.round(d.price * 0.15 * (d.prints || 0)) : 0), 0)}
+            </div>
             <div style={{ fontSize: 12, color: '#10B981', marginTop: 6, fontWeight: 700 }}>15% Royalty per order payout</div>
           </div>
-          <div style={s.card}>
+
+          {/* CLICKABLE PUBLISHED MODELS CARD */}
+          <div
+            onClick={() => {
+              const el = document.getElementById('my-published-models')
+              if (el) el.scrollIntoView({ behavior: 'smooth' })
+            }}
+            style={{ ...s.card, cursor: 'pointer' }}
+          >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <span style={s.metricLabel}>Published Models</span>
               <span style={{ fontSize: 20 }}>📦</span>
@@ -128,22 +138,26 @@ export default function DesignerDashboardClient({ userEmail, initialDesigns, sig
             <div style={s.metricVal}>{designs.length} Models</div>
             <div style={{ fontSize: 12, color: '#64748B', marginTop: 6, fontWeight: 600 }}>Live in STL Marketplace</div>
           </div>
-          <div style={s.card}>
+
+          <Link href="/orders" style={{ ...s.card, textDecoration: 'none', color: 'inherit' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <span style={s.metricLabel}>Total Prints Fulfilled</span>
               <span style={{ fontSize: 20 }}>🖨️</span>
             </div>
-            <div style={s.metricVal}>564 Prints</div>
-            <div style={{ fontSize: 12, color: '#0284C7', marginTop: 6, fontWeight: 600 }}>Across 12 Verified Hubs</div>
-          </div>
-          <div style={s.card}>
+            <div style={s.metricVal}>
+              {designs.reduce((acc, d) => acc + (d.prints || 0), 0)} Prints
+            </div>
+            <div style={{ fontSize: 12, color: '#0284C7', marginTop: 6, fontWeight: 600 }}>Across Verified Hubs</div>
+          </Link>
+
+          <Link href="/requests" style={{ ...s.card, textDecoration: 'none', color: 'inherit' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <span style={s.metricLabel}>Open Brief Bids</span>
               <span style={{ fontSize: 20 }}>✏️</span>
             </div>
-            <div style={s.metricVal}>4 Open Bids</div>
+            <div style={s.metricVal}>0 Open Bids</div>
             <div style={{ fontSize: 12, color: '#D97706', marginTop: 6, fontWeight: 600 }}>Custom Buyer Requests</div>
-          </div>
+          </Link>
         </div>
 
         {/* ANALYTICS METRIC CHART */}
@@ -152,18 +166,18 @@ export default function DesignerDashboardClient({ userEmail, initialDesigns, sig
           subtitle="Live 7-Day Performance & Royalty Accrual"
           accentColor="#8B5CF6"
           data={[
-            { label: 'Mon', value: 1800 },
-            { label: 'Tue', value: 2400 },
-            { label: 'Wed', value: 3100 },
-            { label: 'Thu', value: 2900 },
-            { label: 'Fri', value: 4200 },
-            { label: 'Sat', value: 5800 },
-            { label: 'Sun', value: 6450 },
+            { label: 'Mon', value: 0 },
+            { label: 'Tue', value: 0 },
+            { label: 'Wed', value: 0 },
+            { label: 'Thu', value: 0 },
+            { label: 'Fri', value: 0 },
+            { label: 'Sat', value: 0 },
+            { label: 'Sun', value: 0 },
           ]}
         />
 
         {/* PUBLISHED MODELS SHOWCASE */}
-        <div style={{ ...s.card, marginBottom: 36 }}>
+        <div id="my-published-models" style={{ ...s.card, marginBottom: 36 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
             <div>
               <div style={{ fontSize: 18, fontWeight: 900, color: '#0F172A' }}>🎨 My Published 3D Models</div>
@@ -174,34 +188,45 @@ export default function DesignerDashboardClient({ userEmail, initialDesigns, sig
             </Link>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 20 }}>
-            {designs.map((d) => (
-              <Link
-                key={d.id}
-                href={`/designs/${d.id}`}
-                style={{ background: '#F8FAFC', borderRadius: 16, border: '1px solid #E2E8F0', overflow: 'hidden', textDecoration: 'none', color: 'inherit', display: 'block', transition: 'transform 0.2s, boxShadow 0.2s' }}
-              >
-                <div style={{ position: 'relative', height: 160, width: '100%', background: '#E2E8F0' }}>
-                  <img src={d.preview} alt={d.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                  <span style={{ position: 'absolute', bottom: 10, right: 10, background: 'rgba(15,23,42,0.85)', color: '#fff', fontSize: 11, fontWeight: 800, padding: '4px 10px', borderRadius: 99, backdropFilter: 'blur(4px)' }}>
-                    Inspect 3D Model 🧊
-                  </span>
-                </div>
-                <div style={{ padding: 18 }}>
-                  <div style={{ fontSize: 11, fontWeight: 800, color: '#8B5CF6', textTransform: 'uppercase', marginBottom: 4 }}>{d.category}</div>
-                  <div style={{ fontSize: 16, fontWeight: 800, color: '#0F172A', marginBottom: 8, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{d.title}</div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div style={{ fontSize: 18, fontWeight: 900, color: d.price === 0 ? '#10B981' : '#0F172A' }}>
-                      {d.price === 0 ? 'Free (₹0)' : `₹${d.price}`}
-                    </div>
-                    <div style={{ fontSize: 12, color: '#10B981', fontWeight: 700 }}>
-                      {d.prints} Prints ({d.royalty})
+          {designs.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '48px 24px', background: '#F8FAFC', borderRadius: 16, border: '2px dashed #CBD5E1' }}>
+              <div style={{ fontSize: 36, marginBottom: 8 }}>📦</div>
+              <div style={{ fontSize: 16, fontWeight: 900, color: '#0F172A', marginBottom: 4 }}>No 3D Models Published Yet</div>
+              <div style={{ fontSize: 13, color: '#64748B', marginBottom: 16 }}>Upload your original STL / 3MF files to start earning 15% automated royalties.</div>
+              <Link href="/dashboard/designer/upload" style={s.primaryBtn}>
+                + Upload Your First 3D Model
+              </Link>
+            </div>
+          ) : (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 20 }}>
+              {designs.map((d) => (
+                <Link
+                  key={d.id}
+                  href={`/designs/${d.id}`}
+                  style={{ background: '#F8FAFC', borderRadius: 16, border: '1px solid #E2E8F0', overflow: 'hidden', textDecoration: 'none', color: 'inherit', display: 'block', transition: 'transform 0.2s, boxShadow 0.2s' }}
+                >
+                  <div style={{ position: 'relative', height: 160, width: '100%', background: '#E2E8F0' }}>
+                    <img src={d.preview} alt={d.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    <span style={{ position: 'absolute', bottom: 10, right: 10, background: 'rgba(15,23,42,0.85)', color: '#fff', fontSize: 11, fontWeight: 800, padding: '4px 10px', borderRadius: 99, backdropFilter: 'blur(4px)' }}>
+                      Inspect 3D Model 🧊
+                    </span>
+                  </div>
+                  <div style={{ padding: 18 }}>
+                    <div style={{ fontSize: 11, fontWeight: 800, color: '#8B5CF6', textTransform: 'uppercase', marginBottom: 4 }}>{d.category}</div>
+                    <div style={{ fontSize: 16, fontWeight: 800, color: '#0F172A', marginBottom: 8, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{d.title}</div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div style={{ fontSize: 18, fontWeight: 900, color: d.price === 0 ? '#10B981' : '#0F172A' }}>
+                        {d.price === 0 ? 'Free (₹0)' : `₹${d.price}`}
+                      </div>
+                      <div style={{ fontSize: 12, color: '#10B981', fontWeight: 700 }}>
+                        {d.prints} Prints ({d.royalty})
+                      </div>
                     </div>
                   </div>
-                </div>
-              </Link>
-            ))}
-          </div>
+                </Link>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>

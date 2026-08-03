@@ -3,20 +3,6 @@ import { requireRole } from '@/utils/supabase/require-role'
 import { redirect } from 'next/navigation'
 import { cookies } from 'next/headers'
 import Link from 'next/link'
-
-const DEMO_PRODUCTS = [
-  { id: 'p1', title: 'Articulated Dragon V2', category: 'Toys & Miniatures', price: 799, stock: 18, sales: 42, rating: 4.9, image: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=600&q=80', status: 'Active' },
-  { id: 'p2', title: 'Ergonomic Desk Headphone Stand', category: 'Office Accessories', price: 1299, stock: 4, sales: 89, rating: 5.0, image: 'https://images.unsplash.com/photo-1612815150546-a3a1617296e8?auto=format&fit=crop&w=600&q=80', status: 'Low Stock' },
-  { id: 'p3', title: 'Geometric Planter Pot Set', category: 'Home Décor', price: 549, stock: 25, sales: 31, rating: 4.8, image: 'https://images.unsplash.com/photo-1485955900006-10f4d324d411?auto=format&fit=crop&w=600&q=80', status: 'Active' },
-  { id: 'p4', title: 'Custom Cyberpunk Mask Prop', category: 'Cosplay Items', price: 2499, stock: 6, sales: 15, rating: 4.9, image: 'https://images.unsplash.com/photo-1534447677768-be436bb09401?auto=format&fit=crop&w=600&q=80', status: 'Active' },
-]
-
-const RECENT_ORDERS = [
-  { id: 'ORD-89210', buyer: 'Rahul Sharma', product: 'Ergonomic Desk Headphone Stand', amount: 1299, escrow: '₹909.30 (70%)', status: 'In Slicing', date: 'Today, 11:40 AM' },
-  { id: 'ORD-89204', buyer: 'Priya Patel', product: 'Articulated Dragon V2 (Ruby Red)', amount: 799, escrow: '₹559.30 (70%)', status: 'Dispatched', date: 'Yesterday' },
-  { id: 'ORD-89198', buyer: 'Ankit Verma', product: 'Geometric Planter Pot Set', amount: 549, escrow: '₹384.30 (70%)', status: 'Delivered', date: '29 Jul 2026' },
-]
-
 export default async function SellerDashboard() {
   const { user } = await requireRole('seller')
 
@@ -31,7 +17,7 @@ export default async function SellerDashboard() {
   }
 
   // Fetch live products from Supabase
-  let products = DEMO_PRODUCTS
+  let products: any[] = []
   try {
     const supabase = await createClient()
     const { data: dbProducts } = await supabase.from('products').select('*').order('created_at', { ascending: false })
@@ -42,15 +28,15 @@ export default async function SellerDashboard() {
         category: p.category || 'General',
         price: p.price || 499,
         stock: p.stock_quantity || 12,
-        sales: Math.floor(Math.random() * 30) + 5,
-        rating: 4.9,
-        image: Array.isArray(p.images) && p.images[0] ? p.images[0] : DEMO_PRODUCTS[index % DEMO_PRODUCTS.length].image,
+        sales: 0,
+        rating: 5.0,
+        image: Array.isArray(p.images) && p.images[0] ? p.images[0] : 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=600&q=80',
         status: (p.stock_quantity || 10) < 5 ? 'Low Stock' : 'Active',
       }))
     }
   } catch (err) {}
 
-  const totalRevenue = 48950
+  const totalRevenue = 0
   const activeListings = products.length
 
   const s: Record<string, React.CSSProperties> = {
@@ -124,8 +110,8 @@ export default async function SellerDashboard() {
               <div style={s.metricLabel}>Total Revenue</div>
               <span style={{ fontSize: 22 }}>💰</span>
             </div>
-            <div style={s.metricVal}>₹{totalRevenue.toLocaleString()}</div>
-            <div style={s.changeTag}>▲ +24.8% vs last month</div>
+            <div style={s.metricVal}>₹{totalRevenue}</div>
+            <div style={{ fontSize: 12, color: '#64748B', marginTop: 8, fontWeight: 600 }}>70% Seller Escrow Share</div>
           </div>
 
           <div style={s.card}>
@@ -139,11 +125,11 @@ export default async function SellerDashboard() {
 
           <div style={s.card}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div style={s.metricLabel}>Orders This Month</div>
+              <div style={s.metricLabel}>Orders Total</div>
               <span style={{ fontSize: 22 }}>📦</span>
             </div>
-            <div style={s.metricVal}>28 Orders</div>
-            <div style={s.changeTag}>▲ 100% Escrow Protected</div>
+            <div style={s.metricVal}>0 Orders</div>
+            <div style={s.changeTag}>100% Escrow Protected</div>
           </div>
 
           <div style={s.card}>
@@ -151,8 +137,8 @@ export default async function SellerDashboard() {
               <div style={s.metricLabel}>Seller Rating</div>
               <span style={{ fontSize: 22 }}>⭐</span>
             </div>
-            <div style={s.metricVal}>4.9 / 5.0</div>
-            <div style={{ fontSize: 12, color: '#10B981', marginTop: 8, fontWeight: 700 }}>Top Tier Verified Seller</div>
+            <div style={s.metricVal}>5.0 / 5.0</div>
+            <div style={{ fontSize: 12, color: '#10B981', marginTop: 8, fontWeight: 700 }}>Verified PrintHive Seller</div>
           </div>
         </div>
 
@@ -170,33 +156,44 @@ export default async function SellerDashboard() {
             </Link>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 20 }}>
-            {products.map((p) => (
-              <Link
-                key={p.id}
-                href={`/shop/${p.id}`}
-                style={{ background: '#F8FAFC', borderRadius: 16, border: '1px solid #E2E8F0', overflow: 'hidden', textDecoration: 'none', color: 'inherit', display: 'block', transition: 'all 0.2s' }}
-              >
-                <div style={{ height: 160, width: '100%', background: '#E2E8F0', position: 'relative' }}>
-                  <img src={p.image} alt={p.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                  <div style={{ position: 'absolute', top: 12, right: 12, background: p.status === 'Low Stock' ? '#FEF2F2' : '#ECFDF5', color: p.status === 'Low Stock' ? '#EF4444' : '#10B981', border: `1px solid ${p.status === 'Low Stock' ? '#FCA5A5' : '#A7F3D0'}`, borderRadius: 99, padding: '4px 10px', fontSize: 11, fontWeight: 800 }}>
-                    {p.status} ({p.stock})
-                  </div>
-                  <span style={{ position: 'absolute', bottom: 10, right: 10, background: 'rgba(15,23,42,0.85)', color: '#fff', fontSize: 11, fontWeight: 800, padding: '4px 10px', borderRadius: 99, backdropFilter: 'blur(4px)' }}>
-                    View Product 🛍️
-                  </span>
-                </div>
-                <div style={{ padding: 18 }}>
-                  <div style={{ fontSize: 12, color: '#FF6B35', fontWeight: 800, textTransform: 'uppercase', marginBottom: 4 }}>{p.category}</div>
-                  <div style={{ fontSize: 16, fontWeight: 800, color: '#0F172A', marginBottom: 8, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.title}</div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div style={{ fontSize: 20, fontWeight: 900, color: '#0F172A' }}>₹{p.price}</div>
-                    <div style={{ fontSize: 12, color: '#64748B', fontWeight: 600 }}>⭐ {p.rating} ({p.sales} sold)</div>
-                  </div>
-                </div>
+          {products.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '48px 24px', background: '#F8FAFC', borderRadius: 16, border: '2px dashed #CBD5E1' }}>
+              <div style={{ fontSize: 36, marginBottom: 8 }}>🏬</div>
+              <div style={{ fontSize: 16, fontWeight: 900, color: '#0F172A', marginBottom: 4 }}>No Products Listed Yet</div>
+              <div style={{ fontSize: 13, color: '#64748B', marginBottom: 16 }}>List your ready-made 3D printed creations to start selling across India.</div>
+              <Link href="/dashboard/seller/products/new" style={s.primaryBtn}>
+                + Add Your First Product
               </Link>
-            ))}
-          </div>
+            </div>
+          ) : (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 20 }}>
+              {products.map((p) => (
+                <Link
+                  key={p.id}
+                  href={`/shop/${p.id}`}
+                  style={{ background: '#F8FAFC', borderRadius: 16, border: '1px solid #E2E8F0', overflow: 'hidden', textDecoration: 'none', color: 'inherit', display: 'block', transition: 'all 0.2s' }}
+                >
+                  <div style={{ height: 160, width: '100%', background: '#E2E8F0', position: 'relative' }}>
+                    <img src={p.image} alt={p.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    <div style={{ position: 'absolute', top: 12, right: 12, background: p.status === 'Low Stock' ? '#FEF2F2' : '#ECFDF5', color: p.status === 'Low Stock' ? '#EF4444' : '#10B981', border: `1px solid ${p.status === 'Low Stock' ? '#FCA5A5' : '#A7F3D0'}`, borderRadius: 99, padding: '4px 10px', fontSize: 11, fontWeight: 800 }}>
+                      {p.status} ({p.stock})
+                    </div>
+                    <span style={{ position: 'absolute', bottom: 10, right: 10, background: 'rgba(15,23,42,0.85)', color: '#fff', fontSize: 11, fontWeight: 800, padding: '4px 10px', borderRadius: 99, backdropFilter: 'blur(4px)' }}>
+                      View Product 🛍️
+                    </span>
+                  </div>
+                  <div style={{ padding: 18 }}>
+                    <div style={{ fontSize: 12, color: '#FF6B35', fontWeight: 800, textTransform: 'uppercase', marginBottom: 4 }}>{p.category}</div>
+                    <div style={{ fontSize: 16, fontWeight: 800, color: '#0F172A', marginBottom: 8, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.title}</div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div style={{ fontSize: 20, fontWeight: 900, color: '#0F172A' }}>₹{p.price}</div>
+                      <div style={{ fontSize: 12, color: '#64748B', fontWeight: 600 }}>⭐ {p.rating} ({p.sales} sold)</div>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* RECENT ORDERS TABLE (FLIPKART STYLE) */}
@@ -227,21 +224,11 @@ export default async function SellerDashboard() {
                 </tr>
               </thead>
               <tbody>
-                {RECENT_ORDERS.map((o) => (
-                  <tr key={o.id}>
-                    <td style={{ ...s.td, fontWeight: 800, color: '#0F172A' }}>{o.id}</td>
-                    <td style={s.td}>{o.buyer}</td>
-                    <td style={{ ...s.td, fontWeight: 700 }}>{o.product}</td>
-                    <td style={{ ...s.td, fontWeight: 800 }}>₹{o.amount}</td>
-                    <td style={{ ...s.td, fontWeight: 800, color: '#10B981' }}>{o.escrow}</td>
-                    <td style={s.td}>
-                      <span style={{ ...s.statusBadge, background: o.status === 'Delivered' ? '#ECFDF5' : o.status === 'Dispatched' ? '#EFF6FF' : '#FEF3C7', color: o.status === 'Delivered' ? '#10B981' : o.status === 'Dispatched' ? '#2563EB' : '#D97706' }}>
-                        {o.status}
-                      </span>
-                    </td>
-                    <td style={{ ...s.td, color: '#64748B', fontSize: 13 }}>{o.date}</td>
-                  </tr>
-                ))}
+                <tr>
+                  <td colSpan={7} style={{ textAlign: 'center', padding: '32px 16px', color: '#64748B', fontSize: 13, fontWeight: 600 }}>
+                    No orders placed yet. Orders will appear here automatically when buyers place purchases.
+                  </td>
+                </tr>
               </tbody>
             </table>
           </div>

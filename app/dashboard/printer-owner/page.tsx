@@ -4,18 +4,6 @@ import { redirect } from 'next/navigation'
 import { cookies } from 'next/headers'
 import Link from 'next/link'
 
-const DEMO_PRINTERS = [
-  { id: 'm1', name: 'Bambu Lab X1-Carbon Combo', type: 'FDM Dual-Color', volume: '256 x 256 x 256 mm', status: '🟢 Online & Printing', jobsCount: 42 },
-  { id: 'm2', name: 'Creality Ender 3 S1 Pro', type: 'FDM High-Temp', volume: '220 x 220 x 270 mm', status: '🟢 Ready for Queue', jobsCount: 18 },
-  { id: 'm3', name: 'Anycubic Photon Mono X 6Ks', type: 'MSLA Resin', volume: '197 x 122 x 200 mm', status: '🟡 Maintenance Check', jobsCount: 9 },
-]
-
-const INCOMING_JOBS = [
-  { id: 'JOB-9012', distance: '3.2 km away', file: 'Headphone_Stand_v2.stl', material: 'PLA+ Charcoal Black', payout: '₹909.30 (70%)', status: 'Slicing Feasibility' },
-  { id: 'JOB-9008', distance: '5.8 km away', file: 'Articulated_Dragon_Ruby.stl', material: 'PLA Silk Crimson', payout: '₹559.30 (70%)', status: 'Printing (Layer 142/350)' },
-  { id: 'JOB-8994', distance: '1.4 km away', file: 'Planter_Pot_Set.3mf', material: 'PETG Marble White', payout: '₹384.30 (70%)', status: 'Ready for Courier Pick' },
-]
-
 export default async function PrinterOwnerDashboard() {
   const { user } = await requireRole('printer_owner')
 
@@ -30,7 +18,7 @@ export default async function PrinterOwnerDashboard() {
   }
 
   // Fetch live printers from Supabase
-  let printers = DEMO_PRINTERS
+  let printers: any[] = []
   try {
     const supabase = await createClient()
     const { data: dbPrinters } = await supabase.from('printers').select('*').order('created_at', { ascending: false })
@@ -113,7 +101,7 @@ export default async function PrinterOwnerDashboard() {
               <div style={s.metricLabel}>Total Payout Earnings</div>
               <span style={{ fontSize: 22 }}>💰</span>
             </div>
-            <div style={s.metricVal}>₹34,265</div>
+            <div style={s.metricVal}>₹0</div>
             <div style={{ fontSize: 12, color: '#10B981', marginTop: 8, fontWeight: 700 }}>70% Direct Order Escrow Split</div>
           </div>
 
@@ -131,17 +119,17 @@ export default async function PrinterOwnerDashboard() {
               <div style={s.metricLabel}>Active Job Queue</div>
               <span style={{ fontSize: 22 }}>⚡</span>
             </div>
-            <div style={s.metricVal}>3 Jobs</div>
-            <div style={{ fontSize: 12, color: '#FF6B35', marginTop: 8, fontWeight: 700 }}>Avg Print Time: 3.4 hrs</div>
+            <div style={s.metricVal}>0 Jobs</div>
+            <div style={{ fontSize: 12, color: '#64748B', marginTop: 8, fontWeight: 600 }}>Nearby Order Assignments</div>
           </div>
 
           <div style={s.card}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div style={s.metricLabel}>Hub Fleet Uptime</div>
+              <div style={s.metricLabel}>Hub Fleet Status</div>
               <span style={{ fontSize: 22 }}>📊</span>
             </div>
-            <div style={s.metricVal}>98.6%</div>
-            <div style={{ fontSize: 12, color: '#10B981', marginTop: 8, fontWeight: 700 }}>Top Tier Reliable Printer</div>
+            <div style={s.metricVal}>{printers.length > 0 ? '100% Online' : 'No Machines'}</div>
+            <div style={{ fontSize: 12, color: '#10B981', marginTop: 8, fontWeight: 700 }}>Verified PrintHub Partner</div>
           </div>
         </div>
 
@@ -157,19 +145,30 @@ export default async function PrinterOwnerDashboard() {
             </Link>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 20 }}>
-            {printers.map((p) => (
-              <div key={p.id} style={{ background: '#F8FAFC', borderRadius: 16, border: '1px solid #E2E8F0', padding: 20 }}>
-                <div style={{ fontSize: 12, color: '#2563EB', fontWeight: 800, textTransform: 'uppercase', marginBottom: 4 }}>{p.type}</div>
-                <div style={{ fontSize: 17, fontWeight: 900, color: '#0F172A', marginBottom: 6 }}>{p.name}</div>
-                <div style={{ fontSize: 13, color: '#64748B', marginBottom: 12 }}>Build Volume: {p.volume}</div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#FFFFFF', padding: '10px 14px', borderRadius: 12, border: '1px solid #E2E8F0' }}>
-                  <span style={{ fontSize: 12, fontWeight: 800, color: '#10B981' }}>{p.status}</span>
-                  <span style={{ fontSize: 12, fontWeight: 700, color: '#64748B' }}>{p.jobsCount} Jobs Done</span>
+          {printers.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '48px 24px', background: '#F8FAFC', borderRadius: 16, border: '2px dashed #CBD5E1' }}>
+              <div style={{ fontSize: 36, marginBottom: 8 }}>🖨️</div>
+              <div style={{ fontSize: 16, fontWeight: 900, color: '#0F172A', marginBottom: 4 }}>No 3D Printers Registered Yet</div>
+              <div style={{ fontSize: 13, color: '#64748B', marginBottom: 16 }}>Register your 3D printing equipment to start fulfilling nearby print jobs and earning 70% payouts.</div>
+              <Link href="/dashboard/printer-owner/register" style={s.primaryBtn}>
+                + Register Your First 3D Printer
+              </Link>
+            </div>
+          ) : (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 20 }}>
+              {printers.map((p) => (
+                <div key={p.id} style={{ background: '#F8FAFC', borderRadius: 16, border: '1px solid #E2E8F0', padding: 20 }}>
+                  <div style={{ fontSize: 12, color: '#2563EB', fontWeight: 800, textTransform: 'uppercase', marginBottom: 4 }}>{p.type}</div>
+                  <div style={{ fontSize: 17, fontWeight: 900, color: '#0F172A', marginBottom: 6 }}>{p.name}</div>
+                  <div style={{ fontSize: 13, color: '#64748B', marginBottom: 12 }}>Build Volume: {p.volume}</div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#FFFFFF', padding: '10px 14px', borderRadius: 12, border: '1px solid #E2E8F0' }}>
+                    <span style={{ fontSize: 12, fontWeight: 800, color: '#10B981' }}>{p.status}</span>
+                    <span style={{ fontSize: 12, fontWeight: 700, color: '#64748B' }}>{p.jobsCount} Jobs Done</span>
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* NEARBY JOBS QUEUE TABLE */}
@@ -190,24 +189,15 @@ export default async function PrinterOwnerDashboard() {
                   <th style={s.th}>Model File</th>
                   <th style={s.th}>Material</th>
                   <th style={s.th}>Printer 70% Share</th>
-                  <th style={s.th}>Current Status</th>
+                  <th style={s.th}>Status</th>
                 </tr>
               </thead>
               <tbody>
-                {INCOMING_JOBS.map((j) => (
-                  <tr key={j.id}>
-                    <td style={{ ...s.td, fontWeight: 800, color: '#0F172A' }}>{j.id}</td>
-                    <td style={{ ...s.td, fontWeight: 700, color: '#2563EB' }}>📍 {j.distance}</td>
-                    <td style={{ ...s.td, fontWeight: 700 }}>{j.file}</td>
-                    <td style={s.td}>{j.material}</td>
-                    <td style={{ ...s.td, fontWeight: 900, color: '#10B981' }}>{j.payout}</td>
-                    <td style={s.td}>
-                      <span style={{ padding: '4px 10px', borderRadius: 99, fontSize: 12, fontWeight: 800, background: '#EFF6FF', color: '#2563EB' }}>
-                        {j.status}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
+                <tr>
+                  <td colSpan={6} style={{ textAlign: 'center', padding: '32px 16px', color: '#64748B', fontSize: 13, fontWeight: 600 }}>
+                    No active print jobs in your queue yet. When buyers upload STL files for printing in your city, jobs will route to your hub.
+                  </td>
+                </tr>
               </tbody>
             </table>
           </div>

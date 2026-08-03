@@ -29,22 +29,9 @@ type Complaint = {
   status: 'open' | 'resolved'
 }
 
-const INITIAL_USERS: UserRecord[] = [
-  { id: 'u1', name: 'Priya Sharma', email: 'priya@example.com', role: 'buyer', joined: '12 Jul 2026', status: 'active' },
-  { id: 'u2', name: 'UrbanPrint Co.', email: 'urbanprint@example.com', role: 'seller', joined: '10 Jul 2026', status: 'pending' },
-  { id: 'u3', name: 'Aarav Mehta', email: 'aarav@example.com', role: 'designer', joined: '8 Jul 2026', status: 'active' },
-  { id: 'u4', name: "Rohan's PrintLab", email: 'rohan@example.com', role: 'printer_owner', joined: '5 Jul 2026', status: 'pending' },
-]
-
-const INITIAL_PRODUCTS: ProductApproval[] = [
-  { id: 'p1', name: 'Geometric Planter Set (3)', seller: 'UrbanPrint Co.', submitted: '2 days ago', status: 'pending' },
-  { id: 'p2', name: 'Cosplay Helmet Shell', seller: 'PropForge', submitted: '5 hours ago', status: 'pending' },
-]
-
-const INITIAL_COMPLAINTS: Complaint[] = [
-  { id: 'c1', subject: 'Late delivery on order #PH-2291', from: 'Priya S.', status: 'open' },
-  { id: 'c2', subject: 'Print quality did not match preview', from: 'Rohan K.', status: 'open' },
-]
+const INITIAL_USERS: UserRecord[] = []
+const INITIAL_PRODUCTS: ProductApproval[] = []
+const INITIAL_COMPLAINTS: Complaint[] = []
 
 export default function AdminDashboard() {
   const router = useRouter()

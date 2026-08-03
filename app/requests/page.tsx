@@ -5,60 +5,7 @@ import Link from 'next/link'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 
-const MOCK_REQUESTS = [
-  {
-    id: 'r1',
-    purpose: 'Custom Industrial Gear Replacement for Washing Machine',
-    buyer: 'Kolkata Hardware Ltd.',
-    dimensions: '60mm x 60mm x 25mm',
-    material: 'Nylon / Tough PETG',
-    budgetMin: 350,
-    budgetMax: 750,
-    bidCount: 4,
-    postedAt: '2 hours ago',
-    urgency: 'High Urgency',
-    status: 'Open for Bids',
-  },
-  {
-    id: 'r2',
-    purpose: 'Personalized LED Lit Desk Nameplate with Company Logo',
-    buyer: 'Rahul S. (TechCorp)',
-    dimensions: '180mm x 60mm x 20mm',
-    material: 'Translucent PLA + Wood PLA',
-    budgetMin: 500,
-    budgetMax: 1200,
-    bidCount: 2,
-    postedAt: '5 hours ago',
-    urgency: 'Standard',
-    status: 'Open for Bids',
-  },
-  {
-    id: 'r3',
-    purpose: 'Modular Under-Desk Cable Management Clips (Pack of 12)',
-    buyer: 'Ananya Studio',
-    dimensions: '40mm x 20mm x 15mm each',
-    material: 'Flexible TPU or PETG',
-    budgetMin: 250,
-    budgetMax: 450,
-    bidCount: 1,
-    postedAt: '1 day ago',
-    urgency: 'Flexible',
-    status: 'Open for Bids',
-  },
-  {
-    id: 'r4',
-    purpose: 'Sci-Fi Cosplay Armor Shoulder Plate Pair (Scale 1:1)',
-    buyer: 'PropForge Fanatic',
-    dimensions: '280mm x 200mm x 150mm',
-    material: 'PLA+ / Lightweight ABS',
-    budgetMin: 1800,
-    budgetMax: 3500,
-    bidCount: 6,
-    postedAt: '3 days ago',
-    urgency: 'High Urgency',
-    status: 'In Evaluation',
-  },
-]
+const MOCK_REQUESTS: any[] = []
 
 export default function RequestsListPage() {
   const [search, setSearch] = useState('')
@@ -122,65 +69,76 @@ export default function RequestsListPage() {
           </div>
         </div>
 
-        {/* BRIEF CARDS LIST */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-          {filtered.map((r) => (
-            <Link
-              key={r.id}
-              href={`/requests/${r.id}`}
-              style={{
-                background: 'var(--bg-card)',
-                border: '1px solid var(--border-color)',
-                borderRadius: 24,
-                padding: 28,
-                textDecoration: 'none',
-                color: 'inherit',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 16,
-                boxShadow: '0 4px 20px rgba(0,0,0,0.03)',
-                transition: 'transform 0.2s, boxShadow 0.2s',
-              }}
-            >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                  <span style={{ background: r.urgency === 'High Urgency' ? '#FEF2F2' : '#ECFDF5', color: r.urgency === 'High Urgency' ? '#EF4444' : '#10B981', border: `1px solid ${r.urgency === 'High Urgency' ? '#FCA5A5' : '#A7F3D0'}`, borderRadius: 99, padding: '4px 12px', fontSize: 11, fontWeight: 800 }}>
-                    ⚡ {r.urgency}
-                  </span>
-                  <span style={{ fontSize: 13, color: 'var(--text-sub)', fontWeight: 600 }}>Posted by {r.buyer} • {r.postedAt}</span>
-                </div>
-
-                <div style={{ fontSize: 22, fontWeight: 900, color: '#FF6B35' }}>
-                  ₹{r.budgetMin} – ₹{r.budgetMax}
-                </div>
-              </div>
-
-              <div>
-                <h3 style={{ fontSize: 20, fontWeight: 900, color: 'var(--text-main)', marginBottom: 8, letterSpacing: '-0.3px' }}>
-                  {r.purpose}
-                </h3>
-
-                <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 12 }}>
-                  <span style={{ background: 'var(--bg-card-hover)', border: '1px solid var(--border-color)', padding: '6px 14px', borderRadius: 99, fontSize: 12, fontWeight: 700, color: 'var(--text-sub)' }}>
-                    📏 {r.dimensions}
-                  </span>
-                  <span style={{ background: 'var(--bg-card-hover)', border: '1px solid var(--border-color)', padding: '6px 14px', borderRadius: 99, fontSize: 12, fontWeight: 700, color: 'var(--text-sub)' }}>
-                    🧪 {r.material}
-                  </span>
-                </div>
-              </div>
-
-              <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div style={{ fontSize: 13, fontWeight: 800, color: '#8B5CF6' }}>
-                  💬 {r.bidCount === 0 ? 'No bids submitted — Be first to bid!' : `${r.bidCount} Designer Bids Received`}
-                </div>
-                <div style={{ background: '#0F172A', color: '#fff', padding: '8px 20px', borderRadius: 99, fontSize: 13, fontWeight: 800 }}>
-                  View Brief & Bid →
-                </div>
-              </div>
+        {/* REQUESTS LIST GRID */}
+        {filtered.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '60px 24px', background: 'var(--bg-card)', borderRadius: 24, border: '2px dashed var(--border-color)' }}>
+            <div style={{ fontSize: 40, marginBottom: 12 }}>✏️</div>
+            <div style={{ fontSize: 18, fontWeight: 900, color: 'var(--text-main)', marginBottom: 6 }}>No Custom Design Briefs Posted Yet</div>
+            <div style={{ fontSize: 14, color: 'var(--text-sub)', marginBottom: 20 }}>Post a custom 3D printing brief to get competitive bids from verified designers across India!</div>
+            <Link href="/requests/new" style={{ background: '#FF6B35', color: '#fff', padding: '12px 24px', borderRadius: 12, fontWeight: 800, textDecoration: 'none', display: 'inline-block' }}>
+              + Post Custom Brief
             </Link>
-          ))}
-        </div>
+          </div>
+        ) : (
+          <div style={{ display: 'grid', gap: 20 }}>
+            {filtered.map((r) => (
+              <Link
+                key={r.id}
+                href={`/requests/${r.id}`}
+                style={{
+                  background: 'var(--bg-card)',
+                  border: '1px solid var(--border-color)',
+                  borderRadius: 20,
+                  padding: 24,
+                  textDecoration: 'none',
+                  color: 'inherit',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 16,
+                  transition: 'all 0.2s',
+                  boxShadow: '0 6px 24px rgba(0,0,0,0.03)',
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <span style={{ background: r.urgency === 'High Urgency' ? '#FEF2F2' : '#ECFDF5', color: r.urgency === 'High Urgency' ? '#EF4444' : '#10B981', border: `1px solid ${r.urgency === 'High Urgency' ? '#FCA5A5' : '#A7F3D0'}`, borderRadius: 99, padding: '4px 12px', fontSize: 11, fontWeight: 800 }}>
+                      ⚡ {r.urgency}
+                    </span>
+                    <span style={{ fontSize: 13, color: 'var(--text-sub)', fontWeight: 600 }}>Posted by {r.buyer} • {r.postedAt}</span>
+                  </div>
+
+                  <div style={{ fontSize: 22, fontWeight: 900, color: '#FF6B35' }}>
+                    ₹{r.budgetMin} – ₹{r.budgetMax}
+                  </div>
+                </div>
+
+                <div>
+                  <h3 style={{ fontSize: 20, fontWeight: 900, color: 'var(--text-main)', marginBottom: 8, letterSpacing: '-0.3px' }}>
+                    {r.purpose}
+                  </h3>
+
+                  <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 12 }}>
+                    <span style={{ background: 'var(--bg-card-hover)', border: '1px solid var(--border-color)', padding: '6px 14px', borderRadius: 99, fontSize: 12, fontWeight: 700, color: 'var(--text-sub)' }}>
+                      📏 {r.dimensions}
+                    </span>
+                    <span style={{ background: 'var(--bg-card-hover)', border: '1px solid var(--border-color)', padding: '6px 14px', borderRadius: 99, fontSize: 12, fontWeight: 700, color: 'var(--text-sub)' }}>
+                      🧪 {r.material}
+                    </span>
+                  </div>
+                </div>
+
+                <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div style={{ fontSize: 13, fontWeight: 800, color: '#8B5CF6' }}>
+                    💬 {r.bidCount === 0 ? 'No bids submitted — Be first to bid!' : `${r.bidCount} Designer Bids Received`}
+                  </div>
+                  <div style={{ background: '#0F172A', color: '#fff', padding: '8px 20px', borderRadius: 99, fontSize: 13, fontWeight: 800 }}>
+                    View Brief & Bid →
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        )}
       </section>
 
       <Footer />
