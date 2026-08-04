@@ -51,7 +51,7 @@ export default function RequestsListPage() {
               gap: 8,
             }}
           >
-            + Post New Custom Brief →
+            + Post New Custom Brief
           </Link>
         </div>
 
@@ -132,7 +132,7 @@ export default function RequestsListPage() {
                     💬 {r.bidCount === 0 ? 'No bids submitted — Be first to bid!' : `${r.bidCount} Designer Bids Received`}
                   </div>
                   <div style={{ background: '#0F172A', color: '#fff', padding: '8px 20px', borderRadius: 99, fontSize: 13, fontWeight: 800 }}>
-                    View Brief & Bid →
+                    View Brief & Bid
                   </div>
                 </div>
               </Link>

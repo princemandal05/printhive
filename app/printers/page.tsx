@@ -155,7 +155,7 @@ export default function PrinterDirectoryPage() {
                 href="/print-on-demand"
                 style={{ display: 'block', textAlign: 'center', background: '#ea580c', color: '#fff', padding: '14px', borderRadius: 99, fontWeight: 800, textDecoration: 'none', boxShadow: '0 4px 16px rgba(234,88,12,0.35)' }}
               >
-                Order 3D Print From This Hub →
+                Order 3D Print From This Hub
               </Link>
             </div>
           ) : (

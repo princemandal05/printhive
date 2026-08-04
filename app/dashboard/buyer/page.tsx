@@ -146,7 +146,7 @@ export default async function BuyerDashboard() {
               <div style={{ fontSize: 13, color: '#64748B', marginTop: 2 }}>Live status pushing from printer hub slicing to doorstep delivery</div>
             </div>
             <Link href="/orders" style={{ color: '#FF6B35', fontWeight: 800, fontSize: 14, textDecoration: 'none' }}>
-              View All Orders →
+              View All Orders
             </Link>
           </div>
 
@@ -165,7 +165,7 @@ export default async function BuyerDashboard() {
           <div style={{ fontSize: 18, fontWeight: 900, color: '#0F172A', marginBottom: 6 }}>🛍️ Ready-Made 3D Marketplace</div>
           <div style={{ fontSize: 13, color: '#64748B', marginBottom: 20 }}>Discover custom 3D printed items crafted by verified sellers across India.</div>
           <Link href="/shop" style={{ background: '#0F172A', color: '#fff', padding: '12px 24px', borderRadius: 12, fontWeight: 800, textDecoration: 'none', display: 'inline-block' }}>
-            Open Ready-Made Shop →
+            Open Ready-Made Shop
           </Link>
         </div>
       </div>

@@ -99,7 +99,9 @@ export default function SignupPage() {
 
     // A session was created and its cookies were set by the API route's
     // Supabase client — the user is genuinely logged in now.
-    router.push(DASHBOARD_PATH[role] ?? '/dashboard/buyer')
+    const urlParams = new URLSearchParams(window.location.search)
+    const redirectUrl = urlParams.get('redirect') || urlParams.get('next') || '/'
+    window.location.href = redirectUrl
   }
 
   const s: Record<string, React.CSSProperties> = {

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/utils/supabase/client'
@@ -25,13 +25,16 @@ type ProductApproval = {
 type Complaint = {
   id: string
   subject: string
+  name?: string
+  email?: string
   from: string
+  message?: string
   status: 'open' | 'resolved'
+  created_at?: string
 }
 
 const INITIAL_USERS: UserRecord[] = []
 const INITIAL_PRODUCTS: ProductApproval[] = []
-const INITIAL_COMPLAINTS: Complaint[] = []
 
 export default function AdminDashboard() {
   const router = useRouter()
@@ -39,8 +42,33 @@ export default function AdminDashboard() {
 
   const [users, setUsers] = useState<UserRecord[]>(INITIAL_USERS)
   const [products, setProducts] = useState<ProductApproval[]>(INITIAL_PRODUCTS)
-  const [complaints, setComplaints] = useState<Complaint[]>(INITIAL_COMPLAINTS)
+  const [complaints, setComplaints] = useState<Complaint[]>([])
   const [toastMsg, setToastMsg] = useState('')
+
+  useEffect(() => {
+    async function loadComplaints() {
+      try {
+        const res = await fetch('/api/contact')
+        const data = await res.json()
+        if (data.success && data.complaints) {
+          const formatted = data.complaints.map((c: any) => ({
+            id: c.id,
+            subject: c.subject,
+            name: c.name || c.email?.split('@')[0] || 'User',
+            email: c.email,
+            from: `${c.name || 'User'} (${c.email})`,
+            message: c.message,
+            status: c.status || 'open',
+            created_at: c.created_at,
+          }))
+          setComplaints(formatted)
+        }
+      } catch (err) {
+        console.error('Failed to load contact support tickets for admin:', err)
+      }
+    }
+    loadComplaints()
+  }, [])
 
   const handleSignOut = async () => {
     document.cookie = 'printhive_guest_role=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT'
@@ -75,11 +103,19 @@ export default function AdminDashboard() {
     showToast(`❌ ${prodName} returned for modification.`)
   }
 
-  const handleResolveComplaint = (compId: string) => {
+  const handleResolveComplaint = async (compId: string) => {
     setComplaints((prev) =>
       prev.map((c) => (c.id === compId ? { ...c, status: 'resolved' } : c))
     )
-    showToast(`✅ Complaint resolved and closed.`)
+    try {
+      await fetch('/api/contact', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: compId, status: 'resolved' }),
+      })
+    } catch (e) {}
+
+    showToast(`✅ Contact support ticket resolved and closed.`)
   }
 
   const pendingVerificationsCount = users.filter((u) => u.status === 'pending').length
@@ -119,129 +155,148 @@ export default function AdminDashboard() {
           </div>
           <span style={s.badge}>🛡️ Administrator</span>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
-          <button type="button" onClick={handleSignOut} style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)', color: '#fff', padding: '6px 14px', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <Link
+            href="/"
+            style={{ color: '#94A3B8', fontSize: 13, fontWeight: 700, textDecoration: 'none', padding: '6px 12px', borderRadius: 8, background: 'rgba(255,255,255,0.05)' }}
+          >
+            Main Site
+          </Link>
+          <button
+            type="button"
+            onClick={handleSignOut}
+            style={{ background: '#EF4444', color: '#fff', border: 'none', padding: '6px 14px', borderRadius: 8, fontSize: 13, fontWeight: 800, cursor: 'pointer' }}
+          >
             Sign Out
           </button>
         </div>
       </nav>
 
+      {/* TOAST NOTIFICATION */}
+      {toastMsg && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 84,
+            right: 32,
+            background: '#0F172A',
+            color: '#fff',
+            padding: '14px 22px',
+            borderRadius: 14,
+            fontWeight: 800,
+            fontSize: 14,
+            boxShadow: '0 10px 30px rgba(0,0,0,0.25)',
+            zIndex: 9999,
+          }}
+        >
+          {toastMsg}
+        </div>
+      )}
+
+      {/* BODY */}
       <div style={s.body}>
-        {/* DASHBOARD HEADER */}
         <div style={s.headerRow}>
           <div>
-            <h1 style={s.title}>Platform Control & Verification Portal</h1>
-            <div style={s.sub}>Automated seller verification, product approvals, and complaint dispute resolution</div>
+            <h1 style={s.title}>🛡️ Platform Administration & Operations</h1>
+            <div style={s.sub}>Real-time system health, support ticket queue, and escrow release controls</div>
           </div>
         </div>
 
-        {toastMsg && (
-          <div style={{ background: '#ECFDF5', color: '#065F46', padding: '14px 20px', borderRadius: 14, fontSize: 14, marginBottom: 24, fontWeight: 800, border: '1px solid #A7F3D0', boxShadow: '0 4px 20px rgba(16,185,129,0.15)' }}>
-            {toastMsg}
-          </div>
-        )}
-
-        {/* METRICS GRID */}
+        {/* METRICS ROW */}
         <div style={s.metricGrid}>
           <div style={s.card}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div style={s.metricLabel}>Total Users</div>
-              <span style={{ fontSize: 22 }}>👥</span>
-            </div>
-            <div style={s.metricVal}>{users.length} Users</div>
-            <div style={{ fontSize: 12, color: '#10B981', marginTop: 8, fontWeight: 700 }}>Buyers, Sellers, Printers & Designers</div>
+            <div style={s.metricLabel}>Total Registered Network Users</div>
+            <div style={s.metricVal}>{users.length}</div>
           </div>
 
           <div style={s.card}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div style={s.metricLabel}>Pending Verifications</div>
-              <span style={{ fontSize: 22 }}>📋</span>
+            <div style={s.metricLabel}>Pending Identity Verifications</div>
+            <div style={{ ...s.metricVal, color: pendingVerificationsCount > 0 ? '#ea580c' : '#10B981' }}>
+              {pendingVerificationsCount}
             </div>
-            <div style={{ ...s.metricVal, color: pendingVerificationsCount > 0 ? '#D97706' : '#10B981' }}>
-              {pendingVerificationsCount} Pending
-            </div>
-            <div style={{ fontSize: 12, color: '#64748B', marginTop: 8, fontWeight: 600 }}>Click Verify below to approve</div>
           </div>
 
           <div style={s.card}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div style={s.metricLabel}>Platform Fee Revenue (15%)</div>
-              <span style={{ fontSize: 22 }}>💰</span>
-            </div>
-            <div style={s.metricVal}>₹12,450</div>
-            <div style={{ fontSize: 12, color: '#10B981', marginTop: 8, fontWeight: 700 }}>15% Platform Split on All Orders</div>
+            <div style={s.metricLabel}>Products Pending Review</div>
+            <div style={s.metricVal}>{products.filter((p) => p.status === 'pending').length}</div>
           </div>
 
           <div style={s.card}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div style={s.metricLabel}>Open Complaints</div>
-              <span style={{ fontSize: 22 }}>⚠️</span>
-            </div>
+            <div style={s.metricLabel}>Open Support Tickets & Complaints</div>
             <div style={{ ...s.metricVal, color: openComplaintsCount > 0 ? '#EF4444' : '#10B981' }}>
               {openComplaintsCount} Open
             </div>
-            <div style={{ fontSize: 12, color: '#64748B', marginTop: 8, fontWeight: 600 }}>Dispute Escrow Resolution</div>
           </div>
         </div>
 
-        {/* USER MANAGEMENT & VERIFICATION TABLE */}
+        {/* USER VERIFICATION MANAGEMENT */}
         <div style={s.card}>
           <div style={{ fontSize: 18, fontWeight: 900, color: '#0F172A', marginBottom: 20 }}>
-            👥 User Management & Seller/Printer Verification
+            👤 Network Accounts & Identity Verification
           </div>
 
           <div style={{ overflowX: 'auto' }}>
             <table style={s.table}>
               <thead>
                 <tr>
-                  <th style={s.th}>Name</th>
-                  <th style={s.th}>Email</th>
-                  <th style={s.th}>Account Role</th>
-                  <th style={s.th}>Joined Date</th>
-                  <th style={s.th}>Verification Status</th>
-                  <th style={s.th}>Actions</th>
+                  <th style={s.th}>User</th>
+                  <th style={s.th}>Role</th>
+                  <th style={s.th}>Joined</th>
+                  <th style={s.th}>Status</th>
+                  <th style={s.th}>Action</th>
                 </tr>
               </thead>
               <tbody>
-                {users.map((u) => (
-                  <tr key={u.id}>
-                    <td style={{ ...s.td, fontWeight: 800, color: '#0F172A' }}>{u.name}</td>
-                    <td style={{ ...s.td, color: '#64748B' }}>{u.email}</td>
-                    <td style={s.td}>
-                      <span style={{ padding: '4px 10px', borderRadius: 99, fontSize: 12, fontWeight: 800, background: '#F1F5F9', color: '#475569', textTransform: 'uppercase' }}>
-                        {u.role.replace('_', ' ')}
-                      </span>
-                    </td>
-                    <td style={{ ...s.td, color: '#64748B', fontSize: 13 }}>{u.joined}</td>
-                    <td style={s.td}>
-                      <span style={{ padding: '4px 10px', borderRadius: 99, fontSize: 12, fontWeight: 800, background: u.status === 'verified' || u.status === 'active' ? '#ECFDF5' : '#FEF3C7', color: u.status === 'verified' || u.status === 'active' ? '#10B981' : '#D97706' }}>
-                        {u.status === 'verified' ? '🟢 Verified' : u.status === 'active' ? '🟢 Active' : '⏳ Pending Verification'}
-                      </span>
-                    </td>
-                    <td style={s.td}>
-                      {u.status === 'pending' ? (
-                        <button
-                          type="button"
-                          onClick={() => handleVerifyUser(u.id, u.name)}
-                          style={{ ...s.rowBtn, background: '#10B981' }}
-                        >
-                          Verify & Approve →
-                        </button>
-                      ) : (
-                        <span style={{ fontSize: 13, color: '#10B981', fontWeight: 800 }}>Verified ✓</span>
-                      )}
+                {users.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} style={{ ...s.td, textAlign: 'center', color: '#64748B', padding: '36px' }}>
+                      No users registered yet.
                     </td>
                   </tr>
-                ))}
+                ) : (
+                  users.map((u) => (
+                    <tr key={u.id}>
+                      <td style={{ ...s.td, fontWeight: 800, color: '#0F172A' }}>
+                        {u.name}
+                        <div style={{ fontSize: 12, color: '#64748B', fontWeight: 600 }}>{u.email}</div>
+                      </td>
+                      <td style={s.td}>
+                        <span style={{ background: '#F1F5F9', color: '#334155', padding: '4px 10px', borderRadius: 99, fontSize: 12, fontWeight: 800 }}>
+                          {u.role.toUpperCase()}
+                        </span>
+                      </td>
+                      <td style={s.td}>{u.joined}</td>
+                      <td style={s.td}>
+                        <span style={{ padding: '4px 10px', borderRadius: 99, fontSize: 12, fontWeight: 800, background: u.status === 'verified' ? '#ECFDF5' : u.status === 'pending' ? '#FFF7ED' : '#F1F5F9', color: u.status === 'verified' ? '#10B981' : u.status === 'pending' ? '#EA580C' : '#64748B' }}>
+                          {u.status}
+                        </span>
+                      </td>
+                      <td style={s.td}>
+                        {u.status === 'pending' ? (
+                          <button
+                            type="button"
+                            onClick={() => handleVerifyUser(u.id, u.name)}
+                            style={s.rowBtn}
+                          >
+                            Verify & Approve
+                          </button>
+                        ) : (
+                          <span style={{ fontSize: 13, color: '#10B981', fontWeight: 800 }}>Verified ✓</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
         </div>
 
-        {/* PRODUCT APPROVALS TABLE */}
+        {/* MARKETPLACE PRODUCT REVIEW QUEUE */}
         <div style={s.card}>
           <div style={{ fontSize: 18, fontWeight: 900, color: '#0F172A', marginBottom: 20 }}>
-            📦 Product & Model Approvals Queue
+            📦 Marketplace Product Review Queue
           </div>
 
           <div style={{ overflowX: 'auto' }}>
@@ -249,93 +304,123 @@ export default function AdminDashboard() {
               <thead>
                 <tr>
                   <th style={s.th}>Product Title</th>
-                  <th style={s.th}>Seller / Designer</th>
-                  <th style={s.th}>Submitted</th>
+                  <th style={s.th}>Seller</th>
+                  <th style={s.th}>Submitted Date</th>
                   <th style={s.th}>Status</th>
-                  <th style={s.th}>Approval Action</th>
+                  <th style={s.th}>Action</th>
                 </tr>
               </thead>
               <tbody>
-                {products.map((p) => (
-                  <tr key={p.id}>
-                    <td style={{ ...s.td, fontWeight: 800, color: '#0F172A' }}>{p.name}</td>
-                    <td style={{ ...s.td, color: '#64748B' }}>{p.seller}</td>
-                    <td style={{ ...s.td, color: '#64748B', fontSize: 13 }}>{p.submitted}</td>
-                    <td style={s.td}>
-                      <span style={{ padding: '4px 10px', borderRadius: 99, fontSize: 12, fontWeight: 800, background: p.status === 'approved' ? '#ECFDF5' : p.status === 'rejected' ? '#FEF2F2' : '#FEF3C7', color: p.status === 'approved' ? '#10B981' : p.status === 'rejected' ? '#EF4444' : '#D97706' }}>
-                        {p.status}
-                      </span>
-                    </td>
-                    <td style={s.td}>
-                      {p.status === 'pending' ? (
-                        <div style={{ display: 'flex', gap: 8 }}>
-                          <button
-                            type="button"
-                            onClick={() => handleApproveProduct(p.id, p.name)}
-                            style={{ ...s.rowBtn, background: '#10B981' }}
-                          >
-                            Approve
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleRejectProduct(p.id, p.name)}
-                            style={s.rowBtnGhost}
-                          >
-                            Reject
-                          </button>
-                        </div>
-                      ) : (
-                        <span style={{ fontSize: 13, fontWeight: 700, color: '#64748B' }}>Completed</span>
-                      )}
+                {products.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} style={{ ...s.td, textAlign: 'center', color: '#64748B', padding: '36px' }}>
+                      No product listings pending review.
                     </td>
                   </tr>
-                ))}
+                ) : (
+                  products.map((p) => (
+                    <tr key={p.id}>
+                      <td style={{ ...s.td, fontWeight: 800, color: '#0F172A' }}>{p.name}</td>
+                      <td style={{ ...s.td, color: '#64748B' }}>{p.seller}</td>
+                      <td style={s.td}>{p.submitted}</td>
+                      <td style={s.td}>
+                        <span style={{ padding: '4px 10px', borderRadius: 99, fontSize: 12, fontWeight: 800, background: p.status === 'approved' ? '#ECFDF5' : p.status === 'rejected' ? '#FEF2F2' : '#FFF7ED', color: p.status === 'approved' ? '#10B981' : p.status === 'rejected' ? '#EF4444' : '#EA580C' }}>
+                          {p.status}
+                        </span>
+                      </td>
+                      <td style={s.td}>
+                        {p.status === 'pending' ? (
+                          <div style={{ display: 'flex', gap: 8 }}>
+                            <button
+                              type="button"
+                              onClick={() => handleApproveProduct(p.id, p.name)}
+                              style={s.rowBtn}
+                            >
+                              Approve Listing
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleRejectProduct(p.id, p.name)}
+                              style={s.rowBtnGhost}
+                            >
+                              Reject
+                            </button>
+                          </div>
+                        ) : (
+                          <span style={{ fontSize: 13, color: p.status === 'approved' ? '#10B981' : '#EF4444', fontWeight: 800 }}>
+                            {p.status.toUpperCase()}
+                          </span>
+                        )}
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
         </div>
 
-        {/* COMPLAINTS & REPORTS */}
+        {/* COMPLAINTS & SUPPORT TICKETS QUEUE */}
         <div style={s.card}>
-          <div style={{ fontSize: 18, fontWeight: 900, color: '#0F172A', marginBottom: 20 }}>
-            ⚠️ Complaints & Disputes Queue
+          <div style={{ fontSize: 18, fontWeight: 900, color: '#0F172A', marginBottom: 20, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <span>⚠️ Contact Support Messages & Complaints Queue</span>
+            <span style={{ fontSize: 12, background: 'rgba(234,88,12,0.1)', color: '#ea580c', padding: '4px 12px', borderRadius: 99, fontWeight: 800 }}>
+              Live Support Inbox
+            </span>
           </div>
 
           <div style={{ overflowX: 'auto' }}>
             <table style={s.table}>
               <thead>
                 <tr>
-                  <th style={s.th}>Subject</th>
+                  <th style={s.th}>Subject & Inquiry</th>
                   <th style={s.th}>From User</th>
+                  <th style={s.th}>Message Details</th>
                   <th style={s.th}>Status</th>
                   <th style={s.th}>Action</th>
                 </tr>
               </thead>
               <tbody>
-                {complaints.map((c) => (
-                  <tr key={c.id}>
-                    <td style={{ ...s.td, fontWeight: 800, color: '#0F172A' }}>{c.subject}</td>
-                    <td style={{ ...s.td, color: '#64748B' }}>{c.from}</td>
-                    <td style={s.td}>
-                      <span style={{ padding: '4px 10px', borderRadius: 99, fontSize: 12, fontWeight: 800, background: c.status === 'resolved' ? '#ECFDF5' : '#FEF2F2', color: c.status === 'resolved' ? '#10B981' : '#EF4444' }}>
-                        {c.status}
-                      </span>
-                    </td>
-                    <td style={s.td}>
-                      {c.status === 'open' ? (
-                        <button
-                          type="button"
-                          onClick={() => handleResolveComplaint(c.id)}
-                          style={{ ...s.rowBtn, background: '#FF6B35' }}
-                        >
-                          Resolve & Release Escrow →
-                        </button>
-                      ) : (
-                        <span style={{ fontSize: 13, color: '#10B981', fontWeight: 800 }}>Resolved ✓</span>
-                      )}
+                {complaints.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} style={{ ...s.td, textAlign: 'center', color: '#64748B', padding: '36px' }}>
+                      No support tickets or complaints received yet.
                     </td>
                   </tr>
-                ))}
+                ) : (
+                  complaints.map((c) => (
+                    <tr key={c.id}>
+                      <td style={{ ...s.td, fontWeight: 800, color: '#0F172A', maxWidth: 220 }}>
+                        {c.subject}
+                      </td>
+                      <td style={{ ...s.td, color: '#64748B', maxWidth: 200 }}>
+                        <div style={{ fontWeight: 800, color: '#0F172A' }}>{c.name || 'User'}</div>
+                        <div style={{ fontSize: 12 }}>{c.email}</div>
+                      </td>
+                      <td style={{ ...s.td, color: '#334155', maxWidth: 360, fontSize: 13, lineHeight: 1.5 }}>
+                        {c.message || 'Support inquiry submitted via contact form.'}
+                      </td>
+                      <td style={s.td}>
+                        <span style={{ padding: '4px 10px', borderRadius: 99, fontSize: 12, fontWeight: 800, background: c.status === 'resolved' ? '#ECFDF5' : '#FEF2F2', color: c.status === 'resolved' ? '#10B981' : '#EF4444' }}>
+                          {c.status}
+                        </span>
+                      </td>
+                      <td style={s.td}>
+                        {c.status === 'open' ? (
+                          <button
+                            type="button"
+                            onClick={() => handleResolveComplaint(c.id)}
+                            style={{ ...s.rowBtn, background: '#FF6B35' }}
+                          >
+                            Resolve Ticket
+                          </button>
+                        ) : (
+                          <span style={{ fontSize: 13, color: '#10B981', fontWeight: 800 }}>Resolved ✓</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>

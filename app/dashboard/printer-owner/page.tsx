@@ -141,7 +141,7 @@ export default async function PrinterOwnerDashboard() {
               <div style={{ fontSize: 13, color: '#64748B', marginTop: 2 }}>Connected machines receiving local job assignments</div>
             </div>
             <Link href="/dashboard/printer-owner/register" style={{ color: '#2563EB', fontWeight: 800, fontSize: 14, textDecoration: 'none' }}>
-              + Register Machine →
+              + Register Machine
             </Link>
           </div>
 

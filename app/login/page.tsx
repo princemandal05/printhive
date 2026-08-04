@@ -49,13 +49,13 @@ export default function LoginPage() {
       
       const role = (profile?.role as string) || data.user.user_metadata?.role || 'buyer'
       const urlParams = new URLSearchParams(window.location.search)
-      const redirectUrl = urlParams.get('redirect') || (DASHBOARD_PATH[role] ?? '/dashboard/buyer')
+      const redirectUrl = urlParams.get('redirect') || urlParams.get('next') || '/'
       
       // Set active role auth cookie so middleware grants immediate access
       document.cookie = `printhive_auth_role=${role}; path=/; max-age=604800`
       document.cookie = `printhive_guest_role=${role}; path=/; max-age=604800`
 
-      // Direct login redirect to target role dashboard
+      // Direct login redirect to Home page (or explicit next target)
       window.location.href = redirectUrl
     }
   }

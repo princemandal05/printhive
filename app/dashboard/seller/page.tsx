@@ -206,7 +206,7 @@ export default async function SellerDashboard() {
               <div style={{ fontSize: 13, color: '#64748B', marginTop: 2 }}>Real-time order statuses backed by Razorpay Escrow protection</div>
             </div>
             <Link href="/orders" style={{ color: '#FF6B35', fontWeight: 800, fontSize: 14, textDecoration: 'none' }}>
-              View All Orders →
+              View All Orders
             </Link>
           </div>
 

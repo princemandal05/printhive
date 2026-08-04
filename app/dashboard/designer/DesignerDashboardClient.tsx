@@ -184,7 +184,7 @@ export default function DesignerDashboardClient({ userEmail, initialDesigns, sig
               <div style={{ fontSize: 13, color: '#64748B', marginTop: 2 }}>STL & 3MF models generating automated royalties for you</div>
             </div>
             <Link href="/dashboard/designer/upload" style={{ color: '#8B5CF6', fontWeight: 800, fontSize: 14, textDecoration: 'none' }}>
-              + Upload Model →
+              + Upload Model
             </Link>
           </div>
 

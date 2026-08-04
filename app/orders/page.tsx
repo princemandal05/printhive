@@ -502,7 +502,7 @@ export default function OrdersPage() {
             }}
           >
             <Link
-              href="/requests"
+              href="/contact"
               className="btn btn-primary"
             >
               Contact Support

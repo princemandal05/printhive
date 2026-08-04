@@ -12,15 +12,14 @@ export const DASHBOARD_PATH: Record<Role, string> = {
   admin: '/dashboard/admin',
 }
 
-export async function requireRole(role: Role) {
+export async function requireRole(expectedRole: Role) {
   const cookieStore = await cookies()
   const guestDemoRole = cookieStore.get('printhive_guest_role')?.value
 
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  // Real, authenticated session always wins — check this first regardless
-  // of any cookies present.
+  // Real, authenticated session always wins
   if (user) {
     const { data: profile } = await supabase
       .from('profiles')
@@ -28,32 +27,44 @@ export async function requireRole(role: Role) {
       .eq('id', user.id)
       .maybeSingle()
 
+    const userRole: Role = (profile?.role as Role) || (user.user_metadata?.role as Role) || 'buyer'
+
+    // Strict Role Access Control:
+    // If the authenticated user's actual registered role does NOT match the page required role (and user is not Admin),
+    // redirect them to their authorized role dashboard!
+    if (userRole !== expectedRole && userRole !== 'admin' && expectedRole !== 'buyer') {
+      redirect(DASHBOARD_PATH[userRole] || '/dashboard/buyer')
+    }
+
     return {
       supabase,
       user,
       profile: profile || {
         id: user.id,
         email: user.email,
-        role,
+        role: userRole,
         full_name: user.email?.split('@')[0] || 'User',
       },
       isGuest: false as const,
     }
   }
 
-  // Explicit "browse as guest" demo mode — only reached when the user
-  // deliberately chose it (sets printhive_guest_role), never as a silent
-  // stand-in for a real login that failed.
+  // Guest demo mode — strictly enforce role matching
   if (guestDemoRole) {
+    const activeGuestRole = guestDemoRole as Role
+    if (activeGuestRole !== expectedRole && activeGuestRole !== 'admin' && expectedRole !== 'buyer') {
+      redirect(DASHBOARD_PATH[activeGuestRole] || '/dashboard/buyer')
+    }
+
     const guestUser = {
-      id: `guest-${guestDemoRole}`,
-      email: `guest_${guestDemoRole}@printhive.demo`,
+      id: `guest-${activeGuestRole}`,
+      email: `guest_${activeGuestRole}@printhive.demo`,
     }
     const guestProfile = {
       id: guestUser.id,
       email: guestUser.email,
-      role: guestDemoRole,
-      full_name: `Guest ${guestDemoRole.replace('_', ' ').toUpperCase()}`,
+      role: activeGuestRole,
+      full_name: `Guest ${activeGuestRole.replace('_', ' ').toUpperCase()}`,
     }
 
     return {
@@ -64,10 +75,6 @@ export async function requireRole(role: Role) {
     }
   }
 
-  // No real session and no explicit guest mode. The previous version
-  // fabricated a fake logged-in user here (`account_${role}@printhive.com`)
-  // — that's exactly what hid the broken-signup bug: a failed signup or an
-  // expired/missing session looked identical to a working dashboard. Send
-  // people to login instead of pretending they're authenticated.
+  // Unauthenticated users attempting to access protected routes redirect to login
   redirect('/login')
 }

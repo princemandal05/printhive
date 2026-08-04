@@ -89,7 +89,8 @@ export default function Navbar() {
         setUser(currentUser)
         const { data: userProfile } = await supabase.from('profiles').select('*').eq('id', currentUser.id).maybeSingle()
         if (userProfile) setProfile(userProfile)
-        role = userProfile?.role || 'buyer'
+        
+        role = userProfile?.role || currentUser.user_metadata?.role || 'buyer'
       } else if (typeof document !== 'undefined') {
         const guestMatch = document.cookie.match(/printhive_guest_role=([^;]+)/) || document.cookie.match(/printhive_auth_role=([^;]+)/)
         role = guestMatch ? guestMatch[1] : null
@@ -148,6 +149,11 @@ export default function Navbar() {
   }
 
   const handleRoleSwitch = (newRole: string) => {
+    if (user && profile?.role !== 'admin' && profile?.role !== newRole) {
+      alert(`Access Restricted: Your registered account role is ${ROLE_LABELS[profile?.role || 'buyer']}. You cannot switch to unauthorized roles.`)
+      return
+    }
+
     document.cookie = `printhive_guest_role=${newRole}; path=/; max-age=604800`
     document.cookie = `printhive_auth_role=${newRole}; path=/; max-age=604800`
     setUserRole(newRole)
@@ -162,6 +168,8 @@ export default function Navbar() {
   const userName = profile?.full_name || user?.user_metadata?.full_name || user?.email?.split('@')[0] || (userRole ? `Guest ${userRole}` : 'User')
   const userEmail = user?.email || (userRole ? `${userRole}@printhive.demo` : '')
   const avatarUrl = profile?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}&background=ea580c&color=ffffff&bold=true`
+
+  const isAdminOrGuest = !user || profile?.role === 'admin'
 
   return (
     <header className="navbar" style={{ background: 'var(--bg-card)', backdropFilter: 'blur(20px)', borderBottom: '1px solid var(--border-color)', position: 'sticky', top: 0, zIndex: 100, transition: 'all 0.3s ease' }}>
@@ -247,58 +255,26 @@ export default function Navbar() {
             )}
           </Link>
 
-          {/* Logged In Controls: Mode Dropdown, My Profile Button, Dashboard Button, Log out, + Profile Avatar Dropdown */}
+          {/* Logged In Controls: Dashboard Button + Round Avatar Circle Dropdown */}
           {userRole ? (
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              {/* 1-Click Role Switcher Selector */}
-              <select
-                value={userRole}
-                onChange={(e) => handleRoleSwitch(e.target.value)}
-                style={{ background: 'var(--bg-card-hover)', color: 'var(--text-main)', border: '1px solid var(--border-color)', padding: '6px 12px', borderRadius: 99, fontSize: 12, fontWeight: 800, cursor: 'pointer', outline: 'none' }}
-                title="Switch Active Role Experience"
-              >
-                <option value="buyer">🛍️ Buyer Mode</option>
-                <option value="seller">🏬 Seller Mode</option>
-                <option value="designer">🎨 Designer Mode</option>
-                <option value="printer_owner">🖨️ Printer Owner Mode</option>
-                <option value="admin">🛡️ Admin Mode</option>
-              </select>
-
-              {/* My Profile Button */}
-              <Link
-                href="/profile"
-                style={{ background: 'var(--bg-card-hover)', border: '1px solid var(--border-color)', color: 'var(--text-main)', padding: '6px 14px', borderRadius: 99, fontSize: 13, fontWeight: 800, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 6 }}
-                title="View & Edit My Profile"
-              >
-                👤 My Profile
-              </Link>
-
               {/* Dashboard Button */}
               {dashboardHref && (
                 <Link
                   href={dashboardHref}
                   style={{ background: '#ea580c', color: '#fff', padding: '8px 16px', borderRadius: 99, fontSize: 13, fontWeight: 800, textDecoration: 'none', boxShadow: '0 4px 14px rgba(234, 88, 12, 0.3)' }}
                 >
-                  Dashboard →
+                  Dashboard
                 </Link>
               )}
 
-              {/* Log Out Button */}
-              <button
-                type="button"
-                onClick={handleSignOut}
-                style={{ background: 'var(--bg-card-hover)', color: 'var(--text-sub)', border: '1px solid var(--border-color)', padding: '8px 14px', borderRadius: 99, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
-              >
-                Log out
-              </button>
-
-              {/* Profile Avatar Circle & Dropdown */}
+              {/* Profile Avatar Circle & Floating Dropdown */}
               <div style={{ position: 'relative', marginLeft: 4 }} ref={dropdownRef}>
                 <button
                   type="button"
                   onClick={() => setDropdownOpen(!dropdownOpen)}
                   style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', display: 'flex', alignItems: 'center' }}
-                  title="GitHub Style Profile Menu"
+                  title="Profile Account Menu"
                 >
                   <img
                     src={avatarUrl}
@@ -348,7 +324,7 @@ export default function Navbar() {
                         <span style={{ background: 'rgba(234,88,12,0.12)', color: '#ea580c', padding: '2px 8px', borderRadius: 99, fontSize: 11, fontWeight: 800 }}>
                           {ROLE_LABELS[userRole] || userRole}
                         </span>
-                        <span style={{ fontSize: 11, color: 'var(--text-sub)', fontWeight: 700 }}>⇄ Mode Switcher</span>
+                        <span style={{ fontSize: 11, color: 'var(--text-sub)', fontWeight: 700 }}>Verified Role</span>
                       </div>
                     </div>
 
@@ -366,7 +342,7 @@ export default function Navbar() {
                         onClick={() => setDropdownOpen(false)}
                         style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 18px', fontSize: 13, fontWeight: 700, color: 'var(--text-main)', textDecoration: 'none', transition: 'background 0.2s' }}
                       >
-                        <span>🚀</span> My Role Dashboard
+                        <span>🚀</span> My Authorized Dashboard
                       </Link>
                       <Link
                         href="/orders"
@@ -375,7 +351,47 @@ export default function Navbar() {
                       >
                         <span>📦</span> My Orders & Escrow
                       </Link>
+                      <Link
+                        href="/support-tickets"
+                        onClick={() => setDropdownOpen(false)}
+                        style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 18px', fontSize: 13, fontWeight: 700, color: 'var(--text-main)', textDecoration: 'none', transition: 'background 0.2s' }}
+                      >
+                        <span>🎧</span> My Support Tickets & Live Status
+                      </Link>
                     </div>
+
+                    {/* MODE DISPLAY / SWITCHER FOR ADMIN OR DEMO GUESTS */}
+                    {isAdminOrGuest && (
+                      <div style={{ padding: '8px 0', borderBottom: '1px solid var(--border-color)' }}>
+                        <div style={{ padding: '4px 18px', fontSize: 11, fontWeight: 800, color: 'var(--text-sub)', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                          Demo Preview Mode
+                        </div>
+                        {Object.keys(ROLE_LABELS).map((rKey) => (
+                          <button
+                            key={rKey}
+                            type="button"
+                            onClick={() => handleRoleSwitch(rKey)}
+                            style={{
+                              width: '100%',
+                              textAlign: 'left',
+                              background: userRole === rKey ? 'rgba(234,88,12,0.1)' : 'transparent',
+                              border: 'none',
+                              padding: '8px 18px',
+                              fontSize: 13,
+                              fontWeight: userRole === rKey ? 800 : 600,
+                              color: userRole === rKey ? '#ea580c' : 'var(--text-main)',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'space-between',
+                            }}
+                          >
+                            <span>{ROLE_LABELS[rKey]}</span>
+                            {userRole === rKey && <span style={{ fontSize: 12 }}>✓</span>}
+                          </button>
+                        ))}
+                      </div>
+                    )}
 
                     {/* SETTINGS & THEME & LOGIN ACCESS */}
                     <div style={{ padding: '8px 0', borderBottom: '1px solid var(--border-color)' }}>

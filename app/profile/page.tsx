@@ -223,7 +223,7 @@ export default function ProfilePage() {
                 href={DASHBOARD_PATH[role] || '/dashboard/buyer'}
                 style={{ background: 'linear-gradient(135deg, #ea580c 0%, #c2410c 100%)', color: '#fff', padding: '12px 20px', borderRadius: 12, fontWeight: 800, fontSize: 14, textDecoration: 'none', boxShadow: '0 6px 20px rgba(234,88,12,0.3)' }}
               >
-                Go to Dashboard →
+                Go to Dashboard
               </Link>
               <button
                 type="button"
