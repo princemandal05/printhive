@@ -1,10 +1,20 @@
 'use client'
 
 import { useState } from 'react'
+import dynamic from 'next/dynamic'
 import Link from 'next/link'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
-import OpenStreetMap, { MapLocation } from '@/components/OpenStreetMap'
+import type { MapLocation } from '@/components/OpenStreetMap'
+
+const OpenStreetMap = dynamic(() => import('@/components/OpenStreetMap'), {
+  ssr: false,
+  loading: () => (
+    <div style={{ height: 440, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-card)', color: 'var(--text-sub)', fontSize: 14, fontWeight: 800 }}>
+      🗺️ Loading India OpenStreetMap Leaflet Engine...
+    </div>
+  ),
+})
 
 type PrinterOwner = MapLocation & {
   completedOrders: number

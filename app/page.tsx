@@ -2,9 +2,18 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import dynamic from 'next/dynamic'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
-import Hero3D from '@/components/Hero3D'
+
+const Hero3D = dynamic(() => import('@/components/Hero3D'), {
+  ssr: false,
+  loading: () => (
+    <div style={{ height: 420, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-sub)', fontSize: 13, fontWeight: 700 }}>
+      ⚡ Initializing 3D Canvas Engine...
+    </div>
+  ),
+})
 
 const PROBLEMS = [
   {

@@ -9,12 +9,14 @@ const spaceGrotesk = Space_Grotesk({
   subsets: ['latin'],
   weight: ['500', '600', '700'],
   variable: '--font-display',
+  display: 'swap',
 })
 
 const sourceSans3 = Source_Sans_3({
   subsets: ['latin'],
   weight: ['300', '400', '600', '700', '800'],
   variable: '--font-body',
+  display: 'swap',
 })
 
 export const metadata: Metadata = {
