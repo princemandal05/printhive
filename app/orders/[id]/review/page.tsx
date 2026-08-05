@@ -134,7 +134,7 @@ export default function LeaveReviewPage() {
               boxShadow: '0 4px 16px rgba(234, 88, 12, 0.35)',
             }}
           >
-            {submitting ? 'Submitting Review...' : 'Submit Review →'}
+            {submitting ? 'Submitting Review...' : 'Submit Review'}
           </button>
         </form>
       </section>

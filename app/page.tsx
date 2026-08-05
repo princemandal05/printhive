@@ -1,10 +1,12 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import dynamic from 'next/dynamic'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
+
+import { createClient } from '@/utils/supabase/client'
 
 const Hero3D = dynamic(() => import('@/components/Hero3D'), {
   ssr: false,
@@ -69,8 +71,25 @@ const FEATURES = [
 ]
 
 export default function Home() {
+  const supabase = createClient()
   const [aiSearchQuery, setAiSearchQuery] = useState('')
   const [activeRoleTab, setActiveRoleTab] = useState<'buyer' | 'designer' | 'printer'>('buyer')
+  const [isLoggedIn, setIsLoggedIn] = useState(false)
+
+  // Detect logged in state
+  useEffect(() => {
+    async function checkAuth() {
+      try {
+        const { data: { user } } = await supabase.auth.getUser()
+        if (user) {
+          setIsLoggedIn(true)
+        }
+      } catch (e) {
+        // guest mode
+      }
+    }
+    checkAuth()
+  }, [])
 
   return (
     <main style={{ minHeight: '100vh', transition: 'background 0.3s ease' }}>
@@ -249,10 +268,10 @@ export default function Home() {
                   </p>
                   <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
                     <Link href="/browse" className="btn btn-primary" style={{ background: '#10B981', color: '#fff', padding: '12px 24px', borderRadius: 99, fontWeight: 700, textDecoration: 'none' }}>
-                      Browse Designs →
+                      Browse Designs
                     </Link>
                     <Link href="/print-on-demand" className="btn btn-outline" style={{ borderColor: 'var(--border-color)', color: 'var(--text-main)', padding: '12px 24px', borderRadius: 99, textDecoration: 'none', fontWeight: 600 }}>
-                      Slicer & Upload →
+                      Slicer & Upload
                     </Link>
                   </div>
                 </div>
@@ -278,10 +297,10 @@ export default function Home() {
                   </p>
                   <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
                     <Link href="/dashboard/designer/upload" className="btn btn-primary" style={{ background: '#ea580c', color: '#fff', padding: '12px 24px', borderRadius: 99, fontWeight: 700, textDecoration: 'none' }}>
-                      Upload 3D Model →
+                      Upload 3D Model
                     </Link>
                     <Link href="/dashboard/designer/earnings" className="btn btn-outline" style={{ borderColor: 'var(--border-color)', color: 'var(--text-main)', padding: '12px 24px', borderRadius: 99, textDecoration: 'none', fontWeight: 600 }}>
-                      Royalty Calculator →
+                      Royalty Calculator
                     </Link>
                   </div>
                 </div>
@@ -304,10 +323,10 @@ export default function Home() {
                   </p>
                   <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
                     <Link href="/printers" className="btn btn-primary" style={{ background: '#2563eb', color: '#fff', padding: '12px 24px', borderRadius: 99, fontWeight: 700, textDecoration: 'none' }}>
-                      View Printer Hubs Map →
+                      View Printer Hubs Map
                     </Link>
                     <Link href="/dashboard/printer-owner/register" className="btn btn-outline" style={{ borderColor: 'var(--border-color)', color: 'var(--text-main)', padding: '12px 24px', borderRadius: 99, textDecoration: 'none', fontWeight: 600 }}>
-                      Register Machine →
+                      Register Machine
                     </Link>
                   </div>
                 </div>
@@ -364,30 +383,45 @@ export default function Home() {
         </div>
       </section>
 
-      {/* FINAL CTA BAND */}
+      {/* FINAL CTA BAND — AUTH AWARE */}
       <section className="container section-sm" style={{ paddingBottom: 80 }}>
         <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', padding: '54px 36px', textAlign: 'center', borderRadius: 28, boxShadow: '0 10px 40px rgba(0,0,0,0.05)' }}>
           <h2 style={{ fontSize: 34, fontWeight: 900, marginBottom: 12, color: 'var(--text-main)' }}>
-            Ready to Print Something Real?
+            {isLoggedIn ? 'Welcome Back to PrintHive' : 'Ready to Print Something Real?'}
           </h2>
           <p style={{ color: 'var(--text-sub)', marginBottom: 32, fontSize: 16 }}>
-            Join PrintHive today — no printer, no CAD software, no hassle.
+            {isLoggedIn
+              ? 'Explore active 3D designs, upload custom models, or manage your orders and earnings.'
+              : 'Join PrintHive today — no printer, no CAD software, no hassle.'}
           </p>
           <div style={{ display: 'flex', gap: 16, justifyContent: 'center', flexWrap: 'wrap' }}>
-            <Link href="/signup" className="btn btn-primary btn-lg" style={{ background: '#ea580c', color: '#fff', padding: '14px 36px', borderRadius: 99, fontWeight: 800, textDecoration: 'none', boxShadow: '0 4px 16px rgba(234,88,12,0.35)' }}>
-              Create Free Account →
-            </Link>
-            <button
-              onClick={() => {
-                document.cookie = 'printhive_guest_role=buyer; path=/; max-age=604800'
-                document.cookie = 'printhive_auth_role=buyer; path=/; max-age=604800'
-                window.location.href = '/dashboard/buyer'
-              }}
-              className="btn btn-outline btn-lg"
-              style={{ borderColor: 'var(--border-color)', color: 'var(--text-main)', padding: '14px 32px', borderRadius: 99, background: 'var(--bg-card-hover)', textDecoration: 'none', fontWeight: 600, cursor: 'pointer' }}
-            >
-              Try Demo / Guest Login
-            </button>
+            {isLoggedIn ? (
+              <>
+                <Link href="/dashboard/buyer" className="btn btn-primary btn-lg" style={{ background: '#ea580c', color: '#fff', padding: '14px 36px', borderRadius: 99, fontWeight: 800, textDecoration: 'none', boxShadow: '0 4px 16px rgba(234,88,12,0.35)' }}>
+                  🚀 Go to My Dashboard
+                </Link>
+                <Link href="/shop" className="btn btn-outline btn-lg" style={{ borderColor: 'var(--border-color)', color: 'var(--text-main)', padding: '14px 32px', borderRadius: 99, background: 'var(--bg-card-hover)', textDecoration: 'none', fontWeight: 600 }}>
+                  🛒 Explore 3D Marketplace
+                </Link>
+              </>
+            ) : (
+              <>
+                <Link href="/signup" className="btn btn-primary btn-lg" style={{ background: '#ea580c', color: '#fff', padding: '14px 36px', borderRadius: 99, fontWeight: 800, textDecoration: 'none', boxShadow: '0 4px 16px rgba(234,88,12,0.35)' }}>
+                  Create Free Account
+                </Link>
+                <button
+                  onClick={() => {
+                    document.cookie = 'printhive_guest_role=buyer; path=/; max-age=604800'
+                    document.cookie = 'printhive_auth_role=buyer; path=/; max-age=604800'
+                    window.location.href = '/dashboard/buyer'
+                  }}
+                  className="btn btn-outline btn-lg"
+                  style={{ borderColor: 'var(--border-color)', color: 'var(--text-main)', padding: '14px 32px', borderRadius: 99, background: 'var(--bg-card-hover)', textDecoration: 'none', fontWeight: 600, cursor: 'pointer' }}
+                >
+                  Try Demo / Guest Login
+                </button>
+              </>
+            )}
           </div>
         </div>
       </section>

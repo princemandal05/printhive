@@ -132,7 +132,7 @@ function OrderTrackingContent() {
             href={`/orders/${orderId}/review`}
             style={{ background: '#10B981', color: '#fff', padding: '12px 24px', borderRadius: 99, textDecoration: 'none', fontWeight: 800, fontSize: 14, boxShadow: '0 4px 16px rgba(16,185,129,0.35)' }}
           >
-            Leave Review & Rating →
+            Leave Review & Rating
           </Link>
         )}
 

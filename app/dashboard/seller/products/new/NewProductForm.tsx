@@ -313,7 +313,7 @@ export default function NewProductForm() {
                 boxShadow: '0 8px 24px rgba(255,107,53,0.35)',
               }}
             >
-              {submitting ? 'Publishing Product Listing…' : '🚀 Publish Product Listing Live →'}
+              {submitting ? 'Publishing Product Listing…' : '🚀 Publish Product Listing Live'}
             </button>
           </div>
 

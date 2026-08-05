@@ -163,6 +163,7 @@ export default function ProductDetailsPage() {
               style={{
                 height: '520px',
                 borderRadius: '20px',
+                overflow: 'hidden',
                 background:
                   'linear-gradient(135deg,var(--color-slate-100),var(--color-border-light))',
                 display: 'flex',
@@ -170,16 +171,20 @@ export default function ProductDetailsPage() {
                 alignItems: 'center',
               }}
             >
-              <svg
-                width="130"
-                height="130"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="var(--color-slate-400)"
-                strokeWidth="1.5"
-              >
-                <path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-              </svg>
+              {product.images && product.images[0] ? (
+                <img src={product.images[0]} alt={product.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              ) : (
+                <svg
+                  width="130"
+                  height="130"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="var(--color-slate-400)"
+                  strokeWidth="1.5"
+                >
+                  <path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                </svg>
+              )}
             </div>
 
             <div

@@ -9,6 +9,7 @@ export type CartItem = {
   price: number
   quantity: number
   stock: number
+  image?: string
 }
 
 export type WishlistItem = {

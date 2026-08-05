@@ -129,7 +129,7 @@ export default function DesignDetailClient({ design, reviews }: { design: Design
               className="btn btn-primary btn-block btn-lg"
               style={{ display: 'block', textAlign: 'center', padding: '14px 0', background: 'linear-gradient(135deg, #ff6b35 0%, #f97316 100%)', color: '#fff', borderRadius: 10, fontWeight: 700, textDecoration: 'none', boxShadow: '0 8px 20px rgba(255, 107, 53, 0.4)' }}
             >
-              Order this print →
+              Order this print
             </Link>
             <button
               className="btn btn-outline btn-block"

@@ -351,7 +351,7 @@ export default function UploadDesignForm() {
                 boxShadow: '0 8px 24px rgba(139,92,246,0.35)',
               }}
             >
-              {submitting ? 'Publishing 3D Model…' : '🚀 Publish 3D Model Live →'}
+              {submitting ? 'Publishing 3D Model…' : '🚀 Publish 3D Model Live'}
             </button>
           </div>
 

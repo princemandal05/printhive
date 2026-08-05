@@ -25,12 +25,20 @@ type OpenStreetMapProps = {
   height?: string | number
 }
 
+// Shared validator function for India coordinates
+function isValidIndiaCoord(lat: any, lng: any): boolean {
+  return (
+    typeof lat === 'number' && Number.isFinite(lat) && lat >= 6.5 && lat <= 35.5 &&
+    typeof lng === 'number' && Number.isFinite(lng) && lng >= 68.0 && lng <= 97.5
+  )
+}
+
 export default function OpenStreetMap({
-  locations,
+  locations = [],
   selectedId,
   onSelectLocation,
-  center = [20.5937, 78.9629], // Default Center of India
-  zoom = 5,
+  center = [28.6139, 77.2090], // Default Center: New Delhi, India
+  zoom = 6,
   isPicker = false,
   onLocationPicked,
   height = '420px',
@@ -39,6 +47,16 @@ export default function OpenStreetMap({
   const mapInstanceRef = useRef<any>(null)
   const markersRef = useRef<any[]>([])
   const [loaded, setLoaded] = useState(false)
+
+  // Safe coordinates validator
+  const validCenter: [number, number] = (
+    Array.isArray(center) && center.length === 2 && isValidIndiaCoord(center[0], center[1])
+  ) ? center : [28.6139, 77.2090]
+
+  // Filter out any invalid location entries using shared validator
+  const validLocations = Array.isArray(locations)
+    ? locations.filter((loc) => loc && isValidIndiaCoord(loc.lat, loc.lng))
+    : []
 
   // 1. Dynamically Load Leaflet CSS and JS
   useEffect(() => {
@@ -84,7 +102,7 @@ export default function OpenStreetMap({
       maxBoundsViscosity: 1.0, // Prevents panning outside India
       minZoom: 4,
       maxZoom: 18,
-    }).setView(center, zoom)
+    }).setView(validCenter, zoom)
 
     mapInstanceRef.current = map
 
@@ -94,11 +112,12 @@ export default function OpenStreetMap({
       attribution: '© <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors | PrintHive India GPS',
     }).addTo(map)
 
-    // Handle map click for picker mode
+    // Handle map click for picker mode using shared coordinate validator
     if (isPicker && onLocationPicked) {
       map.on('click', (e: any) => {
-        const { lat, lng } = e.latlng
-        onLocationPicked(lat, lng)
+        if (e && e.latlng && isValidIndiaCoord(e.latlng.lat, e.latlng.lng)) {
+          onLocationPicked(e.latlng.lat, e.latlng.lng)
+        }
       })
     }
 
@@ -122,7 +141,7 @@ export default function OpenStreetMap({
     markersRef.current.forEach((m) => m.remove())
     markersRef.current = []
 
-    if (locations.length === 0) return
+    if (validLocations.length === 0) return
 
     // Custom India Marker Icon Generator
     const createCustomIcon = (isSelected: boolean) =>
@@ -147,7 +166,7 @@ export default function OpenStreetMap({
         iconAnchor: [17, 17],
       })
 
-    locations.forEach((loc) => {
+    validLocations.forEach((loc) => {
       const isSelected = loc.id === selectedId
       const marker = L.marker([loc.lat, loc.lng], {
         icon: createCustomIcon(isSelected),
@@ -156,8 +175,8 @@ export default function OpenStreetMap({
       // Popup Content
       const popupHtml = `
         <div style="font-family: inherit; padding: 4px; color: #0F172A;">
-          <div style="font-weight: 800; font-size: 14px; margin-bottom: 2px;">${loc.name}</div>
-          <div style="font-size: 12px; color: #64748B; margin-bottom: 6px;">📍 ${loc.location}</div>
+          <div style="font-weight: 800; font-size: 14px; margin-bottom: 2px;">${loc.name || 'Printer Hub'}</div>
+          <div style="font-size: 12px; color: #64748B; margin-bottom: 6px;">📍 ${loc.location || 'India'}</div>
           ${loc.distance ? `<div style="font-size: 11px; font-weight: 700; color: #FF6B35;">🚀 ${loc.distance}</div>` : ''}
           ${loc.machines ? `<div style="font-size: 11px; color: #475569; margin-top: 4px;">🖨️ ${loc.machines.join(', ')}</div>` : ''}
         </div>
@@ -172,12 +191,12 @@ export default function OpenStreetMap({
     })
 
     if (selectedId) {
-      const activeLoc = locations.find((l) => l.id === selectedId)
+      const activeLoc = validLocations.find((l) => l.id === selectedId)
       if (activeLoc) {
         map.setView([activeLoc.lat, activeLoc.lng], 11, { animate: true })
       }
     }
-  }, [loaded, locations, selectedId])
+  }, [loaded, validLocations, selectedId])
 
   return (
     <div style={{ position: 'relative', width: '100%', height, borderRadius: 20, overflow: 'hidden' }}>

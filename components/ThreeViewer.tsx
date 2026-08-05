@@ -1,22 +1,88 @@
 'use client'
 
-import { useState } from 'react'
+import React, { useState, Component, ErrorInfo, ReactNode } from 'react'
 
 interface ThreeViewerProps {
   title?: string
   color?: string
   wireframeDefault?: boolean
   height?: number | string
+  modelUrl?: string
 }
 
-export default function ThreeViewer({
+interface ErrorBoundaryProps {
+  children: ReactNode
+  fallbackTitle?: string
+}
+
+interface ErrorBoundaryState {
+  hasError: boolean
+  errorMessage: string
+}
+
+class ThreeViewerErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
+  constructor(props: ErrorBoundaryProps) {
+    super(props)
+    this.state = { hasError: false, errorMessage: '' }
+  }
+
+  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
+    return { hasError: true, errorMessage: error.message || 'Corrupt or incompatible 3D geometry file.' }
+  }
+
+  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    console.error('ThreeViewer rendering error caught by boundary:', error, errorInfo)
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div
+          style={{
+            position: 'relative',
+            width: '100%',
+            height: 380,
+            borderRadius: 16,
+            background: 'radial-gradient(circle at center, #1e1b4b 0%, #0f172a 100%)',
+            border: '1px solid #4338ca',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: 24,
+            textAlign: 'center',
+          }}
+        >
+          <div style={{ fontSize: 42, marginBottom: 12 }}>🧊</div>
+          <div style={{ fontSize: 16, fontWeight: 800, color: '#fff', marginBottom: 6 }}>
+            Fallback Viewport Loaded
+          </div>
+          <div style={{ fontSize: 13, color: '#a5b4fc', maxWidth: 400, lineHeight: 1.5, marginBottom: 16 }}>
+            {this.state.errorMessage || 'Standard 3D mesh preview active.'}
+          </div>
+          <span style={{ fontSize: 12, background: 'rgba(239,68,68,0.2)', color: '#fca5a5', padding: '4px 12px', borderRadius: 99, fontWeight: 700 }}>
+            ● Preview Unavailable — Click to Retry
+          </span>
+        </div>
+      )
+    }
+
+    return this.props.children
+  }
+}
+
+function ThreeViewerInner({
   title = '3D Model Viewport',
   color = '#ff6b35',
   height = 420,
+  modelUrl,
 }: ThreeViewerProps) {
   const [wireframe, setWireframe] = useState(false)
   const [rotating, setRotating] = useState(true)
   const [zoom, setZoom] = useState(100)
+
+  // Safe color validator
+  const validColor = /^#[0-9A-F]{6}$/i.test(color) ? color : '#ff6b35'
 
   return (
     <div
@@ -65,25 +131,25 @@ export default function ThreeViewer({
           viewBox="0 0 100 100"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
-          style={{ filter: `drop-shadow(0 15px 25px ${color}44)` }}
+          style={{ filter: `drop-shadow(0 15px 25px ${validColor}44)` }}
         >
           {/* Isometric 3D Cube / Polyline Geometry */}
           <polygon
             points="50,15 90,35 50,55 10,35"
-            fill={wireframe ? 'transparent' : `${color}cc`}
-            stroke={color}
+            fill={wireframe ? 'transparent' : `${validColor}cc`}
+            stroke={validColor}
             strokeWidth={wireframe ? '1.5' : '0.5'}
           />
           <polygon
             points="10,35 50,55 50,95 10,75"
-            fill={wireframe ? 'transparent' : `${color}aa`}
-            stroke={color}
+            fill={wireframe ? 'transparent' : `${validColor}aa`}
+            stroke={validColor}
             strokeWidth={wireframe ? '1.5' : '0.5'}
           />
           <polygon
             points="50,55 90,35 90,75 50,95"
-            fill={wireframe ? 'transparent' : `${color}88`}
-            stroke={color}
+            fill={wireframe ? 'transparent' : `${validColor}88`}
+            stroke={validColor}
             strokeWidth={wireframe ? '1.5' : '0.5'}
           />
 
@@ -146,7 +212,7 @@ export default function ThreeViewer({
         <button
           type="button"
           onClick={() => setWireframe(!wireframe)}
-          style={{ background: wireframe ? color : 'transparent', color: '#fff', border: 'none', borderRadius: 6, padding: '4px 10px', fontSize: 12, cursor: 'pointer', fontWeight: 600 }}
+          style={{ background: wireframe ? validColor : 'transparent', color: '#fff', border: 'none', borderRadius: 6, padding: '4px 10px', fontSize: 12, cursor: 'pointer', fontWeight: 600 }}
         >
           {wireframe ? 'Solid Render' : 'Wireframe'}
         </button>
@@ -167,5 +233,13 @@ export default function ThreeViewer({
         </button>
       </div>
     </div>
+  )
+}
+
+export default function ThreeViewer(props: ThreeViewerProps) {
+  return (
+    <ThreeViewerErrorBoundary fallbackTitle={props.title}>
+      <ThreeViewerInner {...props} />
+    </ThreeViewerErrorBoundary>
   )
 }

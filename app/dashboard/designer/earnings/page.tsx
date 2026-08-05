@@ -1,22 +1,77 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { createClient } from '@/utils/supabase/client'
 
-const MOCK_TRANSACTIONS = [
-  { date: '8 Jul 2026', design: 'Articulated Dragon', order: '#PH-2291', buyer: 'Priya S.', amount: 68 },
-  { date: '5 Jul 2026', design: 'Desk Organizer', order: '#PH-2277', buyer: 'Rohan K.', amount: 45 },
-  { date: '2 Jul 2026', design: 'Articulated Dragon', order: '#PH-2260', buyer: 'Meera J.', amount: 68 },
-  { date: '28 Jun 2026', design: 'Phone Stand', order: '#PH-2231', buyer: 'Aditya R.', amount: 30 },
-]
+type Transaction = {
+  id: string
+  date: string
+  createdAt?: string | null
+  design: string
+  order: string
+  buyer: string
+  amount: number
+}
 
 export default function DesignerEarningsPage() {
-  const totalEarnings = MOCK_TRANSACTIONS.reduce((sum, t) => sum + t.amount, 0)
+  const supabase = createClient()
+  const [transactions, setTransactions] = useState<Transaction[]>([])
+  const [loading, setLoading] = useState(true)
 
   // Interactive Designer Royalty Calculator State
   const [printsPerMonth, setPrintsPerMonth] = useState(120)
   const [avgPrice, setAvgPrice] = useState(450)
   const monthlyRoyaltyEarnings = Math.round(printsPerMonth * avgPrice * 0.15)
+
+  useEffect(() => {
+    async function loadEarnings() {
+      try {
+        const { data: { user } } = await supabase.auth.getUser()
+        if (user) {
+          const { data } = await supabase
+            .from('orders')
+            .select('*')
+            .eq('designer_id', user.id)
+            .order('created_at', { ascending: false })
+
+          if (data && data.length > 0) {
+            const mapped: Transaction[] = data.map((o: any) => {
+              const orderIdStr = String(o.id || '')
+              return {
+                id: orderIdStr,
+                createdAt: o.created_at || null,
+                date: o.created_at ? new Date(o.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Recently',
+                design: o.items?.[0]?.name || o.product_name || '3D Print Model',
+                order: `#${orderIdStr.slice(0, 8)}`,
+                buyer: o.buyer_name || 'PrintHive Buyer',
+                amount: o.designer_share || (o.total_price ? Math.round(o.total_price * 0.15) : 0),
+              }
+            })
+            setTransactions(mapped)
+          } else {
+            setTransactions([])
+          }
+        }
+      } catch (e) {
+        setTransactions([])
+      } finally {
+        setLoading(false)
+      }
+    }
+    loadEarnings()
+  }, [])
+
+  const totalEarnings = transactions.reduce((sum, t) => sum + t.amount, 0)
+
+  const now = new Date()
+  const monthEarnings = transactions
+    .filter((t) => {
+      if (!t.createdAt) return false
+      const d = new Date(t.createdAt)
+      return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear()
+    })
+    .reduce((sum, t) => sum + t.amount, 0)
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg-canvas)', color: 'var(--text-main)', transition: 'all 0.3s ease' }}>
@@ -39,8 +94,8 @@ export default function DesignerEarningsPage() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16, marginBottom: 36 }}>
           {[
             { val: `₹${totalEarnings}`, label: 'Total Earnings' },
-            { val: `₹${MOCK_TRANSACTIONS.filter((t) => t.date.includes('Jul')).reduce((s2, t) => s2 + t.amount, 0)}`, label: 'This Month' },
-            { val: String(MOCK_TRANSACTIONS.length), label: 'Paid Orders' },
+            { val: `₹${monthEarnings}`, label: 'This Month' },
+            { val: String(transactions.length), label: 'Paid Orders' },
             { val: '15%', label: 'Royalty Rate' },
           ].map(({ val, label }) => (
             <div key={label} style={{ background: 'var(--bg-card)', borderRadius: 16, padding: '20px 24px', border: '1px solid var(--border-color)', boxShadow: '0 4px 16px rgba(0,0,0,0.03)' }}>
@@ -109,28 +164,38 @@ export default function DesignerEarningsPage() {
         {/* Transaction History Table */}
         <div style={{ background: 'var(--bg-card)', borderRadius: 20, padding: 28, border: '1px solid var(--border-color)' }}>
           <div style={{ fontSize: 18, fontWeight: 800, marginBottom: 20 }}>Transaction History</div>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
-            <thead>
-              <tr style={{ borderBottom: '1px solid var(--border-color)', textAlign: 'left', color: 'var(--text-sub)' }}>
-                <th style={{ padding: '12px 8px' }}>Date</th>
-                <th style={{ padding: '12px 8px' }}>Design</th>
-                <th style={{ padding: '12px 8px' }}>Order ID</th>
-                <th style={{ padding: '12px 8px' }}>Buyer</th>
-                <th style={{ padding: '12px 8px', textAlign: 'right' }}>Royalty Payout</th>
-              </tr>
-            </thead>
-            <tbody>
-              {MOCK_TRANSACTIONS.map((t) => (
-                <tr key={t.order} style={{ borderBottom: '1px solid var(--border-color)' }}>
-                  <td style={{ padding: '12px 8px', color: 'var(--text-sub)' }}>{t.date}</td>
-                  <td style={{ padding: '12px 8px', fontWeight: 700 }}>{t.design}</td>
-                  <td style={{ padding: '12px 8px', color: 'var(--text-sub)' }}>{t.order}</td>
-                  <td style={{ padding: '12px 8px' }}>{t.buyer}</td>
-                  <td style={{ padding: '12px 8px', textAlign: 'right', fontWeight: 800, color: '#10B981' }}>+₹{t.amount}</td>
+          {loading ? (
+            <div style={{ padding: 20, textAlign: 'center', color: 'var(--text-sub)' }}>Loading transaction records...</div>
+          ) : transactions.length === 0 ? (
+            <div style={{ padding: '36px 20px', textAlign: 'center', color: 'var(--text-sub)' }}>
+              <div style={{ fontSize: 36, marginBottom: 8 }}>💰</div>
+              <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-main)' }}>No Royalty Payouts Yet</div>
+              <div style={{ fontSize: 13, marginTop: 4 }}>Royalties will appear here as buyers order your 3D models.</div>
+            </div>
+          ) : (
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
+              <thead>
+                <tr style={{ borderBottom: '1px solid var(--border-color)', textAlign: 'left', color: 'var(--text-sub)' }}>
+                  <th style={{ padding: '12px 8px' }}>Date</th>
+                  <th style={{ padding: '12px 8px' }}>Design</th>
+                  <th style={{ padding: '12px 8px' }}>Order ID</th>
+                  <th style={{ padding: '12px 8px' }}>Buyer</th>
+                  <th style={{ padding: '12px 8px', textAlign: 'right' }}>Royalty Payout</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {transactions.map((t) => (
+                  <tr key={t.id} style={{ borderBottom: '1px solid var(--border-color)' }}>
+                    <td style={{ padding: '12px 8px', color: 'var(--text-sub)' }}>{t.date}</td>
+                    <td style={{ padding: '12px 8px', fontWeight: 700 }}>{t.design}</td>
+                    <td style={{ padding: '12px 8px', color: 'var(--text-sub)' }}>{t.order}</td>
+                    <td style={{ padding: '12px 8px' }}>{t.buyer}</td>
+                    <td style={{ padding: '12px 8px', textAlign: 'right', fontWeight: 800, color: '#10B981' }}>+₹{t.amount}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
         </div>
       </div>
     </div>

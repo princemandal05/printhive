@@ -217,7 +217,7 @@ export default function RegisterPrinterForm() {
                 boxShadow: '0 8px 24px rgba(37,99,235,0.35)',
               }}
             >
-              {submitting ? 'Registering Machine Hub…' : '🚀 Register Machine on Leaflet Map →'}
+              {submitting ? 'Registering Machine Hub…' : '🚀 Register Machine on Leaflet Map'}
             </button>
           </div>
 
