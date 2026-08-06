@@ -393,15 +393,17 @@ export default function Navbar() {
                       </div>
                     )}
 
-                    {/* SETTINGS & THEME & LOGIN ACCESS */}
+                    {/* SETTINGS & THEME */}
                     <div style={{ padding: '8px 0', borderBottom: '1px solid var(--border-color)' }}>
-                      <Link
-                        href="/login"
-                        onClick={() => setDropdownOpen(false)}
-                        style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 18px', fontSize: 13, fontWeight: 700, color: 'var(--text-main)', textDecoration: 'none', transition: 'background 0.2s' }}
-                      >
-                        <span>🔑</span> Log In / Switch Account
-                      </Link>
+                      {!user && (
+                        <Link
+                          href="/login"
+                          onClick={() => setDropdownOpen(false)}
+                          style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 18px', fontSize: 13, fontWeight: 700, color: 'var(--text-main)', textDecoration: 'none', transition: 'background 0.2s' }}
+                        >
+                          <span>🔑</span> Log In
+                        </Link>
+                      )}
                       <button
                         type="button"
                         onClick={() => { toggleTheme(); setDropdownOpen(false); }}
