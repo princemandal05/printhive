@@ -124,58 +124,7 @@ export default function LoginPage() {
           {loading ? 'Verifying Credentials…' : 'Continue →'}
         </button>
 
-        {/* Quick Demo Sign-In Selector */}
-        <div style={{ marginTop: 20, paddingTop: 16, borderTop: '1px solid #E2E8F0' }}>
-          <div style={{ fontSize: 12, fontWeight: 800, color: '#64748B', textAlign: 'center', marginBottom: 10, textTransform: 'uppercase', letterSpacing: 0.5 }}>
-            ⚡ Instant 1-Click Role Login (No Password Needed)
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-            <button
-              type="button"
-              onClick={() => {
-                document.cookie = 'printhive_guest_role=buyer; path=/; max-age=604800'
-                document.cookie = 'printhive_auth_role=buyer; path=/; max-age=604800'
-                window.location.href = '/dashboard/buyer'
-              }}
-              style={{ background: '#EFF6FF', color: '#1E40AF', border: '1px solid #BFDBFE', padding: '8px 10px', borderRadius: 10, fontSize: 12, fontWeight: 800, cursor: 'pointer' }}
-            >
-              🛍️ Buyer Mode
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                document.cookie = 'printhive_guest_role=seller; path=/; max-age=604800'
-                document.cookie = 'printhive_auth_role=seller; path=/; max-age=604800'
-                window.location.href = '/dashboard/seller'
-              }}
-              style={{ background: '#FFF7ED', color: '#C2410C', border: '1px solid #FFEDD5', padding: '8px 10px', borderRadius: 10, fontSize: 12, fontWeight: 800, cursor: 'pointer' }}
-            >
-              🏬 Seller Central
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                document.cookie = 'printhive_guest_role=designer; path=/; max-age=604800'
-                document.cookie = 'printhive_auth_role=designer; path=/; max-age=604800'
-                window.location.href = '/dashboard/designer'
-              }}
-              style={{ background: '#F3E8FF', color: '#6B21A8', border: '1px solid #E9D5FF', padding: '8px 10px', borderRadius: 10, fontSize: 12, fontWeight: 800, cursor: 'pointer' }}
-            >
-              🎨 3D Designer
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                document.cookie = 'printhive_guest_role=printer_owner; path=/; max-age=604800'
-                document.cookie = 'printhive_auth_role=printer_owner; path=/; max-age=604800'
-                window.location.href = '/dashboard/printer-owner'
-              }}
-              style={{ background: '#ECFDF5', color: '#065F46', border: '1px solid #A7F3D0', padding: '8px 10px', borderRadius: 10, fontSize: 12, fontWeight: 800, cursor: 'pointer' }}
-            >
-              🖨️ Printer Owner
-            </button>
-          </div>
-        </div>
+
 
         {showResetOption && (
           <div style={{ marginTop: 14, textAlign: 'center', display: 'flex', flexDirection: 'column', gap: 8 }}>

@@ -160,13 +160,22 @@ export default async function BuyerDashboard() {
           </div>
         </div>
 
-        {/* SHOP DISCOVERY BANNER */}
+        {/* CUSTOMER SUPPORT TICKETS DESK */}
         <div style={s.card}>
-          <div style={{ fontSize: 18, fontWeight: 900, color: '#0F172A', marginBottom: 6 }}>🛍️ Ready-Made 3D Marketplace</div>
-          <div style={{ fontSize: 13, color: '#64748B', marginBottom: 20 }}>Discover custom 3D printed items crafted by verified sellers across India.</div>
-          <Link href="/shop" style={{ background: '#0F172A', color: '#fff', padding: '12px 24px', borderRadius: 12, fontWeight: 800, textDecoration: 'none', display: 'inline-block' }}>
-            Open Ready-Made Shop
-          </Link>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 12 }}>
+            <div>
+              <div style={{ fontSize: 18, fontWeight: 900, color: '#0F172A' }}>🎧 Support Desk & Live Complaint Tracker</div>
+              <div style={{ fontSize: 13, color: '#64748B', marginTop: 2 }}>Submit tickets, report order issues, or check live complaint resolution status</div>
+            </div>
+            <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+              <Link href="/support-tickets" style={{ background: '#0F172A', color: '#fff', padding: '10px 18px', borderRadius: 12, fontWeight: 800, fontSize: 13, textDecoration: 'none' }}>
+                📋 My Support Tickets
+              </Link>
+              <Link href="/contact" style={{ background: '#c2410c', color: '#ffffff', padding: '10px 18px', borderRadius: 12, fontWeight: 800, fontSize: 13, textDecoration: 'none' }}>
+                ✉️ Send Message to Support
+              </Link>
+            </div>
+          </div>
         </div>
       </div>
     </div>

@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/utils/supabase/server'
 
-// Fallback in-memory store for support messages if database table is not yet migrated
 export let SYSTEM_COMPLAINTS: Array<{
   id: string
   name: string
@@ -10,98 +9,115 @@ export let SYSTEM_COMPLAINTS: Array<{
   message: string
   status: 'open' | 'resolved'
   created_at: string
-}> = [
-  {
-    id: 'ticket-101',
-    name: 'Rahul Sharma',
-    email: 'rahul.sharma@example.com',
-    subject: '3D Print Delivery Status & Escrow Query',
-    message: 'I ordered a custom PLA model 2 days ago. Can I get an updated delivery estimate from the printer owner?',
-    status: 'open',
-    created_at: new Date(Date.now() - 3600000 * 5).toISOString(),
-  },
-]
+}> = []
 
-export async function GET(request: Request) {
+export async function GET() {
   try {
-    const { searchParams } = new URL(request.url)
-    const emailParam = searchParams.get('email')
-
     const supabase = await createClient()
-    let query = supabase.from('complaints').select('*').order('created_at', { ascending: false })
-    
-    if (emailParam) {
-      query = query.eq('email', emailParam)
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user || !user.email) {
+      return NextResponse.json({ error: 'Unauthorized: Log in to view support tickets.' }, { status: 401 })
     }
 
-    const { data: dbComplaints, error } = await query
+    const userEmail = user.email
 
-    if (!error && dbComplaints && dbComplaints.length > 0) {
-      return NextResponse.json({ success: true, complaints: dbComplaints })
+    const { data: dbComplaints, error } = await supabase
+      .from('complaints')
+      .select('*')
+      .eq('email', userEmail)
+      .order('created_at', { ascending: false })
+
+    if (error) {
+      console.error('Supabase complaints query error:', error.message)
+      return NextResponse.json({ error: 'Failed to fetch tickets from database' }, { status: 500 })
     }
 
-    let filtered = SYSTEM_COMPLAINTS
-    if (emailParam) {
-      filtered = SYSTEM_COMPLAINTS.filter((c) => c.email.toLowerCase() === emailParam.toLowerCase())
-    }
-
-    return NextResponse.json({ success: true, complaints: filtered })
-  } catch (err: any) {
-    return NextResponse.json({ success: true, complaints: SYSTEM_COMPLAINTS })
+    return NextResponse.json({ success: true, complaints: dbComplaints || [] })
+  } catch (err: unknown) {
+    const error = err as Error
+    return NextResponse.json({ error: error.message || 'Failed to fetch tickets' }, { status: 500 })
   }
 }
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json()
-    const { name, email, subject, message } = body
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
 
-    if (!email || !subject || !message) {
+    if (!user || !user.email) {
+      return NextResponse.json({ error: 'Unauthorized: Please log in to submit a ticket.' }, { status: 401 })
+    }
+
+    let body: unknown
+    try {
+      body = await request.json()
+    } catch {
+      return NextResponse.json({ error: 'Invalid JSON payload' }, { status: 400 })
+    }
+
+    if (!body || typeof body !== 'object' || Array.isArray(body)) {
+      return NextResponse.json({ error: 'Request body must be a JSON object' }, { status: 400 })
+    }
+
+    const payload = body as Record<string, unknown>
+    const name = payload.name
+    const subject = payload.subject
+    const message = payload.message
+
+    if (
+      typeof subject !== 'string' ||
+      !subject.trim() ||
+      typeof message !== 'string' ||
+      !message.trim()
+    ) {
       return NextResponse.json(
-        { success: false, error: 'Email, subject, and message are required.' },
+        { success: false, error: 'Valid subject and message strings are required.' },
         { status: 400 }
       )
     }
 
+    const userEmail = user.email
+    const ticketId = `ticket-${Date.now()}`
+    const trimmedSubject = subject.trim()
+    const trimmedMessage = message.trim()
+    const ticketName = typeof name === 'string' && name.trim() ? name.trim() : userEmail.split('@')[0]
+
     const newTicket = {
-      id: `ticket-${Date.now()}`,
-      name: name || email.split('@')[0],
-      email,
-      subject,
-      message,
+      id: ticketId,
+      name: ticketName,
+      email: userEmail,
+      subject: trimmedSubject,
+      message: trimmedMessage,
       status: 'open' as const,
       created_at: new Date().toISOString(),
     }
 
-    // Try inserting into Supabase database table
-    try {
-      const supabase = await createClient()
-      const { error: dbErr } = await supabase.from('complaints').insert({
-        name: newTicket.name,
-        email: newTicket.email,
-        subject: newTicket.subject,
-        message: newTicket.message,
-        status: 'open',
-      })
+    const { error: dbErr } = await supabase.from('complaints').insert({
+      id: newTicket.id,
+      name: newTicket.name,
+      email: newTicket.email,
+      subject: newTicket.subject,
+      message: newTicket.message,
+      status: 'open',
+    })
 
-      if (dbErr) {
-        console.warn('Supabase complaints insert notice:', dbErr.message)
-      }
-    } catch (e) {
-      // Ignore DB error and rely on state
+    if (dbErr) {
+      console.error('Supabase complaints insert error:', dbErr.message)
+      return NextResponse.json({ error: 'Failed to insert ticket into database' }, { status: 500 })
     }
 
-    // Always push to SYSTEM_COMPLAINTS so Admin dashboard picks it up immediately
     SYSTEM_COMPLAINTS.unshift(newTicket)
 
     return NextResponse.json({
       success: true,
-      message: 'Your support message has been sent directly to the Support Desk!',
+      message: 'Your support message has been sent directly to Support Desk!',
       ticket: newTicket,
     })
-  } catch (err: any) {
+  } catch (err: unknown) {
+    const error = err as Error
     return NextResponse.json(
-      { success: false, error: err.message || 'Failed to submit support ticket.' },
+      { success: false, error: error.message || 'Failed to submit support ticket.' },
       { status: 500 }
     )
   }
@@ -109,21 +125,89 @@ export async function POST(request: Request) {
 
 export async function PATCH(request: Request) {
   try {
-    const { id, status } = await request.json()
-    
-    // Update in memory
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user || !user.email) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    let body: unknown
+    try {
+      body = await request.json()
+    } catch {
+      return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 })
+    }
+
+    if (!body || typeof body !== 'object' || Array.isArray(body)) {
+      return NextResponse.json({ error: 'Request body must be a JSON object' }, { status: 400 })
+    }
+
+    const payload = body as Record<string, unknown>
+    const id = payload.id
+    const rawStatus = payload.status
+
+    if (!id || typeof id !== 'string' || !id.trim()) {
+      return NextResponse.json({ error: 'Valid ticket ID required' }, { status: 400 })
+    }
+
+    let targetStatus: 'open' | 'resolved' = 'resolved'
+    if (rawStatus !== undefined) {
+      if (rawStatus !== 'open' && rawStatus !== 'resolved') {
+        return NextResponse.json({ error: 'Invalid status value. Must be "open" or "resolved".' }, { status: 400 })
+      }
+      targetStatus = rawStatus
+    }
+
+    // Verify existing ticket presence and authorization
+    const { data: existingTicket, error: fetchErr } = await supabase
+      .from('complaints')
+      .select('email')
+      .eq('id', id)
+      .maybeSingle()
+
+    if (fetchErr) {
+      console.error('Supabase complaint query error:', fetchErr.message)
+      return NextResponse.json({ error: 'Database query failed' }, { status: 500 })
+    }
+
+    if (!existingTicket) {
+      return NextResponse.json({ error: 'Ticket not found' }, { status: 404 })
+    }
+
+    const { data: userProfile, error: profileErr } = await supabase.from('profiles').select('role').eq('id', user.id).maybeSingle()
+
+    if (profileErr) {
+      console.error('Supabase profile query error:', profileErr.message)
+      return NextResponse.json({ error: 'Database query failed' }, { status: 500 })
+    }
+
+    const isAdmin = userProfile?.role === 'admin'
+    const isOwner = existingTicket.email.toLowerCase() === user.email.toLowerCase()
+
+    if (!isAdmin && !isOwner) {
+      return NextResponse.json({ error: 'Forbidden: You do not own this ticket.' }, { status: 403 })
+    }
+
+    // Perform database update first
+    const { error: updateErr } = await supabase
+      .from('complaints')
+      .update({ status: targetStatus })
+      .eq('id', id)
+
+    if (updateErr) {
+      console.error('Supabase complaints update error:', updateErr.message)
+      return NextResponse.json({ error: 'Failed to update ticket status in database' }, { status: 500 })
+    }
+
+    // Mutate in-memory complaints store ONLY after database update succeeds
     SYSTEM_COMPLAINTS = SYSTEM_COMPLAINTS.map((c) =>
-      c.id === id ? { ...c, status: status || 'resolved' } : c
+      c.id === id ? { ...c, status: targetStatus } : c
     )
 
-    // Try updating DB
-    try {
-      const supabase = await createClient()
-      await supabase.from('complaints').update({ status: status || 'resolved' }).eq('id', id)
-    } catch (e) {}
-
     return NextResponse.json({ success: true, message: 'Ticket status updated.' })
-  } catch (err: any) {
-    return NextResponse.json({ success: false, error: err.message }, { status: 500 })
+  } catch (err: unknown) {
+    const error = err as Error
+    return NextResponse.json({ success: false, error: error.message }, { status: 500 })
   }
 }

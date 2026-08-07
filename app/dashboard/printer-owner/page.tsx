@@ -4,6 +4,24 @@ import { redirect } from 'next/navigation'
 import { cookies } from 'next/headers'
 import Link from 'next/link'
 
+interface PrinterCard {
+  id: string
+  name: string
+  type: string
+  volume: string
+  status: string
+  jobsCount: number
+}
+
+interface DbPrinterRow {
+  id?: string
+  name?: string
+  printer_model?: string
+  technology?: string
+  build_volume?: string
+  status?: string
+}
+
 export default async function PrinterOwnerDashboard() {
   const { user } = await requireRole('printer_owner')
 
@@ -17,22 +35,29 @@ export default async function PrinterOwnerDashboard() {
     redirect('/')
   }
 
-  // Fetch live printers from Supabase
-  let printers: any[] = []
+  // Fetch live printers from Supabase with error tracking
+  let printers: PrinterCard[] = []
+  let loadError: string | null = null
+
   try {
     const supabase = await createClient()
-    const { data: dbPrinters } = await supabase.from('printers').select('*').order('created_at', { ascending: false })
-    if (dbPrinters && dbPrinters.length > 0) {
-      printers = dbPrinters.map((p: any, index: number) => ({
+    const { data: dbPrinters, error } = await supabase.from('printers').select('*').order('created_at', { ascending: false })
+    if (error) {
+      loadError = error.message
+    } else if (dbPrinters && dbPrinters.length > 0) {
+      printers = dbPrinters.map((p: DbPrinterRow, index: number) => ({
         id: p.id || `m-${index}`,
         name: p.printer_model || p.name || '3D Printer Unit',
         type: p.technology || 'FDM Precision',
         volume: p.build_volume || '220 x 220 x 250 mm',
-        status: '🟢 Online & Printing',
-        jobsCount: Math.floor(Math.random() * 30) + 5,
+        status: p.status || '🟢 Online & Printing',
+        jobsCount: 0,
       }))
     }
-  } catch (err) {}
+  } catch (err: unknown) {
+    const error = err as Error
+    loadError = error.message || 'Failed to query printer fleet.'
+  }
 
   const s: Record<string, React.CSSProperties> = {
     page: { minHeight: '100vh', background: '#FAF8F5', color: '#0F172A', fontFamily: 'inherit' },
@@ -94,6 +119,13 @@ export default async function PrinterOwnerDashboard() {
           </div>
         </div>
 
+        {/* ERROR ALERT BANNER */}
+        {loadError && (
+          <div style={{ background: '#FEF2F2', border: '1px solid #FCA5A5', color: '#B91C1C', padding: '16px 20px', borderRadius: 16, marginBottom: 28, fontSize: 14, fontWeight: 700 }}>
+            ⚠️ Error loading printer fleet: {loadError}
+          </div>
+        )}
+
         {/* METRICS CARDS GRID */}
         <div style={s.metricGrid}>
           <div style={s.card}>
@@ -128,7 +160,7 @@ export default async function PrinterOwnerDashboard() {
               <div style={s.metricLabel}>Hub Fleet Status</div>
               <span style={{ fontSize: 22 }}>📊</span>
             </div>
-            <div style={s.metricVal}>{printers.length > 0 ? '100% Online' : 'No Machines'}</div>
+            <div style={s.metricVal}>{printers.length > 0 ? `${printers.length} Online` : 'No Machines'}</div>
             <div style={{ fontSize: 12, color: '#10B981', marginTop: 8, fontWeight: 700 }}>Verified PrintHub Partner</div>
           </div>
         </div>
@@ -145,7 +177,7 @@ export default async function PrinterOwnerDashboard() {
             </Link>
           </div>
 
-          {printers.length === 0 ? (
+          {printers.length === 0 && !loadError ? (
             <div style={{ textAlign: 'center', padding: '48px 24px', background: '#F8FAFC', borderRadius: 16, border: '2px dashed #CBD5E1' }}>
               <div style={{ fontSize: 36, marginBottom: 8 }}>🖨️</div>
               <div style={{ fontSize: 16, fontWeight: 900, color: '#0F172A', marginBottom: 4 }}>No 3D Printers Registered Yet</div>
@@ -200,6 +232,24 @@ export default async function PrinterOwnerDashboard() {
                 </tr>
               </tbody>
             </table>
+          </div>
+        </div>
+
+        {/* CUSTOMER SUPPORT TICKETS DESK FOR PRINTER OWNERS */}
+        <div style={{ ...s.card, marginTop: 36 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 12 }}>
+            <div>
+              <div style={{ fontSize: 18, fontWeight: 900, color: '#0F172A' }}>🎧 Printer Owner Support Desk</div>
+              <div style={{ fontSize: 13, color: '#64748B', marginTop: 2 }}>Questions about print job dispatches, escrow payouts, or machine registration? Contact Support.</div>
+            </div>
+            <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+              <Link href="/support-tickets" style={{ background: '#0F172A', color: '#fff', padding: '10px 18px', borderRadius: 12, fontWeight: 800, fontSize: 13, textDecoration: 'none' }}>
+                📋 My Support Tickets
+              </Link>
+              <Link href="/contact" style={{ background: '#1d4ed8', color: '#ffffff', padding: '10px 18px', borderRadius: 12, fontWeight: 800, fontSize: 13, textDecoration: 'none' }}>
+                ✉️ Send Message to Support
+              </Link>
+            </div>
           </div>
         </div>
       </div>

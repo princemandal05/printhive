@@ -228,6 +228,24 @@ export default function DesignerDashboardClient({ userEmail, initialDesigns, sig
             </div>
           )}
         </div>
+
+        {/* CUSTOMER SUPPORT TICKETS DESK FOR DESIGNERS */}
+        <div style={s.card}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 12 }}>
+            <div>
+              <div style={{ fontSize: 18, fontWeight: 900, color: '#0F172A' }}>🎧 Creator Support & Ticket Desk</div>
+              <div style={{ fontSize: 13, color: '#64748B', marginTop: 2 }}>Need help with 3D model royalties, copyright claims, or custom briefs? Contact Support.</div>
+            </div>
+            <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+              <Link href="/support-tickets" style={{ background: '#0F172A', color: '#fff', padding: '10px 18px', borderRadius: 12, fontWeight: 800, fontSize: 13, textDecoration: 'none' }}>
+                📋 My Support Tickets
+              </Link>
+              <Link href="/contact" style={{ background: '#6d28d9', color: '#ffffff', padding: '10px 18px', borderRadius: 12, fontWeight: 800, fontSize: 13, textDecoration: 'none' }}>
+                ✉️ Send Message to Support
+              </Link>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   )

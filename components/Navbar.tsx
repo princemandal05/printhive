@@ -74,6 +74,8 @@ export default function Navbar() {
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
 
+  const [roleLoading, setRoleLoading] = useState(true)
+
   useEffect(() => {
     let active = true
 
@@ -82,6 +84,7 @@ export default function Navbar() {
     document.documentElement.setAttribute('data-theme', savedTheme)
 
     async function loadSession() {
+      setRoleLoading(true)
       const { data: { user: currentUser } } = await supabase.auth.getUser()
       let role: string | null = null
 
@@ -91,9 +94,13 @@ export default function Navbar() {
         if (userProfile) setProfile(userProfile)
         
         role = userProfile?.role || currentUser.user_metadata?.role || 'buyer'
-      } else if (typeof document !== 'undefined') {
-        const guestMatch = document.cookie.match(/printhive_guest_role=([^;]+)/) || document.cookie.match(/printhive_auth_role=([^;]+)/)
-        role = guestMatch ? guestMatch[1] : null
+      } else {
+        setUser(null)
+        setProfile(null)
+        if (typeof document !== 'undefined') {
+          const authMatch = document.cookie.match(/printhive_auth_role=([^;]+)/)
+          role = authMatch ? authMatch[1] : null
+        }
       }
 
       if (!active) return
@@ -105,6 +112,7 @@ export default function Navbar() {
         setUserRole(null)
         setDashboardHref(null)
       }
+      setRoleLoading(false)
     }
 
     loadSession()
@@ -256,7 +264,7 @@ export default function Navbar() {
           </Link>
 
           {/* Logged In Controls: Dashboard Button + Round Avatar Circle Dropdown */}
-          {userRole ? (
+          {(user || userRole) ? (
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               {/* Dashboard Button */}
               {dashboardHref && (
@@ -322,7 +330,7 @@ export default function Navbar() {
                       </div>
                       <div style={{ marginTop: 10, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                         <span style={{ background: 'rgba(234,88,12,0.12)', color: '#ea580c', padding: '2px 8px', borderRadius: 99, fontSize: 11, fontWeight: 800 }}>
-                          {ROLE_LABELS[userRole] || userRole}
+                          {roleLoading ? 'Loading Role...' : (userRole && ROLE_LABELS[userRole]) || 'Buyer Mode'}
                         </span>
                         <span style={{ fontSize: 11, color: 'var(--text-sub)', fontWeight: 700 }}>Verified Role</span>
                       </div>

@@ -3,8 +3,18 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import dynamic from 'next/dynamic'
 import { createClient } from '@/utils/supabase/client'
-import OpenStreetMap, { MapLocation } from '@/components/OpenStreetMap'
+import type { MapLocation } from '@/components/OpenStreetMap'
+
+const OpenStreetMap = dynamic(() => import('@/components/OpenStreetMap'), {
+  ssr: false,
+  loading: () => (
+    <div style={{ height: 340, background: 'var(--bg-card)', borderRadius: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-sub)', fontSize: 13, fontWeight: 700 }}>
+      🗺️ Loading Leaflet OpenStreetMap Engine...
+    </div>
+  ),
+})
 
 const MATERIALS = ['PLA', 'PETG', 'ABS', 'TPU (Flexible)', 'Resin']
 

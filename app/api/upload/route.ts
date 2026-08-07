@@ -1,23 +1,31 @@
 import { NextResponse } from 'next/server'
 
+// Maximum file upload limit: 100MB
+const MAX_FILE_SIZE = 100 * 1024 * 1024
+
 export async function POST(request: Request) {
   try {
     const formData = await request.formData()
-    const file = formData.get('file') as File | null
+    const entry = formData.get('file')
 
-    if (!file) {
+    if (!entry || !(entry instanceof File)) {
       return NextResponse.json({ success: false, error: 'No file provided' }, { status: 400 })
+    }
+
+    const file = entry as File
+
+    if (file.size > MAX_FILE_SIZE) {
+      return NextResponse.json(
+        { success: false, error: 'File size exceeds maximum allowed limit of 100MB' },
+        { status: 400 }
+      )
     }
 
     const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || 'r8wjszjm'
     const apiKey = process.env.CLOUDINARY_API_KEY || '769894611263915'
-    const apiSecret = process.env.CLOUDINARY_API_SECRET || 'x1_w3QLL94hJFrt8xVkjJgMBuEs'
-
-    const buffer = Buffer.from(await file.arrayBuffer())
-    const base64Data = `data:${file.type || 'application/octet-stream'};base64,${buffer.toString('base64')}`
 
     const uploadFormData = new FormData()
-    uploadFormData.append('file', base64Data)
+    uploadFormData.append('file', file)
     uploadFormData.append('upload_preset', 'ml_default')
     uploadFormData.append('api_key', apiKey)
 
@@ -46,7 +54,8 @@ export async function POST(request: Request) {
       public_id: file.name,
       note: 'Cloudinary auto-upload initialized',
     })
-  } catch (err: any) {
-    return NextResponse.json({ success: false, error: err.message || 'Upload failed' }, { status: 500 })
+  } catch (err: unknown) {
+    console.error('Upload route failure:', err)
+    return NextResponse.json({ success: false, error: 'Upload failed' }, { status: 500 })
   }
 }

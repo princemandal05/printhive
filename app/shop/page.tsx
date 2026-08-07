@@ -1,11 +1,13 @@
 'use client'
 
-import { useMemo, useState, Suspense } from 'react'
+import { useMemo, useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 import { useStore } from '@/lib/cart-context'
+import { createClient } from '@/utils/supabase/client'
+import type { User } from '@supabase/supabase-js'
 
 type Product = {
   id: string
@@ -70,6 +72,59 @@ export default function ShopPage() {
   const [category, setCategory] = useState('All')
   const [sort, setSort] = useState('popular')
   const [toastMsg, setToastMsg] = useState('')
+  const [userRole, setUserRole] = useState<string | null>(null)
+  const [roleLoading, setRoleLoading] = useState(true)
+
+  useEffect(() => {
+    const supabase = createClient()
+    let isMounted = true
+    let activeRequestId = 0
+
+    async function fetchRole(user: User | null, reqId?: number) {
+      const requestId = reqId || ++activeRequestId
+      if (!user) {
+        if (isMounted && requestId === activeRequestId) {
+          setUserRole(null)
+          setRoleLoading(false)
+        }
+        return
+      }
+      if (isMounted && requestId === activeRequestId) {
+        setRoleLoading(true)
+      }
+      try {
+        const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).maybeSingle()
+        if (isMounted && requestId === activeRequestId) {
+          setUserRole(profile?.role || null)
+        }
+      } catch {
+        if (isMounted && requestId === activeRequestId) {
+          setUserRole(null)
+        }
+      } finally {
+        if (isMounted && requestId === activeRequestId) {
+          setRoleLoading(false)
+        }
+      }
+    }
+
+    // Reserve initial request ID before starting async getUser() call
+    const initialReqId = ++activeRequestId
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (isMounted) fetchRole(user, initialReqId)
+    })
+
+    // Subscribe to auth state changes and cleanup on unmount
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (isMounted) fetchRole(session?.user || null)
+    })
+
+    return () => {
+      isMounted = false
+      activeRequestId++
+      subscription.unsubscribe()
+    }
+  }, [])
 
   const handleAddToCart = (e: React.MouseEvent, p: Product) => {
     e.preventDefault()
@@ -218,10 +273,29 @@ export default function ShopPage() {
           <div style={{ textAlign: 'center', padding: '60px 24px', background: 'var(--bg-card-hover)', borderRadius: 24, border: '2px dashed var(--border-color)' }}>
             <div style={{ fontSize: 40, marginBottom: 12 }}>🛒</div>
             <div style={{ fontSize: 18, fontWeight: 900, color: 'var(--text-main)', marginBottom: 6 }}>No Products Listed Yet</div>
-            <div style={{ fontSize: 14, color: 'var(--text-sub)', marginBottom: 20 }}>Be the first seller to list 3D printed products on the marketplace!</div>
-            <Link href="/dashboard/seller/products/new" style={{ background: '#FF6B35', color: '#fff', padding: '12px 24px', borderRadius: 12, fontWeight: 800, textDecoration: 'none', display: 'inline-block' }}>
-              + Add Product as Seller
-            </Link>
+            <div style={{ fontSize: 14, color: 'var(--text-sub)', marginBottom: 20 }}>
+              {roleLoading
+                ? 'Loading user permissions...'
+                : userRole === 'seller'
+                ? 'List your 3D printed items to start selling on the marketplace!'
+                : 'Upload a custom model or request a 3D print job directly from verified makers.'}
+            </div>
+            {roleLoading ? (
+              <div style={{ fontSize: 13, color: 'var(--text-sub)', fontWeight: 600 }}>Checking role...</div>
+            ) : userRole === 'seller' ? (
+              <Link href="/dashboard/seller/products/new" style={{ background: '#FF6B35', color: '#fff', padding: '12px 24px', borderRadius: 12, fontWeight: 800, textDecoration: 'none', display: 'inline-block' }}>
+                + Add Product as Seller
+              </Link>
+            ) : (
+              <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
+                <Link href="/print-on-demand" style={{ background: '#FF6B35', color: '#fff', padding: '12px 24px', borderRadius: 12, fontWeight: 800, textDecoration: 'none', display: 'inline-block' }}>
+                  ⚡ Print Custom File
+                </Link>
+                <Link href="/requests/new" style={{ background: 'var(--bg-card)', color: 'var(--text-main)', border: '1px solid var(--border-color)', padding: '12px 24px', borderRadius: 12, fontWeight: 800, textDecoration: 'none', display: 'inline-block' }}>
+                  ✏️ Post Custom Request
+                </Link>
+              </div>
+            )}
           </div>
         ) : (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 28 }}>
