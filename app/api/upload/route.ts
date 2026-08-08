@@ -24,9 +24,16 @@ export async function POST(request: Request) {
     const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || 'r8wjszjm'
     const apiKey = process.env.CLOUDINARY_API_KEY || '769894611263915'
 
+    const ext = file.name.split('.').pop()?.toLowerCase() || ''
+    const is3dModel = ['stl', '3mf', 'obj', 'gcode', 'ply', 'step', 'stp'].includes(ext)
+    
+    const preset = is3dModel
+      ? (process.env.NEXT_PUBLIC_CLOUDINARY_PRESET_MODELS || 'printhive_models')
+      : (process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || 'printhive_uploads')
+
     const uploadFormData = new FormData()
     uploadFormData.append('file', file)
-    uploadFormData.append('upload_preset', 'ml_default')
+    uploadFormData.append('upload_preset', preset)
     uploadFormData.append('api_key', apiKey)
 
     const cloudinaryRes = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`, {

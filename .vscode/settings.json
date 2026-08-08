@@ -1,4 +1,4 @@
 {
-    "coderabbit.agentType": "Claude Code",
-    "coderabbit.autoReviewMode": "auto"
+    "coderabbit.agentType": "Native",
+    "coderabbit.autoReviewMode": "prompt"
 }

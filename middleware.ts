@@ -22,6 +22,15 @@ const PUBLIC_ROUTES = [
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
+  const response = NextResponse.next()
+
+  // Inject Enterprise Security Headers (XSS, Clickjacking, MIME-Sniffing & CSP protection)
+  response.headers.set('X-Frame-Options', 'DENY')
+  response.headers.set('X-Content-Type-Options', 'nosniff')
+  response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin')
+  response.headers.set('X-XSS-Protection', '1; mode=block')
+  response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=(self)')
+  response.headers.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains')
 
   // Allow static files, next internals, images, and API routes explicitly
   if (
@@ -30,11 +39,10 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith('/auth') ||
     pathname.includes('.')
   ) {
-    return NextResponse.next()
+    return response
   }
 
   // Restrict public access strictly to public detail view pages (/shop/[id], /designs/[id])
-  // Keep action/creation flows (/designs/[id]/order, /requests/new, /requests/[id], /support-tickets) protected
   const shopDetailMatch = /^\/shop\/[^\/]+$/.test(pathname)
   const designsDetailMatch = /^\/designs\/[^\/]+$/.test(pathname)
   const isPublicDetail = shopDetailMatch || designsDetailMatch
@@ -42,12 +50,12 @@ export async function middleware(request: NextRequest) {
   const isPublicRoute = PUBLIC_ROUTES.includes(pathname) || isPublicDetail
 
   if (isPublicRoute) {
-    return NextResponse.next()
+    return response
   }
 
   // Bypasses login page loop if user is already on /login
   if (pathname === '/login' || pathname === '/signup') {
-    return NextResponse.next()
+    return response
   }
 
   // Check authentication tokens & role cookies
@@ -63,7 +71,7 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(loginUrl)
   }
 
-  return NextResponse.next()
+  return response
 }
 
 export const config = {
