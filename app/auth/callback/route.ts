@@ -33,19 +33,35 @@ export async function GET(request: NextRequest) {
     const { error } = await supabase.auth.exchangeCodeForSession(code)
 
     if (!error) {
-      // Password-reset links carry ?next=/reset-password — send the user
-      // straight there to set a new password, skipping the dashboard lookup.
       if (next === '/reset-password') {
         return NextResponse.redirect(`${origin}/reset-password`)
       }
 
-      // Otherwise (e.g. future Google OAuth) route to the correct
-      // role-specific dashboard, or to /signup if no role has been set yet.
       const { data: { user } } = await supabase.auth.getUser()
       if (user) {
-        const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
-        const path = profile?.role ? (DASHBOARD_PATH[profile.role] ?? '/') : '/signup'
-        return NextResponse.redirect(`${origin}${path}`)
+        let { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).maybeSingle()
+        let userRole = profile?.role || 'buyer'
+
+        // Auto-provision profile for first-time Google OAuth sign-in
+        if (!profile) {
+          const userFullName = user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0] || 'User'
+          const userAvatar = user.user_metadata?.avatar_url || user.user_metadata?.picture || ''
+          
+          await supabase.from('profiles').insert({
+            id: user.id,
+            email: user.email,
+            full_name: userFullName,
+            avatar_url: userAvatar,
+            role: 'buyer',
+          })
+          userRole = 'buyer'
+        }
+
+        // Set role cookie
+        cookieStore.set('printhive_auth_role', userRole, { maxAge: 604800, path: '/' })
+
+        const targetPath = next || (DASHBOARD_PATH[userRole] ?? '/')
+        return NextResponse.redirect(`${origin}${targetPath}`)
       }
 
       return NextResponse.redirect(`${origin}/`)

@@ -83,8 +83,20 @@ export default function DesignerDashboardClient({ userEmail, initialDesigns, sig
           </div>
           <span style={s.badge}>🎨 3D Designer</span>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
-          <span style={{ color: '#94A3B8', fontSize: 13, fontWeight: 600 }}>{userEmail}</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <img
+              src={`https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(userEmail || 'Designer')}`}
+              alt="User Avatar"
+              style={{ width: 36, height: 36, borderRadius: '50%', objectFit: 'cover', border: '2px solid #8B5CF6' }}
+            />
+            <div style={{ textAlign: 'left' }}>
+              <div style={{ color: '#fff', fontSize: 13, fontWeight: 800, lineHeight: 1.2 }}>
+                {userEmail?.split('@')[0] || 'Designer'}
+              </div>
+              <div style={{ color: '#94A3B8', fontSize: 11, fontWeight: 600 }}>{userEmail}</div>
+            </div>
+          </div>
           <form action={signOutAction}>
             <button type="submit" style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)', color: '#fff', padding: '6px 14px', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
               Sign Out

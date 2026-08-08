@@ -156,7 +156,20 @@ export default function AdminDashboard() {
           <span style={s.badge}>🛡️ Administrator</span>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <img
+              src="https://api.dicebear.com/7.x/initials/svg?seed=Admin"
+              alt="Admin Avatar"
+              style={{ width: 36, height: 36, borderRadius: '50%', objectFit: 'cover', border: '2px solid #EF4444' }}
+            />
+            <div style={{ textAlign: 'left' }}>
+              <div style={{ color: '#fff', fontSize: 13, fontWeight: 800, lineHeight: 1.2 }}>
+                System Administrator
+              </div>
+              <div style={{ color: '#94A3B8', fontSize: 11, fontWeight: 600 }}>admin@printhive.com</div>
+            </div>
+          </div>
           <Link
             href="/"
             style={{ color: '#94A3B8', fontSize: 13, fontWeight: 700, textDecoration: 'none', padding: '6px 12px', borderRadius: 8, background: 'rgba(255,255,255,0.05)' }}

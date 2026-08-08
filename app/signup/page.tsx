@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { createClient } from '@/utils/supabase/client'
 
 const ROLES = [
   { id: 'buyer', label: 'Buyer', desc: 'Shop physical 3D items & order custom prints', icon: '🛍️' },
@@ -102,6 +103,20 @@ export default function SignupPage() {
     const urlParams = new URLSearchParams(window.location.search)
     const redirectUrl = urlParams.get('redirect') || urlParams.get('next') || '/'
     window.location.href = redirectUrl
+  }
+
+  const handleGoogleSignIn = async () => {
+    setError('')
+    const supabase = createClient()
+    const { error: oauthErr } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback`,
+      },
+    })
+    if (oauthErr) {
+      setError(oauthErr.message)
+    }
   }
 
   const s: Record<string, React.CSSProperties> = {
@@ -234,6 +249,44 @@ export default function SignupPage() {
               onClick={handleSignup}
             >
               {loading ? 'Creating Account…' : 'Create PrintHive Account →'}
+            </button>
+
+            {/* OR DIVIDER */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '20px 0 16px 0' }}>
+              <div style={{ flex: 1, height: 1, background: '#E2E8F0' }} />
+              <span style={{ fontSize: 12, color: '#94A3B8', fontWeight: 700, textTransform: 'uppercase' }}>Or</span>
+              <div style={{ flex: 1, height: 1, background: '#E2E8F0' }} />
+            </div>
+
+            {/* GOOGLE SIGN UP BUTTON */}
+            <button
+              type="button"
+              onClick={handleGoogleSignIn}
+              style={{
+                width: '100%',
+                background: '#FFFFFF',
+                color: '#0F172A',
+                border: '1px solid #CBD5E1',
+                borderRadius: 12,
+                padding: '12px 0',
+                fontSize: 14,
+                fontWeight: 800,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 10,
+                boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
+                transition: 'all 0.2s',
+              }}
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24">
+                <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"/>
+                <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.29v3.14C3.26 21.3 7.31 24 12 24z"/>
+                <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.59H1.29C.47 8.23 0 10.06 0 12s.47 3.77 1.29 5.41l3.99-3.14z"/>
+                <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.31 0 3.26 2.7 1.29 6.59l3.99 3.14c.95-2.83 3.6-4.98 6.72-4.98z"/>
+              </svg>
+              Sign up with Google
             </button>
 
             <button

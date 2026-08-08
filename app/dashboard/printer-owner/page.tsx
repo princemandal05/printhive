@@ -92,8 +92,20 @@ export default async function PrinterOwnerDashboard() {
           </div>
           <span style={s.badge}>🖨️ Printer Owner</span>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
-          <span style={{ color: '#94A3B8', fontSize: 13, fontWeight: 600 }}>{user.email}</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <img
+              src={user.user_metadata?.avatar_url || user.user_metadata?.picture || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(user.user_metadata?.full_name || user.email || 'User')}`}
+              alt="User Avatar"
+              style={{ width: 36, height: 36, borderRadius: '50%', objectFit: 'cover', border: '2px solid #FF6B35' }}
+            />
+            <div style={{ textAlign: 'left' }}>
+              <div style={{ color: '#fff', fontSize: 13, fontWeight: 800, lineHeight: 1.2 }}>
+                {user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0]}
+              </div>
+              <div style={{ color: '#94A3B8', fontSize: 11, fontWeight: 600 }}>{user.email}</div>
+            </div>
+          </div>
           <form action={handleSignOut}>
             <button type="submit" style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)', color: '#fff', padding: '6px 14px', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
               Sign Out
