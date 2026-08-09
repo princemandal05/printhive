@@ -23,6 +23,22 @@ export default function SupportTicketsPage() {
   const [myTickets, setMyTickets] = useState<SupportTicket[]>([])
   const [loading, setLoading] = useState(true)
 
+  const fetchTickets = async (emailToFetch: string) => {
+    if (!emailToFetch) return
+    setLoading(true)
+    try {
+      const res = await fetch(`/api/contact?email=${encodeURIComponent(emailToFetch)}`)
+      const data = await res.json()
+      if (data.success && data.complaints) {
+        setMyTickets(data.complaints)
+      }
+    } catch {
+      // ignore
+    } finally {
+      setLoading(false)
+    }
+  }
+
   useEffect(() => {
     async function loadUserAndTickets() {
       try {
@@ -33,28 +49,12 @@ export default function SupportTicketsPage() {
         } else {
           setLoading(false)
         }
-      } catch (e) {
+      } catch {
         setLoading(false)
       }
     }
     loadUserAndTickets()
   }, [])
-
-  const fetchTickets = async (emailToFetch: string) => {
-    if (!emailToFetch) return
-    setLoading(true)
-    try {
-      const res = await fetch(`/api/contact?email=${encodeURIComponent(emailToFetch)}`)
-      const data = await res.json()
-      if (data.success && data.complaints) {
-        setMyTickets(data.complaints)
-      }
-    } catch (err) {
-      console.error('Failed to load tickets:', err)
-    } finally {
-      setLoading(false)
-    }
-  }
 
   return (
     <main style={{ minHeight: '100vh', background: '#0b0f19', color: '#f8fafc' }}>
@@ -138,7 +138,7 @@ export default function SupportTicketsPage() {
                   </div>
 
                   <div style={{ fontSize: 14, color: '#cbd5e1', lineHeight: 1.6, background: 'rgba(30, 41, 59, 0.6)', padding: 16, borderRadius: 10, marginBottom: 12 }}>
-                    "{t.message}"
+                    &quot;{t.message}&quot;
                   </div>
 
                   <div style={{ fontSize: 12, color: '#64748B', display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>

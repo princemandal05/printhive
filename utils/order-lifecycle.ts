@@ -39,6 +39,7 @@ export const ORDER_LIFECYCLE_STEPS: OrderStatusStep[] = [
 /**
  * Updates order status in Supabase database and records an audit log entry in order_status_history.
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function updateOrderStatus(
   supabase: any,
   orderId: string,

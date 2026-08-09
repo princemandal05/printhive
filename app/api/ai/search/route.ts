@@ -94,7 +94,7 @@ export async function POST(request: Request) {
       .replace(/\b(?:I need|a|an|for|that|can|be|printed)\b/gi, '')
       .trim()
 
-    let detectedCategory = category || '3D Printing'
+    const detectedCategory = category || '3D Printing'
     let expandedKeywords = [cleanSearchTerm || query, material || 'PLA', '3d model', 'printable'].filter(Boolean)
 
     // Call Google Gemini API (Server-side) with 5-Second Abort Guard
