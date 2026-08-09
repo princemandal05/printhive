@@ -5,13 +5,13 @@ import { useParams, useSearchParams, useRouter } from 'next/navigation'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 
-// Mock nearby printer owners — replace with a Supabase + Leaflet query
-// filtered by GPS distance from the buyer's address.
-const NEARBY_PRINTERS = [
-  { id: 'p1', name: 'Rohan\u2019s PrintLab', distance: '1.2 km', rating: 4.9, price: 450 },
-  { id: 'p2', name: 'Andheri 3D Studio', distance: '2.8 km', rating: 4.7, price: 420 },
-  { id: 'p3', name: 'Bandra MakerSpace', distance: '4.1 km', rating: 4.8, price: 480 },
-]
+interface PrinterHub {
+  id: string
+  name: string
+  distance?: string
+  rating?: number
+  price: number
+}
 
 export default function OrderPage() {
   return (
@@ -33,20 +33,22 @@ function OrderPageContent() {
   const material = search?.get('material') || 'PLA'
   const color = search?.get('color') || 'Default'
 
+  const [printers, setPrinters] = useState<PrinterHub[]>([])
   const [quantity, setQuantity] = useState(1)
   const [scale, setScale] = useState(100)
   const [infill, setInfill] = useState(20)
   const [layerHeight, setLayerHeight] = useState('0.20')
   const [surfaceFinish, setSurfaceFinish] = useState(SURFACE_FINISHES[0])
-  const [selectedPrinter, setSelectedPrinter] = useState(NEARBY_PRINTERS[0].id)
+  const [selectedPrinter, setSelectedPrinter] = useState<string | null>(null)
   const [address, setAddress] = useState('')
   const [placing, setPlacing] = useState(false)
 
-  const printer = NEARBY_PRINTERS.find((p) => p.id === selectedPrinter)!
+  const activePrinter = printers.find((p) => p.id === selectedPrinter)
+  const basePrice = activePrinter?.price ?? 400
   const infillMultiplier = 1 + (infill - 20) / 100
   const scaleMultiplier = Math.pow(scale / 100, 2)
   const finishSurcharge = surfaceFinish === 'Standard' ? 0 : surfaceFinish === 'Smoothed (vapor/sanded)' ? 80 : 180
-  const unitPrice = Math.max(50, Math.round(printer.price * infillMultiplier * scaleMultiplier) + finishSurcharge)
+  const unitPrice = Math.max(50, Math.round(basePrice * infillMultiplier * scaleMultiplier) + finishSurcharge)
   const subtotal = unitPrice * quantity
   const platformFee = Math.round(subtotal * 0.05)
   const total = subtotal + platformFee
@@ -163,34 +165,46 @@ function OrderPageContent() {
               {/* Replace this list with a Leaflet.js + OpenStreetMap view
                   plotting each printer owner's GPS location */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
-                {NEARBY_PRINTERS.map((p) => (
-                  <label
-                    key={p.id}
-                    className="flex items-center justify-between"
-                    style={{
-                      border: `1px solid ${selectedPrinter === p.id ? 'var(--color-primary)' : 'var(--color-border-light)'}`,
-                      borderRadius: 'var(--radius-md)',
-                      padding: 'var(--space-4)',
-                      cursor: 'pointer',
-                      background: selectedPrinter === p.id ? 'var(--color-primary-tint)' : 'transparent',
-                    }}
-                  >
-                    <div className="flex items-center gap-3">
-                      <input
-                        type="radio"
-                        className="radio"
-                        name="printer"
-                        checked={selectedPrinter === p.id}
-                        onChange={() => setSelectedPrinter(p.id)}
-                      />
-                      <div>
-                        <div className="text-sm" style={{ fontWeight: 600 }}>{p.name}</div>
-                        <div className="text-xs text-muted">{p.distance} away · ★ {p.rating}</div>
-                      </div>
+                {printers.length === 0 ? (
+                  <div style={{ padding: '24px 16px', textAlign: 'center', background: 'var(--bg-card-hover)', borderRadius: 'var(--radius-md)', border: '1px dashed var(--border-color)' }}>
+                    <div style={{ fontSize: 28, marginBottom: 8 }}>🖨️</div>
+                    <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-main)', marginBottom: 4 }}>
+                      No Verified Printers Selected
                     </div>
-                    <div className="text-sm" style={{ fontWeight: 600 }}>from ₹{p.price}</div>
-                  </label>
-                ))}
+                    <div style={{ fontSize: 12, color: 'var(--text-sub)', maxWidth: 320, margin: '0 auto' }}>
+                      Once you enter your delivery address, local printer hubs will be matched dynamically.
+                    </div>
+                  </div>
+                ) : (
+                  printers.map((p) => (
+                    <label
+                      key={p.id}
+                      className="flex items-center justify-between"
+                      style={{
+                        border: `1px solid ${selectedPrinter === p.id ? 'var(--color-primary)' : 'var(--color-border-light)'}`,
+                        borderRadius: 'var(--radius-md)',
+                        padding: 'var(--space-4)',
+                        cursor: 'pointer',
+                        background: selectedPrinter === p.id ? 'var(--color-primary-tint)' : 'transparent',
+                      }}
+                    >
+                      <div className="flex items-center gap-3">
+                        <input
+                          type="radio"
+                          className="radio"
+                          name="printer"
+                          checked={selectedPrinter === p.id}
+                          onChange={() => setSelectedPrinter(p.id)}
+                        />
+                        <div>
+                          <div className="text-sm" style={{ fontWeight: 600 }}>{p.name}</div>
+                          <div className="text-xs text-muted">{p.distance || 'Nearby'} · ★ {p.rating || 5.0}</div>
+                        </div>
+                      </div>
+                      <div className="text-sm" style={{ fontWeight: 600 }}>from ₹{p.price}</div>
+                    </label>
+                  ))
+                )}
               </div>
             </div>
           </div>

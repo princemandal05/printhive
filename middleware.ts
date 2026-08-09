@@ -18,6 +18,8 @@ const PUBLIC_ROUTES = [
   '/about',
   '/faq',
   '/contact',
+  '/auth/callback',
+  '/api/auth/callback',
 ]
 
 export async function middleware(request: NextRequest) {

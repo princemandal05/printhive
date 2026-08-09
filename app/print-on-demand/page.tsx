@@ -10,17 +10,18 @@ const COLORS = ['White', 'Black', 'Red', 'Blue', 'Green', 'Grey', 'Custom (speci
 const SURFACE_FINISHES = ['Standard', 'Smoothed (vapor/sanded)', 'Painted']
 const INFILL_PRESETS = [10, 20, 35, 50, 75, 100]
 
-// Mock nearby printer owners — replace with a Supabase + Leaflet query
-// filtered by GPS distance from the buyer's address, and material/machine match.
-const NEARBY_PRINTERS = [
-  { id: 'p1', name: 'Rohan\u2019s PrintLab', distance: '1.2 km', rating: 4.9, basePrice: 350 },
-  { id: 'p2', name: 'Andheri 3D Studio', distance: '2.8 km', rating: 4.7, basePrice: 320 },
-  { id: 'p3', name: 'Bandra MakerSpace', distance: '4.1 km', rating: 4.8, basePrice: 380 },
-]
+interface PrinterHub {
+  id: string
+  name: string
+  distance?: string
+  rating?: number
+  basePrice: number
+}
 
 export default function PrintOnDemandUploadPage() {
   const router = useRouter()
 
+  const [printers, setPrinters] = useState<PrinterHub[]>([])
   const [fileName, setFileName] = useState('')
   const [material, setMaterial] = useState(MATERIALS[0])
   const [color, setColor] = useState(COLORS[0])
@@ -31,22 +32,23 @@ export default function PrintOnDemandUploadPage() {
   const [quantity, setQuantity] = useState(1)
   const [notes, setNotes] = useState('')
   const [address, setAddress] = useState('')
-  const [selectedPrinter, setSelectedPrinter] = useState(NEARBY_PRINTERS[0].id)
+  const [selectedPrinter, setSelectedPrinter] = useState<string | null>(null)
   const [placing, setPlacing] = useState(false)
 
-  const printer = NEARBY_PRINTERS.find((p) => p.id === selectedPrinter)!
+  const activePrinter = printers.find((p) => p.id === selectedPrinter)
+  const basePrice = activePrinter?.basePrice ?? 300
 
   // Rough live price estimate — replace with the Gemini smart-price-estimation
   // endpoint once the file is actually uploaded and analysed server-side.
   const infillMultiplier = 1 + (infill - 20) / 100
   const scaleMultiplier = Math.pow(scale / 100, 2)
   const finishSurcharge = surfaceFinish === 'Standard' ? 0 : surfaceFinish === 'Smoothed (vapor/sanded)' ? 80 : 180
-  const unitPrice = Math.max(50, Math.round(printer.basePrice * infillMultiplier * scaleMultiplier) + finishSurcharge)
+  const unitPrice = Math.max(50, Math.round(basePrice * infillMultiplier * scaleMultiplier) + finishSurcharge)
   const subtotal = unitPrice * quantity
   const platformFee = Math.round(subtotal * 0.05)
   const total = subtotal + platformFee
 
-  const canSubmit = !!fileName && !!address && quantity > 0
+  const canSubmit = !!fileName && !!address && quantity > 0 && !!selectedPrinter
 
   const handlePlaceOrder = async () => {
     // Replace with:
@@ -214,31 +216,43 @@ export default function PrintOnDemandUploadPage() {
                   plotting each printer owner's GPS location, filtered to
                   those supporting the selected material */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
-                {NEARBY_PRINTERS.map((p) => (
-                  <label
-                    key={p.id}
-                    className="flex items-center justify-between"
-                    style={{
-                      border: `1px solid ${selectedPrinter === p.id ? 'var(--color-primary)' : 'var(--color-border-light)'}`,
-                      borderRadius: 'var(--radius-md)',
-                      padding: 'var(--space-4)',
-                      cursor: 'pointer',
-                      background: selectedPrinter === p.id ? 'var(--color-primary-tint)' : 'transparent',
-                    }}
-                  >
-                    <div className="flex items-center gap-3">
-                      <input
-                        type="radio" className="radio" name="printer"
-                        checked={selectedPrinter === p.id}
-                        onChange={() => setSelectedPrinter(p.id)}
-                      />
-                      <div>
-                        <div className="text-sm" style={{ fontWeight: 600 }}>{p.name}</div>
-                        <div className="text-xs text-muted">{p.distance} away · ★ {p.rating}</div>
-                      </div>
+                {printers.length === 0 ? (
+                  <div style={{ padding: '24px 16px', textAlign: 'center', background: 'var(--bg-card-hover)', borderRadius: 'var(--radius-md)', border: '1px dashed var(--border-color)' }}>
+                    <div style={{ fontSize: 28, marginBottom: 8 }}>🖨️</div>
+                    <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-main)', marginBottom: 4 }}>
+                      No Verified Printers Selected
                     </div>
-                  </label>
-                ))}
+                    <div style={{ fontSize: 12, color: 'var(--text-sub)', maxWidth: 320, margin: '0 auto' }}>
+                      Once you enter your delivery address, local printer hubs will be matched dynamically. Your request can also be broadcast to all nearby hubs.
+                    </div>
+                  </div>
+                ) : (
+                  printers.map((p) => (
+                    <label
+                      key={p.id}
+                      className="flex items-center justify-between"
+                      style={{
+                        border: `1px solid ${selectedPrinter === p.id ? 'var(--color-primary)' : 'var(--color-border-light)'}`,
+                        borderRadius: 'var(--radius-md)',
+                        padding: 'var(--space-4)',
+                        cursor: 'pointer',
+                        background: selectedPrinter === p.id ? 'var(--color-primary-tint)' : 'transparent',
+                      }}
+                    >
+                      <div className="flex items-center gap-3">
+                        <input
+                          type="radio" className="radio" name="printer"
+                          checked={selectedPrinter === p.id}
+                          onChange={() => setSelectedPrinter(p.id)}
+                        />
+                        <div>
+                          <div className="text-sm" style={{ fontWeight: 600 }}>{p.name}</div>
+                          <div className="text-xs text-muted">{p.distance || 'Nearby'} · ★ {p.rating || 5.0}</div>
+                        </div>
+                      </div>
+                    </label>
+                  ))
+                )}
               </div>
             </div>
           </div>

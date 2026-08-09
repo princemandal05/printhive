@@ -84,6 +84,8 @@ function ThreeViewerInner({
   // Safe color validator
   const validColor = /^#[0-9A-F]{6}$/i.test(color) ? color : '#ff6b35'
 
+  const hasModel = Boolean(modelUrl && modelUrl.trim() !== '')
+
   return (
     <div
       style={{
@@ -113,52 +115,68 @@ function ThreeViewerInner({
         }}
       />
 
-      {/* Interactive 3D Mesh Representation */}
-      <div
-        style={{
-          transform: `scale(${zoom / 100})`,
-          transition: 'transform 0.2s ease',
-          animation: rotating ? 'spin3D 12s linear infinite' : 'none',
-          cursor: 'grab',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
-        <svg
-          width="180"
-          height="180"
-          viewBox="0 0 100 100"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-          style={{ filter: `drop-shadow(0 15px 25px ${validColor}44)` }}
+      {hasModel ? (
+        /* Interactive 3D Mesh Representation */
+        <div
+          style={{
+            transform: `scale(${zoom / 100})`,
+            transition: 'transform 0.2s ease',
+            animation: rotating ? 'spin3D 12s linear infinite' : 'none',
+            cursor: 'grab',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
         >
-          {/* Isometric 3D Cube / Polyline Geometry */}
-          <polygon
-            points="50,15 90,35 50,55 10,35"
-            fill={wireframe ? 'transparent' : `${validColor}cc`}
-            stroke={validColor}
-            strokeWidth={wireframe ? '1.5' : '0.5'}
-          />
-          <polygon
-            points="10,35 50,55 50,95 10,75"
-            fill={wireframe ? 'transparent' : `${validColor}aa`}
-            stroke={validColor}
-            strokeWidth={wireframe ? '1.5' : '0.5'}
-          />
-          <polygon
-            points="50,55 90,35 90,75 50,95"
-            fill={wireframe ? 'transparent' : `${validColor}88`}
-            stroke={validColor}
-            strokeWidth={wireframe ? '1.5' : '0.5'}
-          />
+          <svg
+            width="180"
+            height="180"
+            viewBox="0 0 100 100"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            style={{ filter: `drop-shadow(0 15px 25px ${validColor}44)` }}
+          >
+            {/* Isometric 3D Cube / Polyline Geometry */}
+            <polygon
+              points="50,15 90,35 50,55 10,35"
+              fill={wireframe ? 'transparent' : `${validColor}cc`}
+              stroke={validColor}
+              strokeWidth={wireframe ? '1.5' : '0.5'}
+            />
+            <polygon
+              points="10,35 50,55 50,95 10,75"
+              fill={wireframe ? 'transparent' : `${validColor}aa`}
+              stroke={validColor}
+              strokeWidth={wireframe ? '1.5' : '0.5'}
+            />
+            <polygon
+              points="50,55 90,35 90,75 50,95"
+              fill={wireframe ? 'transparent' : `${validColor}88`}
+              stroke={validColor}
+              strokeWidth={wireframe ? '1.5' : '0.5'}
+            />
 
-          {/* Internal Wireframe Geometry Lines */}
-          <line x1="50" y1="15" x2="50" y2="55" stroke="#ffffff66" strokeWidth="1" />
-          <line x1="10" y1="35" x2="90" y2="35" stroke="#ffffff33" strokeWidth="1" />
-          <line x1="50" y1="55" x2="50" y2="95" stroke="#ffffff33" strokeWidth="1" />
-        </svg>
-      </div>
+            {/* Internal Wireframe Geometry Lines */}
+            <line x1="50" y1="15" x2="50" y2="55" stroke="#ffffff66" strokeWidth="1" />
+            <line x1="10" y1="35" x2="90" y2="35" stroke="#ffffff33" strokeWidth="1" />
+            <line x1="50" y1="55" x2="50" y2="95" stroke="#ffffff33" strokeWidth="1" />
+          </svg>
+        </div>
+      ) : (
+        /* Empty Model Placeholder State */
+        <div style={{ textAlign: 'center', padding: 24, zIndex: 2, maxWidth: 360 }}>
+          <div style={{ fontSize: 42, marginBottom: 12 }}>📦</div>
+          <div style={{ fontSize: 16, fontWeight: 800, color: '#fff', marginBottom: 6 }}>
+            Upload your 3D file to view
+          </div>
+          <div style={{ fontSize: 13, color: '#94a3b8', lineHeight: 1.5, marginBottom: 14 }}>
+            Select an STL, 3MF, or OBJ model file to inspect the 3D geometry mesh live in WebGL.
+          </div>
+          <span style={{ fontSize: 11, background: 'rgba(234,88,12,0.15)', color: '#ea580c', padding: '4px 12px', borderRadius: 99, fontWeight: 700, border: '1px solid rgba(234,88,12,0.3)' }}>
+            ● WebGL Mesh Engine Ready
+          </span>
+        </div>
+      )}
 
       <style jsx global>{`
         @keyframes spin3D {
@@ -183,8 +201,8 @@ function ThreeViewerInner({
         <span style={{ fontSize: 12, fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase', color: '#94a3b8', background: 'rgba(15, 23, 42, 0.8)', padding: '4px 10px', borderRadius: 6, border: '1px solid rgba(255,255,255,0.1)' }}>
           🧊 3D WebGL Viewport · {title}
         </span>
-        <span style={{ fontSize: 11, color: '#10b981', background: 'rgba(16, 185, 129, 0.1)', padding: '4px 8px', borderRadius: 6, fontWeight: 600 }}>
-          ● Ready to Slice
+        <span style={{ fontSize: 11, color: hasModel ? '#10b981' : '#f59e0b', background: hasModel ? 'rgba(16, 185, 129, 0.1)' : 'rgba(245, 158, 11, 0.1)', padding: '4px 8px', borderRadius: 6, fontWeight: 600 }}>
+          {hasModel ? '● Ready to Slice' : '○ Standby'}
         </span>
       </div>
 
