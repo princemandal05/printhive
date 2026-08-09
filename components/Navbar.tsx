@@ -98,8 +98,8 @@ export default function Navbar() {
         setUser(null)
         setProfile(null)
         if (typeof document !== 'undefined') {
-          const authMatch = document.cookie.match(/printhive_auth_role=([^;]+)/)
-          role = authMatch ? authMatch[1] : null
+          const guestMatch = document.cookie.match(/printhive_guest_role=([^;]+)/)
+          role = guestMatch ? guestMatch[1] : null
         }
       }
 
@@ -146,12 +146,13 @@ export default function Navbar() {
   }
 
   const handleSignOut = async () => {
-    document.cookie = 'printhive_guest_role=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT'
-    document.cookie = 'printhive_auth_role=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT'
+    document.cookie = 'printhive_guest_role=; path=/; max-age=0; expires=Thu, 01 Jan 1970 00:00:01 GMT'
+    document.cookie = 'printhive_auth_role=; path=/; max-age=0; expires=Thu, 01 Jan 1970 00:00:01 GMT'
     await supabase.auth.signOut()
     setUserRole(null)
     setDashboardHref(null)
     setUser(null)
+    setProfile(null)
     setDropdownOpen(false)
     window.location.href = '/'
   }
