@@ -32,11 +32,15 @@ CREATE TABLE IF NOT EXISTS public.escrow_payouts (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- 3. Enable RLS
+-- 3. Create Unique Indexes for Payment Atomicity & Double-Capture Prevention
+CREATE UNIQUE INDEX IF NOT EXISTS idx_transactions_razorpay_payment_id ON public.transactions(razorpay_payment_id) WHERE razorpay_payment_id IS NOT NULL AND status = 'captured';
+CREATE UNIQUE INDEX IF NOT EXISTS idx_escrow_payouts_order_role ON public.escrow_payouts(order_id, role);
+
+-- 4. Enable RLS
 ALTER TABLE public.transactions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.escrow_payouts ENABLE ROW LEVEL SECURITY;
 
--- 4. Secure RLS Policies (Owner & Admin Scoped)
+-- 5. Secure RLS Policies (Owner & Admin Scoped)
 DROP POLICY IF EXISTS "Public read transactions" ON public.transactions;
 DROP POLICY IF EXISTS "Owner/Admin read transactions" ON public.transactions;
 CREATE POLICY "Owner/Admin read transactions" ON public.transactions FOR SELECT USING (
@@ -47,7 +51,7 @@ CREATE POLICY "Owner/Admin read transactions" ON public.transactions FOR SELECT 
       o.buyer_id = auth.uid() OR
       o.designer_id = auth.uid() OR
       o.printer_owner_id = auth.uid() OR
-      EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin')
+      public.is_admin()
     )
   )
 );
@@ -63,7 +67,7 @@ CREATE POLICY "Recipient/Owner/Admin read escrow_payouts" ON public.escrow_payou
       o.buyer_id = auth.uid() OR
       o.designer_id = auth.uid() OR
       o.printer_owner_id = auth.uid() OR
-      EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin')
+      public.is_admin()
     )
   )
 );

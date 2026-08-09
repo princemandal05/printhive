@@ -77,13 +77,25 @@ function ThreeViewerInner({
   color = '#ff6b35',
   height = 420,
   modelUrl,
-  dimensions = { x: 120, y: 85, z: 140 },
+  dimensions,
 }: ThreeViewerProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const [wireframe, setWireframe] = useState(false)
   const [rotating, setRotating] = useState(true)
   const [zoom, setZoom] = useState(100)
   const [isFullscreen, setIsFullscreen] = useState(false)
+
+  React.useEffect(() => {
+    const handleFullscreenChange = () => {
+      if (containerRef.current) {
+        setIsFullscreen(document.fullscreenElement === containerRef.current)
+      }
+    }
+    document.addEventListener('fullscreenchange', handleFullscreenChange)
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange)
+    }
+  }, [])
 
   // Safe color validator
   const validColor = /^#[0-9A-F]{6}$/i.test(color) ? color : '#ff6b35'

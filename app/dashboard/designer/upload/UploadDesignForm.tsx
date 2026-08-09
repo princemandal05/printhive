@@ -22,6 +22,7 @@ export default function UploadDesignForm() {
   const [cloudinaryFileUrl, setCloudinaryFileUrl] = useState('')
   const [cloudinaryPublicId, setCloudinaryPublicId] = useState('')
   const [previewImageUrl, setPreviewImageUrl] = useState('')
+  const [isUploadingModel, setIsUploadingModel] = useState(false)
   const [generatingAi, setGeneratingAi] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [statusMsg, setStatusMsg] = useState('')
@@ -33,6 +34,7 @@ export default function UploadDesignForm() {
   const handleModelUploadSuccess = (meta: CloudinaryMetadata) => {
     setCloudinaryFileUrl(meta.secure_url)
     setCloudinaryPublicId(meta.cloudinary_public_id)
+    setIsUploadingModel(false)
     setStatusMsg(`✅ 3D Model successfully uploaded to Cloudinary! (${meta.format.toUpperCase()}, ${(meta.file_size / 1024).toFixed(1)} KB)`)
   }
 
@@ -50,31 +52,31 @@ export default function UploadDesignForm() {
     setStatusMsg('✨ Gemini AI is generating 3D printing slicing notes...')
 
     try {
-      const res = await fetch('/api/ai/generate-description', {
+      const res = await fetch('/api/generate-description', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title, category, material: materials.join(', ') }),
+        body: JSON.stringify({ title, category, materials }),
       })
       const data = await res.json()
       if (data.description) {
         setDescription(data.description)
-        setStatusMsg('✅ Gemini AI description & print specs generated!')
+        setStatusMsg('✨ Gemini AI generation complete!')
       }
-    } catch (err) {
-      console.warn('Gemini AI note:', err)
+    } catch {
+      setStatusMsg('✨ Gemini AI unavailable — using manual entry.')
     } finally {
       setGeneratingAi(false)
     }
   }
 
   const handleSubmit = async () => {
-    if (!title) return
+    if (!title || isUploadingModel) return
     setSubmitting(true)
     setStatusMsg('🚀 Publishing 3D Model to PrintHive Creator Studio...')
 
     const defaultStlUrl = '/models/demo.stl'
     const fileUrl = cloudinaryFileUrl || defaultStlUrl
-    const previewUrl = 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=600&q=80'
+    const previewUrl = previewImageUrl || 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=600&q=80'
 
     const designPayload = {
       title,
@@ -174,7 +176,6 @@ export default function UploadDesignForm() {
         <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 28, alignItems: 'start' }}>
           {/* LEFT FORM COLUMNS */}
           <div>
-            {/* STEP 1: 3D MODEL & IMAGE UPLOADS */}
             <div style={s.card}>
               <div style={{ fontSize: 18, fontWeight: 900, color: '#0F172A', marginBottom: 16 }}>
                 1. 3D Model File & Preview Image (Cloudinary CDN)
@@ -184,7 +185,9 @@ export default function UploadDesignForm() {
                 <CloudinaryUploader
                   acceptType="model"
                   label="Upload 3D Model (.stl, .3mf, .obj, .glb, .gltf)"
+                  onUploadStart={() => setIsUploadingModel(true)}
                   onUploadSuccess={handleModelUploadSuccess}
+                  onUploadError={() => setIsUploadingModel(false)}
                   currentUrl={cloudinaryFileUrl}
                 />
 
@@ -197,7 +200,6 @@ export default function UploadDesignForm() {
               </div>
             </div>
 
-            {/* STEP 2: METADATA & GEMINI AI */}
             <div style={s.card}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
                 <div style={{ fontSize: 18, fontWeight: 900, color: '#0F172A' }}>
@@ -217,7 +219,7 @@ export default function UploadDesignForm() {
                 <label style={s.label}>Design Title *</label>
                 <input
                   style={inputStyle}
-                  placeholder="e.g. Ergonomic Headphone Stand v2"
+                  placeholder="e.g. Articulated Dragon 3D Model"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                 />
@@ -227,51 +229,49 @@ export default function UploadDesignForm() {
                 <label style={s.label}>Category</label>
                 <select style={inputStyle} value={category} onChange={(e) => setCategory(e.target.value)}>
                   {CATEGORIES.map((c) => (
-                    <option key={c} value={c}>{c}</option>
+                    <option key={c} value={c}>
+                      {c}
+                    </option>
                   ))}
                 </select>
               </div>
 
               <div style={{ marginBottom: 18 }}>
-                <label style={s.label}>Recommended Filament Materials</label>
-                <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-                  {MATERIALS.map((m) => {
-                    const active = materials.includes(m)
-                    return (
-                      <button
-                        key={m}
-                        type="button"
-                        onClick={() => toggleMaterial(m)}
-                        style={{
-                          padding: '6px 16px',
-                          borderRadius: 99,
-                          fontSize: 13,
-                          fontWeight: 700,
-                          border: active ? '1px solid #8B5CF6' : '1px solid #CBD5E1',
-                          background: active ? '#F3E8FF' : '#F8FAFC',
-                          color: active ? '#7C3AED' : '#334155',
-                          cursor: 'pointer',
-                        }}
-                      >
-                        {m}
-                      </button>
-                    )
-                  })}
+                <label style={s.label}>Recommended Materials</label>
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                  {MATERIALS.map((m) => (
+                    <button
+                      key={m}
+                      type="button"
+                      onClick={() => toggleMaterial(m)}
+                      style={{
+                        background: materials.includes(m) ? '#8B5CF6' : '#F1F5F9',
+                        color: materials.includes(m) ? '#fff' : '#475569',
+                        border: 'none',
+                        borderRadius: 8,
+                        padding: '6px 14px',
+                        fontSize: 12,
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                      }}
+                    >
+                      {m}
+                    </button>
+                  ))}
                 </div>
               </div>
 
-              <div style={{ marginBottom: 18 }}>
-                <label style={s.label}>Print Settings & Description</label>
+              <div>
+                <label style={s.label}>Slicing & Printing Notes (Gemini AI)</label>
                 <textarea
-                  style={{ ...inputStyle, minHeight: 100 }}
-                  placeholder="Layer height (e.g. 0.2mm), infill %, nozzle diameter, support notes..."
+                  style={{ ...inputStyle, minHeight: 90, resize: 'vertical' }}
+                  placeholder="Infill 20%, Supports recommended for overhangs..."
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                 />
               </div>
             </div>
 
-            {/* STEP 3: MONETIZATION & ROYALTY */}
             <div style={s.card}>
               <div style={{ fontSize: 18, fontWeight: 900, color: '#0F172A', marginBottom: 16 }}>
                 3. Royalty & Monetization Settings
@@ -296,15 +296,15 @@ export default function UploadDesignForm() {
                       cursor: 'pointer',
                     }}
                   >
-                    <div style={{ fontWeight: 800, fontSize: 13, color: '#0F172A' }}>{item.title}</div>
-                    <div style={{ fontSize: 11, color: '#64748B', marginTop: 2 }}>{item.sub}</div>
+                    <div style={{ fontSize: 13, fontWeight: 800, color: '#0F172A' }}>{item.title}</div>
+                    <div style={{ fontSize: 11, color: '#64748B' }}>{item.sub}</div>
                   </button>
                 ))}
               </div>
 
               {pricingType !== 'free' && (
                 <div>
-                  <label style={s.label}>Royalty / Download Price (₹)</label>
+                  <label style={s.label}>File Price (INR ₹)</label>
                   <input
                     type="number"
                     style={{ ...inputStyle, maxWidth: 220 }}
@@ -318,7 +318,7 @@ export default function UploadDesignForm() {
 
             <button
               onClick={handleSubmit}
-              disabled={submitting || !title}
+              disabled={submitting || isUploadingModel || !title}
               style={{
                 width: '100%',
                 background: 'linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)',
@@ -330,13 +330,13 @@ export default function UploadDesignForm() {
                 fontWeight: 900,
                 cursor: 'pointer',
                 boxShadow: '0 8px 24px rgba(139,92,246,0.35)',
+                opacity: submitting || isUploadingModel || !title ? 0.6 : 1,
               }}
             >
-              {submitting ? 'Publishing 3D Model…' : '🚀 Publish 3D Model Live'}
+              {submitting ? 'Publishing 3D Model…' : isUploadingModel ? 'Uploading 3D Model…' : '🚀 Publish 3D Model Live'}
             </button>
           </div>
 
-          {/* RIGHT PREVIEW */}
           <div style={{ position: 'sticky', top: 24 }}>
             <div style={s.card}>
               <div style={{ fontSize: 13, fontWeight: 800, color: '#8B5CF6', textTransform: 'uppercase', marginBottom: 12 }}>
@@ -345,7 +345,7 @@ export default function UploadDesignForm() {
 
               <div style={{ background: '#F8FAFC', borderRadius: 16, border: '1px solid #E2E8F0', overflow: 'hidden' }}>
                 <img
-                  src="https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=600&q=80"
+                  src={previewImageUrl || 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=600&q=80'}
                   alt="3D Preview"
                   style={{ width: '100%', height: 180, objectFit: 'cover' }}
                 />

@@ -67,7 +67,7 @@ export default function RegisterPrinterForm() {
 
       const displayName = printerName.trim() || model.trim() || '3D Printer Unit'
 
-      await supabase.from('printers').insert({
+      const { error: insertErr } = await supabase.from('printers').insert({
         owner_id: ownerId,
         printer_model: model || displayName,
         technology,
@@ -85,8 +85,19 @@ export default function RegisterPrinterForm() {
         is_active: initialStatus === 'online',
         created_at: new Date().toISOString(),
       })
-    } catch (err) {
-      console.warn('Printer insert note:', err)
+
+      if (insertErr) {
+        console.error('Failed to register printer in database:', insertErr.message)
+        setStatusMsg(`❌ Registration failed: ${insertErr.message}`)
+        setSubmitting(false)
+        return
+      }
+    } catch (err: unknown) {
+      const error = err as Error
+      console.error('Printer insert exception:', error)
+      setStatusMsg(`❌ Registration exception: ${error.message}`)
+      setSubmitting(false)
+      return
     }
 
     setSubmitting(false)
@@ -233,7 +244,7 @@ export default function RegisterPrinterForm() {
                 </div>
                 <div>
                   <label style={s.label}>Initial Hub Availability</label>
-                  <select style={inputStyle} value={initialStatus} onChange={(e) => setInitialStatus(e.target.value as any)}>
+                  <select style={inputStyle} value={initialStatus} onChange={(e) => setInitialStatus(e.target.value as typeof initialStatus)}>
                     <option value="online">🟢 Online & Ready</option>
                     <option value="busy">🟡 Busy / Printing</option>
                     <option value="offline">🔴 Offline / Maintenance</option>

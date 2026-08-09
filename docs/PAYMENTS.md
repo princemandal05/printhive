@@ -28,10 +28,10 @@ $$\text{PrintHive Fee} = \text{Total Amount} - (\text{Printer Payout} + \text{De
 
 ### 1. Create Payment Order (`POST /api/payments/create-order`)
 * **Purpose**: Generates a server-validated Razorpay order ID and records initial transaction status.
+* **Monetary Units**: Request amounts and breakdown totals are in **INR Rupees (₹)**. Razorpay's `amount` field is in **Integer Paisa** (100 paise = ₹1 INR).
 * **Payload**:
   ```json
   {
-    "amount": 450,
     "orderId": "d1-order-uuid"
   }
   ```
@@ -63,18 +63,19 @@ $$\text{PrintHive Fee} = \text{Total Amount} - (\text{Printer Payout} + \text{De
     .update(`${razorpay_order_id}|${razorpay_payment_id}`)
     .digest('hex');
   ```
-* **Database Updates**:
-  1. Writes captured record to `public.transactions`.
-  2. Inserts Escrow hold records to `public.escrow_payouts`.
-  3. Transitions order status: `PAYMENT_CONFIRMED` $\rightarrow$ `FINDING_PRINTER`.
+* **Database Atomicity & Idempotency**:
+  1. Partial unique index on `transactions(razorpay_payment_id)` and `escrow_payouts(order_id, role)` prevents double capture.
+  2. Writes captured record to `public.transactions`.
+  3. Inserts Escrow hold records with recipient IDs (`printer_owner_id`, `designer_id`) to `public.escrow_payouts`.
+  4. Transitions order status: `PAYMENT_CONFIRMED` $\rightarrow$ `FINDING_PRINTER`.
 
 ---
 
 ### 3. Refund Payment (`POST /api/payments/refund`)
-* **Purpose**: Issues full or partial refunds for order cancellations via Razorpay REST API (`POST /v1/payments/{payment_id}/refund`).
+* **Purpose**: Issues full refunds for pre-dispatch order cancellations via Razorpay REST API (`POST /v1/payments/{payment_id}/refund`).
 * **Database Updates**:
   1. Records refund transaction log in `public.transactions`.
-  2. Marks `public.escrow_payouts` status as `refunded`.
+  2. Marks all matching `public.escrow_payouts` rows for the order as `refunded`.
   3. Transitions order lifecycle state to `REFUNDED`.
 
 ---

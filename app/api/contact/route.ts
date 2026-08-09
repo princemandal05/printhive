@@ -22,7 +22,12 @@ export async function GET() {
 
     const userEmail = user.email
 
-    const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).maybeSingle()
+    const { data: profile, error: profileErr } = await supabase.from('profiles').select('role').eq('id', user.id).maybeSingle()
+    if (profileErr) {
+      console.error('Failed to verify user profile role:', profileErr.message)
+      return NextResponse.json({ error: 'Failed to verify authorization status' }, { status: 500 })
+    }
+
     const isAdmin = profile?.role === 'admin'
 
     let query = supabase.from('complaints').select('*').order('created_at', { ascending: false })

@@ -57,11 +57,14 @@ export async function POST(request: Request) {
           const text = data?.candidates?.[0]?.content?.parts?.[0]?.text
           if (text) {
             const parsed = JSON.parse(text.replace(/```json|```/g, '').trim())
-            if (parsed.recommendedMaterial) recommendedMaterial = parsed.recommendedMaterial
-            if (parsed.reasoning) reasoning = parsed.reasoning
-            if (parsed.bedTemp) bedTemp = parsed.bedTemp
-            if (parsed.printTemp) printTemp = parsed.printTemp
-            if (parsed.score) score = parsed.score
+            const SUPPORTED_MATERIALS = ['PLA', 'PETG', 'ABS', 'TPU', 'RESIN']
+            if (typeof parsed.recommendedMaterial === 'string' && SUPPORTED_MATERIALS.includes(parsed.recommendedMaterial.trim().toUpperCase())) {
+              recommendedMaterial = parsed.recommendedMaterial.trim().toUpperCase()
+            }
+            if (typeof parsed.reasoning === 'string' && parsed.reasoning.trim()) reasoning = parsed.reasoning.trim()
+            if (typeof parsed.bedTemp === 'string' && parsed.bedTemp.trim()) bedTemp = parsed.bedTemp.trim()
+            if (typeof parsed.printTemp === 'string' && parsed.printTemp.trim()) printTemp = parsed.printTemp.trim()
+            if (typeof parsed.score === 'string' && parsed.score.trim()) score = parsed.score.trim()
           }
         }
       } catch (geminiErr) {

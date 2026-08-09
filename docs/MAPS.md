@@ -58,7 +58,7 @@ ALTER TABLE public.printers ADD COLUMN IF NOT EXISTS address TEXT;
 
 ## 📂 Key Source Code Locations
 
-* [components/OpenStreetMap.tsx](file:///c:/printhive/components/OpenStreetMap.tsx) — Main Leaflet/OpenStreetMap wrapper component.
-* [utils/location.ts](file:///c:/printhive/utils/location.ts) — Haversine distance calculator & sorting helpers.
-* [RegisterPrinterForm.tsx](file:///c:/printhive/app/dashboard/printer-owner/register/RegisterPrinterForm.tsx) — Printer registration & location picker form.
-* [app/printers/page.tsx](file:///c:/printhive/app/printers/page.tsx) — Directory list with map pins & distance sorting.
+* [components/OpenStreetMap.tsx](../components/OpenStreetMap.tsx) — Main Leaflet/OpenStreetMap wrapper component.
+* [utils/location.ts](../utils/location.ts) — Haversine distance calculator & sorting helpers.
+* [RegisterPrinterForm.tsx](../app/dashboard/printer-owner/register/RegisterPrinterForm.tsx) — Printer registration & location picker form.
+* [app/printers/page.tsx](../app/printers/page.tsx) — Directory list with map pins & distance sorting.

@@ -23,59 +23,119 @@ function OrderTrackingContent() {
   const orderId = (params?.id as string) || 'demo-order-id'
   const isJustReviewed = searchParams?.get('reviewed') === 'true'
 
-  const [currentStatus, setCurrentStatus] = useState<OrderStatus>('PRINTING')
+  const [currentStatus, setCurrentStatus] = useState<OrderStatus | null>(null)
   const [history, setHistory] = useState<HistoryEntry[]>([])
   const [loading, setLoading] = useState(true)
+  const [orderNotFound, setOrderNotFound] = useState(false)
   const [actionMsg, setActionMsg] = useState('')
+  const [confirmingDelivery, setConfirmingDelivery] = useState(false)
 
   // Load live order and status history from Supabase
   useEffect(() => {
+    let isCancelled = false
+
     async function loadOrderHistory() {
       setLoading(true)
+      setOrderNotFound(false)
+
       try {
         // Query order status
-        const { data: orderData } = await supabase
+        const { data: orderData, error: orderErr } = await supabase
           .from('orders')
           .select('status')
           .eq('id', orderId)
           .maybeSingle()
 
+        if (orderErr) {
+          console.error('Failed to query order:', orderErr.message)
+        }
+
+        if (isCancelled) return
+
         if (orderData?.status) {
           setCurrentStatus(orderData.status as OrderStatus)
+        } else {
+          setOrderNotFound(true)
         }
 
         // Query status history logs
-        const { data: historyData } = await supabase
+        const { data: historyData, error: historyErr } = await supabase
           .from('order_status_history')
           .select('*')
           .eq('order_id', orderId)
           .order('created_at', { ascending: true })
+
+        if (historyErr) {
+          console.error('Failed to query order status history:', historyErr.message)
+        }
+
+        if (isCancelled) return
 
         if (historyData && historyData.length > 0) {
           setHistory(historyData)
         }
       } catch (err) {
         console.warn('Order history query note:', err)
+        if (!isCancelled) setOrderNotFound(true)
+      } finally {
+        if (!isCancelled) setLoading(false)
       }
-      setLoading(false)
     }
 
     loadOrderHistory()
+
+    return () => {
+      isCancelled = true
+    }
   }, [orderId])
 
   // Get index of active step in standard 10 happy-path steps
-  const activeStepIndex = ORDER_LIFECYCLE_STEPS.findIndex((s) => s.key === currentStatus)
-  const safeStepIndex = activeStepIndex >= 0 ? activeStepIndex : 5
+  const activeStepIndex = currentStatus ? ORDER_LIFECYCLE_STEPS.findIndex((s) => s.key === currentStatus) : -1
+  const safeStepIndex = activeStepIndex >= 0 ? activeStepIndex : 0
 
   const handleConfirmDelivery = async () => {
+    if (confirmingDelivery || !currentStatus) return
+    setConfirmingDelivery(true)
     setActionMsg('⚡ Confirming delivery & releasing Escrow funds...')
-    await updateOrderStatus(supabase, orderId, 'DELIVERED', 'Delivery confirmed by customer.')
-    await updateOrderStatus(supabase, orderId, 'COMPLETED', '70% Printer / 15% Designer payouts released.')
-    setCurrentStatus('COMPLETED')
-    setActionMsg('🎉 Order Completed! Escrow payouts released.')
+
+    const resDelivered = await updateOrderStatus(supabase, orderId, 'DELIVERED', 'Delivery confirmed by customer.', undefined, currentStatus)
+    if (!resDelivered.success) {
+      setActionMsg(`❌ Failed to update delivery status: ${resDelivered.error || 'Error'}`)
+      setConfirmingDelivery(false)
+      return
+    }
+
+    const resCompleted = await updateOrderStatus(supabase, orderId, 'COMPLETED', '70% Printer / 15% Designer payouts released.', undefined, 'DELIVERED')
+    if (resCompleted.success) {
+      setCurrentStatus('COMPLETED')
+      setActionMsg('🎉 Order Completed! Escrow payouts released.')
+    } else {
+      setActionMsg(`❌ Delivery confirmed, but completion step failed: ${resCompleted.error || 'Error'}`)
+    }
+    setConfirmingDelivery(false)
   }
 
-  const isCompletedOrDelivered = ['DELIVERED', 'COMPLETED'].includes(currentStatus)
+  const isCompletedOrDelivered = currentStatus ? ['DELIVERED', 'COMPLETED'].includes(currentStatus) : false
+
+  if (loading) {
+    return (
+      <section className="container section-sm" style={{ maxWidth: 900, margin: '0 auto', padding: '60px 20px', textAlign: 'center', color: 'var(--text-sub)' }}>
+        <div style={{ fontSize: 36, marginBottom: 12 }}>⏳</div>
+        <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--text-main)' }}>Loading Order Lifecycle Stream…</div>
+      </section>
+    )
+  }
+
+  if (orderNotFound || !currentStatus) {
+    return (
+      <section className="container section-sm" style={{ maxWidth: 900, margin: '0 auto', padding: '60px 20px', textAlign: 'center', color: 'var(--text-sub)' }}>
+        <div style={{ fontSize: 36, marginBottom: 12 }}>📦</div>
+        <div style={{ fontSize: 20, fontWeight: 900, color: 'var(--text-main)', marginBottom: 8 }}>Order Not Found</div>
+        <p>No active order record matching #{orderId.slice(0, 10)} was found in database.</p>
+        <Link href="/" style={{ color: '#2563EB', fontWeight: 700, textDecoration: 'none' }}>← Return to Homepage</Link>
+      </section>
+    )
+  }
 
   return (
     <section className="container section-sm" style={{ maxWidth: 900, margin: '0 auto', padding: '40px 20px' }}>

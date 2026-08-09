@@ -51,6 +51,10 @@ export default function DesignDetailClient({ design, reviews }: { design: Design
   }
 
   const handleBuyModel = () => {
+    if (!design.file_url) {
+      alert('This 3D model file is currently unavailable for download.')
+      return
+    }
     addToCart({
       id: design.id,
       name: `${design.title} (Digital 3D STL)`,
@@ -130,7 +134,7 @@ export default function DesignDetailClient({ design, reviews }: { design: Design
 
           <div className="flex items-center gap-2" style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 24 }}>
             <span className="rating" style={{ color: '#fbbf24', fontWeight: 700 }}>★ {design.rating || '4.9'}</span>
-            <span className="rating-count" style={{ color: '#64748b', fontSize: 13 }}>({design.rating_count || 18} orders completed)</span>
+            <span className="rating-count" style={{ color: '#64748b', fontSize: 13 }}>({design.rating_count ?? 18} orders completed)</span>
           </div>
 
           {/* Designer Card */}

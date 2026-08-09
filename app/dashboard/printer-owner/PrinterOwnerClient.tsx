@@ -110,36 +110,32 @@ export default function PrinterOwnerClient({ user, initialPrinters, initialOrder
 
   return (
     <div style={s.page}>
-      {/* PRINTER COMMAND HUB NAVIGATION */}
+      {/* NAVIGATION BAR */}
       <nav style={s.nav}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
           <div style={s.logo}>
             <Link href="/" style={{ textDecoration: 'none', color: '#fff' }}>
               Print<span style={s.logoAccent}>Hive</span>
             </Link>{' '}
-            <span style={{ fontSize: 12, color: '#94A3B8', fontWeight: 600 }}>Printer Hub Command</span>
+            <span style={{ fontSize: 12, color: '#94A3B8', fontWeight: 600 }}>Printer Hub</span>
           </div>
-          <span style={s.badge}>🖨️ Printer Owner</span>
         </div>
+
         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            {user.avatar_url ? (
-              <img src={user.avatar_url} alt="Avatar" style={{ width: 36, height: 36, borderRadius: '50%', objectFit: 'cover' }} />
-            ) : (
-              <div style={{ width: 36, height: 36, borderRadius: '50%', background: '#FF6B35', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800 }}>
-                {(user.full_name || 'U').charAt(0)}
-              </div>
-            )}
-            <div style={{ textAlign: 'left' }}>
-              <div style={{ color: '#fff', fontSize: 13, fontWeight: 800, lineHeight: 1.2 }}>
+            <div style={{ width: 34, height: 34, borderRadius: 99, background: '#FF6B35', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: 14 }}>
+              {user.full_name?.charAt(0).toUpperCase() || 'P'}
+            </div>
+            <div>
+              <div style={{ color: '#fff', fontSize: 13, fontWeight: 700, lineHeight: 1.2 }}>
                 {user.full_name || 'Printer Owner'}
               </div>
               <div style={{ color: '#94A3B8', fontSize: 11, fontWeight: 600 }}>{user.email}</div>
             </div>
           </div>
-          <a href="/" style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)', color: '#fff', padding: '6px 14px', borderRadius: 8, fontSize: 12, fontWeight: 700, textDecoration: 'none' }}>
+          <Link href="/" style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)', color: '#fff', padding: '6px 14px', borderRadius: 8, fontSize: 12, fontWeight: 700, textDecoration: 'none' }}>
             Exit Hub
-          </a>
+          </Link>
         </div>
       </nav>
 
@@ -311,8 +307,12 @@ export default function PrinterOwnerClient({ user, initialPrinters, initialOrder
                   orders.map((o) => {
                     const handleNextStep = async (nextStatus: OrderStatus, notes: string) => {
                       setUpdatingId(o.id)
-                      await updateOrderStatus(supabase, o.id, nextStatus, notes, user.id)
-                      setOrders((prev) => prev.map((item) => (item.id === o.id ? { ...item, status: nextStatus as any } : item)))
+                      const res = await updateOrderStatus(supabase, o.id, nextStatus, notes, user.id, o.status as OrderStatus)
+                      if (res.success) {
+                        setOrders((prev) => prev.map((item) => (item.id === o.id ? { ...item, status: nextStatus } : item)))
+                      } else {
+                        console.error('Failed to update order status:', res.error)
+                      }
                       setUpdatingId(null)
                     }
 

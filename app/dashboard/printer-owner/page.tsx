@@ -40,7 +40,7 @@ export default async function PrinterOwnerDashboardPage() {
     const { data: dbOrders } = await supabase
       .from('orders')
       .select('*')
-      .or(`buyer_id.eq.${user.id},designer_id.eq.${user.id}`)
+      .eq('printer_owner_id', user.id)
       .order('created_at', { ascending: false })
 
     if (dbOrders && dbOrders.length > 0) {
@@ -51,8 +51,8 @@ export default async function PrinterOwnerDashboardPage() {
         material: o.material || 'PLA',
         color: o.color || 'Default',
         quantity: o.quantity || 1,
-        total: o.total || 0,
-        payout: o.subtotal ? Math.round(o.subtotal * 0.7) : Math.round((o.total || 0) * 0.7),
+        total: o.total_amount || o.total_price || o.total || 0,
+        payout: typeof o.printer_payout === 'number' && o.printer_payout > 0 ? o.printer_payout : (typeof o.subtotal === 'number' ? Math.round(o.subtotal * 0.7) : 0),
       }))
     }
   } catch (err) {

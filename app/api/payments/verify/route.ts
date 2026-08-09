@@ -1,11 +1,12 @@
 import { NextResponse } from 'next/server'
 import crypto from 'crypto'
-import { createClient } from '@/utils/supabase/server'
+import { createClient, createAdminClient } from '@/utils/supabase/server'
 import { updateOrderStatus } from '@/utils/order-lifecycle'
 
 export async function POST(request: Request) {
   try {
     const supabase = await createClient()
+    const adminSupabase = await createAdminClient()
 
     // 1. Authenticate caller
     const { data: { user }, error: authError } = await supabase.auth.getUser()
@@ -51,12 +52,18 @@ export async function POST(request: Request) {
     const isAdmin = profile?.role === 'admin'
     const orderBuyerId = order.buyer_id || order.user_id
 
-    if (!isAdmin && orderBuyerId && orderBuyerId !== user.id) {
+    if (!isAdmin && (!orderBuyerId || orderBuyerId !== user.id)) {
       return NextResponse.json({ error: 'Forbidden: You do not own this order' }, { status: 403 })
+    }
+
+    // Compare stored order's razorpay_order_id with submitted razorpay_order_id
+    if (order.razorpay_order_id && order.razorpay_order_id !== razorpay_order_id) {
+      return NextResponse.json({ error: 'Razorpay order ID mismatch' }, { status: 400 })
     }
 
     // 4. HMAC-SHA256 Constant-Time Signature Verification
     const keySecret = process.env.RAZORPAY_KEY_SECRET
+    const allowMock = process.env.ALLOW_MOCK_PAYMENTS === 'true' || process.env.NODE_ENV === 'development'
 
     if (keySecret) {
       if (!razorpay_signature || typeof razorpay_signature !== 'string') {
@@ -78,6 +85,8 @@ export async function POST(request: Request) {
       if (!isSignatureValid) {
         return NextResponse.json({ error: 'Invalid payment signature verification' }, { status: 400 })
       }
+    } else if (!allowMock) {
+      return NextResponse.json({ error: 'Razorpay Key Secret not configured on server' }, { status: 500 })
     }
 
     // 5. Payment Idempotency Check: Prevent duplicate payment captures
@@ -99,7 +108,7 @@ export async function POST(request: Request) {
     }
 
     // 6. Precise Integer Paisa Arithmetic loaded from DB amount
-    const orderAmount = Number(order.total_amount || order.total || order.price || order.amount)
+    const orderAmount = Number(order.total_amount || order.total_price || order.total || order.price || order.amount)
     if (!orderAmount || isNaN(orderAmount) || orderAmount <= 0) {
       return NextResponse.json({ error: 'Invalid order total in database' }, { status: 400 })
     }
@@ -114,7 +123,7 @@ export async function POST(request: Request) {
     const platformFee = platformFeePaisa / 100
 
     // 7. Atomic DB Transactions & Escrow Payout Updates
-    const { error: txnErr } = await supabase.from('transactions').insert({
+    const { error: txnErr } = await adminSupabase.from('transactions').insert({
       order_id,
       razorpay_order_id,
       razorpay_payment_id,
@@ -134,13 +143,13 @@ export async function POST(request: Request) {
     }
 
     // 8. Prevent duplicate Escrow Payout records
-    const { data: existingEscrow } = await supabase
+    const { data: existingEscrow } = await adminSupabase
       .from('escrow_payouts')
       .select('id')
       .eq('order_id', order_id)
 
     if (!existingEscrow || existingEscrow.length === 0) {
-      const { error: escrowErr } = await supabase.from('escrow_payouts').insert([
+      const { error: escrowErr } = await adminSupabase.from('escrow_payouts').insert([
         {
           order_id,
           role: 'printer_owner',
@@ -165,7 +174,7 @@ export async function POST(request: Request) {
 
     // 9. Atomic Lifecycle Transitions: PENDING_PAYMENT -> PAYMENT_CONFIRMED -> FINDING_PRINTER
     const step1 = await updateOrderStatus(
-      supabase,
+      adminSupabase,
       order_id,
       'PAYMENT_CONFIRMED',
       'Payment verified server-side with HMAC SHA-256.',
@@ -178,7 +187,7 @@ export async function POST(request: Request) {
     }
 
     const step2 = await updateOrderStatus(
-      supabase,
+      adminSupabase,
       order_id,
       'FINDING_PRINTER',
       'Searching Leaflet OpenStreetMap for nearby printer hub.',

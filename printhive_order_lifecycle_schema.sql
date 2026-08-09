@@ -13,10 +13,13 @@ CREATE TABLE IF NOT EXISTS public.order_status_history (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- 2. Enable RLS on order_status_history
+-- 2. Create composite index for efficient lifecycle query execution
+CREATE INDEX IF NOT EXISTS idx_order_status_history_order_id ON public.order_status_history(order_id, created_at);
+
+-- 3. Enable RLS on order_status_history
 ALTER TABLE public.order_status_history ENABLE ROW LEVEL SECURITY;
 
--- 3. Secure RLS Policies (Order Participant Scoped)
+-- 4. Secure RLS Policies (Order Participant Scoped)
 DROP POLICY IF EXISTS "Public read order_status_history" ON public.order_status_history;
 DROP POLICY IF EXISTS "Participants read order_status_history" ON public.order_status_history;
 CREATE POLICY "Participants read order_status_history" ON public.order_status_history FOR SELECT USING (
@@ -27,15 +30,12 @@ CREATE POLICY "Participants read order_status_history" ON public.order_status_hi
       o.buyer_id = auth.uid() OR
       o.designer_id = auth.uid() OR
       o.printer_owner_id = auth.uid() OR
-      EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin')
+      public.is_admin()
     )
   )
 );
 
 DROP POLICY IF EXISTS "Authenticated users insert order_status_history" ON public.order_status_history;
-CREATE POLICY "Authenticated users insert order_status_history" ON public.order_status_history FOR INSERT WITH CHECK (
-  auth.uid() IS NOT NULL
-);
 
--- 4. Ensure orders table status column accepts lifecycle states
+-- 5. Ensure orders table status column accepts lifecycle states
 ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'PENDING_PAYMENT';

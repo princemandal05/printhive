@@ -41,8 +41,12 @@ export async function POST(request: Request) {
     }
 
     const query = payload.query.trim()
+    if (query.length > MAX_QUERY_LENGTH) {
+      return NextResponse.json({ error: `Query length exceeds maximum allowed limit of ${MAX_QUERY_LENGTH} characters` }, { status: 400 })
+    }
+
     const cleanQuery = query.toLowerCase()
-    const isCacheable = cleanQuery.length > 0 && cleanQuery.length <= MAX_QUERY_LENGTH
+    const isCacheable = cleanQuery.length > 0
 
     // Check LRU cache first to prevent redundant AI calls
     if (isCacheable && SEARCH_CACHE.has(cleanQuery)) {
@@ -56,6 +60,9 @@ export async function POST(request: Request) {
       })
     }
 
+    // Shared Price Regex covering "under ₹500", "below 300", "500 rupees", "300 inr"
+    const SHARED_PRICE_PATTERN = /(?:under|below|less than|<|₹|rs\.?)\s*(\d+)|\b(\d+)\s*(?:rupees|rs|inr)\b/gi
+
     // Default / Fallback regex parser for natural language
     let cleanSearchTerm = query
     let maxPrice: number | null = null
@@ -63,10 +70,13 @@ export async function POST(request: Request) {
     let category: string | null = null
     let technology: string | null = null
 
-    // Extract price pattern (e.g. under ₹500, below 300, < 400)
-    const priceMatch = query.match(/(?:under|below|less than|<|₹|rs\.?)\s*(\d+)/i) || query.match(/(\d+)\s*(?:rupees|rs|inr)/i)
+    // Extract price pattern
+    const priceMatch = query.match(/(?:under|below|less than|<|₹|rs\.?)\s*(\d+)/i) || query.match(/\b(\d+)\s*(?:rupees|rs|inr)\b/i)
     if (priceMatch) {
-      maxPrice = Number(priceMatch[1])
+      const parsedVal = Number(priceMatch[1] || priceMatch[2])
+      if (Number.isFinite(parsedVal) && parsedVal >= 0) {
+        maxPrice = parsedVal
+      }
     }
 
     // Extract material pattern
@@ -87,9 +97,9 @@ export async function POST(request: Request) {
       category = 'Personalized & Props'
     }
 
-    // Clean search term by stripping price/material keywords
+    // Clean search term using shared price regex
     cleanSearchTerm = query
-      .replace(/(?:under|below|less than|<|₹|rs\.?)\s*\d+/gi, '')
+      .replace(SHARED_PRICE_PATTERN, '')
       .replace(/(?:printed using|in|with|using|made of)\s*(?:PLA|PETG|ABS|TPU|Resin|Nylon)/gi, '')
       .replace(/\b(?:I need|a|an|for|that|can|be|printed)\b/gi, '')
       .trim()
@@ -129,12 +139,29 @@ Extract structured JSON filters matching this schema:
           const text = data?.candidates?.[0]?.content?.parts?.[0]?.text
           if (text) {
             const parsed = JSON.parse(text.replace(/```json|```/g, '').trim())
-            if (parsed.cleanSearchTerm) cleanSearchTerm = parsed.cleanSearchTerm
-            if (typeof parsed.maxPrice === 'number') maxPrice = parsed.maxPrice
-            if (parsed.material) material = parsed.material
-            if (parsed.category) category = parsed.category
-            if (parsed.technology) technology = parsed.technology
-            if (Array.isArray(parsed.expandedKeywords)) expandedKeywords = parsed.expandedKeywords
+            
+            const ALLOWED_MATERIALS = ['PLA', 'PETG', 'ABS', 'TPU', 'Resin', 'Nylon']
+            const ALLOWED_CATEGORIES = ['Office & Desk', 'Toys & Games', 'Personalized & Props', 'Home & Living']
+            const ALLOWED_TECHS = ['FDM', 'SLA', 'SLS']
+
+            if (typeof parsed.cleanSearchTerm === 'string' && parsed.cleanSearchTerm.trim()) {
+              cleanSearchTerm = parsed.cleanSearchTerm.trim()
+            }
+            if (typeof parsed.maxPrice === 'number' && Number.isFinite(parsed.maxPrice) && parsed.maxPrice >= 0) {
+              maxPrice = parsed.maxPrice
+            }
+            if (typeof parsed.material === 'string' && ALLOWED_MATERIALS.includes(parsed.material)) {
+              material = parsed.material
+            }
+            if (typeof parsed.category === 'string' && ALLOWED_CATEGORIES.includes(parsed.category)) {
+              category = parsed.category
+            }
+            if (typeof parsed.technology === 'string' && ALLOWED_TECHS.includes(parsed.technology)) {
+              technology = parsed.technology
+            }
+            if (Array.isArray(parsed.expandedKeywords) && parsed.expandedKeywords.every((k: unknown) => typeof k === 'string')) {
+              expandedKeywords = parsed.expandedKeywords
+            }
           }
         }
       } catch (geminiErr) {

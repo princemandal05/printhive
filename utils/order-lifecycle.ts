@@ -52,16 +52,53 @@ const ALLOWED_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
   REFUNDED: [],
 }
 
+const LEGACY_STATUS_MAP: Record<string, OrderStatus> = {
+  pending: 'PENDING_PAYMENT',
+  confirmed: 'PAYMENT_CONFIRMED',
+  finding_printer: 'FINDING_PRINTER',
+  printer_assigned: 'PRINTER_ASSIGNED',
+  printer_accepted: 'PRINTER_ACCEPTED',
+  accepted: 'PRINTER_ACCEPTED',
+  in_production: 'PRINTING',
+  printing: 'PRINTING',
+  quality_check: 'QUALITY_CHECK',
+  ready: 'READY',
+  dispatched: 'DISPATCHED',
+  delivered: 'DELIVERED',
+  completed: 'COMPLETED',
+  cancelled: 'CANCELLED',
+  refunded: 'REFUNDED',
+}
+
+export function normalizeOrderStatus(status: string): OrderStatus {
+  if (!status) return 'PENDING_PAYMENT'
+  const upper = status.toUpperCase() as OrderStatus
+  if (ALLOWED_TRANSITIONS[upper]) return upper
+  const lower = status.toLowerCase()
+  return LEGACY_STATUS_MAP[lower] || upper
+}
+
 /**
  * Validates if moving from currentStatus to targetStatus is allowed by the lifecycle state machine.
  */
-export function isValidStatusTransition(currentStatus: OrderStatus, targetStatus: OrderStatus): boolean {
-  if (currentStatus === targetStatus) return true
-  const allowed = ALLOWED_TRANSITIONS[currentStatus] || []
-  return allowed.includes(targetStatus)
+export function isValidStatusTransition(currentStatus: string, targetStatus: string): boolean {
+  const normCurrent = normalizeOrderStatus(currentStatus)
+  const normTarget = normalizeOrderStatus(targetStatus)
+  if (normCurrent === normTarget) return true
+  const allowed = ALLOWED_TRANSITIONS[normCurrent] || []
+  return allowed.includes(normTarget)
+}
+
+interface SupabaseQueryBuilder {
+  select: (columns?: string) => SupabaseQueryBuilder
+  update: (values: Record<string, unknown>) => SupabaseQueryBuilder
+  insert: (values: Record<string, unknown> | Array<Record<string, unknown>>) => SupabaseQueryBuilder
+  eq: (column: string, value: unknown) => SupabaseQueryBuilder
+  maybeSingle: () => Promise<{ data: Record<string, unknown> | null; error: { message: string } | null }>
 }
 
 interface SupabaseClientLike {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   from: (table: string) => any
 }
 
@@ -86,6 +123,11 @@ export async function updateOrderStatus(
     if (currentOrder?.status) {
       activeStatus = currentOrder.status as OrderStatus
     }
+  }
+
+  // Return immediately if status is unchanged
+  if (activeStatus && normalizeOrderStatus(activeStatus) === normalizeOrderStatus(newStatus)) {
+    return { success: true, notes: 'Status unchanged' }
   }
 
   // Validate state transition if activeStatus is present

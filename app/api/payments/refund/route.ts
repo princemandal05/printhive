@@ -1,10 +1,11 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@/utils/supabase/server'
-import { updateOrderStatus } from '@/utils/order-lifecycle'
+import { createClient, createAdminClient } from '@/utils/supabase/server'
+import { updateOrderStatus, isValidStatusTransition } from '@/utils/order-lifecycle'
 
 export async function POST(request: Request) {
   try {
     const supabase = await createClient()
+    const adminSupabase = await createAdminClient()
 
     // 1. Authenticate caller
     const { data: { user }, error: authError } = await supabase.auth.getUser()
@@ -47,16 +48,26 @@ export async function POST(request: Request) {
     const isAdmin = profile?.role === 'admin'
     const orderBuyerId = order.buyer_id || order.user_id
 
-    if (!isAdmin && orderBuyerId && orderBuyerId !== user.id) {
+    if (!isAdmin && (!orderBuyerId || orderBuyerId !== user.id)) {
       return NextResponse.json({ error: 'Forbidden: Only the order buyer or an admin can issue a refund' }, { status: 403 })
     }
 
-    // 4. Reject already refunded or cancelled orders
+    // Buyer-initiated refunds are restricted to pre-dispatch order statuses
+    const PRE_DISPATCH_STATUSES = ['PENDING_PAYMENT', 'PAYMENT_CONFIRMED', 'FINDING_PRINTER', 'PRINTER_ASSIGNED', 'PRINTER_ACCEPTED', 'PRINTING', 'QUALITY_CHECK', 'READY']
+    if (!isAdmin && !PRE_DISPATCH_STATUSES.includes(order.status)) {
+      return NextResponse.json({ error: 'Forbidden: Admin authorization is required to refund dispatched, delivered, or completed orders' }, { status: 403 })
+    }
+
+    // 4. Reject already refunded orders or invalid transitions
     if (order.status === 'REFUNDED') {
       return NextResponse.json({ error: 'Order has already been refunded' }, { status: 400 })
     }
 
-    // 5. Query captured transaction record
+    if (!isValidStatusTransition(order.status, 'REFUNDED')) {
+      return NextResponse.json({ error: `Cannot transition order lifecycle status from ${order.status} to REFUNDED` }, { status: 400 })
+    }
+
+    // 5. Query captured transaction record (Require captured txn)
     const { data: txn, error: txnFetchErr } = await supabase
       .from('transactions')
       .select('*')
@@ -69,13 +80,15 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Failed to query payment transactions' }, { status: 500 })
     }
 
-    const refundAmount = Number(txn?.amount || order.total_amount || order.total || order.price || 0)
-    if (refundAmount <= 0) {
-      return NextResponse.json({ error: 'No valid captured payment found to refund' }, { status: 400 })
+    if (!txn || typeof txn.amount !== 'number' || txn.amount <= 0) {
+      return NextResponse.json({ error: 'No valid captured payment transaction found to refund' }, { status: 400 })
     }
+
+    const refundAmount = Number(txn.amount)
 
     const keyId = process.env.RAZORPAY_KEY_ID || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID
     const keySecret = process.env.RAZORPAY_KEY_SECRET
+    const allowMock = process.env.ALLOW_MOCK_PAYMENTS === 'true' || process.env.NODE_ENV === 'development'
 
     let razorpayRefundId: string | null = null
 
@@ -107,9 +120,11 @@ export async function POST(request: Request) {
 
       const rzpData = await rzpResponse.json()
       razorpayRefundId = rzpData.id
-    } else {
+    } else if (allowMock) {
       // Sandbox mode when credentials are unconfigured
       razorpayRefundId = `rfnd_${Math.random().toString(36).substring(2, 14)}`
+    } else {
+      return NextResponse.json({ error: 'Razorpay Gateway secret credentials not configured for refund' }, { status: 500 })
     }
 
     if (!razorpayRefundId) {
@@ -117,7 +132,7 @@ export async function POST(request: Request) {
     }
 
     // 7. Log refund transaction in database
-    const { error: insertRefundTxnErr } = await supabase.from('transactions').insert({
+    const { error: insertRefundTxnErr } = await adminSupabase.from('transactions').insert({
       order_id: targetOrderId,
       razorpay_payment_id: txn?.razorpay_payment_id || null,
       amount: refundAmount,
@@ -133,18 +148,19 @@ export async function POST(request: Request) {
     }
 
     // 8. Update escrow payouts to refunded status
-    const { error: escrowRefundErr } = await supabase
+    const { error: escrowRefundErr } = await adminSupabase
       .from('escrow_payouts')
       .update({ status: 'refunded', released_at: new Date().toISOString() })
       .eq('order_id', targetOrderId)
 
     if (escrowRefundErr) {
       console.error('Failed to update escrow payouts status:', escrowRefundErr.message)
+      return NextResponse.json({ error: 'Failed to update escrow payout records for refund', refundId: razorpayRefundId }, { status: 500 })
     }
 
     // 9. Atomic Order Lifecycle Transition to REFUNDED
     const transitionResult = await updateOrderStatus(
-      supabase,
+      adminSupabase,
       targetOrderId,
       'REFUNDED',
       `Refund processed (${razorpayRefundId}): ${typeof reason === 'string' ? reason : 'Cancelled'}`,

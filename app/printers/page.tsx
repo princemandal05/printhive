@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
+import { useSearchParams } from 'next/navigation'
 import dynamic from 'next/dynamic'
 import Link from 'next/link'
 import Navbar from '@/components/Navbar'
@@ -18,7 +19,7 @@ const OpenStreetMap = dynamic(() => import('@/components/OpenStreetMap'), {
   ),
 })
 
-type PrinterHub = MapLocation & {
+export type PrinterHub = MapLocation & {
   model?: string
   technology?: string
   materials?: string[]
@@ -33,13 +34,16 @@ type PrinterHub = MapLocation & {
   formattedDistance?: string
 }
 
-export default function PrinterDirectoryPage() {
+function PrinterDirectoryContent() {
   const supabase = createClient()
+  const searchParams = useSearchParams()
+  const preselectedPrinterId = searchParams?.get('printer_id')
 
   const [printers, setPrinters] = useState<PrinterHub[]>([])
   const [selectedHub, setSelectedHub] = useState<PrinterHub | null>(null)
   const [userCoords, setUserCoords] = useState<{ lat: number; lng: number } | null>(null)
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState<string | null>(null)
 
   // 6 Filter States
   const [filterMaxDistance, setFilterMaxDistance] = useState<number | 'All'>('All')
@@ -54,43 +58,62 @@ export default function PrinterDirectoryPage() {
   useEffect(() => {
     async function loadPrinters() {
       setLoading(true)
+      setLoadError(null)
       try {
         const { data, error } = await supabase
           .from('printers')
           .select('*')
 
-        if (data && data.length > 0) {
-          const mapped: PrinterHub[] = data.map((item) => ({
-            id: item.id || `printer-${Math.random()}`,
-            name: item.printer_model || item.name || '3D Printer Hub',
-            model: item.printer_model || 'FDM Precision',
-            technology: item.technology || 'FDM Dual-Color Precision',
-            location: item.address || 'India GPS Location',
-            lat: Number(item.latitude) || 28.6139,
-            lng: Number(item.longitude) || 77.2090,
-            materials: item.materials || ['PLA', 'PETG'],
-            base_price: item.base_price || 350,
-            price: item.base_price || 350,
-            status: item.status || (item.is_active ? 'online' : 'offline'),
-            working_hours: item.working_hours || '09:00 AM - 09:00 PM',
-            max_resolution: item.max_resolution || '0.05 mm',
-            city: item.city || item.address?.split(',').pop()?.trim() || 'India',
-            completedOrders: item.completed_orders || 12,
-            rating: item.rating || 4.9,
-          }))
-          setPrinters(mapped)
-        } else {
-          setPrinters([])
+        if (error) {
+          console.error('Failed to load registered printers:', error.message)
+          setLoadError('Failed to retrieve printer hubs from database.')
+          setLoading(false)
+          return
         }
-      } catch (err) {
-        console.warn('Printer fetch note:', err)
-        setPrinters([])
+
+        if (data && data.length > 0) {
+          const mapped: PrinterHub[] = data
+            .filter((item) => {
+              const lat = Number(item.latitude)
+              const lng = Number(item.longitude)
+              return item.latitude !== null && item.longitude !== null && Number.isFinite(lat) && Number.isFinite(lng)
+            })
+            .map((item) => ({
+              id: item.id || `printer-${Math.random()}`,
+              name: item.printer_model || item.name || '3D Printer Hub',
+              model: item.printer_model || 'FDM Precision',
+              technology: item.technology || 'FDM Dual-Color Precision',
+              location: item.address || 'India GPS Location',
+              lat: Number(item.latitude),
+              lng: Number(item.longitude),
+              materials: item.materials || ['PLA', 'PETG'],
+              base_price: item.base_price || 350,
+              price: item.base_price || 350,
+              status: item.status || (item.is_active ? 'online' : 'offline'),
+              working_hours: item.working_hours || '09:00 AM - 09:00 PM',
+              rating: item.rating || 4.9,
+              completedOrders: item.completed_orders || 42,
+              city: item.city || 'New Delhi',
+            }))
+
+          setPrinters(mapped)
+
+          if (preselectedPrinterId) {
+            const preselected = mapped.find((p) => p.id === preselectedPrinterId)
+            if (preselected) setSelectedHub(preselected)
+          }
+        }
+      } catch (err: unknown) {
+        const error = err as Error
+        console.error('Printer loading exception:', error)
+        setLoadError(error.message || 'Error loading printer hubs.')
+      } finally {
+        setLoading(false)
       }
-      setLoading(false)
     }
 
     loadPrinters()
-  }, [])
+  }, [preselectedPrinterId])
 
   // Calculate distance for all printers if user coordinates are available
   const processedPrinters = printers.map((printer) => {
@@ -478,5 +501,17 @@ export default function PrinterDirectoryPage() {
 
       <Footer />
     </main>
+  )
+}
+
+export default function PrinterDirectoryPage() {
+  return (
+    <Suspense fallback={
+      <main style={{ minHeight: '100vh', background: 'var(--bg-main)', color: 'var(--text-main)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ fontWeight: 800, fontSize: 16 }}>🖨️ Loading 3D Printer Hub Directory…</div>
+      </main>
+    }>
+      <PrinterDirectoryContent />
+    </Suspense>
   )
 }

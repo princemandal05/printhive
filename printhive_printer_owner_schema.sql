@@ -68,5 +68,5 @@ CREATE POLICY "Authorized participants read own orders" ON public.orders FOR SEL
   buyer_id = auth.uid() OR
   designer_id = auth.uid() OR
   printer_owner_id = auth.uid() OR
-  EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin')
+  public.is_admin()
 );

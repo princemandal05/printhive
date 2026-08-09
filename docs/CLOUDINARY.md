@@ -34,7 +34,7 @@ PrintHive routes files dynamically based on file extensions:
 
 ## ⚡ Client Features & Progress Tracking
 
-The [`CloudinaryUploader`](file:///c:/printhive/components/CloudinaryUploader.tsx) component provides:
+The [`CloudinaryUploader`](../components/CloudinaryUploader.tsx) component provides:
 
 1. **Live Upload Progress Bar (%)**: Uses `XMLHttpRequest.upload.onprogress` to display real-time upload progress percentage.
 2. **Upload Cancellation**: Users can cancel in-flight uploads (`xhr.abort()`).
@@ -45,7 +45,7 @@ The [`CloudinaryUploader`](file:///c:/printhive/components/CloudinaryUploader.ts
 
 ## 📂 Key Source Code Locations
 
-* [app/api/upload/route.ts](file:///c:/printhive/app/api/upload/route.ts) — Server-side upload handler with preset routing and format validation.
-* [components/CloudinaryUploader.tsx](file:///c:/printhive/components/CloudinaryUploader.tsx) — Reusable React uploader component with progress & cancel support.
-* [UploadDesignForm.tsx](file:///c:/printhive/app/dashboard/designer/upload/UploadDesignForm.tsx) — Designer 3D model & preview image publishing form.
-* [RegisterPrinterForm.tsx](file:///c:/printhive/app/dashboard/printer-owner/register/RegisterPrinterForm.tsx) — Printer hub machine photo uploader.
+* [app/api/upload/route.ts](../app/api/upload/route.ts) — Server-side upload handler with preset routing and format validation.
+* [components/CloudinaryUploader.tsx](../components/CloudinaryUploader.tsx) — Reusable React uploader component with progress & cancel support.
+* [UploadDesignForm.tsx](../app/dashboard/designer/upload/UploadDesignForm.tsx) — Designer 3D model & preview image publishing form.
+* [RegisterPrinterForm.tsx](../app/dashboard/printer-owner/register/RegisterPrinterForm.tsx) — Printer hub machine photo uploader.

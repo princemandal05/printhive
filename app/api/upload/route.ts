@@ -96,9 +96,18 @@ export async function POST(request: Request) {
       )
     }
 
-    // Select preset based on format category
-    const isVerifiedModel = isModel ? await validateModelContent(file, ext) : false
-    const preset = (isModel || isVerifiedModel)
+    // Validate 3D model content before uploading
+    if (isModel) {
+      const isVerifiedModel = await validateModelContent(file, ext)
+      if (!isVerifiedModel) {
+        return NextResponse.json(
+          { success: false, error: 'Invalid or corrupt 3D model file content' },
+          { status: 400 }
+        )
+      }
+    }
+
+    const preset = isModel
       ? (process.env.NEXT_PUBLIC_CLOUDINARY_PRESET_MODELS || 'printhive_models')
       : (process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || 'printhive_uploads')
 

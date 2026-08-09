@@ -74,34 +74,62 @@ export default function CheckoutPage() {
   }
 
   const handleConfirmPayment = async () => {
-    setPlacing(true)
     const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
-    const buyerId = user?.id || 'demo-buyer-id'
-    const orderId = `ORD-${Date.now().toString().slice(-6)}`
+    
+    if (!user) {
+      alert('Please log in to complete your checkout.')
+      router.push('/login')
+      return
+    }
+
+    setPlacing(true)
+    const orderId = crypto.randomUUID()
 
     try {
-      await supabase.from('orders').insert({
+      // 1. Insert non-financial pending order payload (financials calculated server-side)
+      const { error: insertErr } = await supabase.from('orders').insert({
         id: orderId,
-        buyer_id: buyerId,
+        buyer_id: user.id,
         seller_id: 'demo-seller-id',
-        status: 'confirmed',
-        payment_status: 'paid',
+        status: 'PENDING_PAYMENT',
+        payment_status: 'pending',
         payment_method: paymentCategory || 'upi',
-        total_price: total,
-        printer_share: printerShare,
-        designer_share: designerShare,
-        platform_share: platformShare,
         items: cart,
         created_at: new Date().toISOString(),
       })
-    } catch (orderErr) {
-      console.warn('Order insert note:', orderErr)
-    }
 
-    clearCart()
-    setShowModal(false)
-    router.push(`/orders/${orderId}`)
+      if (insertErr) {
+        console.error('Failed to create order record:', insertErr.message)
+        alert(`Order creation failed: ${insertErr.message}`)
+        setPlacing(false)
+        return
+      }
+
+      // 2. Call server endpoint to calculate authoritative total & initialize payment
+      const createOrderRes = await fetch('/api/payments/create-order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderId }),
+      })
+
+      if (!createOrderRes.ok) {
+        const errorData = await createOrderRes.json().catch(() => ({}))
+        console.error('Failed to initialize server-side payment order:', errorData)
+        alert(`Payment initialization failed: ${errorData.error || 'Server error'}`)
+        setPlacing(false)
+        return
+      }
+
+      clearCart()
+      setShowModal(false)
+      router.push(`/orders/${orderId}`)
+    } catch (orderErr: unknown) {
+      const error = orderErr as Error
+      console.error('Checkout error:', error)
+      alert(`Checkout failed: ${error.message || 'Unknown error'}`)
+      setPlacing(false)
+    }
   }
 
   const inputStyle: React.CSSProperties = {

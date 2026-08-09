@@ -12,6 +12,7 @@ export type CloudinaryMetadata = {
 
 type CloudinaryUploaderProps = {
   acceptType?: 'image' | 'model' | 'any'
+  onUploadStart?: () => void
   onUploadSuccess?: (metadata: CloudinaryMetadata) => void
   onUploadError?: (error: string) => void
   label?: string
@@ -23,6 +24,7 @@ const ALLOWED_MODELS = ['stl', '3mf', 'glb', 'gltf', 'obj', 'ply', '3ds', 'fbx',
 
 export default function CloudinaryUploader({
   acceptType = 'any',
+  onUploadStart,
   onUploadSuccess,
   onUploadError,
   label = 'Upload File to Cloudinary',
@@ -49,7 +51,7 @@ export default function CloudinaryUploader({
       ? 'image/jpeg,image/png,image/webp'
       : acceptType === 'model'
       ? '.stl,.3mf,.glb,.gltf,.obj,.ply,.3ds,.fbx,.usdz,.gcode,.step,.stp'
-      : 'image/*,.stl,.3mf,.glb,.gltf,.obj,.ply,.3ds,.fbx,.usdz,.gcode'
+      : 'image/*,.stl,.3mf,.glb,.gltf,.obj,.ply,.3ds,.fbx,.usdz,.gcode,.step,.stp'
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -83,6 +85,7 @@ export default function CloudinaryUploader({
   const startUpload = (file: File) => {
     setUploading(true)
     setProgress(0)
+    if (onUploadStart) onUploadStart()
 
     const formData = new FormData()
     formData.append('file', file)

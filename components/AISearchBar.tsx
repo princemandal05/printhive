@@ -141,7 +141,7 @@ export default function AISearchBar({
               🔍 Topic: {activeFilters.cleanSearchTerm}
             </span>
           )}
-          {activeFilters.maxPrice && (
+          {activeFilters.maxPrice !== null && (
             <span style={{ background: 'rgba(16,185,129,0.12)', color: '#10B981', border: '1px solid rgba(16,185,129,0.3)', padding: '4px 10px', borderRadius: 99, fontSize: 12, fontWeight: 800 }}>
               💰 Max: ₹{activeFilters.maxPrice}
             </span>
@@ -154,6 +154,11 @@ export default function AISearchBar({
           {activeFilters.category && (
             <span style={{ background: 'rgba(139,92,246,0.12)', color: '#8B5CF6', border: '1px solid rgba(139,92,246,0.3)', padding: '4px 10px', borderRadius: 99, fontSize: 12, fontWeight: 800 }}>
               📂 Category: {activeFilters.category}
+            </span>
+          )}
+          {activeFilters.technology && (
+            <span style={{ background: 'rgba(236,72,153,0.12)', color: '#EC4899', border: '1px solid rgba(236,72,153,0.3)', padding: '4px 10px', borderRadius: 99, fontSize: 12, fontWeight: 800 }}>
+              ⚙️ Tech: {activeFilters.technology}
             </span>
           )}
 

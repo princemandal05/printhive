@@ -22,18 +22,30 @@ export default function SupportTicketsPage() {
   const [lookupEmail, setLookupEmail] = useState('')
   const [myTickets, setMyTickets] = useState<SupportTicket[]>([])
   const [loading, setLoading] = useState(true)
+  const [fetchError, setFetchError] = useState<string | null>(null)
 
   const fetchTickets = async (emailToFetch: string) => {
     if (!emailToFetch) return
     setLoading(true)
+    setFetchError(null)
     try {
       const res = await fetch(`/api/contact?email=${encodeURIComponent(emailToFetch)}`)
-      const data = await res.json()
-      if (data.success && data.complaints) {
-        setMyTickets(data.complaints)
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}))
+        setFetchError(errData.error || `HTTP error ${res.status}: Failed to fetch tickets`)
+        setMyTickets([])
+        return
       }
-    } catch {
-      // ignore
+      const data = await res.json()
+      if (data.success && Array.isArray(data.complaints)) {
+        setMyTickets(data.complaints)
+      } else {
+        setFetchError(data.error || 'Failed to retrieve support tickets')
+      }
+    } catch (err: unknown) {
+      const error = err as Error
+      setFetchError(error.message || 'Network error fetching support tickets')
+      setMyTickets([])
     } finally {
       setLoading(false)
     }
@@ -47,9 +59,12 @@ export default function SupportTicketsPage() {
           setLookupEmail(user.email)
           await fetchTickets(user.email)
         } else {
+          setFetchError('Log in to view support tickets')
           setLoading(false)
         }
-      } catch {
+      } catch (err: unknown) {
+        const error = err as Error
+        setFetchError(error.message || 'Failed to authenticate user session')
         setLoading(false)
       }
     }
@@ -99,6 +114,19 @@ export default function SupportTicketsPage() {
           {/* TICKET LIST */}
           {loading ? (
             <div style={{ textAlign: 'center', padding: '48px', color: '#94a3b8' }}>Fetching live ticket status from Support Desk…</div>
+          ) : fetchError ? (
+            <div style={{ textAlign: 'center', padding: '40px 24px', background: 'rgba(239, 68, 68, 0.1)', borderRadius: 16, border: '1px solid rgba(239, 68, 68, 0.3)' }}>
+              <div style={{ fontSize: 36, marginBottom: 8 }}>⚠️</div>
+              <div style={{ fontSize: 16, fontWeight: 800, color: '#f87171', marginBottom: 4 }}>Unable to Load Tickets</div>
+              <div style={{ fontSize: 13, color: '#cbd5e1', marginBottom: 16 }}>{fetchError}</div>
+              <button
+                type="button"
+                onClick={() => fetchTickets(lookupEmail)}
+                style={{ background: '#ff6b35', color: '#fff', border: 'none', padding: '8px 20px', borderRadius: 99, fontWeight: 800, fontSize: 13, cursor: 'pointer' }}
+              >
+                Try Again
+              </button>
+            </div>
           ) : myTickets.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '56px 24px', background: 'rgba(15, 23, 42, 0.5)', borderRadius: 16, border: '1px dashed #334155' }}>
               <div style={{ fontSize: 42, marginBottom: 12 }}>📩</div>

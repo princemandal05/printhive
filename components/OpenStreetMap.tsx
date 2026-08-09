@@ -52,6 +52,7 @@ export default function OpenStreetMap({
   const [loadError, setLoadError] = useState<string | null>(null)
   const [isLocating, setIsLocating] = useState(false)
   const [geoNotification, setGeoNotification] = useState<string | null>(null)
+  const [geoNotificationType, setGeoNotificationType] = useState<'info' | 'error' | 'success'>('info')
 
   // Safe coordinates validator
   const validCenter: [number, number] = (
@@ -263,6 +264,7 @@ export default function OpenStreetMap({
         const userLng = Number(position.coords.longitude.toFixed(5))
 
         if (!isValidIndiaCoord(userLat, userLng)) {
+          setGeoNotificationType('error')
           setGeoNotification(`Detected location (${userLat}, ${userLng}) is outside supported India region. Map centered over default India GPS bounds.`)
           return
         }
@@ -275,23 +277,25 @@ export default function OpenStreetMap({
           onLocationPicked(userLat, userLng)
         }
 
+        setGeoNotificationType('success')
         setGeoNotification('✅ Map centered on your current location!')
         setTimeout(() => setGeoNotification(null), 4000)
       },
       (error) => {
         setIsLocating(false)
+        setGeoNotificationType('error')
         switch (error.code) {
           case error.PERMISSION_DENIED:
-            setGeoNotification('⚠️ Location access denied. Click anywhere on the map or drag the pin to set your location manually.')
+            setGeoNotification('⚠️ Geolocation permission denied. Allow location access in browser.')
             break
           case error.POSITION_UNAVAILABLE:
-            setGeoNotification('⚠️ GPS position unavailable. Please click on the map to set location.')
+            setGeoNotification('⚠️ Location information unavailable.')
             break
           case error.TIMEOUT:
-            setGeoNotification('⚠️ GPS request timed out. Please click on the map to set location.')
+            setGeoNotification('⚠️ Location request timed out.')
             break
           default:
-            setGeoNotification('⚠️ Could not fetch location. Please pick location manually.')
+            setGeoNotification('⚠️ Unable to retrieve your location.')
             break
         }
       },
@@ -362,7 +366,7 @@ export default function OpenStreetMap({
           left: 14,
           right: 14,
           zIndex: 1000,
-          background: geoNotification.includes('⚠️') ? 'rgba(239,68,68,0.92)' : 'rgba(16,185,129,0.92)',
+          background: geoNotificationType === 'error' ? 'rgba(239,68,68,0.92)' : 'rgba(16,185,129,0.92)',
           color: '#fff',
           padding: '10px 16px',
           borderRadius: 12,
