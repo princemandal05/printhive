@@ -167,13 +167,13 @@ function ThreeViewerInner({
         <div style={{ textAlign: 'center', padding: 24, zIndex: 2, maxWidth: 360 }}>
           <div style={{ fontSize: 42, marginBottom: 12 }}>📦</div>
           <div style={{ fontSize: 16, fontWeight: 800, color: '#fff', marginBottom: 6 }}>
-            Upload your 3D file to view
+            No 3D Model Selected
           </div>
           <div style={{ fontSize: 13, color: '#94a3b8', lineHeight: 1.5, marginBottom: 14 }}>
-            Select an STL, 3MF, or OBJ model file to inspect the 3D geometry mesh live in WebGL.
+            Select or upload an STL, 3MF, or OBJ model file to preview the 3D model geometry.
           </div>
           <span style={{ fontSize: 11, background: 'rgba(234,88,12,0.15)', color: '#ea580c', padding: '4px 12px', borderRadius: 99, fontWeight: 700, border: '1px solid rgba(234,88,12,0.3)' }}>
-            ● WebGL Mesh Engine Ready
+            ● Viewport Standby
           </span>
         </div>
       )}
@@ -206,50 +206,52 @@ function ThreeViewerInner({
         </span>
       </div>
 
-      {/* Bottom Controls Bar */}
-      <div
-        style={{
-          position: 'absolute',
-          bottom: 14,
-          display: 'flex',
-          gap: 8,
-          background: 'rgba(15, 23, 42, 0.85)',
-          backdropFilter: 'blur(8px)',
-          padding: '6px 12px',
-          borderRadius: 12,
-          border: '1px solid rgba(255, 255, 255, 0.15)',
-        }}
-      >
-        <button
-          type="button"
-          onClick={() => setRotating(!rotating)}
-          style={{ background: rotating ? '#334155' : 'transparent', color: '#fff', border: 'none', borderRadius: 6, padding: '4px 10px', fontSize: 12, cursor: 'pointer', fontWeight: 600 }}
+      {/* Bottom Controls Bar (Rendered only when a model is active) */}
+      {hasModel && (
+        <div
+          style={{
+            position: 'absolute',
+            bottom: 14,
+            display: 'flex',
+            gap: 8,
+            background: 'rgba(15, 23, 42, 0.85)',
+            backdropFilter: 'blur(8px)',
+            padding: '6px 12px',
+            borderRadius: 12,
+            border: '1px solid rgba(255, 255, 255, 0.15)',
+          }}
         >
-          {rotating ? '⏸ Pause Spin' : '▶ Auto Rotate'}
-        </button>
-        <button
-          type="button"
-          onClick={() => setWireframe(!wireframe)}
-          style={{ background: wireframe ? validColor : 'transparent', color: '#fff', border: 'none', borderRadius: 6, padding: '4px 10px', fontSize: 12, cursor: 'pointer', fontWeight: 600 }}
-        >
-          {wireframe ? 'Solid Render' : 'Wireframe'}
-        </button>
-        <button
-          type="button"
-          onClick={() => setZoom((z) => Math.max(60, z - 15))}
-          style={{ background: 'transparent', color: '#fff', border: 'none', borderRadius: 6, padding: '4px 8px', fontSize: 12, cursor: 'pointer' }}
-        >
-          🔍−
-        </button>
-        <span style={{ fontSize: 11, color: '#94a3b8', alignSelf: 'center' }}>{zoom}%</span>
-        <button
-          type="button"
-          onClick={() => setZoom((z) => Math.min(150, z + 15))}
-          style={{ background: 'transparent', color: '#fff', border: 'none', borderRadius: 6, padding: '4px 8px', fontSize: 12, cursor: 'pointer' }}
-        >
-          🔍+
-        </button>
-      </div>
+          <button
+            type="button"
+            onClick={() => setRotating(!rotating)}
+            style={{ background: rotating ? '#334155' : 'transparent', color: '#fff', border: 'none', borderRadius: 6, padding: '4px 10px', fontSize: 12, cursor: 'pointer', fontWeight: 600 }}
+          >
+            {rotating ? '⏸ Pause Spin' : '▶ Auto Rotate'}
+          </button>
+          <button
+            type="button"
+            onClick={() => setWireframe(!wireframe)}
+            style={{ background: wireframe ? validColor : 'transparent', color: '#fff', border: 'none', borderRadius: 6, padding: '4px 10px', fontSize: 12, cursor: 'pointer', fontWeight: 600 }}
+          >
+            {wireframe ? 'Solid Render' : 'Wireframe'}
+          </button>
+          <button
+            type="button"
+            onClick={() => setZoom((z) => Math.max(60, z - 15))}
+            style={{ background: 'transparent', color: '#fff', border: 'none', borderRadius: 6, padding: '4px 8px', fontSize: 12, cursor: 'pointer' }}
+          >
+            🔍−
+          </button>
+          <span style={{ fontSize: 11, color: '#94a3b8', alignSelf: 'center' }}>{zoom}%</span>
+          <button
+            type="button"
+            onClick={() => setZoom((z) => Math.min(150, z + 15))}
+            style={{ background: 'transparent', color: '#fff', border: 'none', borderRadius: 6, padding: '4px 8px', fontSize: 12, cursor: 'pointer' }}
+          >
+            🔍+
+          </button>
+        </div>
+      )}
     </div>
   )
 }

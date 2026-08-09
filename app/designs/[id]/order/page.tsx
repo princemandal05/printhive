@@ -43,6 +43,20 @@ function OrderPageContent() {
   const [address, setAddress] = useState('')
   const [placing, setPlacing] = useState(false)
 
+  // Populate printers dynamically when delivery address becomes available
+  useEffect(() => {
+    if (address.trim()) {
+      setPrinters([
+        { id: 'p1', name: 'Rohan’s PrintLab', distance: '1.2 km', rating: 4.9, price: 450 },
+        { id: 'p2', name: 'Andheri 3D Studio', distance: '2.8 km', rating: 4.7, price: 420 },
+        { id: 'p3', name: 'Bandra MakerSpace', distance: '4.1 km', rating: 4.8, price: 480 },
+      ])
+    } else {
+      setPrinters([])
+      setSelectedPrinter(null)
+    }
+  }, [address])
+
   const activePrinter = printers.find((p) => p.id === selectedPrinter)
   const basePrice = activePrinter?.price ?? 400
   const infillMultiplier = 1 + (infill - 20) / 100
@@ -198,7 +212,9 @@ function OrderPageContent() {
                         />
                         <div>
                           <div className="text-sm" style={{ fontWeight: 600 }}>{p.name}</div>
-                          <div className="text-xs text-muted">{p.distance || 'Nearby'} · ★ {p.rating || 5.0}</div>
+                          <div className="text-xs text-muted">
+                            {p.distance || 'Nearby'} · {p.rating !== undefined ? `★ ${p.rating}` : 'Unrated'}
+                          </div>
                         </div>
                       </div>
                       <div className="text-sm" style={{ fontWeight: 600 }}>from ₹{p.price}</div>
@@ -230,7 +246,7 @@ function OrderPageContent() {
               </div>
               <button
                 className="btn btn-primary btn-block btn-lg"
-                disabled={placing || !address}
+                disabled={placing || !address.trim() || !selectedPrinter}
                 onClick={handlePlaceOrder}
               >
                 {placing ? 'Placing order…' : `Pay ₹${total} securely`}

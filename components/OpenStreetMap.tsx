@@ -199,14 +199,14 @@ export default function OpenStreetMap({
   }, [loaded, validLocations, selectedId])
 
   return (
-    <div style={{ position: 'relative', width: '100%', height, borderRadius: 20, overflow: 'hidden' }}>
+    <div style={{ position: 'relative', width: '100%', height, borderRadius: 20, overflow: 'hidden', isolation: 'isolate', zIndex: 1 }}>
       {!loaded && (
         <div style={{ position: 'absolute', inset: 0, background: 'var(--bg-card)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-sub)', fontSize: 14, fontWeight: 700, zIndex: 10 }}>
           🇮🇳 Loading India OpenStreetMap Engine...
         </div>
       )}
       {loaded && validLocations.length === 0 && (
-        <div style={{ position: 'absolute', top: 14, left: 16, zIndex: 5, background: 'rgba(15, 23, 42, 0.85)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 12, padding: '8px 14px', color: '#f8fafc', fontSize: 12, fontWeight: 700 }}>
+        <div style={{ position: 'absolute', top: 14, left: 16, zIndex: 1000, background: 'rgba(15, 23, 42, 0.85)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 12, padding: '8px 14px', color: '#f8fafc', fontSize: 12, fontWeight: 700 }}>
           📍 No active printer hubs pinned in this view yet.
         </div>
       )}

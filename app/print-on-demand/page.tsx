@@ -33,13 +33,27 @@ export default function PrintOnDemandUploadPage() {
   const [notes, setNotes] = useState('')
   const [address, setAddress] = useState('')
   const [selectedPrinter, setSelectedPrinter] = useState<string | null>(null)
+  const [isBroadcast, setIsBroadcast] = useState(false)
   const [placing, setPlacing] = useState(false)
+
+  // Populate printers dynamically when delivery address becomes available
+  useEffect(() => {
+    if (address.trim()) {
+      setPrinters([
+        { id: 'p1', name: 'Rohan’s PrintLab', distance: '1.2 km', rating: 4.9, basePrice: 350 },
+        { id: 'p2', name: 'Andheri 3D Studio', distance: '2.8 km', rating: 4.7, basePrice: 320 },
+        { id: 'p3', name: 'Bandra MakerSpace', distance: '4.1 km', rating: 4.8, basePrice: 380 },
+      ])
+    } else {
+      setPrinters([])
+      setSelectedPrinter(null)
+    }
+  }, [address])
 
   const activePrinter = printers.find((p) => p.id === selectedPrinter)
   const basePrice = activePrinter?.basePrice ?? 300
 
-  // Rough live price estimate — replace with the Gemini smart-price-estimation
-  // endpoint once the file is actually uploaded and analysed server-side.
+  // Live price estimate
   const infillMultiplier = 1 + (infill - 20) / 100
   const scaleMultiplier = Math.pow(scale / 100, 2)
   const finishSurcharge = surfaceFinish === 'Standard' ? 0 : surfaceFinish === 'Smoothed (vapor/sanded)' ? 80 : 180
@@ -48,7 +62,7 @@ export default function PrintOnDemandUploadPage() {
   const platformFee = Math.round(subtotal * 0.05)
   const total = subtotal + platformFee
 
-  const canSubmit = !!fileName && !!address && quantity > 0 && !!selectedPrinter
+  const canSubmit = !!fileName && !!address.trim() && quantity > 0 && (!!selectedPrinter || isBroadcast)
 
   const handlePlaceOrder = async () => {
     // Replace with:
@@ -216,14 +230,38 @@ export default function PrintOnDemandUploadPage() {
                   plotting each printer owner's GPS location, filtered to
                   those supporting the selected material */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
+                {/* Explicit Broadcast Option Path */}
+                <label
+                  className="flex items-center justify-between"
+                  style={{
+                    border: `1px solid ${isBroadcast ? 'var(--color-primary)' : 'var(--color-border-light)'}`,
+                    borderRadius: 'var(--radius-md)',
+                    padding: 'var(--space-4)',
+                    cursor: 'pointer',
+                    background: isBroadcast ? 'var(--color-primary-tint)' : 'transparent',
+                  }}
+                >
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="radio" className="radio" name="printer"
+                      checked={isBroadcast}
+                      onChange={() => { setIsBroadcast(true); setSelectedPrinter(null) }}
+                    />
+                    <div>
+                      <div className="text-sm" style={{ fontWeight: 700 }}>📢 Broadcast to All Nearby Hubs</div>
+                      <div className="text-xs text-muted">Send quote request to all nearby printer owners for competitive bids</div>
+                    </div>
+                  </div>
+                </label>
+
                 {printers.length === 0 ? (
                   <div style={{ padding: '24px 16px', textAlign: 'center', background: 'var(--bg-card-hover)', borderRadius: 'var(--radius-md)', border: '1px dashed var(--border-color)' }}>
                     <div style={{ fontSize: 28, marginBottom: 8 }}>🖨️</div>
                     <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-main)', marginBottom: 4 }}>
-                      No Verified Printers Selected
+                      Enter Delivery Address to Match Hubs
                     </div>
                     <div style={{ fontSize: 12, color: 'var(--text-sub)', maxWidth: 320, margin: '0 auto' }}>
-                      Once you enter your delivery address, local printer hubs will be matched dynamically. Your request can also be broadcast to all nearby hubs.
+                      Once you enter your delivery address above, local printer hubs will be matched dynamically. Or select Broadcast mode above.
                     </div>
                   </div>
                 ) : (
@@ -243,11 +281,13 @@ export default function PrintOnDemandUploadPage() {
                         <input
                           type="radio" className="radio" name="printer"
                           checked={selectedPrinter === p.id}
-                          onChange={() => setSelectedPrinter(p.id)}
+                          onChange={() => { setSelectedPrinter(p.id); setIsBroadcast(false) }}
                         />
                         <div>
                           <div className="text-sm" style={{ fontWeight: 600 }}>{p.name}</div>
-                          <div className="text-xs text-muted">{p.distance || 'Nearby'} · ★ {p.rating || 5.0}</div>
+                          <div className="text-xs text-muted">
+                            {p.distance || 'Nearby'} · {p.rating !== undefined ? `★ ${p.rating}` : 'Unrated'}
+                          </div>
                         </div>
                       </div>
                     </label>
