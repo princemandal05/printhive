@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/utils/supabase/client'
+import { updateOrderStatus, type OrderStatus } from '@/utils/order-lifecycle'
 
 export type PrinterHub = {
   id: string
@@ -23,7 +24,7 @@ export type PrinterHub = {
 export type OrderJob = {
   id: string
   created_at: string
-  status: 'pending' | 'accepted' | 'in_production' | 'completed' | 'cancelled'
+  status: OrderStatus | string
   material: string
   color: string
   quantity: number
@@ -283,7 +284,7 @@ export default function PrinterOwnerClient({ user, initialPrinters, initialOrder
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
             <div>
               <div style={{ fontSize: 18, fontWeight: 900, color: '#0F172A' }}>📦 Print Jobs Queue ({orders.length})</div>
-              <div style={{ fontSize: 13, color: '#64748B', marginTop: 2 }}>Incoming orders routed via OpenStreetMap GPS engine</div>
+              <div style={{ fontSize: 13, color: '#64748B', marginTop: 2 }}>Manage order states and update manufacturing status</div>
             </div>
           </div>
 
@@ -295,30 +296,94 @@ export default function PrinterOwnerClient({ user, initialPrinters, initialOrder
                   <th style={s.th}>Material & Spec</th>
                   <th style={s.th}>Qty</th>
                   <th style={s.th}>70% Payout</th>
-                  <th style={s.th}>Status</th>
+                  <th style={s.th}>Current Status</th>
+                  <th style={s.th}>Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {orders.length === 0 ? (
                   <tr>
-                    <td colSpan={5} style={{ textAlign: 'center', padding: '32px 16px', color: '#64748B', fontSize: 13, fontWeight: 600 }}>
+                    <td colSpan={6} style={{ textAlign: 'center', padding: '32px 16px', color: '#64748B', fontSize: 13, fontWeight: 600 }}>
                       No active print jobs in your queue yet. When buyers submit print requests in your area, jobs will appear here automatically.
                     </td>
                   </tr>
                 ) : (
-                  orders.map((o) => (
-                    <tr key={o.id}>
-                      <td style={{ ...s.td, fontWeight: 800, color: '#2563EB' }}>#{o.id.slice(0, 8)}</td>
-                      <td style={s.td}>{o.material} ({o.color})</td>
-                      <td style={s.td}>{o.quantity}×</td>
-                      <td style={{ ...s.td, fontWeight: 800, color: '#10B981' }}>₹{o.payout || Math.round(o.total * 0.7)}</td>
-                      <td style={s.td}>
-                        <span style={{ background: '#EFF6FF', color: '#2563EB', padding: '4px 10px', borderRadius: 6, fontWeight: 800, fontSize: 12, textTransform: 'capitalize' }}>
-                          {o.status}
-                        </span>
-                      </td>
-                    </tr>
-                  ))
+                  orders.map((o) => {
+                    const handleNextStep = async (nextStatus: OrderStatus, notes: string) => {
+                      setUpdatingId(o.id)
+                      await updateOrderStatus(supabase, o.id, nextStatus, notes, user.id)
+                      setOrders((prev) => prev.map((item) => (item.id === o.id ? { ...item, status: nextStatus as any } : item)))
+                      setUpdatingId(null)
+                    }
+
+                    return (
+                      <tr key={o.id}>
+                        <td style={{ ...s.td, fontWeight: 800 }}>
+                          <Link href={`/orders/${o.id}`} style={{ color: '#2563EB', textDecoration: 'none' }}>
+                            #{o.id.slice(0, 8)} ↗
+                          </Link>
+                        </td>
+                        <td style={s.td}>{o.material} ({o.color})</td>
+                        <td style={s.td}>{o.quantity}×</td>
+                        <td style={{ ...s.td, fontWeight: 800, color: '#10B981' }}>₹{o.payout || Math.round(o.total * 0.7)}</td>
+                        <td style={s.td}>
+                          <span style={{ background: '#EFF6FF', color: '#2563EB', padding: '4px 10px', borderRadius: 6, fontWeight: 800, fontSize: 12 }}>
+                            {o.status}
+                          </span>
+                        </td>
+                        <td style={s.td}>
+                          {['PRINTER_ASSIGNED', 'FINDING_PRINTER', 'pending'].includes(o.status) && (
+                            <button
+                              onClick={() => handleNextStep('PRINTER_ACCEPTED', 'Printer hub accepted job.')}
+                              disabled={updatingId === o.id}
+                              style={{ background: '#2563EB', color: '#fff', border: 'none', padding: '4px 10px', borderRadius: 6, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
+                            >
+                              Accept Job
+                            </button>
+                          )}
+                          {['PRINTER_ACCEPTED', 'accepted'].includes(o.status) && (
+                            <button
+                              onClick={() => handleNextStep('PRINTING', '3D printing started on machine.')}
+                              disabled={updatingId === o.id}
+                              style={{ background: '#ea580c', color: '#fff', border: 'none', padding: '4px 10px', borderRadius: 6, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
+                            >
+                              Start Printing
+                            </button>
+                          )}
+                          {['PRINTING', 'in_production'].includes(o.status) && (
+                            <button
+                              onClick={() => handleNextStep('QUALITY_CHECK', 'Print finished, starting quality inspection.')}
+                              disabled={updatingId === o.id}
+                              style={{ background: '#8B5CF6', color: '#fff', border: 'none', padding: '4px 10px', borderRadius: 6, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
+                            >
+                              Quality Check
+                            </button>
+                          )}
+                          {o.status === 'QUALITY_CHECK' && (
+                            <button
+                              onClick={() => handleNextStep('READY', 'Quality check passed, packaged for courier.')}
+                              disabled={updatingId === o.id}
+                              style={{ background: '#10B981', color: '#fff', border: 'none', padding: '4px 10px', borderRadius: 6, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
+                            >
+                              Mark Ready
+                            </button>
+                          )}
+                          {o.status === 'READY' && (
+                            <button
+                              onClick={() => handleNextStep('DISPATCHED', 'Package dispatched with courier.')}
+                              disabled={updatingId === o.id}
+                              style={{ background: '#0284C7', color: '#fff', border: 'none', padding: '4px 10px', borderRadius: 6, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
+                            >
+                              Dispatch Courier
+                            </button>
+                          )}
+                          {['DISPATCHED', 'DELIVERED', 'COMPLETED'].includes(o.status) && (
+                            <span style={{ fontSize: 12, color: '#10B981', fontWeight: 800 }}>✓ Dispatched</span>
+                          )}
+                        </td>
+                      </tr>
+                    )
+                  })
                 )}
               </tbody>
             </table>

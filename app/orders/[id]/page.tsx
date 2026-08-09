@@ -1,33 +1,85 @@
 'use client'
 
-import { useState, Suspense } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useParams, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
+import { createClient } from '@/utils/supabase/client'
+import { ORDER_LIFECYCLE_STEPS, updateOrderStatus, type OrderStatus } from '@/utils/order-lifecycle'
 
-const STEPS = [
-  { key: 'confirmed', label: 'Order Confirmed', icon: '📝', desc: 'Buyer payment placed securely in Razorpay Escrow.' },
-  { key: 'printer_assigned', label: 'Printer Matched', icon: '📍', desc: 'Leaflet GPS assigned nearby Bambu Lab X1-C (1.2 km away).' },
-  { key: 'manufacturing', label: 'Printing (Layer 142/500)', icon: '🖨️', desc: 'Active extrusion with 0.12mm layer height precision.' },
-  { key: 'quality_check', label: 'Quality Verified', icon: '🔍', desc: 'Dimensional accuracy tolerance checked under ±0.1mm.' },
-  { key: 'out_for_delivery', label: 'Out for Delivery', icon: '🚚', desc: 'Courier dispatched with live GPS tracking.' },
-  { key: 'delivered', label: 'Delivered & Funds Released', icon: '🎉', desc: 'Buyer confirms package -> 70% Printer / 15% Designer released.' },
-]
+interface HistoryEntry {
+  id: string
+  status: string
+  notes?: string
+  created_at: string
+}
 
 function OrderTrackingContent() {
   const params = useParams()
   const searchParams = useSearchParams()
+  const supabase = createClient()
+
   const orderId = (params?.id as string) || 'demo-order-id'
   const isJustReviewed = searchParams?.get('reviewed') === 'true'
 
-  const [currentStepIndex, setCurrentStepIndex] = useState(isJustReviewed ? 5 : 2)
+  const [currentStatus, setCurrentStatus] = useState<OrderStatus>('PRINTING')
+  const [history, setHistory] = useState<HistoryEntry[]>([])
+  const [loading, setLoading] = useState(true)
+  const [actionMsg, setActionMsg] = useState('')
 
-  const isDelivered = currentStepIndex === STEPS.length - 1
+  // Load live order and status history from Supabase
+  useEffect(() => {
+    async function loadOrderHistory() {
+      setLoading(true)
+      try {
+        // Query order status
+        const { data: orderData } = await supabase
+          .from('orders')
+          .select('status')
+          .eq('id', orderId)
+          .maybeSingle()
+
+        if (orderData?.status) {
+          setCurrentStatus(orderData.status as OrderStatus)
+        }
+
+        // Query status history logs
+        const { data: historyData } = await supabase
+          .from('order_status_history')
+          .select('*')
+          .eq('order_id', orderId)
+          .order('created_at', { ascending: true })
+
+        if (historyData && historyData.length > 0) {
+          setHistory(historyData)
+        }
+      } catch (err) {
+        console.warn('Order history query note:', err)
+      }
+      setLoading(false)
+    }
+
+    loadOrderHistory()
+  }, [orderId])
+
+  // Get index of active step in standard 10 happy-path steps
+  const activeStepIndex = ORDER_LIFECYCLE_STEPS.findIndex((s) => s.key === currentStatus)
+  const safeStepIndex = activeStepIndex >= 0 ? activeStepIndex : 5
+
+  const handleConfirmDelivery = async () => {
+    setActionMsg('⚡ Confirming delivery & releasing Escrow funds...')
+    await updateOrderStatus(supabase, orderId, 'DELIVERED', 'Delivery confirmed by customer.')
+    await updateOrderStatus(supabase, orderId, 'COMPLETED', '70% Printer / 15% Designer payouts released.')
+    setCurrentStatus('COMPLETED')
+    setActionMsg('🎉 Order Completed! Escrow payouts released.')
+  }
+
+  const isCompletedOrDelivered = ['DELIVERED', 'COMPLETED'].includes(currentStatus)
 
   return (
-    <section className="container section-sm" style={{ maxWidth: 840, margin: '0 auto', padding: '40px 20px' }}>
-      {/* Amazon / Flipkart Style Review Confirmation Success Banner */}
+    <section className="container section-sm" style={{ maxWidth: 900, margin: '0 auto', padding: '40px 20px' }}>
+      {/* Review Submitted Banner */}
       {isJustReviewed && (
         <div style={{ background: 'rgba(16,185,129,0.12)', border: '1px solid #10B981', padding: 20, borderRadius: 20, marginBottom: 28, display: 'flex', alignItems: 'center', gap: 16 }}>
           <div style={{ fontSize: 32 }}>🎉</div>
@@ -36,110 +88,138 @@ function OrderTrackingContent() {
               Review Submitted Successfully!
             </div>
             <div style={{ fontSize: 13, color: 'var(--text-sub)' }}>
-              Thank you for rating your order. Your feedback has been published to help future buyers and creators on PrintHive.
+              Thank you for rating your order. Your feedback helps future buyers and creators on PrintHive.
             </div>
           </div>
         </div>
       )}
 
+      {actionMsg && (
+        <div style={{ background: '#ECFDF5', color: '#065F46', padding: '14px 20px', borderRadius: 14, fontSize: 14, marginBottom: 24, fontWeight: 700, border: '1px solid #A7F3D0' }}>
+          {actionMsg}
+        </div>
+      )}
+
       <div className="ateion-pill" style={{ marginBottom: 12 }}>
-        ⚡ Supabase Realtime Order Stream
+        ⚡ PrintHive Order Lifecycle Stream
       </div>
 
-      <h1 style={{ fontSize: 32, fontWeight: 900, marginBottom: 8, color: 'var(--text-main)' }}>
-        Order #{orderId.slice(0, 10)}
-      </h1>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8, flexWrap: 'wrap', gap: 12 }}>
+        <h1 style={{ fontSize: 32, fontWeight: 900, color: 'var(--text-main)', margin: 0 }}>
+          Order #{orderId.slice(0, 10)}
+        </h1>
+        <span style={{ background: isCompletedOrDelivered ? '#ECFDF5' : '#EFF6FF', color: isCompletedOrDelivered ? '#059669' : '#2563EB', padding: '6px 16px', borderRadius: 99, fontWeight: 800, fontSize: 13 }}>
+          ● {currentStatus.replace('_', ' ')}
+        </span>
+      </div>
 
       <p style={{ color: 'var(--text-sub)', marginBottom: 32, fontSize: 15 }}>
-        Live status pushed via Supabase websockets from nearby printer hub to your doorstep.
+        Real-time audit status history logged directly in PostgreSQL <code style={{ color: '#ea580c' }}>order_status_history</code>.
       </p>
 
-      {/* Step Simulator Controls (Developer Demo Bar) */}
+      {/* 13-STATE INTERACTIVE TIMELINE DISPLAY */}
       <div style={{ background: 'var(--bg-card)', borderRadius: 24, border: '1px solid var(--border-color)', padding: 28, marginBottom: 32, boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-          <div style={{ fontSize: 13, fontWeight: 800, textTransform: 'uppercase', letterSpacing: 1, color: '#ea580c' }}>
-            🛠️ Demo Simulator Controls:
-          </div>
-          <span style={{ fontSize: 11, background: 'rgba(234, 88, 12, 0.12)', color: '#ea580c', padding: '3px 10px', borderRadius: 99, fontWeight: 700 }}>
-            Testing Tool Only
-          </span>
+        <div style={{ fontSize: 16, fontWeight: 900, color: 'var(--text-main)', marginBottom: 20 }}>
+          📊 Order Lifecycle Progress Timeline
         </div>
 
-        <p style={{ fontSize: 12, color: 'var(--text-sub)', marginTop: 0, marginBottom: 16 }}>
-          (In production, buyers do not click status buttons. Status updates stream automatically in real-time as the Printer Hub manufactures your 3D print.)
-        </p>
-
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: 8, marginBottom: 24 }}>
-          {STEPS.map((step, idx) => (
-            <button
-              key={step.key}
-              type="button"
-              onClick={() => setCurrentStepIndex(idx)}
-              style={{
-                padding: '10px 8px',
-                borderRadius: 12,
-                border: currentStepIndex === idx ? '2px solid #ea580c' : '1px solid var(--border-color)',
-                background: currentStepIndex === idx ? 'rgba(234,88,12,0.1)' : 'var(--bg-card-hover)',
-                color: 'var(--text-main)',
-                fontSize: 12,
-                fontWeight: 700,
-                cursor: 'pointer',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                gap: 4,
-              }}
-            >
-              <span>{step.icon}</span>
-              <span>{step.label.split(' ')[0]}</span>
-            </button>
-          ))}
-        </div>
-
-        {/* Active Status Display Box */}
-        <div style={{ background: 'var(--bg-card-hover)', padding: 20, borderRadius: 16, border: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', gap: 16 }}>
-          <div style={{ fontSize: 36 }}>{STEPS[currentStepIndex].icon}</div>
-          <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--text-main)', marginBottom: 4 }}>
-              {STEPS[currentStepIndex].label}
-            </div>
-            <div style={{ fontSize: 13, color: 'var(--text-sub)' }}>
-              {STEPS[currentStepIndex].desc}
-            </div>
-          </div>
-          <div style={{ background: 'rgba(16,185,129,0.15)', color: '#10B981', padding: '6px 12px', borderRadius: 99, fontSize: 12, fontWeight: 800, display: 'flex', alignItems: 'center', gap: 6 }}>
-            <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#10B981', display: 'inline-block' }}></span>
-            Live Stream
-          </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+          {ORDER_LIFECYCLE_STEPS.slice(0, 11).map((step, idx) => {
+            const isPassed = idx <= safeStepIndex
+            const isCurrent = step.key === currentStatus
+            return (
+              <div key={step.key} style={{ display: 'flex', gap: 16, alignItems: 'flex-start' }}>
+                <div
+                  style={{
+                    width: 38,
+                    height: 38,
+                    borderRadius: '50%',
+                    background: isCurrent ? '#ea580c' : isPassed ? '#10B981' : 'var(--bg-card-hover)',
+                    color: isCurrent || isPassed ? '#fff' : 'var(--text-sub)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: 18,
+                    fontWeight: 800,
+                    border: isCurrent ? '2px solid #ea580c' : '1px solid var(--border-color)',
+                    boxShadow: isCurrent ? '0 0 16px rgba(234,88,12,0.35)' : 'none',
+                    flexShrink: 0,
+                  }}
+                >
+                  {isPassed && !isCurrent ? '✓' : step.icon}
+                </div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div style={{ fontSize: 15, fontWeight: 800, color: isCurrent ? '#ea580c' : isPassed ? 'var(--text-main)' : 'var(--text-sub)' }}>
+                      {step.label}
+                    </div>
+                    {isCurrent && (
+                      <span style={{ fontSize: 11, background: 'rgba(234, 88, 12, 0.15)', color: '#ea580c', padding: '2px 8px', borderRadius: 99, fontWeight: 800 }}>
+                        Active Phase
+                      </span>
+                    )}
+                  </div>
+                  <div style={{ fontSize: 13, color: 'var(--text-sub)', marginTop: 2 }}>
+                    {step.description}
+                  </div>
+                </div>
+              </div>
+            )
+          })}
         </div>
       </div>
 
-      {/* Razorpay Escrow Status & Buyer Actions */}
+      {/* AUDIT LOG HISTORY ENTRIES */}
+      {history.length > 0 && (
+        <div style={{ background: 'var(--bg-card)', borderRadius: 24, border: '1px solid var(--border-color)', padding: 28, marginBottom: 32 }}>
+          <div style={{ fontSize: 16, fontWeight: 900, color: 'var(--text-main)', marginBottom: 16 }}>
+            📜 Verified Audit History (`order_status_history`)
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            {history.map((h) => (
+              <div key={h.id} style={{ background: 'var(--bg-card-hover)', padding: '12px 16px', borderRadius: 12, border: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                  <span style={{ fontWeight: 800, color: '#2563EB', fontSize: 13 }}>{h.status}</span>
+                  <div style={{ fontSize: 12, color: 'var(--text-sub)', marginTop: 2 }}>{h.notes}</div>
+                </div>
+                <div style={{ fontSize: 11, color: 'var(--text-sub)', fontWeight: 600 }}>
+                  {new Date(h.created_at).toLocaleString()}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* BUYER ACTION & ESCROW STATUS */}
       <div style={{ background: 'var(--bg-card)', borderRadius: 24, border: '1px solid var(--border-color)', padding: 28, boxShadow: '0 4px 20px rgba(0,0,0,0.03)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16 }}>
         <div>
           <div style={{ fontSize: 14, fontWeight: 800, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span>🔒 Razorpay Escrow Status</span>
+            <span>🔒 Razorpay Escrow Protection</span>
           </div>
-          <div style={{ fontSize: 13, color: isDelivered ? '#10B981' : '#ea580c', fontWeight: 600, marginTop: 4 }}>
-            {isDelivered
+          <div style={{ fontSize: 13, color: isCompletedOrDelivered ? '#10B981' : '#ea580c', fontWeight: 600, marginTop: 4 }}>
+            {isCompletedOrDelivered
               ? '✅ Escrow released: 70% Printer / 15% Designer / 15% Platform'
               : '⏳ Funds held safely in Escrow until physical delivery confirmation.'}
           </div>
         </div>
 
-        {isDelivered && !isJustReviewed && (
+        {currentStatus === 'DISPATCHED' && (
+          <button
+            onClick={handleConfirmDelivery}
+            style={{ background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)', color: '#fff', border: 'none', padding: '12px 24px', borderRadius: 99, fontWeight: 800, fontSize: 14, cursor: 'pointer', boxShadow: '0 4px 16px rgba(16,185,129,0.35)' }}
+          >
+            📦 Confirm Package Delivery
+          </button>
+        )}
+
+        {isCompletedOrDelivered && !isJustReviewed && (
           <Link
             href={`/orders/${orderId}/review`}
             style={{ background: '#10B981', color: '#fff', padding: '12px 24px', borderRadius: 99, textDecoration: 'none', fontWeight: 800, fontSize: 14, boxShadow: '0 4px 16px rgba(16,185,129,0.35)' }}
           >
             Leave Review & Rating
           </Link>
-        )}
-
-        {isJustReviewed && (
-          <span style={{ background: 'rgba(16,185,129,0.15)', color: '#10B981', padding: '10px 20px', borderRadius: 99, fontWeight: 800, fontSize: 13 }}>
-            ✓ Review Submitted
-          </span>
         )}
       </div>
     </section>
