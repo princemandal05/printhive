@@ -6,6 +6,7 @@ import Link from 'next/link'
 import dynamic from 'next/dynamic'
 import { createClient } from '@/utils/supabase/client'
 import type { MapLocation } from '@/components/OpenStreetMap'
+import CloudinaryUploader, { type CloudinaryMetadata } from '@/components/CloudinaryUploader'
 
 const OpenStreetMap = dynamic(() => import('@/components/OpenStreetMap'), {
   ssr: false,
@@ -16,16 +17,21 @@ const OpenStreetMap = dynamic(() => import('@/components/OpenStreetMap'), {
   ),
 })
 
-import CloudinaryUploader, { type CloudinaryMetadata } from '@/components/CloudinaryUploader'
-
-const MATERIALS = ['PLA', 'PETG', 'ABS', 'TPU (Flexible)', 'Resin']
+const MATERIALS = ['PLA', 'PETG', 'ABS', 'TPU (Flexible)', 'Resin (8K)', 'Nylon', 'Carbon Fiber']
+const TECHNOLOGIES = ['FDM Dual-Color Precision', 'SLA Resin High-Detail', 'SLS Industrial Nylon', 'DLP Precision']
 
 export default function RegisterPrinterForm() {
   const router = useRouter()
   const supabase = createClient()
 
+  const [printerName, setPrinterName] = useState('')
   const [model, setModel] = useState('')
-  const [buildVolume, setBuildVolume] = useState('256 x 256 x 256')
+  const [technology, setTechnology] = useState(TECHNOLOGIES[0])
+  const [buildVolume, setBuildVolume] = useState('256 x 256 x 256 mm')
+  const [maxResolution, setMaxResolution] = useState('0.05 mm (50 microns)')
+  const [basePrice, setBasePrice] = useState('350')
+  const [workingHours, setWorkingHours] = useState('09:00 AM - 09:00 PM (Mon-Sat)')
+  const [initialStatus, setInitialStatus] = useState<'online' | 'offline' | 'busy'>('online')
   const [materials, setMaterials] = useState<string[]>(['PLA', 'PETG'])
   const [address, setAddress] = useState('')
   const [lat, setLat] = useState(28.6315)
@@ -51,7 +57,7 @@ export default function RegisterPrinterForm() {
   }
 
   const handleSubmit = async () => {
-    if (!model) return
+    if (!model && !printerName) return
     setSubmitting(true)
     setStatusMsg('⚡ Registering 3D Printer Machine on Leaflet OpenStreetMap Hub...')
 
@@ -59,19 +65,24 @@ export default function RegisterPrinterForm() {
       const { data: { user } } = await supabase.auth.getUser()
       const ownerId = user?.id || 'demo-owner-id'
 
+      const displayName = printerName.trim() || model.trim() || '3D Printer Unit'
+
       await supabase.from('printers').insert({
         owner_id: ownerId,
-        printer_model: model,
-        technology: 'FDM Dual-Color Precision',
+        printer_model: model || displayName,
+        technology,
         build_volume: buildVolume,
+        max_resolution: maxResolution,
+        base_price: Number(basePrice) || 350,
+        working_hours: workingHours,
         materials,
         latitude: lat,
         longitude: lng,
         address: address || 'New Delhi Print Hub',
         image_url: printerImageUrl,
         cloudinary_public_id: cloudinaryPublicId,
-        status: 'online',
-        is_active: true,
+        status: initialStatus,
+        is_active: initialStatus === 'online',
         created_at: new Date().toISOString(),
       })
     } catch (err) {
@@ -80,12 +91,13 @@ export default function RegisterPrinterForm() {
 
     setSubmitting(false)
     router.push('/dashboard/printer-owner')
+    router.refresh()
   }
 
   const pickerLocations: MapLocation[] = [
     {
       id: 'pin-1',
-      name: model || 'New Printer Hub Location Pin',
+      name: printerName || model || 'New Printer Hub Pin',
       location: address || 'Selected GPS Coordinates',
       lat,
       lng,
@@ -155,26 +167,87 @@ export default function RegisterPrinterForm() {
           <div>
             <div style={s.card}>
               <div style={{ fontSize: 18, fontWeight: 900, color: '#0F172A', marginBottom: 16 }}>
-                1. Machine Specifications
+                1. Machine Specifications & Pricing
               </div>
 
               <div style={{ marginBottom: 18 }}>
-                <label style={s.label}>Printer Model Name *</label>
+                <label style={s.label}>Printer Hub / Display Name *</label>
                 <input
                   style={inputStyle}
-                  placeholder="e.g. Bambu Lab X1-Carbon Combo"
+                  placeholder="e.g. Rohan’s Precision PrintLab"
+                  value={printerName}
+                  onChange={(e) => setPrinterName(e.target.value)}
+                />
+              </div>
+
+              <div style={{ marginBottom: 18 }}>
+                <label style={s.label}>Printer Model *</label>
+                <input
+                  style={inputStyle}
+                  placeholder="e.g. Bambu Lab X1-Carbon Combo / Creality K1"
                   value={model}
                   onChange={(e) => setModel(e.target.value)}
                 />
               </div>
 
               <div style={{ marginBottom: 18 }}>
-                <label style={s.label}>Build Volume Dimensions (mm)</label>
+                <label style={s.label}>Printing Technology</label>
+                <select style={inputStyle} value={technology} onChange={(e) => setTechnology(e.target.value)}>
+                  {TECHNOLOGIES.map((t) => (
+                    <option key={t} value={t}>{t}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 18 }}>
+                <div>
+                  <label style={s.label}>Build Volume (mm)</label>
+                  <input
+                    style={inputStyle}
+                    placeholder="256 x 256 x 256"
+                    value={buildVolume}
+                    onChange={(e) => setBuildVolume(e.target.value)}
+                  />
+                </div>
+                <div>
+                  <label style={s.label}>Max Resolution</label>
+                  <input
+                    style={inputStyle}
+                    placeholder="0.05 mm"
+                    value={maxResolution}
+                    onChange={(e) => setMaxResolution(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 18 }}>
+                <div>
+                  <label style={s.label}>Base Price per Job (₹)</label>
+                  <input
+                    type="number"
+                    style={inputStyle}
+                    placeholder="350"
+                    value={basePrice}
+                    onChange={(e) => setBasePrice(e.target.value)}
+                  />
+                </div>
+                <div>
+                  <label style={s.label}>Initial Hub Availability</label>
+                  <select style={inputStyle} value={initialStatus} onChange={(e) => setInitialStatus(e.target.value as any)}>
+                    <option value="online">🟢 Online & Ready</option>
+                    <option value="busy">🟡 Busy / Printing</option>
+                    <option value="offline">🔴 Offline / Maintenance</option>
+                  </select>
+                </div>
+              </div>
+
+              <div style={{ marginBottom: 18 }}>
+                <label style={s.label}>Working Operating Hours</label>
                 <input
                   style={inputStyle}
-                  placeholder="e.g. 256 x 256 x 256"
-                  value={buildVolume}
-                  onChange={(e) => setBuildVolume(e.target.value)}
+                  placeholder="e.g. 09:00 AM - 09:00 PM (Mon-Sat)"
+                  value={workingHours}
+                  onChange={(e) => setWorkingHours(e.target.value)}
                 />
               </div>
 
@@ -234,7 +307,7 @@ export default function RegisterPrinterForm() {
 
             <button
               onClick={handleSubmit}
-              disabled={submitting || !model}
+              disabled={submitting || (!model && !printerName)}
               style={{
                 width: '100%',
                 background: 'linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%)',
@@ -259,7 +332,7 @@ export default function RegisterPrinterForm() {
                 📍 Interactive OpenStreetMap GPS Pin
               </div>
               <div style={{ fontSize: 12, color: '#64748B', marginBottom: 16 }}>
-                Click anywhere on the map to set your exact printer hub dispatch coordinates.
+                Click anywhere on the map or drag the pin to set your exact printer hub dispatch coordinates.
               </div>
 
               <div style={{ borderRadius: 16, overflow: 'hidden', border: '1px solid #CBD5E1', marginBottom: 16 }}>
