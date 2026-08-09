@@ -36,8 +36,34 @@ CREATE TABLE IF NOT EXISTS public.escrow_payouts (
 ALTER TABLE public.transactions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.escrow_payouts ENABLE ROW LEVEL SECURITY;
 
+-- 4. Secure RLS Policies (Owner & Admin Scoped)
 DROP POLICY IF EXISTS "Public read transactions" ON public.transactions;
-CREATE POLICY "Public read transactions" ON public.transactions FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Owner/Admin read transactions" ON public.transactions;
+CREATE POLICY "Owner/Admin read transactions" ON public.transactions FOR SELECT USING (
+  EXISTS (
+    SELECT 1 FROM public.orders o
+    WHERE o.id = transactions.order_id
+    AND (
+      o.buyer_id = auth.uid() OR
+      o.designer_id = auth.uid() OR
+      o.printer_owner_id = auth.uid() OR
+      EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin')
+    )
+  )
+);
 
 DROP POLICY IF EXISTS "Public read escrow_payouts" ON public.escrow_payouts;
-CREATE POLICY "Public read escrow_payouts" ON public.escrow_payouts FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Recipient/Owner/Admin read escrow_payouts" ON public.escrow_payouts;
+CREATE POLICY "Recipient/Owner/Admin read escrow_payouts" ON public.escrow_payouts FOR SELECT USING (
+  recipient_id = auth.uid() OR
+  EXISTS (
+    SELECT 1 FROM public.orders o
+    WHERE o.id = escrow_payouts.order_id
+    AND (
+      o.buyer_id = auth.uid() OR
+      o.designer_id = auth.uid() OR
+      o.printer_owner_id = auth.uid() OR
+      EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin')
+    )
+  )
+);

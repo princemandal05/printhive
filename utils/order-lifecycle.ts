@@ -36,42 +36,92 @@ export const ORDER_LIFECYCLE_STEPS: OrderStatusStep[] = [
   { key: 'REFUNDED', label: 'Payment Refunded', icon: '💸', description: 'Full payment refunded to original payment method.' },
 ]
 
+const ALLOWED_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
+  PENDING_PAYMENT: ['PAYMENT_CONFIRMED', 'CANCELLED'],
+  PAYMENT_CONFIRMED: ['FINDING_PRINTER', 'CANCELLED', 'REFUNDED'],
+  FINDING_PRINTER: ['PRINTER_ASSIGNED', 'CANCELLED', 'REFUNDED'],
+  PRINTER_ASSIGNED: ['PRINTER_ACCEPTED', 'CANCELLED', 'REFUNDED'],
+  PRINTER_ACCEPTED: ['PRINTING', 'CANCELLED', 'REFUNDED'],
+  PRINTING: ['QUALITY_CHECK', 'CANCELLED', 'REFUNDED'],
+  QUALITY_CHECK: ['READY', 'PRINTING', 'CANCELLED', 'REFUNDED'],
+  READY: ['DISPATCHED', 'CANCELLED', 'REFUNDED'],
+  DISPATCHED: ['DELIVERED', 'CANCELLED', 'REFUNDED'],
+  DELIVERED: ['COMPLETED', 'REFUNDED'],
+  COMPLETED: [],
+  CANCELLED: ['REFUNDED'],
+  REFUNDED: [],
+}
+
 /**
- * Updates order status in Supabase database and records an audit log entry in order_status_history.
+ * Validates if moving from currentStatus to targetStatus is allowed by the lifecycle state machine.
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function isValidStatusTransition(currentStatus: OrderStatus, targetStatus: OrderStatus): boolean {
+  if (currentStatus === targetStatus) return true
+  const allowed = ALLOWED_TRANSITIONS[currentStatus] || []
+  return allowed.includes(targetStatus)
+}
+
+interface SupabaseClientLike {
+  from: (table: string) => any
+}
+
+/**
+ * Updates order status in Supabase database and records an audit log entry in order_status_history atomically.
+ */
 export async function updateOrderStatus(
-  supabase: any,
+  supabase: SupabaseClientLike,
   orderId: string,
   newStatus: OrderStatus,
   notes?: string,
-  updatedByUserId?: string
+  updatedByUserId?: string,
+  currentStatus?: OrderStatus
 ) {
+  let activeStatus = currentStatus
+  if (!activeStatus) {
+    const { data: currentOrder } = await supabase
+      .from('orders')
+      .select('status')
+      .eq('id', orderId)
+      .maybeSingle()
+    if (currentOrder?.status) {
+      activeStatus = currentOrder.status as OrderStatus
+    }
+  }
+
+  // Validate state transition if activeStatus is present
+  if (activeStatus && !isValidStatusTransition(activeStatus, newStatus)) {
+    console.error(`Invalid order state transition: cannot transition from ${activeStatus} to ${newStatus}`)
+    return { success: false, error: `Invalid transition from ${activeStatus} to ${newStatus}` }
+  }
+
   const stepInfo = ORDER_LIFECYCLE_STEPS.find((s) => s.key === newStatus)
   const defaultNotes = stepInfo ? stepInfo.description : `Status updated to ${newStatus}`
 
-  // 1. Update status in orders table
+  // 1. Update status in orders table FIRST
   const { error: orderError } = await supabase
     .from('orders')
-    .update({ status: newStatus })
+    .update({ status: newStatus, updated_at: new Date().toISOString() })
     .eq('id', orderId)
 
   if (orderError) {
-    console.warn('Orders status update error:', orderError)
+    console.error('Orders status update error:', orderError)
+    return { success: false, error: orderError.message || 'Failed to update order status in database' }
   }
 
   // 2. Insert audit entry into order_status_history
-  try {
-    await supabase.from('order_status_history').insert({
-      order_id: orderId,
-      status: newStatus,
-      notes: notes || defaultNotes,
-      updated_by: updatedByUserId || null,
-      created_at: new Date().toISOString(),
-    })
-  } catch (err) {
-    console.warn('Order status history insertion note:', err)
+  const { error: historyError } = await supabase.from('order_status_history').insert({
+    order_id: orderId,
+    status: newStatus,
+    notes: notes || defaultNotes,
+    updated_by: updatedByUserId || null,
+    created_at: new Date().toISOString(),
+  })
+
+  if (historyError) {
+    console.error('Order status history insertion error:', historyError)
+    return { success: false, error: historyError.message || 'Failed to insert status history audit log' }
   }
 
-  return { success: !orderError, status: newStatus }
+  return { success: true, status: newStatus }
 }
+

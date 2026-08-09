@@ -63,4 +63,10 @@ CREATE POLICY "Owners manage own printers" ON public.printers FOR ALL USING (aut
 ALTER TABLE public.orders ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "Public orders read access" ON public.orders;
-CREATE POLICY "Public orders read access" ON public.orders FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Authorized participants read own orders" ON public.orders;
+CREATE POLICY "Authorized participants read own orders" ON public.orders FOR SELECT USING (
+  buyer_id = auth.uid() OR
+  designer_id = auth.uid() OR
+  printer_owner_id = auth.uid() OR
+  EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin')
+);
