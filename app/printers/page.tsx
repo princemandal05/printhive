@@ -7,7 +7,7 @@ import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 import type { MapLocation } from '@/components/OpenStreetMap'
 import { createClient } from '@/utils/supabase/client'
-import { sortPrintersByDistance } from '@/utils/location'
+import { calculateHaversineDistance, formatDistance } from '@/utils/location'
 
 const OpenStreetMap = dynamic(() => import('@/components/OpenStreetMap'), {
   ssr: false,
@@ -18,23 +18,37 @@ const OpenStreetMap = dynamic(() => import('@/components/OpenStreetMap'), {
   ),
 })
 
-type PrinterOwner = MapLocation & {
+type PrinterHub = MapLocation & {
+  model?: string
+  technology?: string
+  materials?: string[]
+  status?: 'online' | 'busy' | 'offline' | string
+  price?: number
+  base_price?: number
+  working_hours?: string
+  max_resolution?: string
   completedOrders?: number
-  maxVolume?: string
-  status?: 'available' | 'busy' | string
   city?: string
+  calculatedDistanceKm?: number
+  formattedDistance?: string
 }
 
 export default function PrinterDirectoryPage() {
   const supabase = createClient()
 
-  const [printers, setPrinters] = useState<PrinterOwner[]>([])
-  const [filterCity, setFilterCity] = useState('All')
-  const [filterMaterial, setFilterMaterial] = useState('All')
-  const [selectedHub, setSelectedHub] = useState<PrinterOwner | null>(null)
-  const [visibleCount, setVisibleCount] = useState(6)
+  const [printers, setPrinters] = useState<PrinterHub[]>([])
+  const [selectedHub, setSelectedHub] = useState<PrinterHub | null>(null)
   const [userCoords, setUserCoords] = useState<{ lat: number; lng: number } | null>(null)
   const [loading, setLoading] = useState(true)
+
+  // 6 Filter States
+  const [filterMaxDistance, setFilterMaxDistance] = useState<number | 'All'>('All')
+  const [filterMaterial, setFilterMaterial] = useState('All')
+  const [filterTechnology, setFilterTechnology] = useState('All')
+  const [filterMaxPrice, setFilterMaxPrice] = useState<number | 'All'>('All')
+  const [filterMinRating, setFilterMinRating] = useState<number | 'All'>('All')
+  const [filterAvailability, setFilterAvailability] = useState<'All' | 'online'>('All')
+  const [visibleCount, setVisibleCount] = useState(6)
 
   // Fetch real registered printers from Supabase
   useEffect(() => {
@@ -44,17 +58,22 @@ export default function PrinterDirectoryPage() {
         const { data, error } = await supabase
           .from('printers')
           .select('*')
-          .eq('is_active', true)
 
         if (data && data.length > 0) {
-          const mapped: PrinterOwner[] = data.map((item) => ({
+          const mapped: PrinterHub[] = data.map((item) => ({
             id: item.id || `printer-${Math.random()}`,
-            name: item.printer_model || '3D Printer Hub',
-            location: item.address || 'India',
+            name: item.printer_model || item.name || '3D Printer Hub',
+            model: item.printer_model || 'FDM Precision',
+            technology: item.technology || 'FDM Dual-Color Precision',
+            location: item.address || 'India GPS Location',
             lat: Number(item.latitude) || 28.6139,
             lng: Number(item.longitude) || 77.2090,
-            machines: [item.printer_model || 'FDM Printer'],
             materials: item.materials || ['PLA', 'PETG'],
+            base_price: item.base_price || 350,
+            price: item.base_price || 350,
+            status: item.status || (item.is_active ? 'online' : 'offline'),
+            working_hours: item.working_hours || '09:00 AM - 09:00 PM',
+            max_resolution: item.max_resolution || '0.05 mm',
             city: item.city || item.address?.split(',').pop()?.trim() || 'India',
             completedOrders: item.completed_orders || 12,
             rating: item.rating || 4.9,
@@ -73,24 +92,81 @@ export default function PrinterDirectoryPage() {
     loadPrinters()
   }, [])
 
-  // Geolocation sorting helper
-  const processedPrinters = userCoords
-    ? sortPrintersByDistance(printers, userCoords.lat, userCoords.lng).map((item) => ({
-        ...item,
-        distance: item.formattedDistance,
-      }))
-    : printers
-
-  const filteredPrinters = processedPrinters.filter((p) => {
-    const matchesCity = filterCity === 'All' || p.city === filterCity
-    const matchesMaterial = filterMaterial === 'All' || (p.materials && p.materials.includes(filterMaterial))
-    return matchesCity && matchesMaterial
+  // Calculate distance for all printers if user coordinates are available
+  const processedPrinters = printers.map((printer) => {
+    if (userCoords) {
+      const distKm = calculateHaversineDistance(userCoords.lat, userCoords.lng, printer.lat, printer.lng)
+      return {
+        ...printer,
+        calculatedDistanceKm: distKm,
+        formattedDistance: formatDistance(distKm),
+        distance: formatDistance(distKm),
+      }
+    }
+    return printer
   })
 
-  const displayedPrinters = filteredPrinters.slice(0, visibleCount)
+  // Apply 6 Filter Criteria
+  const filteredPrinters = processedPrinters.filter((p) => {
+    // 1. Distance Filter
+    if (filterMaxDistance !== 'All' && p.calculatedDistanceKm !== undefined && p.calculatedDistanceKm > filterMaxDistance) {
+      return false
+    }
+    // 2. Material Filter
+    if (filterMaterial !== 'All' && (!p.materials || !p.materials.some((m) => m.toLowerCase().includes(filterMaterial.toLowerCase())))) {
+      return false
+    }
+    // 3. Technology Filter
+    if (filterTechnology !== 'All' && (!p.technology || !p.technology.toLowerCase().includes(filterTechnology.toLowerCase()))) {
+      return false
+    }
+    // 4. Price Filter
+    if (filterMaxPrice !== 'All' && (p.base_price || 0) > filterMaxPrice) {
+      return false
+    }
+    // 5. Rating Filter
+    if (filterMinRating !== 'All' && (p.rating || 0) < filterMinRating) {
+      return false
+    }
+    // 6. Availability Filter
+    if (filterAvailability === 'online' && p.status !== 'online') {
+      return false
+    }
+    return true
+  })
+
+  // Multi-tier Sorting: 1. Availability (online > busy > offline), 2. Distance (closest first), 3. Rating (highest first)
+  const sortedPrinters = [...filteredPrinters].sort((a, b) => {
+    // Tier 1: Availability
+    const availWeight = (status?: string) => (status === 'online' ? 1 : status === 'busy' ? 2 : 3)
+    const statusDiff = availWeight(a.status) - availWeight(b.status)
+    if (statusDiff !== 0) return statusDiff
+
+    // Tier 2: Distance (if customer GPS available)
+    if (a.calculatedDistanceKm !== undefined && b.calculatedDistanceKm !== undefined) {
+      const distDiff = a.calculatedDistanceKm - b.calculatedDistanceKm
+      if (Math.abs(distDiff) > 0.01) return distDiff
+    }
+
+    // Tier 3: Rating (highest first)
+    return (b.rating || 0) - (a.rating || 0)
+  })
+
+  const displayedPrinters = sortedPrinters.slice(0, visibleCount)
 
   const handleLocationPicked = (lat: number, lng: number) => {
     setUserCoords({ lat, lng })
+  }
+
+  const getStatusBadge = (status?: string) => {
+    switch (status) {
+      case 'online':
+        return <span style={{ background: '#ECFDF5', color: '#059669', padding: '3px 10px', borderRadius: 8, fontSize: 11, fontWeight: 800, border: '1px solid #A7F3D0' }}>🟢 Online</span>
+      case 'busy':
+        return <span style={{ background: '#FEF3C7', color: '#D97706', padding: '3px 10px', borderRadius: 8, fontSize: 11, fontWeight: 800, border: '1px solid #FDE68A' }}>🟡 Busy</span>
+      default:
+        return <span style={{ background: '#FEF2F2', color: '#DC2626', padding: '3px 10px', borderRadius: 8, fontSize: 11, fontWeight: 800, border: '1px solid #FCA5A5' }}>🔴 Offline</span>
+    }
   }
 
   return (
@@ -99,21 +175,21 @@ export default function PrinterDirectoryPage() {
 
       <section className="container section-sm" style={{ maxWidth: 1200, margin: '0 auto', padding: '40px 20px' }}>
         <div className="ateion-pill" style={{ marginBottom: 12 }}>
-          🇮🇳 India OpenStreetMap Real GPS Directory
+          ⚡ Multi-tier Matching Engine (Availability → Distance → Rating)
         </div>
         <h1 style={{ fontSize: 36, fontWeight: 900, marginBottom: 8, color: 'var(--text-main)' }}>
-          Verified 3D Printer Hubs Across India
+          Real Nearby 3D Printer Hub Matching
         </h1>
-        <p style={{ color: 'var(--text-sub)', fontSize: 16, marginBottom: 32, maxWidth: 720 }}>
-          Real-time OpenStreetMap GPS matching. Use your current location or pick a pin to find the nearest 3D printer hub sorted by Haversine distance.
+        <p style={{ color: 'var(--text-sub)', fontSize: 16, marginBottom: 28, maxWidth: 760 }}>
+          Find nearest online 3D printer hubs. Select your GPS location or click any pin on OpenStreetMap to match nearby hubs sorted by availability, distance, and rating.
         </p>
 
-        {/* INDIA OPENSTREETMAP MAP WIDGET */}
-        <div style={{ marginBottom: 36, border: '1px solid var(--border-color)', borderRadius: 24, overflow: 'hidden', boxShadow: '0 10px 30px rgba(0,0,0,0.05)' }}>
+        {/* OPENSTREETMAP MAP CONTAINER */}
+        <div style={{ marginBottom: 32, border: '1px solid var(--border-color)', borderRadius: 24, overflow: 'hidden', boxShadow: '0 10px 30px rgba(0,0,0,0.05)' }}>
           <OpenStreetMap
-            locations={filteredPrinters}
+            locations={sortedPrinters}
             selectedId={selectedHub?.id}
-            onSelectLocation={(loc) => setSelectedHub(loc as PrinterOwner)}
+            onSelectLocation={(loc) => setSelectedHub(loc as PrinterHub)}
             onLocationPicked={handleLocationPicked}
             center={userCoords ? [userCoords.lat, userCoords.lng] : [20.5937, 78.9629]}
             zoom={userCoords ? 10 : 5}
@@ -121,126 +197,207 @@ export default function PrinterDirectoryPage() {
           />
         </div>
 
-        {/* Filter Controls: City & Material */}
-        <div style={{ background: 'var(--bg-card)', padding: 20, borderRadius: 20, border: '1px solid var(--border-color)', marginBottom: 32, display: 'flex', flexDirection: 'column', gap: 16 }}>
-          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
-            <span style={{ fontSize: 13, fontWeight: 800, color: '#ea580c', textTransform: 'uppercase' }}>🇮🇳 Select City:</span>
-            {['All', 'Delhi NCR', 'Bengaluru', 'Mumbai', 'Hyderabad', 'Chennai', 'Kolkata', 'Pune', 'Ahmedabad'].map((city) => (
-              <button
-                key={city}
-                type="button"
-                onClick={() => { setFilterCity(city); setVisibleCount(6) }}
-                style={{
-                  padding: '6px 14px',
-                  borderRadius: 99,
-                  border: filterCity === city ? '1px solid #ea580c' : '1px solid var(--border-color)',
-                  background: filterCity === city ? '#ea580c' : 'var(--bg-card-hover)',
-                  color: filterCity === city ? '#fff' : 'var(--text-main)',
-                  fontSize: 13,
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                  transition: 'all 0.2s',
-                }}
-              >
-                {city}
-              </button>
-            ))}
+        {/* 6 REAL-TIME FILTER CONTROLS BAR */}
+        <div style={{ background: 'var(--bg-card)', padding: 24, borderRadius: 20, border: '1px solid var(--border-color)', marginBottom: 32, display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <div style={{ fontSize: 14, fontWeight: 800, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: 6 }}>
+            <span>🔍 Filter Nearby Printers ({sortedPrinters.length} Matched)</span>
           </div>
 
-          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center', borderTop: '1px dashed var(--border-color)', paddingTop: 14 }}>
-            <span style={{ fontSize: 13, fontWeight: 800, color: 'var(--text-sub)', textTransform: 'uppercase' }}>🧵 Filter Material:</span>
-            {['All', 'PLA', 'PETG', 'ABS', 'Resin', 'TPU'].map((mat) => (
-              <button
-                key={mat}
-                type="button"
-                onClick={() => { setFilterMaterial(mat); setVisibleCount(6) }}
-                style={{
-                  padding: '5px 12px',
-                  borderRadius: 8,
-                  border: filterMaterial === mat ? '1px solid #10B981' : '1px solid var(--border-color)',
-                  background: filterMaterial === mat ? 'rgba(16,185,129,0.15)' : 'var(--bg-card-hover)',
-                  color: filterMaterial === mat ? '#10B981' : 'var(--text-sub)',
-                  fontSize: 12,
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                  transition: 'all 0.2s',
-                }}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: 14 }}>
+            {/* 1. Distance Filter */}
+            <div>
+              <label style={{ display: 'block', fontSize: 11, fontWeight: 800, color: 'var(--text-sub)', textTransform: 'uppercase', marginBottom: 4 }}>
+                📍 Max Distance
+              </label>
+              <select
+                value={filterMaxDistance}
+                onChange={(e) => setFilterMaxDistance(e.target.value === 'All' ? 'All' : Number(e.target.value))}
+                style={{ width: '100%', background: 'var(--bg-card-hover)', border: '1px solid var(--border-color)', borderRadius: 10, padding: '8px 12px', fontSize: 13, color: 'var(--text-main)', fontWeight: 700 }}
               >
-                {mat}
-              </button>
-            ))}
+                <option value="All">All Distances</option>
+                <option value="5">&lt; 5 km</option>
+                <option value="15">&lt; 15 km</option>
+                <option value="50">&lt; 50 km</option>
+                <option value="100">&lt; 100 km</option>
+              </select>
+            </div>
+
+            {/* 2. Material Filter */}
+            <div>
+              <label style={{ display: 'block', fontSize: 11, fontWeight: 800, color: 'var(--text-sub)', textTransform: 'uppercase', marginBottom: 4 }}>
+                🧵 Material
+              </label>
+              <select
+                value={filterMaterial}
+                onChange={(e) => setFilterMaterial(e.target.value)}
+                style={{ width: '100%', background: 'var(--bg-card-hover)', border: '1px solid var(--border-color)', borderRadius: 10, padding: '8px 12px', fontSize: 13, color: 'var(--text-main)', fontWeight: 700 }}
+              >
+                <option value="All">All Materials</option>
+                <option value="PLA">PLA</option>
+                <option value="PETG">PETG</option>
+                <option value="ABS">ABS</option>
+                <option value="TPU">TPU (Flexible)</option>
+                <option value="Resin">Resin (8K Detail)</option>
+                <option value="Nylon">Nylon</option>
+              </select>
+            </div>
+
+            {/* 3. Technology Filter */}
+            <div>
+              <label style={{ display: 'block', fontSize: 11, fontWeight: 800, color: 'var(--text-sub)', textTransform: 'uppercase', marginBottom: 4 }}>
+                🖨️ Technology
+              </label>
+              <select
+                value={filterTechnology}
+                onChange={(e) => setFilterTechnology(e.target.value)}
+                style={{ width: '100%', background: 'var(--bg-card-hover)', border: '1px solid var(--border-color)', borderRadius: 10, padding: '8px 12px', fontSize: 13, color: 'var(--text-main)', fontWeight: 700 }}
+              >
+                <option value="All">All Tech</option>
+                <option value="FDM">FDM Precision</option>
+                <option value="SLA">SLA Resin</option>
+                <option value="SLS">SLS Industrial</option>
+                <option value="DLP">DLP</option>
+              </select>
+            </div>
+
+            {/* 4. Price Filter */}
+            <div>
+              <label style={{ display: 'block', fontSize: 11, fontWeight: 800, color: 'var(--text-sub)', textTransform: 'uppercase', marginBottom: 4 }}>
+                💰 Max Base Price
+              </label>
+              <select
+                value={filterMaxPrice}
+                onChange={(e) => setFilterMaxPrice(e.target.value === 'All' ? 'All' : Number(e.target.value))}
+                style={{ width: '100%', background: 'var(--bg-card-hover)', border: '1px solid var(--border-color)', borderRadius: 10, padding: '8px 12px', fontSize: 13, color: 'var(--text-main)', fontWeight: 700 }}
+              >
+                <option value="All">Any Price</option>
+                <option value="300">&lt; ₹300 / job</option>
+                <option value="500">&lt; ₹500 / job</option>
+                <option value="1000">&lt; ₹1000 / job</option>
+              </select>
+            </div>
+
+            {/* 5. Rating Filter */}
+            <div>
+              <label style={{ display: 'block', fontSize: 11, fontWeight: 800, color: 'var(--text-sub)', textTransform: 'uppercase', marginBottom: 4 }}>
+                ★ Min Rating
+              </label>
+              <select
+                value={filterMinRating}
+                onChange={(e) => setFilterMinRating(e.target.value === 'All' ? 'All' : Number(e.target.value))}
+                style={{ width: '100%', background: 'var(--bg-card-hover)', border: '1px solid var(--border-color)', borderRadius: 10, padding: '8px 12px', fontSize: 13, color: 'var(--text-main)', fontWeight: 700 }}
+              >
+                <option value="All">Any Rating</option>
+                <option value="4.5">4.5+ ★ Rating</option>
+                <option value="4.0">4.0+ ★ Rating</option>
+              </select>
+            </div>
+
+            {/* 6. Availability Filter */}
+            <div>
+              <label style={{ display: 'block', fontSize: 11, fontWeight: 800, color: 'var(--text-sub)', textTransform: 'uppercase', marginBottom: 4 }}>
+                🟢 Availability
+              </label>
+              <select
+                value={filterAvailability}
+                onChange={(e) => setFilterAvailability(e.target.value as any)}
+                style={{ width: '100%', background: 'var(--bg-card-hover)', border: '1px solid var(--border-color)', borderRadius: 10, padding: '8px 12px', fontSize: 13, color: 'var(--text-main)', fontWeight: 700 }}
+              >
+                <option value="All">All Hub Statuses</option>
+                <option value="online">Online Hubs Only</option>
+              </select>
+            </div>
           </div>
         </div>
 
-        {/* Selected Hub Card & Directory Grid */}
+        {/* SELECTED PRINTER CARD & RESULT LIST GRID */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: 32, alignItems: 'start' }}>
+          {/* LEFT SIDE: SELECTED MAP MARKER CARD */}
           {selectedHub ? (
             <div style={{ background: 'var(--bg-card)', padding: 28, borderRadius: 24, border: '2px solid #ea580c', boxShadow: '0 10px 30px rgba(234,88,12,0.1)', position: 'sticky', top: 90 }}>
-              <div style={{ fontSize: 12, textTransform: 'uppercase', color: '#ea580c', fontWeight: 800, letterSpacing: 1, marginBottom: 8 }}>
-                Active Map Selection:
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                <span style={{ fontSize: 12, textTransform: 'uppercase', color: '#ea580c', fontWeight: 800, letterSpacing: 1 }}>
+                  Active Map Pin Selection
+                </span>
+                {getStatusBadge(selectedHub.status)}
               </div>
+
               <h2 style={{ fontSize: 22, fontWeight: 900, color: 'var(--text-main)', marginBottom: 4 }}>
                 {selectedHub.name}
               </h2>
-              <div style={{ fontSize: 13, color: 'var(--text-sub)', marginBottom: 16 }}>
-                📍 {selectedHub.location} {selectedHub.distance ? `(${selectedHub.distance} away)` : ''}
+              <div style={{ fontSize: 13, color: 'var(--text-sub)', marginBottom: 14 }}>
+                📍 {selectedHub.location} {selectedHub.distance ? `(🚀 ${selectedHub.distance} away)` : ''}
               </div>
 
-              <div style={{ display: 'flex', gap: 12, marginBottom: 20 }}>
+              <div style={{ display: 'flex', gap: 12, marginBottom: 18, flexWrap: 'wrap' }}>
                 <div style={{ background: 'rgba(16,185,129,0.1)', color: '#10B981', padding: '6px 12px', borderRadius: 10, fontSize: 13, fontWeight: 800 }}>
-                  ★ {selectedHub.rating || 'New'} Rating
+                  ★ {selectedHub.rating || '4.9'} Rating
                 </div>
-                {selectedHub.completedOrders && (
-                  <div style={{ background: 'var(--bg-card-hover)', color: 'var(--text-main)', padding: '6px 12px', borderRadius: 10, fontSize: 13, fontWeight: 700 }}>
-                    📦 {selectedHub.completedOrders} Orders
-                  </div>
-                )}
+                <div style={{ background: 'var(--bg-card-hover)', color: 'var(--text-main)', padding: '6px 12px', borderRadius: 10, fontSize: 13, fontWeight: 800 }}>
+                  from ₹{selectedHub.base_price || 350}/job
+                </div>
+              </div>
+
+              <div style={{ fontSize: 12, color: 'var(--text-sub)', marginBottom: 14 }}>
+                ⏱️ Hours: {selectedHub.working_hours || '09:00 AM - 09:00 PM'}
               </div>
 
               <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-main)', marginBottom: 8 }}>
-                Available 3D Printers:
+                Supported Materials:
               </div>
               <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 20 }}>
-                {selectedHub.machines?.map((m: string) => (
-                  <span key={m} style={{ background: 'var(--bg-card-hover)', border: '1px solid var(--border-color)', padding: '4px 10px', borderRadius: 8, fontSize: 12, color: 'var(--text-main)' }}>
+                {selectedHub.materials?.map((m: string) => (
+                  <span key={m} style={{ background: 'var(--bg-card-hover)', border: '1px solid var(--border-color)', padding: '4px 10px', borderRadius: 8, fontSize: 12, color: 'var(--text-main)', fontWeight: 600 }}>
                     {m}
                   </span>
                 ))}
               </div>
 
               <Link
-                href="/print-on-demand"
-                style={{ display: 'block', textAlign: 'center', background: '#ea580c', color: '#fff', padding: '14px', borderRadius: 99, fontWeight: 800, textDecoration: 'none', boxShadow: '0 4px 16px rgba(234,88,12,0.35)' }}
+                href={`/print-on-demand?printer_id=${selectedHub.id}`}
+                style={{ display: 'block', textAlign: 'center', background: 'linear-gradient(135deg, #ea580c 0%, #c2410c 100%)', color: '#fff', padding: '14px', borderRadius: 99, fontWeight: 800, textDecoration: 'none', boxShadow: '0 4px 16px rgba(234,88,12,0.35)' }}
               >
-                Order 3D Print From This Hub
+                🚀 Order 3D Print From This Hub
               </Link>
             </div>
           ) : (
             <div style={{ background: 'var(--bg-card)', padding: 28, borderRadius: 24, border: '1px solid var(--border-color)', textAlign: 'center' }}>
-              <div style={{ fontSize: 32, marginBottom: 8 }}>🗺️</div>
-              <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-sub)' }}>Click any printer pin on the map to inspect hub details.</div>
+              <div style={{ fontSize: 36, marginBottom: 8 }}>🗺️</div>
+              <div style={{ fontSize: 14, fontWeight: 800, color: 'var(--text-main)', marginBottom: 4 }}>Select a Printer Pin on Map</div>
+              <div style={{ fontSize: 12, color: 'var(--text-sub)' }}>Click any map pin or select a printer card on the right to view complete hub details and order prints.</div>
             </div>
           )}
 
-          {/* Directory List */}
+          {/* RIGHT SIDE: SORTED PRINTER RESULT LIST */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
               <span style={{ fontSize: 14, fontWeight: 800, color: 'var(--text-main)' }}>
-                {loading ? 'Loading Printer Hubs...' : `Showing ${displayedPrinters.length} of ${filteredPrinters.length} Verified Printer Hubs`}
+                {loading ? 'Loading Printer Hubs...' : `Matched ${displayedPrinters.length} of ${sortedPrinters.length} Printer Hubs`}
               </span>
-              <span style={{ fontSize: 12, color: 'var(--text-sub)' }}>
-                {userCoords ? 'Sorted by Proximity (Closest First)' : 'OpenStreetMap GPS Bounds'}
+              <span style={{ fontSize: 11, color: 'var(--text-sub)', fontWeight: 700 }}>
+                Sorted by: 1. Availability · 2. Distance · 3. Rating
               </span>
             </div>
 
-            {filteredPrinters.length === 0 ? (
+            {sortedPrinters.length === 0 ? (
               <div style={{ textAlign: 'center', padding: '48px 24px', background: 'var(--bg-card)', borderRadius: 20, border: '2px dashed var(--border-color)' }}>
                 <div style={{ fontSize: 36, marginBottom: 8 }}>🖨️</div>
-                <div style={{ fontSize: 16, fontWeight: 900, color: 'var(--text-main)', marginBottom: 4 }}>No Registered 3D Printer Hubs Yet</div>
-                <div style={{ fontSize: 13, color: 'var(--text-sub)', marginBottom: 16 }}>Be the first 3D printer owner to register your machine and accept nearby print jobs!</div>
-                <Link href="/dashboard/printer-owner/register" style={{ background: '#ea580c', color: '#fff', padding: '10px 20px', borderRadius: 12, fontWeight: 800, textDecoration: 'none', display: 'inline-block' }}>
-                  + Register 3D Printer Hub
-                </Link>
+                <div style={{ fontSize: 16, fontWeight: 900, color: 'var(--text-main)', marginBottom: 4 }}>No Printer Hubs Match Selected Filters</div>
+                <div style={{ fontSize: 13, color: 'var(--text-sub)', marginBottom: 16 }}>Try expanding your distance, price, or material filters to view available hubs.</div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setFilterMaxDistance('All')
+                    setFilterMaterial('All')
+                    setFilterTechnology('All')
+                    setFilterMaxPrice('All')
+                    setFilterMinRating('All')
+                    setFilterAvailability('All')
+                  }}
+                  style={{ background: '#ea580c', color: '#fff', border: 'none', padding: '10px 20px', borderRadius: 12, fontWeight: 800, cursor: 'pointer' }}
+                >
+                  Reset All Filters
+                </button>
               </div>
             ) : (
               displayedPrinters.map((printer) => {
@@ -251,28 +408,50 @@ export default function PrinterDirectoryPage() {
                     onClick={() => setSelectedHub(printer)}
                     style={{
                       background: 'var(--bg-card)',
-                      padding: 24,
+                      padding: 22,
                       borderRadius: 20,
                       border: isSelected ? '2px solid #ea580c' : '1px solid var(--border-color)',
                       cursor: 'pointer',
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
+                      boxShadow: isSelected ? '0 8px 24px rgba(234,88,12,0.15)' : 'none',
                       transition: 'all 0.2s',
                     }}
                   >
-                    <div>
-                      <div style={{ fontSize: 18, fontWeight: 900, color: 'var(--text-main)', marginBottom: 4 }}>{printer.name}</div>
-                      <div style={{ fontSize: 13, color: 'var(--text-sub)' }}>
-                        📍 {printer.location} {printer.distance ? `• 🚀 ${printer.distance} away` : ''}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6 }}>
+                      <div>
+                        <div style={{ fontSize: 18, fontWeight: 900, color: 'var(--text-main)', marginBottom: 2 }}>{printer.name}</div>
+                        <div style={{ fontSize: 12, color: 'var(--text-sub)' }}>
+                          📍 {printer.location} {printer.distance ? `• 🚀 ${printer.distance} away` : ''}
+                        </div>
                       </div>
+                      <div>
+                        {getStatusBadge(printer.status)}
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'flex', gap: 14, marginTop: 12, fontSize: 12, color: 'var(--text-sub)', flexWrap: 'wrap', alignItems: 'center' }}>
+                      <span style={{ fontWeight: 800, color: '#fbbf24' }}>★ {printer.rating || '4.9'}</span>
+                      <span>from <strong style={{ color: 'var(--text-main)' }}>₹{printer.base_price || 350}</strong></span>
+                      <span>Tech: <strong style={{ color: 'var(--text-main)' }}>{printer.technology}</strong></span>
+                    </div>
+
+                    <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 12 }}>
+                      {printer.materials?.slice(0, 4).map((m: string) => (
+                        <span key={m} style={{ background: 'var(--bg-card-hover)', border: '1px solid var(--border-color)', padding: '3px 8px', borderRadius: 6, fontSize: 11, color: 'var(--text-main)' }}>
+                          {m}
+                        </span>
+                      ))}
+                      {(printer.materials?.length || 0) > 4 && (
+                        <span style={{ fontSize: 11, color: 'var(--text-sub)', alignSelf: 'center' }}>
+                          +{(printer.materials?.length || 0) - 4} more
+                        </span>
+                      )}
                     </div>
                   </div>
                 )
               })
             )}
 
-            {visibleCount < filteredPrinters.length && (
+            {visibleCount < sortedPrinters.length && (
               <button
                 type="button"
                 onClick={() => setVisibleCount((prev) => prev + 4)}
@@ -290,7 +469,7 @@ export default function PrinterDirectoryPage() {
                   transition: 'all 0.2s',
                 }}
               >
-                Load More Verified Printer Hubs in India ↓
+                Load More Matched Printer Hubs ↓
               </button>
             )}
           </div>
