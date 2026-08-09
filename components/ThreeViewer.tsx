@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, Component, ErrorInfo, ReactNode } from 'react'
+import React, { useState, useRef, Component, ErrorInfo, ReactNode } from 'react'
 
 interface ThreeViewerProps {
   title?: string
@@ -8,6 +8,7 @@ interface ThreeViewerProps {
   wireframeDefault?: boolean
   height?: number | string
   modelUrl?: string
+  dimensions?: { x: number; y: number; z: number }
 }
 
 interface ErrorBoundaryProps {
@@ -76,23 +77,47 @@ function ThreeViewerInner({
   color = '#ff6b35',
   height = 420,
   modelUrl,
+  dimensions = { x: 120, y: 85, z: 140 },
 }: ThreeViewerProps) {
+  const containerRef = useRef<HTMLDivElement>(null)
   const [wireframe, setWireframe] = useState(false)
   const [rotating, setRotating] = useState(true)
   const [zoom, setZoom] = useState(100)
+  const [isFullscreen, setIsFullscreen] = useState(false)
 
   // Safe color validator
   const validColor = /^#[0-9A-F]{6}$/i.test(color) ? color : '#ff6b35'
 
   const hasModel = Boolean(modelUrl && modelUrl.trim() !== '')
 
+  // Extract file extension format
+  const fileExtension = hasModel && modelUrl
+    ? modelUrl.split('.').pop()?.toUpperCase() || '3D STL'
+    : '3D MESH'
+
+  const handleResetView = () => {
+    setZoom(100)
+    setRotating(true)
+    setWireframe(false)
+  }
+
+  const toggleFullscreen = () => {
+    if (!containerRef.current) return
+    if (!document.fullscreenElement) {
+      containerRef.current.requestFullscreen().then(() => setIsFullscreen(true)).catch(() => {})
+    } else {
+      document.exitFullscreen().then(() => setIsFullscreen(false)).catch(() => {})
+    }
+  }
+
   return (
     <div
+      ref={containerRef}
       style={{
         position: 'relative',
         width: '100%',
-        height,
-        borderRadius: 16,
+        height: isFullscreen ? '100vh' : height,
+        borderRadius: isFullscreen ? 0 : 16,
         background: 'radial-gradient(circle at center, #1e293b 0%, #0f172a 100%)',
         border: '1px solid rgba(255, 255, 255, 0.1)',
         overflow: 'hidden',
@@ -129,8 +154,8 @@ function ThreeViewerInner({
           }}
         >
           <svg
-            width="180"
-            height="180"
+            width="190"
+            height="190"
             viewBox="0 0 100 100"
             fill="none"
             xmlns="http://www.w3.org/2000/svg"
@@ -170,7 +195,7 @@ function ThreeViewerInner({
             No 3D Model Selected
           </div>
           <div style={{ fontSize: 13, color: '#94a3b8', lineHeight: 1.5, marginBottom: 14 }}>
-            Select or upload an STL, 3MF, or OBJ model file to preview the 3D model geometry.
+            Select or upload an STL, 3MF, OBJ, GLB, or GLTF model file to preview the 3D geometry mesh.
           </div>
           <span style={{ fontSize: 11, background: 'rgba(234,88,12,0.15)', color: '#ea580c', padding: '4px 12px', borderRadius: 99, fontWeight: 700, border: '1px solid rgba(234,88,12,0.3)' }}>
             ● Viewport Standby
@@ -185,7 +210,7 @@ function ThreeViewerInner({
         }
       `}</style>
 
-      {/* Top Header overlay */}
+      {/* Top Header Overlay */}
       <div
         style={{
           position: 'absolute',
@@ -196,17 +221,40 @@ function ThreeViewerInner({
           justifyContent: 'space-between',
           alignItems: 'center',
           pointerEvents: 'none',
+          gap: 8,
+          flexWrap: 'wrap',
         }}
       >
-        <span style={{ fontSize: 12, fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase', color: '#94a3b8', background: 'rgba(15, 23, 42, 0.8)', padding: '4px 10px', borderRadius: 6, border: '1px solid rgba(255,255,255,0.1)' }}>
-          🧊 3D WebGL Viewport · {title}
+        <span style={{ fontSize: 12, fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase', color: '#94a3b8', background: 'rgba(15, 23, 42, 0.85)', backdropFilter: 'blur(8px)', padding: '4px 10px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)' }}>
+          🧊 3D WebGL · {title}
         </span>
-        <span style={{ fontSize: 11, color: hasModel ? '#10b981' : '#f59e0b', background: hasModel ? 'rgba(16, 185, 129, 0.1)' : 'rgba(245, 158, 11, 0.1)', padding: '4px 8px', borderRadius: 6, fontWeight: 600 }}>
-          {hasModel ? '● Ready to Slice' : '○ Standby'}
+        <span style={{ fontSize: 11, color: hasModel ? '#10b981' : '#f59e0b', background: hasModel ? 'rgba(16, 185, 129, 0.15)' : 'rgba(245, 158, 11, 0.15)', padding: '4px 10px', borderRadius: 8, fontWeight: 700, border: '1px solid rgba(255,255,255,0.1)' }}>
+          {hasModel ? `● ${fileExtension} Ready` : '○ Standby'}
         </span>
       </div>
 
-      {/* Bottom Controls Bar (Rendered only when a model is active) */}
+      {/* Bounding Box Dimensions Badge */}
+      {hasModel && dimensions && (
+        <div
+          style={{
+            position: 'absolute',
+            top: 50,
+            left: 16,
+            background: 'rgba(15, 23, 42, 0.85)',
+            backdropFilter: 'blur(8px)',
+            color: '#94a3b8',
+            border: '1px solid rgba(255,255,255,0.1)',
+            padding: '4px 10px',
+            borderRadius: 8,
+            fontSize: 11,
+            fontWeight: 700,
+          }}
+        >
+          📐 Bounds: {dimensions.x} × {dimensions.y} × {dimensions.z} mm
+        </div>
+      )}
+
+      {/* Bottom Controls Bar */}
       {hasModel && (
         <div
           style={{
@@ -219,6 +267,8 @@ function ThreeViewerInner({
             padding: '6px 12px',
             borderRadius: 12,
             border: '1px solid rgba(255, 255, 255, 0.15)',
+            flexWrap: 'wrap',
+            justifyContent: 'center',
           }}
         >
           <button
@@ -233,7 +283,7 @@ function ThreeViewerInner({
             onClick={() => setWireframe(!wireframe)}
             style={{ background: wireframe ? validColor : 'transparent', color: '#fff', border: 'none', borderRadius: 6, padding: '4px 10px', fontSize: 12, cursor: 'pointer', fontWeight: 600 }}
           >
-            {wireframe ? 'Solid Render' : 'Wireframe'}
+            {wireframe ? 'Solid' : 'Wireframe'}
           </button>
           <button
             type="button"
@@ -249,6 +299,20 @@ function ThreeViewerInner({
             style={{ background: 'transparent', color: '#fff', border: 'none', borderRadius: 6, padding: '4px 8px', fontSize: 12, cursor: 'pointer' }}
           >
             🔍+
+          </button>
+          <button
+            type="button"
+            onClick={handleResetView}
+            style={{ background: 'transparent', color: '#94a3b8', border: 'none', borderRadius: 6, padding: '4px 8px', fontSize: 12, cursor: 'pointer', fontWeight: 600 }}
+          >
+            ↺ Reset
+          </button>
+          <button
+            type="button"
+            onClick={toggleFullscreen}
+            style={{ background: 'transparent', color: '#fff', border: 'none', borderRadius: 6, padding: '4px 8px', fontSize: 12, cursor: 'pointer' }}
+          >
+            ⛶ Fullscreen
           </button>
         </div>
       )}
