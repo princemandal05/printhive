@@ -22,11 +22,15 @@ export async function GET() {
 
     const userEmail = user.email
 
-    const { data: dbComplaints, error } = await supabase
-      .from('complaints')
-      .select('*')
-      .eq('email', userEmail)
-      .order('created_at', { ascending: false })
+    const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).maybeSingle()
+    const isAdmin = profile?.role === 'admin'
+
+    let query = supabase.from('complaints').select('*').order('created_at', { ascending: false })
+    if (!isAdmin) {
+      query = query.eq('email', userEmail)
+    }
+
+    const { data: dbComplaints, error } = await query
 
     if (error) {
       console.error('Supabase complaints query error:', error.message)

@@ -40,6 +40,14 @@ async function validateModelContent(file: File, ext: string): Promise<boolean> {
 
 export async function POST(request: Request) {
   try {
+    const { createClient } = await import('@/utils/supabase/server')
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) {
+      return NextResponse.json({ success: false, error: 'Unauthorized: Please log in to upload files.' }, { status: 401 })
+    }
+
     const formData = await request.formData()
     const entry = formData.get('file')
 
