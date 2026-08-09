@@ -75,8 +75,8 @@ export default function OpenStreetMap({
       document.head.appendChild(link)
     }
 
-    if ((window as any).L) {
-      setLoaded(true)
+    if ((window as unknown as { L?: unknown }).L) {
+      Promise.resolve().then(() => setLoaded(true))
       return
     }
 

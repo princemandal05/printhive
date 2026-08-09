@@ -47,8 +47,14 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     try {
       const savedCart = localStorage.getItem(CART_KEY)
       const savedWishlist = localStorage.getItem(WISHLIST_KEY)
-      if (savedCart) setCart(JSON.parse(savedCart))
-      if (savedWishlist) setWishlist(JSON.parse(savedWishlist))
+      const parsedCart = savedCart ? JSON.parse(savedCart) : null
+      const parsedWishlist = savedWishlist ? JSON.parse(savedWishlist) : null
+      if (parsedCart || parsedWishlist) {
+        Promise.resolve().then(() => {
+          if (parsedCart) setCart(parsedCart)
+          if (parsedWishlist) setWishlist(parsedWishlist)
+        })
+      }
     } catch {
       // ignore corrupt storage
     }
