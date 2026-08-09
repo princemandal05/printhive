@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/utils/supabase/client'
+import CloudinaryUploader, { type CloudinaryMetadata } from '@/components/CloudinaryUploader'
 
 const CATEGORIES = ['Toys & Games', 'Home & Office', 'Home & Decor', 'Personalized', 'Repair Parts']
 const MATERIALS = ['PLA', 'PETG', 'ABS', 'TPU (Flexible)', 'Resin']
@@ -19,7 +20,8 @@ export default function UploadDesignForm() {
   const [description, setDescription] = useState('')
   const [fileName, setFileName] = useState('')
   const [cloudinaryFileUrl, setCloudinaryFileUrl] = useState('')
-  const [uploadingFile, setUploadingFile] = useState(false)
+  const [cloudinaryPublicId, setCloudinaryPublicId] = useState('')
+  const [previewImageUrl, setPreviewImageUrl] = useState('')
   const [generatingAi, setGeneratingAi] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [statusMsg, setStatusMsg] = useState('')
@@ -28,27 +30,15 @@ export default function UploadDesignForm() {
     setMaterials((prev) => (prev.includes(m) ? prev.filter((x) => x !== m) : [...prev, m]))
   }
 
-  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-    setFileName(file.name)
-    setUploadingFile(true)
-    setStatusMsg('⚡ Uploading STL/3MF model to Cloudinary CDN...')
+  const handleModelUploadSuccess = (meta: CloudinaryMetadata) => {
+    setCloudinaryFileUrl(meta.secure_url)
+    setCloudinaryPublicId(meta.cloudinary_public_id)
+    setStatusMsg(`✅ 3D Model successfully uploaded to Cloudinary! (${meta.format.toUpperCase()}, ${(meta.file_size / 1024).toFixed(1)} KB)`)
+  }
 
-    try {
-      const formData = new FormData()
-      formData.append('file', file)
-      const res = await fetch('/api/upload', { method: 'POST', body: formData })
-      const data = await res.json()
-      if (data.url) {
-        setCloudinaryFileUrl(data.url)
-        setStatusMsg('✅ 3D Model successfully saved to Cloudinary CDN!')
-      }
-    } catch (err) {
-      console.warn('Cloudinary design upload note:', err)
-    } finally {
-      setUploadingFile(false)
-    }
+  const handleImageUploadSuccess = (meta: CloudinaryMetadata) => {
+    setPreviewImageUrl(meta.secure_url)
+    setStatusMsg(`✅ Product preview image uploaded to Cloudinary!`)
   }
 
   const handleGeminiAiGenerate = async () => {
@@ -184,36 +174,27 @@ export default function UploadDesignForm() {
         <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 28, alignItems: 'start' }}>
           {/* LEFT FORM COLUMNS */}
           <div>
-            {/* STEP 1: STL FILE UPLOAD */}
+            {/* STEP 1: 3D MODEL & IMAGE UPLOADS */}
             <div style={s.card}>
               <div style={{ fontSize: 18, fontWeight: 900, color: '#0F172A', marginBottom: 16 }}>
-                1. 3D Model Geometry File (Cloudinary CDN)
+                1. 3D Model File & Preview Image (Cloudinary CDN)
               </div>
-              <label
-                htmlFor="stl-file"
-                style={{
-                  border: '2px dashed #CBD5E1',
-                  borderRadius: 16,
-                  padding: 32,
-                  cursor: 'pointer',
-                  textAlign: 'center',
-                  display: 'block',
-                  background: '#F8FAFC',
-                }}
-              >
-                <div style={{ fontSize: 36, marginBottom: 8 }}>📦</div>
-                <div style={{ fontSize: 15, fontWeight: 800, color: '#0F172A' }}>
-                  {uploadingFile ? 'Uploading 3D Model to Cloudinary CDN…' : fileName ? `Uploaded: ${fileName}` : 'Click to Upload STL or 3MF Model File'}
-                </div>
-                <div style={{ fontSize: 13, color: '#64748B', marginTop: 4 }}>Maximum file size: 50MB · Served via Cloudinary CDN</div>
-                <input
-                  id="stl-file"
-                  type="file"
-                  accept=".stl,.3mf"
-                  style={{ display: 'none' }}
-                  onChange={handleFileSelect}
+              
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                <CloudinaryUploader
+                  acceptType="model"
+                  label="Upload 3D Model (.stl, .3mf, .obj, .glb, .gltf)"
+                  onUploadSuccess={handleModelUploadSuccess}
+                  currentUrl={cloudinaryFileUrl}
                 />
-              </label>
+
+                <CloudinaryUploader
+                  acceptType="image"
+                  label="Upload Product Cover Image (.jpg, .png, .webp)"
+                  onUploadSuccess={handleImageUploadSuccess}
+                  currentUrl={previewImageUrl}
+                />
+              </div>
             </div>
 
             {/* STEP 2: METADATA & GEMINI AI */}
@@ -337,7 +318,7 @@ export default function UploadDesignForm() {
 
             <button
               onClick={handleSubmit}
-              disabled={submitting || !title || uploadingFile}
+              disabled={submitting || !title}
               style={{
                 width: '100%',
                 background: 'linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)',

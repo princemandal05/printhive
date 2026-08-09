@@ -16,6 +16,8 @@ const OpenStreetMap = dynamic(() => import('@/components/OpenStreetMap'), {
   ),
 })
 
+import CloudinaryUploader, { type CloudinaryMetadata } from '@/components/CloudinaryUploader'
+
 const MATERIALS = ['PLA', 'PETG', 'ABS', 'TPU (Flexible)', 'Resin']
 
 export default function RegisterPrinterForm() {
@@ -28,6 +30,8 @@ export default function RegisterPrinterForm() {
   const [address, setAddress] = useState('')
   const [lat, setLat] = useState(28.6315)
   const [lng, setLng] = useState(77.2167)
+  const [printerImageUrl, setPrinterImageUrl] = useState('')
+  const [cloudinaryPublicId, setCloudinaryPublicId] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [statusMsg, setStatusMsg] = useState('')
 
@@ -38,6 +42,12 @@ export default function RegisterPrinterForm() {
   const handleLocationPicked = (pickedLat: number, pickedLng: number) => {
     setLat(Number(pickedLat.toFixed(5)))
     setLng(Number(pickedLng.toFixed(5)))
+  }
+
+  const handlePrinterPhotoSuccess = (meta: CloudinaryMetadata) => {
+    setPrinterImageUrl(meta.secure_url)
+    setCloudinaryPublicId(meta.cloudinary_public_id)
+    setStatusMsg('✅ Printer hub machine photo uploaded to Cloudinary!')
   }
 
   const handleSubmit = async () => {
@@ -58,6 +68,8 @@ export default function RegisterPrinterForm() {
         latitude: lat,
         longitude: lng,
         address: address || 'New Delhi Print Hub',
+        image_url: printerImageUrl,
+        cloudinary_public_id: cloudinaryPublicId,
         status: 'online',
         is_active: true,
         created_at: new Date().toISOString(),
@@ -192,6 +204,15 @@ export default function RegisterPrinterForm() {
                     )
                   })}
                 </div>
+              </div>
+
+              <div style={{ marginTop: 18 }}>
+                <CloudinaryUploader
+                  acceptType="image"
+                  label="Machine Hub Photo (.jpg, .png, .webp)"
+                  onUploadSuccess={handlePrinterPhotoSuccess}
+                  currentUrl={printerImageUrl}
+                />
               </div>
             </div>
 
