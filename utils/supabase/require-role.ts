@@ -45,54 +45,13 @@ export async function requireRole(expectedRole: Role) {
 
   // Real, authenticated session always wins
   if (user) {
-    let { data: profile } = await supabase
+    const { data: profile } = await supabase
       .from('profiles')
       .select('*')
       .eq('id', user.id)
       .maybeSingle()
 
-    const metaRole = user.user_metadata?.role as Role | undefined
-    const dbRole = profile?.role as Role | undefined
-    const cookieRole = cookieStore.get('printhive_auth_role')?.value as Role | undefined
-
-    // Prioritize non-buyer role from metadata, cookie, or DB
-    let userRole: Role = 'buyer'
-    if (metaRole && metaRole !== 'buyer') {
-      userRole = metaRole
-    } else if (cookieRole && cookieRole !== 'buyer' && cookieRole === expectedRole) {
-      userRole = cookieRole
-    } else if (dbRole && dbRole !== 'buyer') {
-      userRole = dbRole
-    } else if (dbRole) {
-      userRole = dbRole
-    } else if (metaRole) {
-      userRole = metaRole
-    }
-
-    // Auto-heal or upgrade DB profile if expected role is seller/designer/printer_owner
-    if (expectedRole !== 'buyer' && userRole !== expectedRole) {
-      if (metaRole === expectedRole || cookieRole === expectedRole) {
-        userRole = expectedRole
-        try {
-          const { createAdminClient } = await import('./server')
-          const adminSupabase = await createAdminClient()
-          await adminSupabase.auth.admin.updateUserById(user.id, {
-            user_metadata: { role: expectedRole, full_name: user.user_metadata?.full_name || user.email?.split('@')[0] }
-          })
-          await adminSupabase.from('profiles').upsert({
-            id: user.id,
-            email: user.email,
-            role: expectedRole,
-            full_name: user.user_metadata?.full_name || user.email?.split('@')[0]
-          }, { onConflict: 'id' })
-          if (profile) {
-            profile.role = expectedRole
-          }
-        } catch (e) {
-          console.error('Failed to auto-heal profile role:', e)
-        }
-      }
-    }
+    const userRole: Role = (profile?.role as Role) || 'buyer'
 
     // Strict Role Access Control:
     if (userRole !== expectedRole && userRole !== 'admin' && expectedRole !== 'buyer') {

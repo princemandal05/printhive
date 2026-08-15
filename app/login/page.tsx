@@ -44,27 +44,10 @@ export default function LoginPage() {
     setLoading(false)
 
     if (data.user) {
-      // Query profile table for role safely
+      // Query profile table for server-managed role
       const { data: profile } = await supabase.from('profiles').select('role').eq('id', data.user.id).maybeSingle()
       
-      const metaRole = data.user.user_metadata?.role as string | undefined
-      const dbRole = profile?.role as string | undefined
-      
-      let role = 'buyer'
-      if (metaRole && metaRole !== 'buyer') {
-        role = metaRole
-      } else if (dbRole && dbRole !== 'buyer') {
-        role = dbRole
-      } else if (metaRole) {
-        role = metaRole
-      } else if (dbRole) {
-        role = dbRole
-      }
-
-      // If metadata has seller/designer/printer_owner but db profile is buyer, update db profile
-      if (metaRole && metaRole !== 'buyer' && dbRole === 'buyer') {
-        await supabase.from('profiles').update({ role: metaRole }).eq('id', data.user.id)
-      }
+      const role = (profile?.role as string) || 'buyer'
 
       const urlParams = new URLSearchParams(window.location.search)
       const targetDashboard = DASHBOARD_PATH[role] || '/dashboard/buyer'

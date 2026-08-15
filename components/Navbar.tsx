@@ -93,9 +93,7 @@ export default function Navbar() {
         const { data: userProfile } = await supabase.from('profiles').select('*').eq('id', currentUser.id).maybeSingle()
         if (userProfile) setProfile(userProfile)
         
-        const metaRole = currentUser.user_metadata?.role as string | undefined
-        const dbRole = userProfile?.role as string | undefined
-        role = (metaRole && metaRole !== 'buyer' ? metaRole : dbRole) || metaRole || dbRole || 'buyer'
+        role = (userProfile?.role as string) || 'buyer'
       } else {
         setUser(null)
         setProfile(null)
