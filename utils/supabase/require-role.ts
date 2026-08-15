@@ -51,26 +51,46 @@ export async function requireRole(expectedRole: Role) {
       .eq('id', user.id)
       .maybeSingle()
 
-    let userRole: Role = (profile?.role as Role) || (user.user_metadata?.role as Role) || 'buyer'
-
-    // If metadata indicates seller/designer/printer_owner but profile was recorded as buyer, auto-heal profile role
     const metaRole = user.user_metadata?.role as Role | undefined
-    if (metaRole && ['seller', 'designer', 'printer_owner'].includes(metaRole) && (!profile?.role || profile.role === 'buyer')) {
+    const dbRole = profile?.role as Role | undefined
+    const cookieRole = cookieStore.get('printhive_auth_role')?.value as Role | undefined
+
+    // Prioritize non-buyer role from metadata, cookie, or DB
+    let userRole: Role = 'buyer'
+    if (metaRole && metaRole !== 'buyer') {
       userRole = metaRole
-      try {
-        const { createAdminClient } = await import('./server')
-        const adminSupabase = await createAdminClient()
-        await adminSupabase.from('profiles').upsert({
-          id: user.id,
-          email: user.email,
-          role: userRole,
-          full_name: user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0]
-        }, { onConflict: 'id' })
-        if (profile) {
-          profile.role = userRole
+    } else if (cookieRole && cookieRole !== 'buyer' && cookieRole === expectedRole) {
+      userRole = cookieRole
+    } else if (dbRole && dbRole !== 'buyer') {
+      userRole = dbRole
+    } else if (dbRole) {
+      userRole = dbRole
+    } else if (metaRole) {
+      userRole = metaRole
+    }
+
+    // Auto-heal or upgrade DB profile if expected role is seller/designer/printer_owner
+    if (expectedRole !== 'buyer' && userRole !== expectedRole) {
+      if (metaRole === expectedRole || cookieRole === expectedRole) {
+        userRole = expectedRole
+        try {
+          const { createAdminClient } = await import('./server')
+          const adminSupabase = await createAdminClient()
+          await adminSupabase.auth.admin.updateUserById(user.id, {
+            user_metadata: { role: expectedRole, full_name: user.user_metadata?.full_name || user.email?.split('@')[0] }
+          })
+          await adminSupabase.from('profiles').upsert({
+            id: user.id,
+            email: user.email,
+            role: expectedRole,
+            full_name: user.user_metadata?.full_name || user.email?.split('@')[0]
+          }, { onConflict: 'id' })
+          if (profile) {
+            profile.role = expectedRole
+          }
+        } catch (e) {
+          console.error('Failed to auto-heal profile role:', e)
         }
-      } catch (e) {
-        console.error('Failed to auto-heal profile role:', e)
       }
     }
 
