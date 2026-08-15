@@ -39,26 +39,55 @@ export async function GET(request: NextRequest) {
 
       const { data: { user } } = await supabase.auth.getUser()
       if (user) {
-        let { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).maybeSingle()
-        let userRole = profile?.role || 'buyer'
+        const signupRoleParam = searchParams.get('signup_role')
+        const cookieSignupRole = cookieStore.get('printhive_signup_role')?.value
+        const requestedRole = signupRoleParam || cookieSignupRole
+        const validRequestedRole = (requestedRole && ['seller', 'designer', 'printer_owner', 'buyer'].includes(requestedRole))
+          ? requestedRole
+          : null
 
-        // Auto-provision profile for first-time Google OAuth sign-in
-        if (!profile) {
+        let { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).maybeSingle()
+        let userRole = profile?.role || user.user_metadata?.role || validRequestedRole || 'buyer'
+
+        if (validRequestedRole && (!profile || profile.role === 'buyer')) {
+          userRole = validRequestedRole
           const userFullName = user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0] || 'User'
           const userAvatar = user.user_metadata?.avatar_url || user.user_metadata?.picture || ''
-          
+
+          try {
+            const { createAdminClient } = await import('@/utils/supabase/server')
+            const adminSupabase = await createAdminClient()
+            await adminSupabase.auth.admin.updateUserById(user.id, {
+              user_metadata: { role: validRequestedRole, full_name: userFullName }
+            })
+            await adminSupabase.from('profiles').upsert({
+              id: user.id,
+              email: user.email,
+              full_name: userFullName,
+              avatar_url: userAvatar,
+              role: validRequestedRole,
+            }, { onConflict: 'id' })
+          } catch (e) {
+            console.error('Failed to update Google OAuth signup role:', e)
+          }
+        } else if (!profile) {
+          const userFullName = user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0] || 'User'
+          const userAvatar = user.user_metadata?.avatar_url || user.user_metadata?.picture || ''
           await supabase.from('profiles').insert({
             id: user.id,
             email: user.email,
             full_name: userFullName,
             avatar_url: userAvatar,
-            role: 'buyer',
+            role: userRole,
           })
-          userRole = 'buyer'
         }
 
-        // Set role cookie
+        // Clear temporary signup role cookie
+        cookieStore.set('printhive_signup_role', '', { maxAge: 0, path: '/' })
+
+        // Set active role cookies
         cookieStore.set('printhive_auth_role', userRole, { maxAge: 604800, path: '/' })
+        cookieStore.set('printhive_guest_role', userRole, { maxAge: 604800, path: '/' })
 
         const targetPath = next || (DASHBOARD_PATH[userRole] ?? '/')
         return NextResponse.redirect(`${origin}${targetPath}`)

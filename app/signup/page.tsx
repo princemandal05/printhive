@@ -111,11 +111,12 @@ export default function SignupPage() {
 
   const handleGoogleSignIn = async () => {
     setError('')
+    document.cookie = `printhive_signup_role=${role}; path=/; max-age=3600`
     const supabase = createClient()
     const { error: oauthErr } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
+        redirectTo: `${window.location.origin}/auth/callback?signup_role=${role}`,
       },
     })
     if (oauthErr) {
