@@ -82,17 +82,55 @@ export async function POST(request: Request) {
     if (userId) {
       try {
         const adminSupabase = await createAdminClient()
-        await adminSupabase.auth.admin.updateUserById(userId, {
-          user_metadata: { role: cleanRole, full_name: cleanName }
-        })
-        await adminSupabase.from('profiles').upsert({
-          id: userId,
-          email: cleanEmail,
-          full_name: cleanName,
-          role: cleanRole,
-        }, { onConflict: 'id' })
+
+        const { error: metadataError } =
+          await adminSupabase.auth.admin.updateUserById(userId, {
+            user_metadata: {
+              role: cleanRole,
+              full_name: cleanName,
+            },
+          })
+
+        if (metadataError) {
+          console.error('User metadata update failed:', metadataError)
+
+          return NextResponse.json(
+            { error: `Role assignment failed: ${metadataError.message}` },
+            { status: 500 }
+          )
+        }
+
+        const { error: profileError } =
+          await adminSupabase
+            .from('profiles')
+            .upsert(
+              {
+                id: userId,
+                email: cleanEmail,
+                full_name: cleanName,
+                role: cleanRole,
+              },
+              { onConflict: 'id' }
+            )
+
+        if (profileError) {
+          console.error('Profile role update failed:', profileError)
+
+          return NextResponse.json(
+            { error: `Profile creation failed: ${profileError.message}` },
+            { status: 500 }
+          )
+        }
       } catch (profileErr) {
-        console.error('Error updating profile role on registration:', profileErr)
+        console.error(
+          'Error updating profile role on registration:',
+          profileErr
+        )
+
+        return NextResponse.json(
+          { error: 'Unable to create your account profile.' },
+          { status: 500 }
+        )
       }
     }
 

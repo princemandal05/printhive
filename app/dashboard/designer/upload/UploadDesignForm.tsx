@@ -52,7 +52,7 @@ export default function UploadDesignForm() {
     setStatusMsg('✨ Gemini AI is generating 3D printing slicing notes...')
 
     try {
-      const res = await fetch('/api/generate-description', {
+      const res = await fetch('/api/ai/generate-description', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ title, category, materials }),

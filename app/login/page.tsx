@@ -44,10 +44,23 @@ export default function LoginPage() {
     setLoading(false)
 
     if (data.user) {
-      // Query profile table for server-managed role
-      const { data: profile } = await supabase.from('profiles').select('role').eq('id', data.user.id).maybeSingle()
-      
-      const role = (profile?.role as string) || 'buyer'
+      const { data: profile, error: profileError } =
+        await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', data.user.id)
+          .maybeSingle()
+
+      if (profileError) {
+        console.error('Failed to load user role:', profileError)
+        setLoading(false)
+        return setError('Unable to determine your account role. Please try again.')
+      }
+
+      const role =
+        (profile?.role as string) ||
+        (data.user.user_metadata?.role as string) ||
+        'buyer'
 
       const urlParams = new URLSearchParams(window.location.search)
       const targetDashboard = DASHBOARD_PATH[role] || '/dashboard/buyer'
