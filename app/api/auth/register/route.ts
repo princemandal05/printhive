@@ -64,12 +64,9 @@ export async function POST(request: Request) {
           userId = signInData.user.id
           hasSession = true
         } else {
-          const errMessage =
-            typeof authError.message === 'string' && authError.message.trim()
-              ? authError.message
-              : 'Registration failed. Please check your details and try again.'
-
-          return NextResponse.json({ error: errMessage }, { status: 400 })
+          return NextResponse.json({
+            error: 'An account with this email address already exists. Please log in or use Sign in with Google.'
+          }, { status: 400 })
         }
       } else {
         const errMessage =

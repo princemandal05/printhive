@@ -198,7 +198,21 @@ export default function SignupPage() {
             <div style={s.title}>Account Registration</div>
             <div style={s.sub}>Creating {ROLES.find((r) => r.id === role)?.label} account</div>
 
-            {error && <div style={s.error}>{error}</div>}
+            {error && (
+              <div style={s.error}>
+                {error.includes('already exists') ? (
+                  <>
+                    An account with this email already exists.{' '}
+                    <Link href="/login" style={{ color: '#991B1B', fontWeight: 800, textDecoration: 'underline' }}>
+                      Log in here
+                    </Link>{' '}
+                    or sign in with Google below.
+                  </>
+                ) : (
+                  error
+                )}
+              </div>
+            )}
 
             <div style={{ marginBottom: 16 }}>
               <label style={s.label}>Your full name</label>
