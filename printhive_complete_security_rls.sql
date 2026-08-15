@@ -284,17 +284,27 @@ CREATE POLICY "Participants insert order_status_history" ON public.order_status_
 -- =========================================================
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
+DECLARE
+  user_role TEXT;
 BEGIN
-  -- Always default role strictly to 'buyer', ignoring any user_metadata role override to prevent self-assignment of 'admin'
+  -- Safely assign requested role from metadata, preventing self-assignment of 'admin'
+  user_role := COALESCE(NEW.raw_user_meta_data->>'role', 'buyer');
+  IF user_role NOT IN ('buyer', 'seller', 'designer', 'printer_owner') THEN
+    user_role := 'buyer';
+  END IF;
+
   INSERT INTO public.profiles (id, email, full_name, avatar_url, role)
   VALUES (
     NEW.id,
     NEW.email,
     COALESCE(NEW.raw_user_meta_data->>'full_name', NEW.raw_user_meta_data->>'name', split_part(NEW.email, '@', 1)),
     COALESCE(NEW.raw_user_meta_data->>'avatar_url', NEW.raw_user_meta_data->>'picture', ''),
-    'buyer'
+    user_role
   )
-  ON CONFLICT (id) DO NOTHING;
+  ON CONFLICT (id) DO UPDATE SET
+    role = EXCLUDED.role,
+    full_name = COALESCE(EXCLUDED.full_name, public.profiles.full_name);
+
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, pg_temp;

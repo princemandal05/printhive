@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@/utils/supabase/server'
+import { createClient, createAdminClient } from '@/utils/supabase/server'
+import { cookies } from 'next/headers'
 
 // Only these roles can be self-selected at signup. 'admin' is deliberately
 // excluded — it can never be set through this public endpoint, regardless
@@ -42,6 +43,9 @@ export async function POST(request: Request) {
       },
     })
 
+    let userId = authData?.user?.id ?? null
+    let hasSession = Boolean(authData?.session)
+
     if (authError) {
       console.error('Supabase auth.signUp error:', authError)
 
@@ -57,39 +61,52 @@ export async function POST(request: Request) {
         })
 
         if (signInData?.user && !signInErr) {
-          return NextResponse.json({
-            success: true,
-            userId: signInData.user.id,
-            role: cleanRole,
-            needsEmailConfirmation: false,
-          })
+          userId = signInData.user.id
+          hasSession = true
+        } else {
+          const errMessage =
+            typeof authError.message === 'string' && authError.message.trim()
+              ? authError.message
+              : 'Registration failed. Please check your details and try again.'
+
+          return NextResponse.json({ error: errMessage }, { status: 400 })
         }
+      } else {
+        const errMessage =
+          typeof authError.message === 'string' && authError.message.trim()
+            ? authError.message
+            : 'Registration failed. Please check your details and try again.'
+
+        return NextResponse.json({ error: errMessage }, { status: 400 })
       }
-
-      // Surface clean error string
-      const errMessage =
-        typeof authError.message === 'string' && authError.message.trim()
-          ? authError.message
-          : 'Registration failed. Please check your details and try again.'
-
-      return NextResponse.json({ error: errMessage }, { status: 400 })
     }
 
-    const userId = authData?.user?.id ?? null
-    const hasSession = Boolean(authData?.session)
+    // Explicitly update profiles table via admin client to guarantee the assigned role
+    if (userId) {
+      try {
+        const adminSupabase = await createAdminClient()
+        await adminSupabase.from('profiles').upsert({
+          id: userId,
+          email: cleanEmail,
+          full_name: cleanName,
+          role: cleanRole,
+        }, { onConflict: 'id' })
+      } catch (profileErr) {
+        console.error('Error upserting profile role on registration:', profileErr)
+      }
+    }
 
-    // The `profiles` row is created by the on_auth_user_created DB trigger —
-    // intentionally not duplicating that insert/upsert here. The previous
-    // version's client-side AND server-side inserts racing each other was
-    // part of what made failures inconsistent and hard to diagnose.
+    // Set role cookies if session is established
+    if (hasSession) {
+      const cookieStore = await cookies()
+      cookieStore.set('printhive_auth_role', cleanRole, { maxAge: 604800, path: '/' })
+      cookieStore.set('printhive_guest_role', cleanRole, { maxAge: 604800, path: '/' })
+    }
 
     return NextResponse.json({
       success: true,
       userId,
       role: cleanRole,
-      // If there's no session yet, Supabase is requiring email confirmation
-      // before login — the frontend needs to show a "check your email"
-      // message rather than assuming the user is now logged in.
       needsEmailConfirmation: !hasSession,
     })
   } catch (err: unknown) {
