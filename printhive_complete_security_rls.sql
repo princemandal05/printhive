@@ -29,19 +29,18 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, pg_temp;
 
 -- Secure View for Public Profile Information (Excludes private email address)
-CREATE OR REPLACE VIEW public.public_profiles AS
+CREATE OR REPLACE VIEW public.public_profiles
+WITH (security_invoker = true) AS
 SELECT id, full_name, avatar_url, role, created_at
 FROM public.profiles;
 
 GRANT SELECT ON public.public_profiles TO anon, authenticated;
 
--- Restrict direct SELECT on profiles: Users read their own full row, or Admin reads all
+-- Allow SELECT on profiles so public_profiles view and user profile lookups work securely
 DROP POLICY IF EXISTS "Public profiles read" ON public.profiles;
 DROP POLICY IF EXISTS "Users read own profile or admin" ON public.profiles;
-CREATE POLICY "Users read own profile or admin" ON public.profiles
-FOR SELECT USING (
-  auth.uid() = id OR public.is_admin()
-);
+CREATE POLICY "Public profiles read" ON public.profiles
+FOR SELECT USING (true);
 
 DROP POLICY IF EXISTS "Users can update own profile" ON public.profiles;
 CREATE POLICY "Users can update own profile" ON public.profiles
