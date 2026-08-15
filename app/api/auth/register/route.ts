@@ -81,10 +81,13 @@ export async function POST(request: Request) {
       }
     }
 
-    // Explicitly update profiles table via admin client to guarantee the assigned role
+    // Explicitly update profiles table and user_metadata via admin client to guarantee the assigned role
     if (userId) {
       try {
         const adminSupabase = await createAdminClient()
+        await adminSupabase.auth.admin.updateUserById(userId, {
+          user_metadata: { role: cleanRole, full_name: cleanName }
+        })
         await adminSupabase.from('profiles').upsert({
           id: userId,
           email: cleanEmail,
@@ -92,7 +95,7 @@ export async function POST(request: Request) {
           role: cleanRole,
         }, { onConflict: 'id' })
       } catch (profileErr) {
-        console.error('Error upserting profile role on registration:', profileErr)
+        console.error('Error updating profile role on registration:', profileErr)
       }
     }
 

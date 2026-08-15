@@ -45,13 +45,34 @@ export async function requireRole(expectedRole: Role) {
 
   // Real, authenticated session always wins
   if (user) {
-    const { data: profile } = await supabase
+    let { data: profile } = await supabase
       .from('profiles')
       .select('*')
       .eq('id', user.id)
       .maybeSingle()
 
-    const userRole: Role = (profile?.role as Role) || 'buyer'
+    let userRole: Role = (profile?.role as Role) || (user.user_metadata?.role as Role) || 'buyer'
+
+    // If metadata indicates seller/designer/printer_owner but profile was recorded as buyer, auto-heal profile role
+    const metaRole = user.user_metadata?.role as Role | undefined
+    if (metaRole && ['seller', 'designer', 'printer_owner'].includes(metaRole) && (!profile?.role || profile.role === 'buyer')) {
+      userRole = metaRole
+      try {
+        const { createAdminClient } = await import('./server')
+        const adminSupabase = await createAdminClient()
+        await adminSupabase.from('profiles').upsert({
+          id: user.id,
+          email: user.email,
+          role: userRole,
+          full_name: user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0]
+        }, { onConflict: 'id' })
+        if (profile) {
+          profile.role = userRole
+        }
+      } catch (e) {
+        console.error('Failed to auto-heal profile role:', e)
+      }
+    }
 
     // Strict Role Access Control:
     if (userRole !== expectedRole && userRole !== 'admin' && expectedRole !== 'buyer') {
