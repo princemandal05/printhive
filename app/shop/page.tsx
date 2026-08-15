@@ -26,7 +26,92 @@ type Product = {
   deliveryDays: string
 }
 
-const MOCK_PRODUCTS: Product[] = []
+const SEED_PRODUCTS: Product[] = [
+  {
+    id: 'prod-1',
+    name: 'Articulated Mechanical Dragon',
+    price: 1499,
+    originalPrice: 1999,
+    category: 'Toys & Miniatures',
+    rating: 4.9,
+    reviewsCount: 142,
+    seller: 'DragonForge 3D',
+    stock: 24,
+    image: 'https://images.unsplash.com/photo-1563089145-599997674d42?w=800&auto=format&fit=crop&q=80',
+    featured: true,
+    trending: true,
+    deliveryDays: '2-3 Days',
+  },
+  {
+    id: 'prod-2',
+    name: 'Cyberpunk LED Desk Organizer',
+    price: 899,
+    originalPrice: 1200,
+    category: 'Office Accessories',
+    rating: 4.8,
+    reviewsCount: 98,
+    seller: 'NexusPrints',
+    stock: 15,
+    image: 'https://images.unsplash.com/photo-1586717791821-3f44a563fa4c?w=800&auto=format&fit=crop&q=80',
+    trending: true,
+    deliveryDays: '1-2 Days',
+  },
+  {
+    id: 'prod-3',
+    name: 'Geometric Voronoi Table Lamp',
+    price: 2499,
+    originalPrice: 3200,
+    category: 'Home Décor',
+    rating: 5.0,
+    reviewsCount: 64,
+    seller: 'LuminaCrafts',
+    stock: 8,
+    image: 'https://images.unsplash.com/photo-1507473885765-e6ed057f782c?w=800&auto=format&fit=crop&q=80',
+    featured: true,
+    deliveryDays: '3-5 Days',
+  },
+  {
+    id: 'prod-4',
+    name: 'Custom Lithophane Photo Frame',
+    price: 699,
+    originalPrice: 999,
+    category: 'Personalized Gifts',
+    rating: 4.9,
+    reviewsCount: 210,
+    seller: 'MemoriesIn3D',
+    stock: 50,
+    image: 'https://images.unsplash.com/photo-1513519245088-0e12902e5a38?w=800&auto=format&fit=crop&q=80',
+    newest: true,
+    deliveryDays: '2-4 Days',
+  },
+  {
+    id: 'prod-5',
+    name: 'Full-Scale Helmet Replica (PETG)',
+    price: 3999,
+    originalPrice: 4999,
+    category: 'Cosplay Items',
+    rating: 4.9,
+    reviewsCount: 37,
+    seller: 'TitanProps',
+    stock: 5,
+    image: 'https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?w=800&auto=format&fit=crop&q=80',
+    featured: true,
+    deliveryDays: '4-6 Days',
+  },
+  {
+    id: 'prod-6',
+    name: 'Solar System Planetary Gear Model',
+    price: 1299,
+    originalPrice: 1699,
+    category: 'Educational Kits',
+    rating: 4.7,
+    reviewsCount: 83,
+    seller: 'EduPrint Lab',
+    stock: 18,
+    image: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&auto=format&fit=crop&q=80',
+    deliveryDays: '2-3 Days',
+  },
+]
 
 const CATEGORIES = [
   'All',
@@ -44,6 +129,27 @@ const STATS = [
   { value: '15+', label: 'Print Categories' },
   { value: '4.9★', label: 'Customer Rating' },
 ]
+
+type ProductRow = {
+  id: string
+  title?: string
+  name?: string
+  price?: number
+  original_price?: number
+  category?: string
+  rating?: number
+  reviews_count?: number
+  seller_name?: string
+  seller?: string
+  stock?: number
+  image_url?: string
+  image?: string
+  featured?: boolean
+  trending?: boolean
+  newest?: boolean
+  delivery_days?: string
+  created_at?: string
+}
 
 function ShopReviewBanner() {
   const searchParams = useSearchParams()
@@ -68,6 +174,8 @@ function ShopReviewBanner() {
 
 export default function ShopPage() {
   const { addToCart, addToWishlist, removeFromWishlist, isInWishlist } = useStore()
+  const [products, setProducts] = useState<Product[]>(SEED_PRODUCTS)
+  const [loadingProducts, setLoadingProducts] = useState(true)
   const [search, setSearch] = useState('')
   const [category, setCategory] = useState('All')
   const [sort, setSort] = useState('popular')
@@ -79,6 +187,62 @@ export default function ShopPage() {
     const supabase = createClient()
     let isMounted = true
     let activeRequestId = 0
+
+    async function fetchProducts() {
+      try {
+        let allRows: ProductRow[] = []
+        let from = 0
+        const limit = 1000
+        let hasMore = true
+
+        while (hasMore) {
+          if (!isMounted) break
+
+          const { data, error } = await supabase
+            .from('products')
+            .select('*')
+            .order('created_at', { ascending: false })
+            .order('id', { ascending: false })
+            .range(from, from + limit - 1)
+
+          if (error) throw error
+
+          if (data && data.length > 0) {
+            allRows = allRows.concat(data as ProductRow[])
+            if (data.length < limit) hasMore = false
+            else from += limit
+          } else {
+            hasMore = false
+          }
+        }
+
+        if (allRows.length > 0) {
+          const mapped: Product[] = allRows.map((item: ProductRow) => ({
+            id: item.id,
+            name: item.title || item.name || 'Untitled Product',
+            price: Number(item.price ?? 499),
+            originalPrice: item.original_price != null ? Number(item.original_price) : undefined,
+            category: item.category || 'Home Décor',
+            rating: Number(item.rating ?? 4.9),
+            reviewsCount: Number(item.reviews_count ?? 12),
+            seller: item.seller_name || item.seller || 'PrintHive Verified',
+            stock: Number(item.stock ?? 10),
+            image: item.image_url || item.image || SEED_PRODUCTS[0].image,
+            featured: Boolean(item.featured),
+            trending: Boolean(item.trending),
+            newest: Boolean(item.newest),
+            deliveryDays: item.delivery_days || '2-4 Days',
+          }))
+          if (isMounted) setProducts(mapped)
+        }
+      } catch (err) {
+        console.error('Error fetching products from Supabase:', err)
+      } finally {
+        if (isMounted) setLoadingProducts(false)
+      }
+    }
+
+    fetchProducts()
 
     async function fetchRole(user: User | null, reqId?: number) {
       const requestId = reqId || ++activeRequestId
@@ -108,13 +272,11 @@ export default function ShopPage() {
       }
     }
 
-    // Reserve initial request ID before starting async getUser() call
     const initialReqId = ++activeRequestId
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (isMounted) fetchRole(user, initialReqId)
     })
 
-    // Subscribe to auth state changes and cleanup on unmount
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (isMounted) fetchRole(session?.user || null)
     })
@@ -160,7 +322,7 @@ export default function ShopPage() {
   }
 
   const filtered = useMemo(() => {
-    return MOCK_PRODUCTS.filter((p) => {
+    return products.filter((p) => {
       const matchesSearch =
         p.name.toLowerCase().includes(search.toLowerCase()) ||
         p.seller.toLowerCase().includes(search.toLowerCase()) ||
@@ -175,7 +337,7 @@ export default function ShopPage() {
       if (sort === 'price-high') return b.price - a.price
       return 0
     })
-  }, [search, category, sort])
+  }, [products, search, category, sort])
 
   return (
     <main style={{ minHeight: '100vh', transition: 'background 0.3s ease' }}>

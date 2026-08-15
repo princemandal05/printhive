@@ -16,6 +16,8 @@ export default function NewRequestPage() {
   const [attachedFiles, setAttachedFiles] = useState<File[]>([])
   const [submitting, setSubmitting] = useState(false)
 
+  const [formError, setFormError] = useState<string | null>(null)
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       const newFiles = Array.from(e.target.files)
@@ -29,8 +31,67 @@ export default function NewRequestPage() {
 
   const handleSubmit = async () => {
     setSubmitting(true)
-    await new Promise((res) => setTimeout(res, 900))
-    router.push('/dashboard/buyer')
+    setFormError(null)
+    try {
+      const { createClient } = await import('@/utils/supabase/client')
+      const supabase = createClient()
+      const { data: { user }, error: authError } = await supabase.auth.getUser()
+
+      if (authError || !user) {
+        setFormError('Authentication required. Please log in to post a brief.')
+        return
+      }
+
+      const uploadedUrls: string[] = []
+      for (const file of attachedFiles) {
+        try {
+          const formData = new FormData()
+          formData.append('file', file)
+          const res = await fetch('/api/upload', { method: 'POST', body: formData })
+          if (!res.ok) {
+            setFormError(`Failed to upload attachment "${file.name}". Please try again.`)
+            return
+          }
+          const resData = await res.json()
+          const url = resData.url || resData.secure_url
+          if (!url) {
+            setFormError(`Failed to retrieve URL for attachment "${file.name}". Please try again.`)
+            return
+          }
+          uploadedUrls.push(url)
+        } catch (err: unknown) {
+          console.error('File upload error:', err)
+          setFormError(`Network error while uploading attachment "${file.name}". Please try again.`)
+          return
+        }
+      }
+
+      const { error: insertErr } = await supabase.from('design_requests').insert({
+        buyer_id: user.id,
+        buyer_name: user.user_metadata?.full_name || user.email || 'Verified Buyer',
+        purpose,
+        dimensions,
+        material,
+        budget_min: Number(budgetMin || 0),
+        budget_max: Number(budgetMax || 0),
+        description,
+        urgency: 'Standard',
+        attachment_urls: uploadedUrls,
+      })
+
+      if (insertErr) {
+        setFormError(insertErr.message || 'Failed to submit request. Please try again.')
+        return
+      }
+
+      router.push('/requests')
+    } catch (err: unknown) {
+      console.error('Error inserting design request into Supabase:', err)
+      const msg = err instanceof Error ? err.message : 'An error occurred while submitting your brief.'
+      setFormError(msg)
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   return (
@@ -138,44 +199,38 @@ export default function NewRequestPage() {
             <label className="label" style={{ display: 'block', color: '#cbd5e1', fontSize: 14, fontWeight: 600, marginBottom: 8 }}>
               Reference Specifications & Files
             </label>
+            <input
+              type="file"
+              multiple
+              accept="image/*,.pdf,.doc,.docx"
+              onChange={handleFileChange}
+              style={{ display: 'none' }}
+              id="file-upload-input"
+            />
             <label
-              htmlFor="spec-files"
+              htmlFor="file-upload-input"
               style={{
-                display: 'flex',
-                flexDirection: 'column',
+                display: 'inline-flex',
                 alignItems: 'center',
-                justifyContent: 'center',
-                border: '2px dashed #475569',
-                borderRadius: 12,
-                padding: '24px',
+                gap: 8,
+                padding: '10px 18px',
+                background: '#1e293b',
+                border: '1px dashed #475569',
+                borderRadius: 8,
+                color: '#38bdf8',
+                fontSize: 13,
+                fontWeight: 600,
                 cursor: 'pointer',
-                textAlign: 'center',
-                background: 'rgba(15, 23, 42, 0.5)',
-                transition: 'border 0.2s',
               }}
             >
-              <span style={{ fontSize: 32, marginBottom: 8 }}>📁</span>
-              <span style={{ fontSize: 14, fontWeight: 600, color: '#38bdf8' }}>
-                Click to attach Word docs (.doc, .docx), PDFs, or reference images
-              </span>
-              <span style={{ fontSize: 12, color: '#64748b', marginTop: 4 }}>
-                Supports Word Documents, PDF specifications, PNG, JPG up to 50MB
-              </span>
-              <input
-                id="spec-files"
-                type="file"
-                multiple
-                accept=".doc,.docx,.pdf,image/*"
-                style={{ display: 'none' }}
-                onChange={handleFileChange}
-              />
+              📁 Attach Images or Word Docs (.docx)
             </label>
           </div>
 
           {/* Attached Files List */}
           {attachedFiles.length > 0 && (
-            <div style={{ marginTop: 16 }}>
-              <div style={{ fontSize: 13, fontWeight: 600, color: '#94a3b8', marginBottom: 8 }}>Attached Files ({attachedFiles.length}):</div>
+            <div style={{ marginBottom: 20 }}>
+              <div style={{ fontSize: 12, color: '#94a3b8', marginBottom: 8 }}>Attached files ({attachedFiles.length}):</div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {attachedFiles.map((file, idx) => (
                   <div
@@ -215,6 +270,12 @@ export default function NewRequestPage() {
             </div>
           )}
         </div>
+
+        {formError && (
+          <div role="alert" style={{ background: '#7F1D1D', border: '1px solid #EF4444', color: '#FCA5A5', padding: '12px 16px', borderRadius: 8, fontSize: 14, marginBottom: 16, fontWeight: 600 }}>
+            ⚠️ {formError}
+          </div>
+        )}
 
         <button
           className="btn btn-primary btn-block btn-lg"

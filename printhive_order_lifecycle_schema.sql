@@ -39,3 +39,22 @@ DROP POLICY IF EXISTS "Authenticated users insert order_status_history" ON publi
 
 -- 5. Ensure orders table status column accepts lifecycle states
 ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'PENDING_PAYMENT';
+
+-- 6. Create public.design_request_bids table with CHECK constraints
+CREATE TABLE IF NOT EXISTS public.design_request_bids (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  request_id UUID REFERENCES public.design_requests(id) ON DELETE CASCADE,
+  designer_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+  designer_name TEXT,
+  price NUMERIC NOT NULL CHECK (price >= 0),
+  days INTEGER NOT NULL CHECK (days >= 1),
+  note TEXT,
+  rating NUMERIC DEFAULT 4.9,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+ALTER TABLE public.design_request_bids ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Public read design_request_bids" ON public.design_request_bids;
+CREATE POLICY "Public read design_request_bids" ON public.design_request_bids FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Authenticated users insert design_request_bids" ON public.design_request_bids;
+CREATE POLICY "Authenticated users insert design_request_bids" ON public.design_request_bids FOR INSERT WITH CHECK (auth.uid() IS NOT NULL);

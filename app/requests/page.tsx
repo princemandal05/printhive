@@ -1,19 +1,92 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
+import { createClient } from '@/utils/supabase/client'
 
-const MOCK_REQUESTS: any[] = []
+const SEED_REQUESTS = [
+  {
+    id: 'r1',
+    purpose: 'Replacement Knob for Washing Machine (High ABS)',
+    dimensions: '5cm x 5cm x 2cm',
+    material: 'ABS',
+    budgetMin: 200,
+    budgetMax: 500,
+    buyer: 'Aarav M.',
+    postedAt: '2 days ago',
+    urgency: 'Standard',
+    bidCount: 2,
+  },
+  {
+    id: 'r2',
+    purpose: 'Custom Iron Man Mark 85 Cosplay Helmet (1:1 Scale)',
+    dimensions: '28cm x 22cm x 26cm',
+    material: 'PETG (Durable)',
+    budgetMin: 3500,
+    budgetMax: 6000,
+    buyer: 'Vikram S.',
+    postedAt: '5 hours ago',
+    urgency: 'High Urgency',
+    bidCount: 5,
+  },
+  {
+    id: 'r3',
+    purpose: 'Batch 50x Ergonomic Cable Organizer Clips',
+    dimensions: '3cm x 2cm x 1cm',
+    material: 'PLA (Standard)',
+    budgetMin: 800,
+    budgetMax: 1500,
+    buyer: 'TechLabs Hyd',
+    postedAt: '1 day ago',
+    urgency: 'Standard',
+    bidCount: 3,
+  },
+]
 
 export default function RequestsListPage() {
+  const [requests, setRequests] = useState<any[]>(SEED_REQUESTS)
+  const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
 
-  const filtered = MOCK_REQUESTS.filter((r) =>
-    r.purpose.toLowerCase().includes(search.toLowerCase()) ||
-    r.material.toLowerCase().includes(search.toLowerCase()) ||
-    r.buyer.toLowerCase().includes(search.toLowerCase())
+  useEffect(() => {
+    const supabase = createClient()
+    let isMounted = true
+
+    async function fetchRequests() {
+      try {
+        const { data, error } = await supabase.from('design_requests').select('*').order('created_at', { ascending: false })
+        if (!error && data && data.length > 0) {
+          const mapped = data.map((r: any) => ({
+            id: r.id,
+            purpose: r.purpose || r.title || 'Custom 3D Brief',
+            dimensions: r.dimensions || 'Custom Size',
+            material: r.material || 'PLA',
+            budgetMin: r.budget_min ?? r.budget_min_inr ?? 300,
+            budgetMax: r.budget_max ?? r.budget_max_inr ?? 1000,
+            buyer: r.buyer_name || 'Verified Buyer',
+            postedAt: r.created_at ? new Date(r.created_at).toLocaleDateString() : 'Recently',
+            urgency: r.urgency || 'Standard',
+            bidCount: r.bids_count || 0,
+          }))
+          if (isMounted) setRequests(mapped)
+        }
+      } catch (err) {
+        console.error('Error querying design_requests:', err)
+      } finally {
+        if (isMounted) setLoading(false)
+      }
+    }
+
+    fetchRequests()
+    return () => { isMounted = false }
+  }, [])
+
+  const filtered = requests.filter((r) =>
+    (r.purpose || '').toLowerCase().includes(search.toLowerCase()) ||
+    (r.material || '').toLowerCase().includes(search.toLowerCase()) ||
+    (r.buyer || '').toLowerCase().includes(search.toLowerCase())
   )
 
   return (
