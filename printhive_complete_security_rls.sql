@@ -75,7 +75,7 @@ CREATE TRIGGER tr_prevent_profile_role_escalation
 DROP POLICY IF EXISTS "Users can read own complaints" ON public.complaints;
 CREATE POLICY "Users can read own complaints" ON public.complaints FOR SELECT USING (
   email = (SELECT email FROM auth.users WHERE id = auth.uid()) OR
-  EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin')
+  public.is_admin()
 );
 
 DROP POLICY IF EXISTS "Users can insert complaints" ON public.complaints;
@@ -88,10 +88,10 @@ FOR INSERT WITH CHECK (
 DROP POLICY IF EXISTS "Users or admins update complaints" ON public.complaints;
 CREATE POLICY "Users or admins update complaints" ON public.complaints FOR UPDATE USING (
   email = (SELECT email FROM auth.users WHERE id = auth.uid()) OR
-  EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin')
+  public.is_admin()
 ) WITH CHECK (
   email = (SELECT email FROM auth.users WHERE id = auth.uid()) OR
-  EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin')
+  public.is_admin()
 );
 
 -- =========================================================
@@ -104,7 +104,7 @@ CREATE POLICY "Authorized participants read own orders" ON public.orders FOR SEL
   buyer_id = auth.uid() OR
   designer_id = auth.uid() OR
   printer_owner_id = auth.uid() OR
-  EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin')
+  public.is_admin()
 );
 
 DROP POLICY IF EXISTS "Buyers insert own orders" ON public.orders;
@@ -116,11 +116,11 @@ DROP POLICY IF EXISTS "Participants update own orders" ON public.orders;
 CREATE POLICY "Participants update own orders" ON public.orders FOR UPDATE USING (
   buyer_id = auth.uid() OR
   printer_owner_id = auth.uid() OR
-  EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin')
+  public.is_admin()
 ) WITH CHECK (
   buyer_id = auth.uid() OR
   printer_owner_id = auth.uid() OR
-  EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin')
+  public.is_admin()
 );
 
 -- Combined INSERT & UPDATE Trigger to Block Financial, Status & Ownership Tampering on Orders
@@ -128,10 +128,7 @@ CREATE OR REPLACE FUNCTION public.prevent_order_financial_tampering()
 RETURNS TRIGGER AS $$
 BEGIN
   -- 1. Trust Admin users OR trusted server-side API execution (service_role)
-  IF (auth.role() = 'service_role') OR EXISTS (
-    SELECT 1 FROM public.profiles
-    WHERE id = auth.uid() AND role = 'admin'
-  ) THEN
+  IF (auth.role() = 'service_role') OR public.is_admin() THEN
     RETURN NEW;
   END IF;
 
@@ -217,7 +214,7 @@ CREATE POLICY "Owner/Admin read transactions" ON public.transactions FOR SELECT 
       o.buyer_id = auth.uid() OR
       o.designer_id = auth.uid() OR
       o.printer_owner_id = auth.uid() OR
-      EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin')
+      public.is_admin()
     )
   )
 );
@@ -237,7 +234,7 @@ CREATE POLICY "Recipient/Owner/Admin read escrow_payouts" ON public.escrow_payou
       o.buyer_id = auth.uid() OR
       o.designer_id = auth.uid() OR
       o.printer_owner_id = auth.uid() OR
-      EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin')
+      public.is_admin()
     )
   )
 );
