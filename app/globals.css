@@ -89,30 +89,6 @@
 }
 
 :root,
-[data-theme="dark"] {
-  --bg-canvas: #030712;
-  --bg-card: rgba(13, 19, 36, 0.85);
-  --bg-card-hover: rgba(22, 32, 58, 0.92);
-  --text-main: #F8FAFC;
-  --text-sub: #94A3B8;
-  --border-color: rgba(148, 163, 184, 0.16);
-
-  --color-primary: #FF6B35;
-  --color-primary-hover: #F97316;
-  --color-primary-tint: rgba(255, 107, 53, 0.15);
-  --color-primary-active: #C2410C;
-
-  --color-slate-950: #F8FAFC;
-  --color-slate-800: #E2E8F0;
-  --color-slate-600: #94A3B8;
-  --color-slate-400: #64748B;
-  --color-slate-100: #0F172A;
-  --color-white: #0F172A;
-
-  --color-border-light: rgba(148, 163, 184, 0.16);
-  --color-border-strong: rgba(148, 163, 184, 0.3);
-}
-
 [data-theme="light"] {
   --bg-canvas: #f7f3eb;
   --bg-card: #ffffff;
@@ -137,71 +113,34 @@
   --color-border-strong: #d4d4d8;
 }
 
+[data-theme="dark"] {
+  --bg-canvas: #0f0f11;
+  --bg-card: #18181b;
+  --bg-card-hover: #27272a;
+  --text-main: #f4f4f5;
+  --text-sub: #a1a1aa;
+  --border-color: #27272a;
+
+  --color-primary: #f97316;
+  --color-primary-hover: #ea580c;
+  --color-primary-tint: #431407;
+  --color-primary-active: #c2410c;
+
+  --color-slate-950: #f4f4f5;
+  --color-slate-800: #e4e4e7;
+  --color-slate-600: #a1a1aa;
+  --color-slate-400: #71717a;
+  --color-slate-100: #18181b;
+  --color-white: #18181b;
+
+  --color-border-light: #27272a;
+  --color-border-strong: #3f3f46;
+}
+
 body {
-  background-color: #05020d;
+  background-color: var(--bg-canvas);
   color: var(--text-main);
-  position: relative;
-  overflow-x: hidden;
-  min-height: 100vh;
   transition: background-color 0.3s ease, color 0.3s ease;
-}
-
-/* DEEP VIOLET & MAGENTA BILLOWING NEBULA CLOUD LAYER */
-.space-nebula-bg {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  pointer-events: none;
-  z-index: 0;
-  background: 
-    radial-gradient(circle at 40% 18%, rgba(168, 85, 247, 0.45), rgba(107, 33, 168, 0.28) 35%, transparent 65%),
-    radial-gradient(circle at 22% 48%, rgba(217, 70, 239, 0.42), rgba(147, 51, 234, 0.22) 40%, transparent 65%),
-    radial-gradient(circle at 84% 36%, rgba(147, 51, 234, 0.46), rgba(59, 7, 100, 0.32) 45%, transparent 70%),
-    radial-gradient(circle at 62% 82%, rgba(192, 38, 211, 0.4), rgba(88, 28, 135, 0.26) 45%, transparent 70%),
-    radial-gradient(circle at 18% 88%, rgba(168, 85, 247, 0.38), rgba(107, 33, 168, 0.2) 40%, transparent 65%);
-  filter: blur(12px);
-  animation: spaceAuraPulse 20s ease-in-out infinite alternate;
-}
-
-/* CELESTIAL STARRY BACKGROUND OVERLAY (MATCHING SCREENSHOT) */
-.space-starfield {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  pointer-events: none;
-  z-index: 0;
-  background-image: 
-    radial-gradient(1.5px 1.5px at 8% 12%, rgba(255, 255, 255, 0.9), transparent),
-    radial-gradient(2px 2px at 18% 35%, rgba(232, 121, 249, 0.9), transparent),
-    radial-gradient(1px 1px at 28% 75%, rgba(255, 255, 255, 0.8), transparent),
-    radial-gradient(2.5px 2.5px at 38% 22%, rgba(192, 132, 252, 0.95), transparent),
-    radial-gradient(1.5px 1.5px at 48% 68%, rgba(255, 255, 255, 0.85), transparent),
-    radial-gradient(2px 2px at 58% 14%, rgba(244, 114, 182, 0.9), transparent),
-    radial-gradient(1px 1px at 68% 82%, rgba(255, 255, 255, 0.75), transparent),
-    radial-gradient(2px 2px at 78% 42%, rgba(168, 85, 247, 0.95), transparent),
-    radial-gradient(1.5px 1.5px at 88% 18%, rgba(255, 255, 255, 0.9), transparent),
-    radial-gradient(2px 2px at 94% 72%, rgba(217, 70, 239, 0.9), transparent),
-    radial-gradient(1px 1px at 14% 88%, rgba(255, 255, 255, 0.8), transparent),
-    radial-gradient(2.5px 2.5px at 44% 92%, rgba(192, 132, 252, 0.95), transparent),
-    radial-gradient(1.5px 1.5px at 82% 94%, rgba(255, 255, 255, 0.85), transparent);
-  background-size: 100% 100%;
-  animation: spaceTwinkle 5s ease-in-out infinite alternate;
-}
-
-@keyframes spaceAuraPulse {
-  0% { transform: scale(1) translate(0, 0); opacity: 0.88; }
-  50% { transform: scale(1.08) translate(15px, 20px); opacity: 1; }
-  100% { transform: scale(0.96) translate(-10px, -15px); opacity: 0.92; }
-}
-
-@keyframes spaceTwinkle {
-  0% { opacity: 0.65; transform: scale(1); }
-  50% { opacity: 1; transform: scale(1.01); }
-  100% { opacity: 0.75; transform: scale(0.99); }
 }
 
 .printhive-pill,
