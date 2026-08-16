@@ -153,7 +153,7 @@ export default function BrowseClient({ designs }: { designs: DesignRow[] }) {
                       <span style={{ fontSize: 11, fontWeight: 800, color: '#D97706' }}>⭐ {design.rating}</span>
                     </div>
 
-                    <h3 style={{ fontSize: 14, fontWeight: 800, color: 'var(--text-main)', marginBottom: 8, lineHeight: 1.3, height: 36, overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    <h3 style={{ fontSize: 14, fontWeight: 800, color: 'var(--text-main)', marginBottom: 8, lineHeight: 1.3, height: 36, overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
                       {design.title}
                     </h3>
                   </div>

@@ -488,7 +488,7 @@ export default function ShopPage() {
                   </div>
                   <div style={{ padding: 14, flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                     <div>
-                      <h3 style={{ fontSize: 14, fontWeight: 800, color: 'var(--text-main)', marginBottom: 8, lineHeight: 1.3, height: 36, overflow: 'hidden', textOverflow: 'ellipsis' }}>{product.name}</h3>
+                      <h3 style={{ fontSize: 14, fontWeight: 800, color: 'var(--text-main)', marginBottom: 8, lineHeight: 1.3, height: 36, overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>{product.name}</h3>
                     </div>
                     <div style={{ fontSize: 18, fontWeight: 900, color: '#FF6B35' }}>₹{product.price}</div>
                   </div>
