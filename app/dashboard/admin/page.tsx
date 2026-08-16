@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/utils/supabase/client'
+import DashboardSidebar from '@/components/DashboardSidebar'
 
 type UserRecord = {
   id: string
@@ -122,18 +123,14 @@ export default function AdminDashboard() {
   const openComplaintsCount = complaints.filter((c) => c.status === 'open').length
 
   const s: Record<string, React.CSSProperties> = {
-    page: { minHeight: '100vh', background: '#FAF8F5', color: '#0F172A', fontFamily: 'inherit' },
-    nav: { background: '#0F172A', padding: '0 20px', height: 56, display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.08)' },
-    logo: { fontSize: 18, fontWeight: 900, color: '#fff', letterSpacing: '-0.5px' },
-    logoAccent: { color: '#FF6B35' },
-    badge: { background: 'rgba(239, 68, 68, 0.15)', color: '#EF4444', border: '1px solid rgba(239,68,68,0.3)', borderRadius: 99, padding: '3px 10px', fontSize: 11, fontWeight: 800, textTransform: 'uppercase' as const, letterSpacing: 0.5 },
-    body: { maxWidth: 1140, margin: '0 auto', padding: '20px 16px' },
-    headerRow: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap' as const, gap: 12 },
-    title: { fontSize: 20, fontWeight: 800, color: '#0F172A', margin: 0, letterSpacing: '-0.5px' },
-    sub: { fontSize: 13, color: '#64748B', marginTop: 2 },
-    metricGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 12, marginBottom: 16 },
-    card: { background: '#FFFFFF', borderRadius: 14, border: '1px solid #E2E8F0', padding: 14, boxShadow: '0 2px 10px rgba(0,0,0,0.03)', marginBottom: 16 },
-    metricVal: { fontSize: 20, fontWeight: 900, color: '#0F172A', marginTop: 4, letterSpacing: '-0.5px' },
+    page: { minHeight: '100vh', background: '#FAF8F5', color: '#0F172A', fontFamily: 'inherit', display: 'flex' },
+    main: { flex: 1, padding: '24px 32px', minWidth: 0, overflowX: 'hidden' },
+    headerRow: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, flexWrap: 'wrap' as const, gap: 16 },
+    title: { fontSize: 22, fontWeight: 900, color: '#0F172A', margin: 0, letterSpacing: '-0.5px' },
+    sub: { fontSize: 13, color: '#64748B', marginTop: 4 },
+    metricGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: 16, marginBottom: 20 },
+    card: { background: '#FFFFFF', borderRadius: 14, border: '1px solid #E2E8F0', padding: 18, boxShadow: '0 2px 10px rgba(0,0,0,0.03)', marginBottom: 20 },
+    metricVal: { fontSize: 24, fontWeight: 900, color: '#0F172A', marginTop: 6, letterSpacing: '-0.5px' },
     metricLabel: { fontSize: 11, color: '#64748B', fontWeight: 800, textTransform: 'uppercase' as const, letterSpacing: 0.5 },
     table: { width: '100%', borderCollapse: 'collapse' as const, textAlign: 'left' as const },
     th: { background: '#F8FAFC', padding: '10px 14px', fontSize: 11, fontWeight: 800, color: '#475569', textTransform: 'uppercase' as const, letterSpacing: 0.5, borderBottom: '1px solid #E2E8F0' },
@@ -144,47 +141,26 @@ export default function AdminDashboard() {
 
   return (
     <div style={s.page}>
-      {/* ADMIN CONTROL HUB NAVIGATION */}
-      <nav style={s.nav}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-          <div style={s.logo}>
-            <Link href="/" style={{ textDecoration: 'none', color: '#fff' }}>
-              Print<span style={s.logoAccent}>Hive</span>
-            </Link>{' '}
-            <span style={{ fontSize: 11, color: '#94A3B8', fontWeight: 600 }}>Admin Console</span>
-          </div>
-          <span style={s.badge}>🛡️ Administrator</span>
-        </div>
+      {/* SAAS SIDEBAR NAVIGATION */}
+      <DashboardSidebar
+        role="admin"
+        userEmail="admin@printhive.com"
+        userName="System Administrator"
+        signOutAction={async () => {
+          await supabase.auth.signOut()
+          router.push('/')
+        }}
+      />
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <img
-              src="https://api.dicebear.com/7.x/initials/svg?seed=Admin"
-              alt="Admin Avatar"
-              style={{ width: 32, height: 32, borderRadius: '50%', objectFit: 'cover', border: '2px solid #EF4444' }}
-            />
-            <div style={{ textAlign: 'left' }}>
-              <div style={{ color: '#fff', fontSize: 12, fontWeight: 800, lineHeight: 1.2 }}>
-                System Administrator
-              </div>
-              <div style={{ color: '#94A3B8', fontSize: 10, fontWeight: 600 }}>admin@printhive.com</div>
-            </div>
+      {/* MAIN CONTENT CANVAS */}
+      <main style={s.main}>
+        {/* DASHBOARD HEADER */}
+        <div style={s.headerRow}>
+          <div>
+            <h1 style={s.title}>System Control & Operations Hub</h1>
+            <div style={s.sub}>Platform moderation, catalog approvals, user management, and support desk</div>
           </div>
-          <Link
-            href="/"
-            style={{ color: '#94A3B8', fontSize: 11, fontWeight: 700, textDecoration: 'none', padding: '5px 10px', borderRadius: 6, background: 'rgba(255,255,255,0.05)' }}
-          >
-            Main Site
-          </Link>
-          <button
-            type="button"
-            onClick={handleSignOut}
-            style={{ background: '#EF4444', color: '#fff', border: 'none', padding: '6px 14px', borderRadius: 8, fontSize: 13, fontWeight: 800, cursor: 'pointer' }}
-          >
-            Sign Out
-          </button>
         </div>
-      </nav>
 
       {/* TOAST NOTIFICATION */}
       {toastMsg && (
@@ -207,14 +183,7 @@ export default function AdminDashboard() {
         </div>
       )}
 
-      {/* BODY */}
-      <div style={s.body}>
-        <div style={s.headerRow}>
-          <div>
-            <h1 style={s.title}>🛡️ Platform Administration & Operations</h1>
-            <div style={s.sub}>Real-time system health, support ticket queue, and escrow release controls</div>
-          </div>
-        </div>
+
 
         {/* METRICS ROW */}
         <div style={s.metricGrid}>
@@ -438,7 +407,7 @@ export default function AdminDashboard() {
             </table>
           </div>
         </div>
-      </div>
+      </main>
     </div>
   )
 }

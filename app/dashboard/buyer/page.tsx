@@ -3,6 +3,7 @@ import { requireRole } from '@/utils/supabase/require-role'
 import { redirect } from 'next/navigation'
 import { cookies } from 'next/headers'
 import Link from 'next/link'
+import DashboardSidebar from '@/components/DashboardSidebar'
 
 export default async function BuyerDashboard() {
   const { user } = await requireRole('buyer')
@@ -15,59 +16,32 @@ export default async function BuyerDashboard() {
   }
 
   const s: Record<string, React.CSSProperties> = {
-    page: { minHeight: '100vh', background: '#FAF8F5', color: '#0F172A', fontFamily: 'inherit' },
-    nav: { background: '#0F172A', padding: '0 20px', height: 56, display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.08)' },
-    logo: { fontSize: 18, fontWeight: 900, color: '#fff', letterSpacing: '-0.5px' },
-    logoAccent: { color: '#FF6B35' },
-    badge: { background: 'rgba(16, 185, 129, 0.15)', color: '#10B981', border: '1px solid rgba(16,185,129,0.3)', borderRadius: 99, padding: '3px 10px', fontSize: 11, fontWeight: 800, textTransform: 'uppercase' as const, letterSpacing: 0.5 },
-    body: { maxWidth: 1140, margin: '0 auto', padding: '20px 16px' },
-    headerRow: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap' as const, gap: 12 },
-    title: { fontSize: 20, fontWeight: 800, color: '#0F172A', margin: 0, letterSpacing: '-0.5px' },
-    sub: { fontSize: 13, color: '#64748B', marginTop: 2 },
-    primaryBtn: { background: 'linear-gradient(135deg, #FF6B35 0%, #F97316 100%)', color: '#fff', padding: '8px 16px', borderRadius: 10, fontWeight: 800, fontSize: 13, textDecoration: 'none', boxShadow: '0 4px 14px rgba(255,107,53,0.25)', display: 'inline-flex', alignItems: 'center', gap: 6 },
-    metricGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 12, marginBottom: 16 },
-    card: { background: '#FFFFFF', borderRadius: 14, border: '1px solid #E2E8F0', padding: 14, boxShadow: '0 2px 10px rgba(0,0,0,0.03)' },
-    metricVal: { fontSize: 20, fontWeight: 900, color: '#0F172A', marginTop: 4, letterSpacing: '-0.5px' },
+    page: { minHeight: '100vh', background: '#FAF8F5', color: '#0F172A', fontFamily: 'inherit', display: 'flex' },
+    main: { flex: 1, padding: '24px 32px', minWidth: 0, overflowX: 'hidden' },
+    headerRow: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, flexWrap: 'wrap' as const, gap: 16 },
+    title: { fontSize: 22, fontWeight: 900, color: '#0F172A', margin: 0, letterSpacing: '-0.5px' },
+    sub: { fontSize: 13, color: '#64748B', marginTop: 4 },
+    primaryBtn: { background: 'linear-gradient(135deg, #FF6B35 0%, #F97316 100%)', color: '#fff', padding: '10px 18px', borderRadius: 10, fontWeight: 800, fontSize: 13, textDecoration: 'none', boxShadow: '0 4px 14px rgba(255,107,53,0.25)', display: 'inline-flex', alignItems: 'center', gap: 6 },
+    metricGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: 16, marginBottom: 20 },
+    card: { background: '#FFFFFF', borderRadius: 14, border: '1px solid #E2E8F0', padding: 18, boxShadow: '0 2px 10px rgba(0,0,0,0.03)' },
+    metricVal: { fontSize: 24, fontWeight: 900, color: '#0F172A', marginTop: 6, letterSpacing: '-0.5px' },
     metricLabel: { fontSize: 11, color: '#64748B', fontWeight: 800, textTransform: 'uppercase' as const, letterSpacing: 0.5 },
-    actionCard: { background: '#FFFFFF', borderRadius: 14, border: '1px solid #E2E8F0', padding: 14, textDecoration: 'none', color: 'inherit', display: 'flex', alignItems: 'center', gap: 12, transition: 'all 0.2s' },
+    actionCard: { background: '#FFFFFF', borderRadius: 14, border: '1px solid #E2E8F0', padding: 18, textDecoration: 'none', color: 'inherit', display: 'flex', alignItems: 'center', gap: 14, transition: 'all 0.2s' },
   }
 
   return (
     <div style={s.page}>
-      {/* BUYER ACCOUNT NAVIGATION */}
-      <nav style={s.nav}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-          <div style={s.logo}>
-            <Link href="/" style={{ textDecoration: 'none', color: '#fff' }}>
-              Print<span style={s.logoAccent}>Hive</span>
-            </Link>{' '}
-            <span style={{ fontSize: 11, color: '#94A3B8', fontWeight: 600 }}>Buyer Account</span>
-          </div>
-          <span style={s.badge}>🛍️ Verified Buyer</span>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <img
-              src={user.user_metadata?.avatar_url || user.user_metadata?.picture || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(user.user_metadata?.full_name || user.email || 'User')}`}
-              alt="User Avatar"
-              style={{ width: 32, height: 32, borderRadius: '50%', objectFit: 'cover', border: '2px solid #FF6B35' }}
-            />
-            <div style={{ textAlign: 'left' }}>
-              <div style={{ color: '#fff', fontSize: 12, fontWeight: 800, lineHeight: 1.2 }}>
-                {user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0]}
-              </div>
-              <div style={{ color: '#94A3B8', fontSize: 10, fontWeight: 600 }}>{user.email}</div>
-            </div>
-          </div>
-          <form action={handleSignOut}>
-            <button type="submit" style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)', color: '#fff', padding: '5px 12px', borderRadius: 8, fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>
-              Sign Out
-            </button>
-          </form>
-        </div>
-      </nav>
+      {/* SAAS SIDEBAR NAVIGATION */}
+      <DashboardSidebar
+        role="buyer"
+        userEmail={user.email || ''}
+        userName={user.user_metadata?.full_name || user.user_metadata?.name}
+        avatarUrl={user.user_metadata?.avatar_url || user.user_metadata?.picture}
+        signOutAction={handleSignOut}
+      />
 
-      <div style={s.body}>
+      {/* MAIN CONTENT CANVAS */}
+      <main style={s.main}>
         {/* DASHBOARD HEADER */}
         <div style={s.headerRow}>
           <div>
@@ -78,7 +52,7 @@ export default async function BuyerDashboard() {
             <Link href="/shop" style={s.primaryBtn}>
               🛒 Browse Shop Marketplace
             </Link>
-            <Link href="/print-on-demand" style={{ background: '#F8FAFC', color: '#0F172A', border: '1px solid #CBD5E1', padding: '8px 16px', borderRadius: 10, fontWeight: 700, fontSize: 13, textDecoration: 'none' }}>
+            <Link href="/print-on-demand" style={{ background: '#FFFFFF', color: '#0F172A', border: '1px solid #CBD5E1', padding: '10px 18px', borderRadius: 10, fontWeight: 700, fontSize: 13, textDecoration: 'none' }}>
               🖨️ Instant Print Estimator
             </Link>
           </div>
@@ -189,7 +163,7 @@ export default async function BuyerDashboard() {
             </div>
           </div>
         </div>
-      </div>
+      </main>
     </div>
   )
 }
