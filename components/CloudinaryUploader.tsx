@@ -82,74 +82,79 @@ export default function CloudinaryUploader({
     startUpload(file)
   }
 
-  const startUpload = (file: File) => {
+  const startUpload = async (file: File) => {
     setUploading(true)
     setProgress(0)
     if (onUploadStart) onUploadStart()
 
-    const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || 'r8wjszjm'
     const ext = file.name.split('.').pop()?.toLowerCase() || ''
     const isModel = ALLOWED_MODELS.includes(ext)
-    const preset = isModel
-      ? (process.env.NEXT_PUBLIC_CLOUDINARY_PRESET_MODELS || 'printhive_models')
-      : (process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || 'printhive_uploads')
-    const resourceType = isModel ? 'raw' : 'auto'
 
-    // Try direct client-side upload to Cloudinary to bypass Vercel 4.5MB payload limit
-    const directUrl = `https://api.cloudinary.com/v1_1/${cloudName}/${resourceType}/upload`
-    const formData = new FormData()
-    formData.append('file', file)
-    formData.append('upload_preset', preset)
+    try {
+      // 1. Fetch signed parameters from backend signature route
+      const sigRes = await fetch(`/api/upload/signature?isModel=${isModel}`)
+      const sigData = await sigRes.json()
 
-    const xhr = new XMLHttpRequest()
-    xhrRef.current = xhr
+      if (sigData.success && sigData.signature) {
+        const directUrl = `https://api.cloudinary.com/v1_1/${sigData.cloud_name}/${sigData.resource_type}/upload`
+        const formData = new FormData()
+        formData.append('file', file)
+        formData.append('api_key', sigData.api_key)
+        formData.append('timestamp', sigData.timestamp.toString())
+        formData.append('signature', sigData.signature)
 
-    xhr.upload.onprogress = (event) => {
-      if (event.lengthComputable) {
-        const percent = Math.round((event.loaded / event.total) * 100)
-        setProgress(percent)
-      }
-    }
+        const xhr = new XMLHttpRequest()
+        xhrRef.current = xhr
 
-    xhr.onload = () => {
-      if (xhr.status >= 200 && xhr.status < 300) {
-        setUploading(false)
-        try {
-          const data = JSON.parse(xhr.responseText)
-          if (data.secure_url) {
-            const meta: CloudinaryMetadata = {
-              secure_url: data.secure_url,
-              cloudinary_public_id: data.public_id,
-              resource_type: data.resource_type || (isModel ? 'raw' : 'image'),
-              format: data.format || ext,
-              file_size: data.bytes || file.size,
-            }
-            setUploadedUrl(data.secure_url)
-            setUploadedMeta(meta)
-            if (onUploadSuccess) onUploadSuccess(meta)
-            return
+        xhr.upload.onprogress = (event) => {
+          if (event.lengthComputable) {
+            const percent = Math.round((event.loaded / event.total) * 100)
+            setProgress(percent)
           }
-        } catch {
-          // fallback to server upload
         }
+
+        xhr.onload = () => {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            setUploading(false)
+            try {
+              const data = JSON.parse(xhr.responseText)
+              if (data.secure_url) {
+                const meta: CloudinaryMetadata = {
+                  secure_url: data.secure_url,
+                  cloudinary_public_id: data.public_id,
+                  resource_type: data.resource_type || (isModel ? 'raw' : 'image'),
+                  format: data.format || ext,
+                  file_size: data.bytes || file.size,
+                }
+                setUploadedUrl(data.secure_url)
+                setUploadedMeta(meta)
+                if (onUploadSuccess) onUploadSuccess(meta)
+                return
+              }
+            } catch {
+              // fallback below
+            }
+          }
+          uploadViaServerRoute(file)
+        }
+
+        xhr.onerror = () => uploadViaServerRoute(file)
+        xhr.onabort = () => {
+          setUploading(false)
+          setProgress(0)
+          setErrorMsg('Upload canceled by user.')
+        }
+
+        xhr.open('POST', directUrl, true)
+        xhr.send(formData)
+        return
       }
-
-      // Fallback to server route /api/upload
-      uploadViaServerRoute(file)
+    } catch (err) {
+      console.warn('Signed direct upload fallback:', err)
     }
 
-    xhr.onerror = () => {
-      uploadViaServerRoute(file)
-    }
-
-    xhr.onabort = () => {
-      setUploading(false)
-      setProgress(0)
-      setErrorMsg('Upload canceled by user.')
-    }
-
-    xhr.open('POST', directUrl, true)
-    xhr.send(formData)
+    // Fallback to server route /api/upload
+    uploadViaServerRoute(file)
   }
 
   const uploadViaServerRoute = (file: File) => {
