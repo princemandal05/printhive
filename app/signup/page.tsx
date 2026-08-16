@@ -117,6 +117,9 @@ export default function SignupPage() {
       provider: 'google',
       options: {
         redirectTo: `${window.location.origin}/auth/callback?signup_role=${role}`,
+        queryParams: {
+          prompt: 'select_account',
+        },
       },
     })
     if (oauthErr) {
