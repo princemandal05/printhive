@@ -164,28 +164,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* INFINITE NEON MARQUEE TICKER */}
-      <div className="space-ticker-wrap">
-        <div className="space-ticker-track">
-          <div style={{ display: 'flex', gap: 40, alignItems: 'center' }}>
-            <div className="space-ticker-item">🧊 3D WebGL Model Viewer <span className="space-ticker-sep">×</span></div>
-            <div className="space-ticker-item">🤖 AI Slicing & Cost Estimator <span className="space-ticker-sep">×</span></div>
-            <div className="space-ticker-item">🛡️ 70/15/15 Escrow Protection <span className="space-ticker-sep">×</span></div>
-            <div className="space-ticker-item">🖨️ Nearby Printer Hub Matching <span className="space-ticker-sep">×</span></div>
-            <div className="space-ticker-item">🎨 Designer Passive Royalties <span className="space-ticker-sep">×</span></div>
-            <div className="space-ticker-item">📦 Fast Local Doorstep Delivery <span className="space-ticker-sep">×</span></div>
-          </div>
-          <div style={{ display: 'flex', gap: 40, alignItems: 'center' }}>
-            <div className="space-ticker-item">🧊 3D WebGL Model Viewer <span className="space-ticker-sep">×</span></div>
-            <div className="space-ticker-item">🤖 AI Slicing & Cost Estimator <span className="space-ticker-sep">×</span></div>
-            <div className="space-ticker-item">🛡️ 70/15/15 Escrow Protection <span className="space-ticker-sep">×</span></div>
-            <div className="space-ticker-item">🖨️ Nearby Printer Hub Matching <span className="space-ticker-sep">×</span></div>
-            <div className="space-ticker-item">🎨 Designer Passive Royalties <span className="space-ticker-sep">×</span></div>
-            <div className="space-ticker-item">📦 Fast Local Doorstep Delivery <span className="space-ticker-sep">×</span></div>
-          </div>
-        </div>
-      </div>
-
       {/* PROBLEM STATEMENT */}
       <section className="container section" style={{ padding: '80px 0' }}>
         <div style={{ textAlign: 'center', marginBottom: 48 }}>
