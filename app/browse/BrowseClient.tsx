@@ -113,7 +113,7 @@ export default function BrowseClient({ designs }: { designs: DesignRow[] }) {
             <p style={{ color: 'var(--text-sub)', fontSize: 14 }}>Try searching for &quot;Dragon&quot;, &quot;Organizer&quot;, or selecting &quot;All&quot; categories.</p>
           </div>
         ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 28 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 16 }}>
             {filtered.map((design) => (
               <Link
                 key={design.id}
@@ -121,18 +121,18 @@ export default function BrowseClient({ designs }: { designs: DesignRow[] }) {
                 style={{
                   background: 'var(--bg-card)',
                   border: '1px solid var(--border-color)',
-                  borderRadius: 24,
+                  borderRadius: 16,
                   overflow: 'hidden',
                   textDecoration: 'none',
                   color: 'inherit',
                   display: 'flex',
                   flexDirection: 'column',
-                  boxShadow: '0 8px 30px rgba(0,0,0,0.04)',
+                  boxShadow: '0 4px 20px rgba(0,0,0,0.06)',
                   transition: 'transform 0.2s, boxShadow 0.2s',
                 }}
               >
                 {/* 3D PREVIEW THUMBNAIL */}
-                <div style={{ height: 200, width: '100%', position: 'relative', background: '#0F172A', overflow: 'hidden' }}>
+                <div style={{ height: 150, width: '100%', position: 'relative', background: '#0F172A', overflow: 'hidden' }}>
                   <img
                     src={design.thumbnail_url || 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=600&q=80'}
                     alt={design.title}
@@ -140,37 +140,32 @@ export default function BrowseClient({ designs }: { designs: DesignRow[] }) {
                   />
 
                   {/* Category Pill */}
-                  <div style={{ position: 'absolute', top: 12, left: 12, background: 'rgba(139,92,246,0.9)', color: '#fff', fontSize: 11, fontWeight: 800, padding: '4px 12px', borderRadius: 99, backdropFilter: 'blur(4px)' }}>
+                  <div style={{ position: 'absolute', top: 8, left: 8, background: 'rgba(139,92,246,0.9)', color: '#fff', fontSize: 10, fontWeight: 800, padding: '3px 10px', borderRadius: 99, backdropFilter: 'blur(4px)' }}>
                     {design.category || '3D STL Model'}
-                  </div>
-
-                  {/* 3D Viewport Action Badge */}
-                  <div style={{ position: 'absolute', bottom: 12, right: 12, background: 'rgba(15,23,42,0.85)', color: '#fff', fontSize: 11, fontWeight: 800, padding: '4px 12px', borderRadius: 99, backdropFilter: 'blur(4px)', border: '1px solid rgba(255,255,255,0.2)' }}>
-                    Inspect 3D WebGL 🧊
                   </div>
                 </div>
 
                 {/* CARD CONTENT BODY */}
-                <div style={{ padding: 20, flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                <div style={{ padding: 14, flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                   <div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-                      <span style={{ fontSize: 12, color: 'var(--text-sub)', fontWeight: 600 }}>By {design.designer?.full_name || 'PrintHive Designer'}</span>
-                      <span style={{ fontSize: 13, fontWeight: 800, color: '#D97706' }}>⭐ {design.rating} ({design.rating_count})</span>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                      <span style={{ fontSize: 11, color: 'var(--text-sub)', fontWeight: 600 }}>By {design.designer?.full_name || 'PrintHive Designer'}</span>
+                      <span style={{ fontSize: 11, fontWeight: 800, color: '#D97706' }}>⭐ {design.rating}</span>
                     </div>
 
-                    <h3 style={{ fontSize: 17, fontWeight: 800, color: 'var(--text-main)', marginBottom: 12, lineHeight: 1.3, height: 44, overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    <h3 style={{ fontSize: 14, fontWeight: 800, color: 'var(--text-main)', marginBottom: 8, lineHeight: 1.3, height: 36, overflow: 'hidden', textOverflow: 'ellipsis' }}>
                       {design.title}
                     </h3>
                   </div>
 
                   <div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 10 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 6 }}>
                       <div>
-                        <div style={{ fontSize: 11, color: 'var(--text-sub)', fontWeight: 700, textTransform: 'uppercase' }}>Royalty Fee</div>
-                        <div style={{ fontSize: 20, fontWeight: 900, color: '#8B5CF6' }}>₹{design.price}</div>
+                        <div style={{ fontSize: 10, color: 'var(--text-sub)', fontWeight: 700, textTransform: 'uppercase' }}>Royalty</div>
+                        <div style={{ fontSize: 17, fontWeight: 900, color: '#8B5CF6' }}>₹{design.price}</div>
                       </div>
 
-                      <div style={{ background: '#F1F5F9', color: '#0F172A', padding: '8px 16px', borderRadius: 12, fontSize: 12, fontWeight: 800 }}>
+                      <div style={{ background: 'var(--bg-card-hover)', color: 'var(--text-main)', padding: '6px 12px', borderRadius: 10, fontSize: 11, fontWeight: 800 }}>
                         3D View →
                       </div>
                     </div>

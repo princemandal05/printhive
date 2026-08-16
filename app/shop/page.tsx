@@ -460,7 +460,7 @@ export default function ShopPage() {
             )}
           </div>
         ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 28 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 16 }}>
             {filtered.map((product) => {
               const saved = isInWishlist(product.id)
               return (
@@ -470,27 +470,27 @@ export default function ShopPage() {
                   style={{
                     background: 'var(--bg-card)',
                     border: '1px solid var(--border-color)',
-                    borderRadius: 24,
+                    borderRadius: 16,
                     overflow: 'hidden',
                     textDecoration: 'none',
                     color: 'inherit',
                     display: 'flex',
                     flexDirection: 'column',
-                    boxShadow: '0 8px 30px rgba(0,0,0,0.04)',
+                    boxShadow: '0 4px 20px rgba(0,0,0,0.06)',
                     transition: 'transform 0.2s, boxShadow 0.2s',
                   }}
                 >
-                  <div style={{ height: 210, width: '100%', position: 'relative', background: '#E2E8F0', overflow: 'hidden' }}>
+                  <div style={{ height: 150, width: '100%', position: 'relative', background: '#E2E8F0', overflow: 'hidden' }}>
                     <img src={product.image} alt={product.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                    <div style={{ position: 'absolute', top: 12, left: 12, background: 'rgba(15,23,42,0.85)', color: '#fff', fontSize: 11, fontWeight: 800, padding: '4px 12px', borderRadius: 99, backdropFilter: 'blur(4px)' }}>
+                    <div style={{ position: 'absolute', top: 8, left: 8, background: 'rgba(15,23,42,0.85)', color: '#fff', fontSize: 10, fontWeight: 800, padding: '3px 10px', borderRadius: 99, backdropFilter: 'blur(4px)' }}>
                       {product.category}
                     </div>
                   </div>
-                  <div style={{ padding: 20, flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                  <div style={{ padding: 14, flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                     <div>
-                      <h3 style={{ fontSize: 17, fontWeight: 800, color: 'var(--text-main)', marginBottom: 12 }}>{product.name}</h3>
+                      <h3 style={{ fontSize: 14, fontWeight: 800, color: 'var(--text-main)', marginBottom: 8, lineHeight: 1.3, height: 36, overflow: 'hidden', textOverflow: 'ellipsis' }}>{product.name}</h3>
                     </div>
-                    <div style={{ fontSize: 22, fontWeight: 900, color: 'var(--text-main)' }}>₹{product.price}</div>
+                    <div style={{ fontSize: 18, fontWeight: 900, color: '#FF6B35' }}>₹{product.price}</div>
                   </div>
                 </Link>
               )
