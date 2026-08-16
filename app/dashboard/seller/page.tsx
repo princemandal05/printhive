@@ -91,52 +91,52 @@ export default async function SellerDashboard() {
 
   const s: Record<string, React.CSSProperties> = {
     page: { minHeight: '100vh', background: '#FAF8F5', color: '#0F172A', fontFamily: 'inherit' },
-    nav: { background: '#0F172A', padding: '0 32px', height: 68, display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.08)' },
-    logo: { fontSize: 20, fontWeight: 900, color: '#fff', letterSpacing: '-0.5px' },
+    nav: { background: '#0F172A', padding: '0 20px', height: 56, display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.08)' },
+    logo: { fontSize: 18, fontWeight: 900, color: '#fff', letterSpacing: '-0.5px' },
     logoAccent: { color: '#FF6B35' },
-    badge: { background: 'rgba(255, 107, 53, 0.15)', color: '#FF6B35', border: '1px solid rgba(255,107,53,0.3)', borderRadius: 99, padding: '4px 14px', fontSize: 12, fontWeight: 800, textTransform: 'uppercase' as const, letterSpacing: 0.5 },
-    body: { maxWidth: 1240, margin: '0 auto', padding: '36px 24px' },
-    headerRow: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 32, flexWrap: 'wrap' as const, gap: 16 },
-    title: { fontSize: 28, fontWeight: 900, color: '#0F172A', margin: 0, letterSpacing: '-0.5px' },
-    sub: { fontSize: 14, color: '#64748B', marginTop: 4 },
-    primaryBtn: { background: 'linear-gradient(135deg, #FF6B35 0%, #F97316 100%)', color: '#fff', padding: '12px 24px', borderRadius: 12, fontWeight: 800, fontSize: 14, textDecoration: 'none', boxShadow: '0 6px 20px rgba(255,107,53,0.3)', transition: 'all 0.2s', display: 'inline-flex', alignItems: 'center', gap: 8 },
-    metricGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 20, marginBottom: 36 },
-    card: { background: '#FFFFFF', borderRadius: 20, border: '1px solid #E2E8F0', padding: 24, boxShadow: '0 8px 30px rgba(0,0,0,0.04)', transition: 'transform 0.2s' },
-    metricVal: { fontSize: 32, fontWeight: 900, color: '#0F172A', marginTop: 6, letterSpacing: '-0.5px' },
-    metricLabel: { fontSize: 13, color: '#64748B', fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: 0.5 },
-    changeTag: { fontSize: 12, fontWeight: 800, color: '#10B981', background: '#ECFDF5', padding: '2px 8px', borderRadius: 6, display: 'inline-block', marginTop: 8 },
-    sectionHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
-    sectionTitle: { fontSize: 18, fontWeight: 900, color: '#0F172A', display: 'flex', alignItems: 'center', gap: 10 },
+    badge: { background: 'rgba(255, 107, 53, 0.15)', color: '#FF6B35', border: '1px solid rgba(255,107,53,0.3)', borderRadius: 99, padding: '3px 10px', fontSize: 11, fontWeight: 800, textTransform: 'uppercase' as const, letterSpacing: 0.5 },
+    body: { maxWidth: 1140, margin: '0 auto', padding: '20px 16px' },
+    headerRow: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap' as const, gap: 12 },
+    title: { fontSize: 20, fontWeight: 800, color: '#0F172A', margin: 0, letterSpacing: '-0.5px' },
+    sub: { fontSize: 13, color: '#64748B', marginTop: 2 },
+    primaryBtn: { background: 'linear-gradient(135deg, #FF6B35 0%, #F97316 100%)', color: '#fff', padding: '8px 16px', borderRadius: 10, fontWeight: 800, fontSize: 13, textDecoration: 'none', boxShadow: '0 4px 14px rgba(255,107,53,0.25)', transition: 'all 0.2s', display: 'inline-flex', alignItems: 'center', gap: 6 },
+    metricGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 12, marginBottom: 16 },
+    card: { background: '#FFFFFF', borderRadius: 14, border: '1px solid #E2E8F0', padding: 14, boxShadow: '0 2px 10px rgba(0,0,0,0.03)', transition: 'transform 0.2s' },
+    metricVal: { fontSize: 20, fontWeight: 900, color: '#0F172A', marginTop: 4, letterSpacing: '-0.5px' },
+    metricLabel: { fontSize: 11, color: '#64748B', fontWeight: 800, textTransform: 'uppercase' as const, letterSpacing: 0.5 },
+    changeTag: { fontSize: 11, fontWeight: 800, color: '#10B981', background: '#ECFDF5', padding: '2px 6px', borderRadius: 6, display: 'inline-block', marginTop: 6 },
+    sectionHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 },
+    sectionTitle: { fontSize: 16, fontWeight: 800, color: '#0F172A', display: 'flex', alignItems: 'center', gap: 8 },
     table: { width: '100%', borderCollapse: 'collapse' as const, textAlign: 'left' as const },
-    th: { background: '#F8FAFC', padding: '14px 18px', fontSize: 12, fontWeight: 800, color: '#475569', textTransform: 'uppercase' as const, letterSpacing: 0.5, borderBottom: '1px solid #E2E8F0' },
-    td: { padding: '16px 18px', fontSize: 14, borderBottom: '1px solid #F1F5F9', color: '#334155' },
+    th: { background: '#F8FAFC', padding: '10px 14px', fontSize: 11, fontWeight: 800, color: '#475569', textTransform: 'uppercase' as const, letterSpacing: 0.5, borderBottom: '1px solid #E2E8F0' },
+    td: { padding: '12px 14px', fontSize: 13, borderBottom: '1px solid #F1F5F9', color: '#334155' },
   }
 
   return (
     <div style={s.page}>
       {/* SELLER CENTRAL NAVIGATION */}
       <nav style={s.nav}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
           <div style={s.logo}>
             <Link href="/" style={{ textDecoration: 'none', color: '#fff' }}>
               Print<span style={s.logoAccent}>Hive</span>
             </Link>{' '}
-            <span style={{ fontSize: 12, color: '#94A3B8', fontWeight: 600 }}>Seller Central</span>
+            <span style={{ fontSize: 11, color: '#94A3B8', fontWeight: 600 }}>Seller Central</span>
           </div>
           <span style={s.badge}>🏬 Store Active</span>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <img
               src={user.user_metadata?.avatar_url || user.user_metadata?.picture || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(user.user_metadata?.full_name || user.email || 'User')}`}
               alt="User Avatar"
-              style={{ width: 36, height: 36, borderRadius: '50%', objectFit: 'cover', border: '2px solid #FF6B35' }}
+              style={{ width: 32, height: 32, borderRadius: '50%', objectFit: 'cover', border: '2px solid #FF6B35' }}
             />
             <div style={{ textAlign: 'left' }}>
-              <div style={{ color: '#fff', fontSize: 13, fontWeight: 800, lineHeight: 1.2 }}>
+              <div style={{ color: '#fff', fontSize: 12, fontWeight: 800, lineHeight: 1.2 }}>
                 {user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0]}
               </div>
-              <div style={{ color: '#94A3B8', fontSize: 11, fontWeight: 600 }}>{user.email}</div>
+              <div style={{ color: '#94A3B8', fontSize: 10, fontWeight: 600 }}>{user.email}</div>
             </div>
           </div>
           <form action={handleSignOut}>
