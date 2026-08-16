@@ -164,6 +164,28 @@ export default function Home() {
         </div>
       </section>
 
+      {/* INFINITE NEON MARQUEE TICKER */}
+      <div className="space-ticker-wrap">
+        <div className="space-ticker-track">
+          <div style={{ display: 'flex', gap: 40, alignItems: 'center' }}>
+            <div className="space-ticker-item">🧊 3D WebGL Model Viewer <span className="space-ticker-sep">×</span></div>
+            <div className="space-ticker-item">🤖 AI Slicing & Cost Estimator <span className="space-ticker-sep">×</span></div>
+            <div className="space-ticker-item">🛡️ 70/15/15 Escrow Protection <span className="space-ticker-sep">×</span></div>
+            <div className="space-ticker-item">🖨️ Nearby Printer Hub Matching <span className="space-ticker-sep">×</span></div>
+            <div className="space-ticker-item">🎨 Designer Passive Royalties <span className="space-ticker-sep">×</span></div>
+            <div className="space-ticker-item">📦 Fast Local Doorstep Delivery <span className="space-ticker-sep">×</span></div>
+          </div>
+          <div style={{ display: 'flex', gap: 40, alignItems: 'center' }}>
+            <div className="space-ticker-item">🧊 3D WebGL Model Viewer <span className="space-ticker-sep">×</span></div>
+            <div className="space-ticker-item">🤖 AI Slicing & Cost Estimator <span className="space-ticker-sep">×</span></div>
+            <div className="space-ticker-item">🛡️ 70/15/15 Escrow Protection <span className="space-ticker-sep">×</span></div>
+            <div className="space-ticker-item">🖨️ Nearby Printer Hub Matching <span className="space-ticker-sep">×</span></div>
+            <div className="space-ticker-item">🎨 Designer Passive Royalties <span className="space-ticker-sep">×</span></div>
+            <div className="space-ticker-item">📦 Fast Local Doorstep Delivery <span className="space-ticker-sep">×</span></div>
+          </div>
+        </div>
+      </div>
+
       {/* PROBLEM STATEMENT */}
       <section className="container section" style={{ padding: '80px 0' }}>
         <div style={{ textAlign: 'center', marginBottom: 48 }}>
@@ -353,10 +375,10 @@ export default function Home() {
         <div className="grid grid-cols-4 gap-6">
           {STEPS.map((s) => (
             <div key={s.step} style={{ background: 'var(--bg-card)', padding: 28, borderRadius: 24, border: '1px solid var(--border-color)', boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
-              <div style={{ fontSize: 13, fontWeight: 900, color: '#ea580c', letterSpacing: 1, marginBottom: 12 }}>
-                STEP {s.step}
+              <div className="step-card-num">
+                {s.step}
               </div>
-              <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-main)', marginBottom: 8 }}>{s.title}</div>
+              <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--text-main)', marginBottom: 8 }}>{s.title}</div>
               <div style={{ fontSize: 13, color: 'var(--text-sub)', lineHeight: 1.6 }}>{s.text}</div>
             </div>
           ))}
