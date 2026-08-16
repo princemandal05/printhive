@@ -138,7 +138,7 @@
 }
 
 body {
-  background-color: #030712;
+  background-color: #05020d;
   color: var(--text-main);
   position: relative;
   overflow-x: hidden;
@@ -146,35 +146,26 @@ body {
   transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-/* SPACE THEME — NEBULA GLOW AURA LIGHTS */
-body::before {
-  content: "";
+/* DEEP VIOLET & MAGENTA BILLOWING NEBULA CLOUD LAYER */
+.space-nebula-bg {
   position: fixed;
-  top: -20%;
-  left: -10%;
-  width: 70vw;
-  height: 70vh;
-  background: radial-gradient(ellipse 60% 50% at 30% 20%, rgba(124, 58, 237, 0.18), transparent 70%);
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
   pointer-events: none;
   z-index: 0;
-  animation: spaceAuraPulse 18s ease-in-out infinite alternate;
+  background: 
+    radial-gradient(circle at 40% 18%, rgba(168, 85, 247, 0.45), rgba(107, 33, 168, 0.28) 35%, transparent 65%),
+    radial-gradient(circle at 22% 48%, rgba(217, 70, 239, 0.42), rgba(147, 51, 234, 0.22) 40%, transparent 65%),
+    radial-gradient(circle at 84% 36%, rgba(147, 51, 234, 0.46), rgba(59, 7, 100, 0.32) 45%, transparent 70%),
+    radial-gradient(circle at 62% 82%, rgba(192, 38, 211, 0.4), rgba(88, 28, 135, 0.26) 45%, transparent 70%),
+    radial-gradient(circle at 18% 88%, rgba(168, 85, 247, 0.38), rgba(107, 33, 168, 0.2) 40%, transparent 65%);
+  filter: blur(12px);
+  animation: spaceAuraPulse 20s ease-in-out infinite alternate;
 }
 
-body::after {
-  content: "";
-  position: fixed;
-  bottom: -20%;
-  right: -10%;
-  width: 70vw;
-  height: 70vh;
-  background: radial-gradient(ellipse 60% 50% at 70% 80%, rgba(6, 182, 212, 0.16), transparent 70%),
-              radial-gradient(ellipse 40% 40% at 50% 50%, rgba(247, 37, 133, 0.12), transparent 70%);
-  pointer-events: none;
-  z-index: 0;
-  animation: spaceAuraPulse 24s ease-in-out infinite alternate-reverse;
-}
-
-/* CELESTIAL STARRY BACKGROUND OVERLAY */
+/* CELESTIAL STARRY BACKGROUND OVERLAY (MATCHING SCREENSHOT) */
 .space-starfield {
   position: fixed;
   top: 0;
@@ -184,28 +175,33 @@ body::after {
   pointer-events: none;
   z-index: 0;
   background-image: 
-    radial-gradient(1.5px 1.5px at 10% 15%, rgba(255, 255, 255, 0.8), transparent),
-    radial-gradient(2px 2px at 25% 45%, rgba(0, 242, 254, 0.9), transparent),
-    radial-gradient(1px 1px at 35% 85%, rgba(255, 255, 255, 0.6), transparent),
-    radial-gradient(1.5px 1.5px at 50% 25%, rgba(157, 78, 221, 0.9), transparent),
-    radial-gradient(2px 2px at 65% 70%, rgba(255, 255, 255, 0.7), transparent),
-    radial-gradient(1px 1px at 75% 10%, rgba(76, 201, 240, 0.8), transparent),
-    radial-gradient(2px 2px at 85% 55%, rgba(247, 37, 133, 0.8), transparent),
-    radial-gradient(1.5px 1.5px at 92% 90%, rgba(255, 255, 255, 0.9), transparent);
+    radial-gradient(1.5px 1.5px at 8% 12%, rgba(255, 255, 255, 0.9), transparent),
+    radial-gradient(2px 2px at 18% 35%, rgba(232, 121, 249, 0.9), transparent),
+    radial-gradient(1px 1px at 28% 75%, rgba(255, 255, 255, 0.8), transparent),
+    radial-gradient(2.5px 2.5px at 38% 22%, rgba(192, 132, 252, 0.95), transparent),
+    radial-gradient(1.5px 1.5px at 48% 68%, rgba(255, 255, 255, 0.85), transparent),
+    radial-gradient(2px 2px at 58% 14%, rgba(244, 114, 182, 0.9), transparent),
+    radial-gradient(1px 1px at 68% 82%, rgba(255, 255, 255, 0.75), transparent),
+    radial-gradient(2px 2px at 78% 42%, rgba(168, 85, 247, 0.95), transparent),
+    radial-gradient(1.5px 1.5px at 88% 18%, rgba(255, 255, 255, 0.9), transparent),
+    radial-gradient(2px 2px at 94% 72%, rgba(217, 70, 239, 0.9), transparent),
+    radial-gradient(1px 1px at 14% 88%, rgba(255, 255, 255, 0.8), transparent),
+    radial-gradient(2.5px 2.5px at 44% 92%, rgba(192, 132, 252, 0.95), transparent),
+    radial-gradient(1.5px 1.5px at 82% 94%, rgba(255, 255, 255, 0.85), transparent);
   background-size: 100% 100%;
-  animation: spaceTwinkle 6s ease-in-out infinite alternate;
+  animation: spaceTwinkle 5s ease-in-out infinite alternate;
 }
 
 @keyframes spaceAuraPulse {
-  0% { transform: scale(1) translate(0, 0); opacity: 0.8; }
-  50% { transform: scale(1.1) translate(20px, 30px); opacity: 1; }
-  100% { transform: scale(0.95) translate(-15px, -20px); opacity: 0.85; }
+  0% { transform: scale(1) translate(0, 0); opacity: 0.88; }
+  50% { transform: scale(1.08) translate(15px, 20px); opacity: 1; }
+  100% { transform: scale(0.96) translate(-10px, -15px); opacity: 0.92; }
 }
 
 @keyframes spaceTwinkle {
-  0% { opacity: 0.6; transform: scale(1); }
-  50% { opacity: 1; transform: scale(1.02); }
-  100% { opacity: 0.7; transform: scale(0.99); }
+  0% { opacity: 0.65; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.01); }
+  100% { opacity: 0.75; transform: scale(0.99); }
 }
 
 .printhive-pill,

@@ -31,6 +31,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning className={`${spaceGrotesk.variable} ${sourceSans3.variable}`}>
       <body style={{ fontFamily: 'var(--font-body), sans-serif' }}>
+        <div className="space-nebula-bg" />
         <div className="space-starfield" />
         <Script
           id="printhive-theme-init"
