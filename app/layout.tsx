@@ -31,6 +31,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning className={`${spaceGrotesk.variable} ${sourceSans3.variable}`}>
       <body style={{ fontFamily: 'var(--font-body), sans-serif' }}>
+        <div className="space-starfield" />
         <Script
           id="printhive-theme-init"
           strategy="beforeInteractive"
@@ -38,7 +39,7 @@ export default function RootLayout({
             __html: `
               (function () {
                 var t = localStorage.getItem("printhive-theme") || localStorage.getItem("ateion-theme");
-                if (!t) t = "light";
+                if (!t) t = "dark";
                 document.documentElement.setAttribute("data-theme", t);
               })();
             `,
