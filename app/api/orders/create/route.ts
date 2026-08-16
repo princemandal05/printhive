@@ -137,6 +137,15 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Order created, but failed to record initial history' }, { status: 500 })
     }
 
+    // Send real-time notification to buyer
+    await supabase.from('notifications').insert({
+      user_id: user.id,
+      title: '📦 Order Placed',
+      message: `Your order #${order.id.slice(0, 8)} for ₹${total} has been placed. Complete payment to initiate printing.`,
+      type: 'order',
+      link: `/orders/${order.id}`,
+    })
+
     return NextResponse.json({ success: true, order }, { status: 201 })
   } catch (error: any) {
     console.error('Unexpected error in order creation API:', error)

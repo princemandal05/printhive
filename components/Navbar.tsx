@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useRouter, usePathname } from 'next/navigation'
 import { useStore } from '@/lib/cart-context'
 import { createClient } from '@/utils/supabase/client'
+import NotificationBell from '@/components/NotificationBell'
 
 const DASHBOARD_PATH: Record<string, string> = {
   buyer: '/dashboard/buyer',
@@ -271,6 +272,9 @@ export default function Navbar() {
               </span>
             )}
           </Link>
+
+          {/* Real-Time Notification Bell */}
+          <NotificationBell />
 
           {/* Logged In Controls: Dashboard Button + Round Avatar Circle Dropdown */}
           {(user || userRole) ? (

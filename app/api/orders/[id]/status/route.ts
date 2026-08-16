@@ -121,6 +121,17 @@ export async function PATCH(
       return NextResponse.json({ error: 'Status updated, but failed to record audit trail' }, { status: 500 })
     }
 
+    // Send real-time notification to buyer about order status change
+    if (order.buyer_id) {
+      await supabase.from('notifications').insert({
+        user_id: order.buyer_id,
+        title: `📦 Order ${status}`,
+        message: `Your order #${id.slice(0, 8)} status was updated to ${status}.`,
+        type: 'order',
+        link: `/orders/${id}`,
+      })
+    }
+
     return NextResponse.json({ success: true, order: updatedOrder })
   } catch (error: any) {
     console.error('Unexpected error in order status PATCH handler:', error)
