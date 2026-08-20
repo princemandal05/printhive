@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/utils/supabase/client'
-import DashboardSidebar from '@/components/DashboardSidebar'
+import Navbar from '@/components/Navbar'
 
 type UserRecord = {
   id: string
@@ -123,37 +123,29 @@ export default function AdminDashboard() {
   const openComplaintsCount = complaints.filter((c) => c.status === 'open').length
 
   const s: Record<string, React.CSSProperties> = {
-    page: { minHeight: '100vh', background: '#FAF8F5', color: '#0F172A', fontFamily: 'inherit', display: 'flex' },
-    main: { flex: 1, padding: '24px 32px', minWidth: 0, overflowX: 'hidden' },
-    headerRow: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, flexWrap: 'wrap' as const, gap: 16 },
-    title: { fontSize: 22, fontWeight: 900, color: '#0F172A', margin: 0, letterSpacing: '-0.5px' },
-    sub: { fontSize: 13, color: '#64748B', marginTop: 4 },
-    metricGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: 16, marginBottom: 20 },
-    card: { background: '#FFFFFF', borderRadius: 14, border: '1px solid #E2E8F0', padding: 18, boxShadow: '0 2px 10px rgba(0,0,0,0.03)', marginBottom: 20 },
-    metricVal: { fontSize: 24, fontWeight: 900, color: '#0F172A', marginTop: 6, letterSpacing: '-0.5px' },
-    metricLabel: { fontSize: 11, color: '#64748B', fontWeight: 800, textTransform: 'uppercase' as const, letterSpacing: 0.5 },
+    page: { minHeight: '100vh', background: 'var(--bg-canvas)', color: 'var(--text-main)', fontFamily: 'inherit' },
+    body: { maxWidth: 1280, margin: '0 auto', padding: '28px 24px' },
+    headerRow: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24, flexWrap: 'wrap' as const, gap: 16 },
+    title: { fontSize: 24, fontWeight: 900, color: 'var(--text-main)', margin: 0, letterSpacing: '-0.5px' },
+    sub: { fontSize: 13, color: 'var(--text-sub)', marginTop: 4 },
+    metricGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 16, marginBottom: 24 },
+    card: { background: 'var(--bg-card)', borderRadius: 16, border: '1px solid var(--border-color)', padding: 20, boxShadow: '0 4px 20px rgba(0,0,0,0.04)', marginBottom: 24 },
+    metricVal: { fontSize: 26, fontWeight: 900, color: 'var(--text-main)', marginTop: 6, letterSpacing: '-0.5px' },
+    metricLabel: { fontSize: 11, color: 'var(--text-sub)', fontWeight: 800, textTransform: 'uppercase' as const, letterSpacing: 0.5 },
     table: { width: '100%', borderCollapse: 'collapse' as const, textAlign: 'left' as const },
-    th: { background: '#F8FAFC', padding: '10px 14px', fontSize: 11, fontWeight: 800, color: '#475569', textTransform: 'uppercase' as const, letterSpacing: 0.5, borderBottom: '1px solid #E2E8F0' },
-    td: { padding: '12px 14px', fontSize: 13, borderBottom: '1px solid #F1F5F9', color: '#334155' },
+    th: { background: 'var(--bg-card)', padding: '12px 16px', fontSize: 11, fontWeight: 800, color: 'var(--text-sub)', textTransform: 'uppercase' as const, letterSpacing: 0.5, borderBottom: '1px solid var(--border-color)' },
+    td: { padding: '14px 16px', fontSize: 13, borderBottom: '1px solid var(--border-color)', color: 'var(--text-main)' },
     rowBtn: { background: '#0F172A', color: '#fff', border: 'none', borderRadius: 8, padding: '6px 14px', fontSize: 12, fontWeight: 800, cursor: 'pointer', transition: 'all 0.2s' },
-    rowBtnGhost: { background: '#F1F5F9', border: '1px solid #CBD5E1', borderRadius: 8, padding: '6px 14px', fontSize: 12, fontWeight: 700, cursor: 'pointer', color: '#475569' },
+    rowBtnGhost: { background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 8, padding: '6px 14px', fontSize: 12, fontWeight: 700, cursor: 'pointer', color: 'var(--text-main)' },
   }
 
   return (
     <div style={s.page}>
-      {/* SAAS SIDEBAR NAVIGATION */}
-      <DashboardSidebar
-        role="admin"
-        userEmail="admin@printhive.com"
-        userName="System Administrator"
-        signOutAction={async () => {
-          await supabase.auth.signOut()
-          router.push('/')
-        }}
-      />
+      {/* SITE TOP NAVBAR */}
+      <Navbar />
 
-      {/* MAIN CONTENT CANVAS */}
-      <main style={s.main}>
+      {/* MAIN CONTENT CONTAINER */}
+      <div style={s.body}>
         {/* DASHBOARD HEADER */}
         <div style={s.headerRow}>
           <div>
@@ -407,7 +399,7 @@ export default function AdminDashboard() {
             </table>
           </div>
         </div>
-      </main>
+      </div>
     </div>
   )
 }

@@ -3,8 +3,7 @@ import { requireRole } from '@/utils/supabase/require-role'
 import { redirect } from 'next/navigation'
 import { cookies } from 'next/headers'
 import Link from 'next/link'
-
-import DashboardSidebar from '@/components/DashboardSidebar'
+import Navbar from '@/components/Navbar'
 
 interface SellerProductCard {
   id: string
@@ -92,45 +91,39 @@ export default async function SellerDashboard() {
   const activeListings = products.length
 
   const s: Record<string, React.CSSProperties> = {
-    page: { minHeight: '100vh', background: '#FAF8F5', color: '#0F172A', fontFamily: 'inherit', display: 'flex' },
-    main: { flex: 1, padding: '24px 32px', minWidth: 0, overflowX: 'hidden' },
-    headerRow: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, flexWrap: 'wrap' as const, gap: 16 },
-    title: { fontSize: 22, fontWeight: 900, color: '#0F172A', margin: 0, letterSpacing: '-0.5px' },
-    sub: { fontSize: 13, color: '#64748B', marginTop: 4 },
-    primaryBtn: { background: 'linear-gradient(135deg, #FF6B35 0%, #F97316 100%)', color: '#fff', padding: '10px 18px', borderRadius: 10, fontWeight: 800, fontSize: 13, textDecoration: 'none', boxShadow: '0 4px 14px rgba(255,107,53,0.25)', transition: 'all 0.2s', display: 'inline-flex', alignItems: 'center', gap: 6 },
-    metricGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: 16, marginBottom: 20 },
-    card: { background: '#FFFFFF', borderRadius: 14, border: '1px solid #E2E8F0', padding: 18, boxShadow: '0 2px 10px rgba(0,0,0,0.03)', transition: 'transform 0.2s' },
-    metricVal: { fontSize: 24, fontWeight: 900, color: '#0F172A', marginTop: 6, letterSpacing: '-0.5px' },
-    metricLabel: { fontSize: 11, color: '#64748B', fontWeight: 800, textTransform: 'uppercase' as const, letterSpacing: 0.5 },
+    page: { minHeight: '100vh', background: 'var(--bg-canvas)', color: 'var(--text-main)', fontFamily: 'inherit' },
+    body: { maxWidth: 1280, margin: '0 auto', padding: '28px 24px' },
+    headerRow: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24, flexWrap: 'wrap' as const, gap: 16 },
+    title: { fontSize: 24, fontWeight: 900, color: 'var(--text-main)', margin: 0, letterSpacing: '-0.5px' },
+    sub: { fontSize: 13, color: 'var(--text-sub)', marginTop: 4 },
+    primaryBtn: { background: 'linear-gradient(135deg, #FF6B35 0%, #F97316 100%)', color: '#fff', padding: '10px 20px', borderRadius: 12, fontWeight: 800, fontSize: 13, textDecoration: 'none', boxShadow: '0 4px 14px rgba(255,107,53,0.25)', transition: 'all 0.2s', display: 'inline-flex', alignItems: 'center', gap: 6 },
+    metricGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 16, marginBottom: 24 },
+    card: { background: 'var(--bg-card)', borderRadius: 16, border: '1px solid var(--border-color)', padding: 20, boxShadow: '0 4px 20px rgba(0,0,0,0.04)', transition: 'transform 0.2s' },
+    metricVal: { fontSize: 26, fontWeight: 900, color: 'var(--text-main)', marginTop: 6, letterSpacing: '-0.5px' },
+    metricLabel: { fontSize: 11, color: 'var(--text-sub)', fontWeight: 800, textTransform: 'uppercase' as const, letterSpacing: 0.5 },
     changeTag: { fontSize: 11, fontWeight: 800, color: '#10B981', background: '#ECFDF5', padding: '2px 6px', borderRadius: 6, display: 'inline-block', marginTop: 6 },
-    sectionHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 },
-    sectionTitle: { fontSize: 16, fontWeight: 800, color: '#0F172A', display: 'flex', alignItems: 'center', gap: 8 },
+    sectionHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
+    sectionTitle: { fontSize: 16, fontWeight: 800, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: 8 },
     table: { width: '100%', borderCollapse: 'collapse' as const, textAlign: 'left' as const },
-    th: { background: '#F8FAFC', padding: '10px 14px', fontSize: 11, fontWeight: 800, color: '#475569', textTransform: 'uppercase' as const, letterSpacing: 0.5, borderBottom: '1px solid #E2E8F0' },
-    td: { padding: '12px 14px', fontSize: 13, borderBottom: '1px solid #F1F5F9', color: '#334155' },
+    th: { background: 'var(--bg-card)', padding: '12px 16px', fontSize: 11, fontWeight: 800, color: 'var(--text-sub)', textTransform: 'uppercase' as const, letterSpacing: 0.5, borderBottom: '1px solid var(--border-color)' },
+    td: { padding: '14px 16px', fontSize: 13, borderBottom: '1px solid var(--border-color)', color: 'var(--text-main)' },
   }
 
   return (
     <div style={s.page}>
-      {/* SAAS SIDEBAR NAVIGATION */}
-      <DashboardSidebar
-        role="seller"
-        userEmail={user.email || ''}
-        userName={user.user_metadata?.full_name || user.user_metadata?.name}
-        avatarUrl={user.user_metadata?.avatar_url || user.user_metadata?.picture}
-        signOutAction={handleSignOut}
-      />
+      {/* SITE TOP NAVBAR */}
+      <Navbar />
 
-      {/* MAIN CONTENT CANVAS */}
-      <main style={s.main}>
+      {/* MAIN CONTENT CONTAINER */}
+      <div style={s.body}>
         {/* DASHBOARD HEADER */}
         <div style={s.headerRow}>
           <div>
             <h1 style={s.title}>Store Overview & Analytics</h1>
             <div style={s.sub}>Manage ready-made physical products, track orders, and view Escrow payouts</div>
           </div>
-          <div style={{ display: 'flex', gap: 10 }}>
-            <Link href="/shop" style={{ background: '#FFFFFF', color: '#0F172A', border: '1px solid #CBD5E1', padding: '10px 18px', borderRadius: 10, fontWeight: 700, fontSize: 13, textDecoration: 'none' }}>
+          <div style={{ display: 'flex', gap: 12 }}>
+            <Link href="/shop" style={{ background: 'var(--bg-card)', color: 'var(--text-main)', border: '1px solid var(--border-color)', padding: '10px 18px', borderRadius: 12, fontWeight: 700, fontSize: 13, textDecoration: 'none' }}>
               🏪 View Live Shop
             </Link>
             <Link href="/dashboard/seller/products/new" style={s.primaryBtn}>
@@ -294,7 +287,7 @@ export default async function SellerDashboard() {
             </div>
           </div>
         </div>
-      </main>
+      </div>
     </div>
   )
 }
