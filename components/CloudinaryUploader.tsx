@@ -101,6 +101,8 @@ export default function CloudinaryUploader({
         formData.append('file', file)
         formData.append('api_key', sigData.api_key)
         formData.append('timestamp', sigData.timestamp.toString())
+        if (sigData.folder) formData.append('folder', sigData.folder)
+        if (sigData.public_id) formData.append('public_id', sigData.public_id)
         formData.append('signature', sigData.signature)
 
         const xhr = new XMLHttpRequest()

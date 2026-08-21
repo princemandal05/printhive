@@ -61,9 +61,13 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Razorpay order ID mismatch' }, { status: 400 })
     }
 
-    // 4. HMAC-SHA256 Constant-Time Signature Verification
+    // 4. HMAC-SHA256 Constant-Time Signature Verification (Fail-Closed)
     const keySecret = process.env.RAZORPAY_KEY_SECRET
-    const allowMock = process.env.ALLOW_MOCK_PAYMENTS === 'true' || process.env.NODE_ENV === 'development'
+    const allowMock = process.env.ALLOW_MOCK_PAYMENTS === 'true'
+
+    if (!keySecret && !allowMock) {
+      return NextResponse.json({ error: 'Razorpay secret key not configured on server' }, { status: 500 })
+    }
 
     if (keySecret) {
       if (!razorpay_signature || typeof razorpay_signature !== 'string') {
@@ -85,8 +89,6 @@ export async function POST(request: Request) {
       if (!isSignatureValid) {
         return NextResponse.json({ error: 'Invalid payment signature verification' }, { status: 400 })
       }
-    } else if (!allowMock) {
-      return NextResponse.json({ error: 'Razorpay Key Secret not configured on server' }, { status: 500 })
     }
 
     // 5. Payment Idempotency Check: Prevent duplicate payment captures

@@ -60,11 +60,11 @@ export async function middleware(request: NextRequest) {
     return response
   }
 
-  // Check authentication tokens & role cookies
-  const authRole = request.cookies.get('printhive_auth_role')?.value
-  const hasSupabaseToken = request.cookies.getAll().some((c) => c.name.includes('auth-token'))
+  // Check authentication tokens & guest demo cookies (UX Redirect Gate)
+  const hasGuestRole = request.cookies.get('printhive_guest_role')?.value
+  const hasSupabaseToken = request.cookies.getAll().some((c) => c.name.includes('auth-token') || c.name.startsWith('sb-'))
 
-  const isAuthenticated = Boolean(authRole || hasSupabaseToken)
+  const isAuthenticated = Boolean(hasGuestRole || hasSupabaseToken)
 
   // Redirect unauthenticated users attempting to access protected routes to /login
   if (!isAuthenticated) {

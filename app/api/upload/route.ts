@@ -86,12 +86,12 @@ export async function POST(request: Request) {
       )
     }
 
-    const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || 'r8wjszjm'
-    const apiKey = process.env.CLOUDINARY_API_KEY || '769894611263915'
+    const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME
+    const apiKey = process.env.CLOUDINARY_API_KEY
 
-    if (!cloudName) {
+    if (!cloudName || !apiKey) {
       return NextResponse.json(
-        { success: false, error: 'Cloudinary configuration missing: cloudName required' },
+        { success: false, error: 'Cloudinary environment configuration missing (NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME or CLOUDINARY_API_KEY)' },
         { status: 500 }
       )
     }
