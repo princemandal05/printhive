@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import crypto from 'crypto'
 import { createAdminClient } from '@/utils/supabase/server'
+import { settlePayment } from '@/utils/payment-settlement'
 
 export async function POST(request: Request) {
   try {
@@ -30,40 +31,26 @@ export async function POST(request: Request) {
     const event = payload.event
     const payment = payload.payload?.payment?.entity
     const paymentId = payment?.id
-    const orderId = payment?.order_id || payload.payload?.order?.entity?.id
+    const razorpayOrderId = payment?.order_id || payload.payload?.order?.entity?.id
 
-    // Use Service Role Admin client to bypass RLS for webhook updates
     const supabase = await createAdminClient()
 
-    // Handle Order & Escrow Status Updates Asynchronously with Idempotency
+    // Handle Order & Escrow Status Updates Asynchronously with Shared Atomic Settlement
     if (event === 'payment.captured' || event === 'order.paid') {
-      if (orderId) {
-        // Check if this payment event was already processed (Idempotency)
-        const { data: existingOrder } = await supabase
-          .from('orders')
-          .select('id, status, razorpay_payment_id')
-          .eq('razorpay_order_id', orderId)
-          .maybeSingle()
+      if (paymentId) {
+        const settlement = await settlePayment(supabase, {
+          razorpay_order_id: razorpayOrderId,
+          razorpay_payment_id: paymentId,
+          razorpay_signature: signature,
+          actor_id: 'razorpay_webhook',
+        })
 
-        if (existingOrder && existingOrder.razorpay_payment_id === paymentId && existingOrder.status === 'confirmed') {
-          // Already processed, return 200 OK
-          return NextResponse.json({ success: true, message: 'Event already processed' })
+        if (!settlement.success) {
+          console.error('Razorpay Webhook settlement failure:', settlement.error)
+          return NextResponse.json({ error: settlement.error || 'Settlement failed' }, { status: settlement.status || 500 })
         }
 
-        const { error } = await supabase
-          .from('orders')
-          .update({
-            status: 'confirmed',
-            escrow_status: 'held_in_escrow',
-            razorpay_payment_id: paymentId || null,
-            updated_at: new Date().toISOString(),
-          })
-          .eq('razorpay_order_id', orderId)
-
-        if (error) {
-          console.error('Razorpay Webhook DB update error:', error.message)
-          return NextResponse.json({ error: 'Failed to update order status in database' }, { status: 500 })
-        }
+        return NextResponse.json({ success: true, message: 'Webhook payment settled', idempotent: settlement.idempotent })
       }
     }
 

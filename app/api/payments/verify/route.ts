@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import crypto from 'crypto'
 import { createClient, createAdminClient } from '@/utils/supabase/server'
-import { updateOrderStatus } from '@/utils/order-lifecycle'
+import { settlePayment } from '@/utils/payment-settlement'
 
 export async function POST(request: Request) {
   try {
@@ -32,19 +32,16 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Missing or invalid Razorpay payment parameters' }, { status: 400 })
     }
 
-    // 3. Query order details from database & verify ownership — NEVER trust client-supplied amount
+    const targetOrderId = order_id.trim()
+
+    // 3. Query order details from database & verify ownership
     const { data: order, error: orderFetchErr } = await supabase
       .from('orders')
       .select('*')
-      .eq('id', order_id.trim())
+      .eq('id', targetOrderId)
       .maybeSingle()
 
-    if (orderFetchErr) {
-      console.error('Failed to fetch order for verification:', orderFetchErr.message)
-      return NextResponse.json({ error: 'Database query failed' }, { status: 500 })
-    }
-
-    if (!order) {
+    if (orderFetchErr || !order) {
       return NextResponse.json({ error: 'Order not found' }, { status: 404 })
     }
 
@@ -56,7 +53,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Forbidden: You do not own this order' }, { status: 403 })
     }
 
-    // Compare stored order's razorpay_order_id with submitted razorpay_order_id
     if (order.razorpay_order_id && order.razorpay_order_id !== razorpay_order_id) {
       return NextResponse.json({ error: 'Razorpay order ID mismatch' }, { status: 400 })
     }
@@ -91,126 +87,25 @@ export async function POST(request: Request) {
       }
     }
 
-    // 5. Payment Idempotency Check: Prevent duplicate payment captures
-    const { data: existingTxn } = await supabase
-      .from('transactions')
-      .select('id, status')
-      .eq('razorpay_payment_id', razorpay_payment_id)
-      .eq('status', 'captured')
-      .maybeSingle()
-
-    if (existingTxn) {
-      return NextResponse.json({
-        success: true,
-        verified: true,
-        message: 'Payment already processed and verified.',
-        idempotent: true,
-        order_id,
-      })
-    }
-
-    // 6. Precise Integer Paisa Arithmetic loaded from DB amount
-    const orderAmount = Number(order.total_amount || order.total_price || order.total || order.price || order.amount)
-    if (!orderAmount || isNaN(orderAmount) || orderAmount <= 0) {
-      return NextResponse.json({ error: 'Invalid order total in database' }, { status: 400 })
-    }
-
-    const amountInPaisa = Math.round(orderAmount * 100)
-    const printerPayoutPaisa = Math.floor(amountInPaisa * 0.70)
-    const designerRoyaltyPaisa = Math.floor(amountInPaisa * 0.15)
-    const platformFeePaisa = amountInPaisa - (printerPayoutPaisa + designerRoyaltyPaisa)
-
-    const printerPayout = printerPayoutPaisa / 100
-    const designerRoyalty = designerRoyaltyPaisa / 100
-    const platformFee = platformFeePaisa / 100
-
-    // 7. Atomic DB Transactions & Escrow Payout Updates
-    const { error: txnErr } = await adminSupabase.from('transactions').insert({
-      order_id,
+    // 5. Shared Atomic Payment Settlement
+    const settlement = await settlePayment(adminSupabase, {
+      order_id: targetOrderId,
       razorpay_order_id,
       razorpay_payment_id,
-      razorpay_signature: razorpay_signature || 'verified_server',
-      amount: orderAmount,
-      currency: 'INR',
-      status: 'captured',
-      printer_payout: printerPayout,
-      designer_royalty: designerRoyalty,
-      platform_fee: platformFee,
-      created_at: new Date().toISOString(),
+      razorpay_signature: typeof razorpay_signature === 'string' ? razorpay_signature : 'verified_server',
+      actor_id: user.id,
     })
 
-    if (txnErr) {
-      console.error('Failed to log captured transaction:', txnErr.message)
-      return NextResponse.json({ error: 'Failed to record transaction in database' }, { status: 500 })
-    }
-
-    // 8. Prevent duplicate Escrow Payout records
-    const { data: existingEscrow } = await adminSupabase
-      .from('escrow_payouts')
-      .select('id')
-      .eq('order_id', order_id)
-
-    if (!existingEscrow || existingEscrow.length === 0) {
-      const { error: escrowErr } = await adminSupabase.from('escrow_payouts').insert([
-        {
-          order_id,
-          role: 'printer_owner',
-          amount: printerPayout,
-          status: 'held',
-          created_at: new Date().toISOString(),
-        },
-        {
-          order_id,
-          role: 'designer',
-          amount: designerRoyalty,
-          status: 'held',
-          created_at: new Date().toISOString(),
-        },
-      ])
-
-      if (escrowErr) {
-        console.error('Failed to record escrow payouts:', escrowErr.message)
-        return NextResponse.json({ error: 'Failed to record escrow payouts in database' }, { status: 500 })
-      }
-    }
-
-    // 9. Atomic Lifecycle Transitions: PENDING_PAYMENT -> PAYMENT_CONFIRMED -> FINDING_PRINTER
-    const step1 = await updateOrderStatus(
-      adminSupabase,
-      order_id,
-      'PAYMENT_CONFIRMED',
-      'Payment verified server-side with HMAC SHA-256.',
-      user.id,
-      order.status
-    )
-
-    if (!step1.success) {
-      return NextResponse.json({ error: step1.error || 'Failed to update status to PAYMENT_CONFIRMED' }, { status: 500 })
-    }
-
-    const step2 = await updateOrderStatus(
-      adminSupabase,
-      order_id,
-      'FINDING_PRINTER',
-      'Searching Leaflet OpenStreetMap for nearby printer hub.',
-      user.id,
-      'PAYMENT_CONFIRMED'
-    )
-
-    if (!step2.success) {
-      return NextResponse.json({ error: step2.error || 'Failed to update status to FINDING_PRINTER' }, { status: 500 })
+    if (!settlement.success) {
+      return NextResponse.json({ error: settlement.error || 'Payment settlement failed' }, { status: settlement.status || 500 })
     }
 
     return NextResponse.json({
       success: true,
       verified: true,
-      order_id,
-      escrow: {
-        status: 'held_in_escrow',
-        printerPayout,
-        designerRoyalty,
-        platformFee,
-      },
+      idempotent: settlement.idempotent || false,
+      order_id: targetOrderId,
+      escrow: settlement.escrow || { status: 'held_in_escrow' },
     })
   } catch (err: unknown) {
     const error = err as Error

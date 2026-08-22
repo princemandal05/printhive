@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import { createServerClient } from '@supabase/ssr'
 
 // Public routes accessible without login
 const PUBLIC_ROUTES = [
@@ -22,9 +23,25 @@ const PUBLIC_ROUTES = [
   '/api/auth/callback',
 ]
 
+// Explicitly allowed guest demo portal routes
+const GUEST_ALLOWED_PORTALS = [
+  '/dashboard/buyer',
+  '/dashboard/designer',
+  '/dashboard/printer-owner',
+  '/dashboard/seller',
+  '/dashboard/designer/upload',
+  '/dashboard/seller/products/new',
+  '/requests/new',
+  '/print-on-demand',
+]
+
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
-  const response = NextResponse.next()
+  let response = NextResponse.next({
+    request: {
+      headers: request.headers,
+    },
+  })
 
   // Inject Enterprise Security Headers (XSS, Clickjacking, MIME-Sniffing & CSP protection)
   response.headers.set('X-Frame-Options', 'DENY')
@@ -60,20 +77,54 @@ export async function middleware(request: NextRequest) {
     return response
   }
 
-  // Check authentication tokens & guest demo cookies (UX Redirect Gate)
-  const hasGuestRole = request.cookies.get('printhive_guest_role')?.value
-  const hasSupabaseToken = request.cookies.getAll().some((c) => c.name.includes('auth-token') || c.name.startsWith('sb-'))
+  // Validate live Supabase session server-side
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co'
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-anon-key'
 
-  const isAuthenticated = Boolean(hasGuestRole || hasSupabaseToken)
+  const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
+    cookies: {
+      getAll() {
+        return request.cookies.getAll()
+      },
+      setAll(cookiesToSet) {
+        cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
+        response = NextResponse.next({
+          request,
+        })
+        cookiesToSet.forEach(({ name, value, options }) =>
+          response.cookies.set(name, value, options)
+        )
+      },
+    },
+  })
 
-  // Redirect unauthenticated users attempting to access protected routes to /login
-  if (!isAuthenticated) {
-    const loginUrl = new URL('/login', request.url)
-    loginUrl.searchParams.set('next', pathname)
-    return NextResponse.redirect(loginUrl)
+  let hasValidSession = false
+  try {
+    const { data: { user }, error } = await supabase.auth.getUser()
+    if (user && !error) {
+      hasValidSession = true
+    }
+  } catch (e) {
+    // Session validation error or invalid/stale/expired token
+    hasValidSession = false
   }
 
-  return response
+  if (hasValidSession) {
+    return response
+  }
+
+  // Check guest demo mode: guest role bypass is strictly restricted to GUEST_ALLOWED_PORTALS
+  const guestRole = request.cookies.get('printhive_guest_role')?.value
+  const isGuestAllowedRoute = GUEST_ALLOWED_PORTALS.some((route) => pathname.startsWith(route))
+
+  if (guestRole && isGuestAllowedRoute && !pathname.startsWith('/dashboard/admin')) {
+    return response
+  }
+
+  // Redirect unauthenticated / invalid / expired users attempting to access protected routes to /login
+  const loginUrl = new URL('/login', request.url)
+  loginUrl.searchParams.set('next', pathname)
+  return NextResponse.redirect(loginUrl)
 }
 
 export const config = {

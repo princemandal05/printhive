@@ -26,7 +26,12 @@ jobs:
       - name: Run TypeScript Type Check
         run: npx tsc --noEmit
 
-      - name: Run Next.js Production Build Validation
+      - name: Run Secret-Free Next.js Build Validation (Pull Request)
+        if: github.event_name == 'pull_request'
+        run: npx next build
+
+      - name: Run Secret-Mapped Next.js Production Build Validation (Push to Main)
+        if: github.event_name == 'push'
         run: npx next build
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}

@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import crypto from 'crypto'
 
 // Maximum file upload limits
 const MAX_IMAGE_SIZE = 10 * 1024 * 1024 // 10MB for images
@@ -118,10 +119,16 @@ export async function POST(request: Request) {
       )
     }
 
+    const folder = `printhive/${user.id}`
+    const publicId = `${Date.now()}-${crypto.randomUUID().slice(0, 8)}`
+
     const uploadFormData = new FormData()
     uploadFormData.append('file', file)
     uploadFormData.append('upload_preset', preset)
     uploadFormData.append('api_key', apiKey)
+    uploadFormData.append('folder', folder)
+    uploadFormData.append('asset_folder', folder)
+    uploadFormData.append('public_id', publicId)
 
     const resourceType = isModel ? 'raw' : 'auto'
 
