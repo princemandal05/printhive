@@ -17,14 +17,17 @@ if (fs.existsSync(envPath)) {
   })
 }
 
-const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || 'r8wjszjm'
-const apiKey = process.env.CLOUDINARY_API_KEY || '769894611263915'
-const apiSecret = process.env.CLOUDINARY_API_SECRET || 'x1_w3QLL94hJFrt8xVkjJgMBuEs'
+const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME
+const apiKey = process.env.CLOUDINARY_API_KEY
+const apiSecret = process.env.CLOUDINARY_API_SECRET
+
+if (!cloudName || !apiKey || !apiSecret) {
+  throw new Error('Missing required Cloudinary environment variables (NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET)')
+}
 
 console.log('Testing Signed Cloudinary 3D Model Upload...')
 console.log({ cloudName, apiKey, hasSecret: Boolean(apiSecret) })
 
-// Create a valid STL file content
 const stlContent = 'solid shark_stl_model\n  facet normal 0 0 1\n    outer loop\n      vertex 0 0 0\n      vertex 25 0 0\n      vertex 0 25 0\n    endloop\n  endfacet\nendsolid shark_stl_model'
 
 async function testSignedModelUpload() {
@@ -32,7 +35,6 @@ async function testSignedModelUpload() {
   const publicId = `shark_test_${Date.now()}`
   const folder = 'printhive/models'
 
-  // Standard signed params for raw upload: folder, public_id, timestamp
   const strToSign = `folder=${folder}&public_id=${publicId}&timestamp=${timestamp}${apiSecret}`
   const signature = crypto.createHash('sha1').update(strToSign).digest('hex')
 
@@ -73,3 +75,12 @@ async function testSignedModelUpload() {
 }
 
 testSignedModelUpload()
+  .then((res) => {
+    if (!res || !res.ok) {
+      process.exitCode = 1
+    }
+  })
+  .catch((err) => {
+    console.error('Unhandled test failure:', err)
+    process.exitCode = 1
+  })

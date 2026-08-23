@@ -19,8 +19,12 @@ if (fs.existsSync(envPath)) {
 const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || 'r8wjszjm'
 const presetModels = process.env.NEXT_PUBLIC_CLOUDINARY_PRESET_MODELS || 'printhive_models'
 const presetUploads = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || 'printhive_uploads'
-const apiKey = process.env.CLOUDINARY_API_KEY || '769894611263915'
-const apiSecret = process.env.CLOUDINARY_API_SECRET || 'x1_w3QLL94hJFrt8xVkjJgMBuEs'
+const apiKey = process.env.CLOUDINARY_API_KEY
+const apiSecret = process.env.CLOUDINARY_API_SECRET
+
+if (!apiKey || !apiSecret) {
+  throw new Error('Missing required CLOUDINARY_API_KEY or CLOUDINARY_API_SECRET environment variables')
+}
 
 console.log('Testing Cloudinary Model Upload to Cloud:', cloudName)
 console.log('Using Presets:', { presetModels, presetUploads })
@@ -53,17 +57,17 @@ async function testUploadEndpoint(endpoint, presetName) {
 }
 
 async function runTests() {
-  // Test 1: auto endpoint with printhive_models
-  await testUploadEndpoint('auto', presetModels)
+  const r1 = await testUploadEndpoint('auto', presetModels)
+  const r2 = await testUploadEndpoint('raw', presetModels)
+  const r3 = await testUploadEndpoint('auto', presetUploads)
+  const r4 = await testUploadEndpoint('raw', presetUploads)
 
-  // Test 2: raw endpoint with printhive_models
-  await testUploadEndpoint('raw', presetModels)
-
-  // Test 3: auto endpoint with printhive_uploads
-  await testUploadEndpoint('auto', presetUploads)
-
-  // Test 4: raw endpoint with printhive_uploads
-  await testUploadEndpoint('raw', presetUploads)
+  if (!r1.ok || !r2.ok || !r3.ok || !r4.ok) {
+    process.exitCode = 1
+  }
 }
 
-runTests()
+runTests().catch((err) => {
+  console.error('Test run failed:', err)
+  process.exitCode = 1
+})
