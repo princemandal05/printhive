@@ -1,5 +1,5 @@
-export type SupportedFormat = 'stl' | 'obj' | 'glb' | 'gltf'
-export type UnsupportedFormat = '3mf' | 'step' | 'stp' | 'gcode' | 'fbx' | '3ds' | 'ply' | 'usdz' | 'unknown'
+export type SupportedFormat = 'stl' | 'obj' | 'glb' | 'gltf' | '3mf'
+export type UnsupportedFormat = 'step' | 'stp' | 'gcode' | 'fbx' | '3ds' | 'ply' | 'usdz' | 'unknown'
 export type ModelFormat = SupportedFormat | UnsupportedFormat
 
 export interface DetectFormatInput {
@@ -33,7 +33,7 @@ const MIME_MAP: Record<string, ModelFormat> = {
   'text/plain-wavefront-obj': 'obj',
   'model/gltf-binary': 'glb',
   'model/gltf+json': 'gltf',
-  'application/octet-stream': 'glb', // Default check
+  'application/octet-stream': 'glb',
   'application/vnd.ms-package.3dmanufacturing-3dmodel+xml': '3mf',
   'model/3mf': '3mf',
 }
@@ -41,7 +41,6 @@ const MIME_MAP: Record<string, ModelFormat> = {
 function extractExtension(str: string | null | undefined): string | null {
   if (!str) return null
   try {
-    // Strip query parameters, hash fragments, and matrix params
     const cleanStr = str.split('?')[0].split('#')[0]
     const parts = cleanStr.split('/')
     const lastPart = parts[parts.length - 1]
@@ -50,7 +49,7 @@ function extractExtension(str: string | null | undefined): string | null {
       if (ext && EXTENSION_MAP[ext]) return ext
     }
   } catch {
-    // Return raw fallback
+    // Fallback
   }
   return null
 }
@@ -61,7 +60,7 @@ export function detectModelFormat(input: DetectFormatInput): { format: ModelForm
     const cleanFormat = input.format.toLowerCase().trim().replace(/^\./, '')
     if (EXTENSION_MAP[cleanFormat]) {
       const fmt = EXTENSION_MAP[cleanFormat]
-      return { format: fmt, isPreviewable: ['stl', 'obj', 'glb', 'gltf'].includes(fmt) }
+      return { format: fmt, isPreviewable: ['stl', 'obj', 'glb', 'gltf', '3mf'].includes(fmt) }
     }
   }
 
@@ -69,7 +68,7 @@ export function detectModelFormat(input: DetectFormatInput): { format: ModelForm
   const fileExt = extractExtension(input.fileName)
   if (fileExt && EXTENSION_MAP[fileExt]) {
     const fmt = EXTENSION_MAP[fileExt]
-    return { format: fmt, isPreviewable: ['stl', 'obj', 'glb', 'gltf'].includes(fmt) }
+    return { format: fmt, isPreviewable: ['stl', 'obj', 'glb', 'gltf', '3mf'].includes(fmt) }
   }
 
   // 3. Check MIME type
@@ -77,7 +76,7 @@ export function detectModelFormat(input: DetectFormatInput): { format: ModelForm
     const cleanMime = input.mimeType.toLowerCase().trim()
     if (MIME_MAP[cleanMime]) {
       const fmt = MIME_MAP[cleanMime]
-      return { format: fmt, isPreviewable: ['stl', 'obj', 'glb', 'gltf'].includes(fmt) }
+      return { format: fmt, isPreviewable: ['stl', 'obj', 'glb', 'gltf', '3mf'].includes(fmt) }
     }
   }
 
@@ -85,9 +84,9 @@ export function detectModelFormat(input: DetectFormatInput): { format: ModelForm
   const urlExt = extractExtension(input.url)
   if (urlExt && EXTENSION_MAP[urlExt]) {
     const fmt = EXTENSION_MAP[urlExt]
-    return { format: fmt, isPreviewable: ['stl', 'obj', 'glb', 'gltf'].includes(fmt) }
+    return { format: fmt, isPreviewable: ['stl', 'obj', 'glb', 'gltf', '3mf'].includes(fmt) }
   }
 
-  // Default fallback if unrecognised extension
+  // Default fallback
   return { format: 'stl', isPreviewable: true }
 }

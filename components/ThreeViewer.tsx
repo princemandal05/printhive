@@ -5,6 +5,7 @@ import * as THREE from 'three'
 import { STLLoader } from 'three/examples/jsm/loaders/STLLoader.js'
 import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
+import { ThreeMFLoader } from 'three/examples/jsm/loaders/3MFLoader.js'
 import { detectModelFormat, type ModelFormat } from '@/utils/format-detector'
 
 interface ThreeViewerProps {
@@ -36,11 +37,11 @@ class ThreeViewerErrorBoundary extends Component<ErrorBoundaryProps, ErrorBounda
   }
 
   static getDerivedStateFromError(error: Error): ErrorBoundaryState {
-    return { hasError: true, errorMessage: error.message || 'Corrupt or incompatible 3D geometry file.' }
+    return { hasError: true, errorMessage: error.message || '3D WebGL Rendering Error' }
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error('ThreeViewer rendering error caught by boundary:', error, errorInfo)
+    console.error('ThreeViewer Error Boundary caught failure:', error, errorInfo)
   }
 
   render() {
@@ -48,28 +49,26 @@ class ThreeViewerErrorBoundary extends Component<ErrorBoundaryProps, ErrorBounda
       return (
         <div
           style={{
-            position: 'relative',
-            width: '100%',
-            height: 380,
-            borderRadius: 16,
-            background: '#0F172A',
-            border: '1px solid rgba(239, 68, 68, 0.3)',
+            height: 440,
+            background: 'linear-gradient(135deg, #0F172A 0%, #1E293B 100%)',
+            borderRadius: 20,
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
-            padding: 24,
+            padding: 32,
             textAlign: 'center',
             color: '#F8FAFC',
+            border: '1px solid rgba(255,255,255,0.08)',
           }}
         >
-          <div style={{ fontSize: 42, marginBottom: 12 }}>⚠️</div>
-          <div style={{ fontSize: 16, fontWeight: 800, color: '#F8FAFC', marginBottom: 6 }}>
+          <div style={{ fontSize: 44, marginBottom: 12 }}>🧊</div>
+          <h3 style={{ fontSize: 18, fontWeight: 800, margin: '0 0 6px 0', color: '#F8FAFC' }}>
             Unable to preview this 3D model.
-          </div>
-          <div style={{ fontSize: 13, color: '#94A3B8', maxWidth: 420, lineHeight: 1.5 }}>
-            {this.state.errorMessage || 'WebGL parsing failed or file geometry is corrupt.'}
-          </div>
+          </h3>
+          <p style={{ fontSize: 13, color: '#94A3B8', maxWidth: 360, margin: '0 0 20px 0' }}>
+            Download the original file to view or slice it in your 3D printing software.
+          </p>
         </div>
       )
     }
@@ -78,108 +77,95 @@ class ThreeViewerErrorBoundary extends Component<ErrorBoundaryProps, ErrorBounda
   }
 }
 
-function ThreeViewerInner({
-  title = '3D Model Viewport',
-  color = '#FF6B35',
+export default function ThreeViewer(props: ThreeViewerProps) {
+  return (
+    <ThreeViewerErrorBoundary fallbackTitle={props.title}>
+      <ThreeViewerContent {...props} />
+    </ThreeViewerErrorBoundary>
+  )
+}
+
+function ThreeViewerContent({
+  title = '3D Model',
+  color = '#8B5CF6',
+  wireframeDefault = false,
   height = 440,
   modelUrl,
   format,
   fileName,
   mimeType,
-  dimensions,
+  dimensions = { x: 50, y: 50, z: 50 },
 }: ThreeViewerProps) {
   const mountRef = useRef<HTMLDivElement>(null)
-  const [wireframe, setWireframe] = useState(false)
-  const [rotating, setRotating] = useState(true)
-  const [loadingModel, setLoadingModel] = useState(true)
-  const [errorMsg, setErrorMsg] = useState<string | null>(null)
-  const [isFullscreen, setIsFullscreen] = useState(false)
-  const [computedBounds, setComputedBounds] = useState<{ x: number; y: number; z: number } | null>(dimensions || null)
 
+  const [loadingModel, setLoadingModel] = useState(true)
+  const [wireframe, setWireframe] = useState(wireframeDefault)
+  const [rotating, setRotating] = useState(true)
   const rotatingRef = useRef(rotating)
+  const [computedBounds, setComputedBounds] = useState({ x: dimensions.x, y: dimensions.y, z: dimensions.z })
+  const [unsupportedFormat, setUnsupportedFormat] = useState<string | null>(null)
+  const [modelLoadError, setModelLoadError] = useState<string | null>(null)
+
   useEffect(() => {
     rotatingRef.current = rotating
   }, [rotating])
 
-  const materialRef = useRef<THREE.MeshStandardMaterial | null>(null)
   const groupRef = useRef<THREE.Group | null>(null)
+  const materialRef = useRef<THREE.MeshStandardMaterial | null>(null)
 
-  const validColor = /^#[0-9A-F]{6}$/i.test(color) ? color : '#FF6B35'
-  const hasModel = Boolean(modelUrl && modelUrl.trim() !== '')
-
-  // Format detection
-  const detected = detectModelFormat({ format, fileName, mimeType, url: modelUrl })
-  const modelFormatDisplay = (format || fileName?.split('.').pop() || detected.format).toUpperCase()
-
-  useEffect(() => {
-    const handleFullscreenChange = () => {
-      if (mountRef.current) {
-        setIsFullscreen(document.fullscreenElement === mountRef.current)
-      }
-    }
-    document.addEventListener('fullscreenchange', handleFullscreenChange)
-    return () => {
-      document.removeEventListener('fullscreenchange', handleFullscreenChange)
-    }
-  }, [])
+  const detectedInfo = detectModelFormat({
+    format,
+    fileName,
+    mimeType,
+    url: modelUrl,
+  })
+  const detectedFormat: ModelFormat = detectedInfo.format
 
   useEffect(() => {
+    if (materialRef.current) {
+      materialRef.current.wireframe = wireframe
+    }
+  }, [wireframe])
+
+  const validColor = /^#[0-9A-F]{6}$/i.test(color) ? color : '#8B5CF6'
+
+  useEffect(() => {
+    if (!mountRef.current) return
+
+    const width = mountRef.current.clientWidth || 600
+    const heightPx = typeof height === 'number' ? height : mountRef.current.clientHeight || 440
+
     let isDisposed = false
-    const container = mountRef.current
-    if (!container) return
 
-    setErrorMsg(null)
-
-    // Check if model URL is completely missing
-    if (!hasModel || !modelUrl) {
-      setLoadingModel(false)
-      setErrorMsg('No 3D model file URL provided.')
-      return
-    }
-
-    // Check if format is unsupported for preview
-    if (!detected.isPreviewable) {
-      setLoadingModel(false)
-      if (detected.format === '3mf') {
-        setErrorMsg('3MF preview is not currently supported. You can download the original file.')
-      } else {
-        setErrorMsg(`${modelFormatDisplay} preview is not currently supported. You can download the original file.`)
-      }
-      return
-    }
-
-    setLoadingModel(true)
-
-    const width = container.clientWidth || 500
-    const heightPx = container.clientHeight || (typeof height === 'number' ? height : 440)
-    const aspect = width / (heightPx || 1)
-
+    // Setup Three.js Scene, Camera, Renderer
     const scene = new THREE.Scene()
-    scene.background = new THREE.Color(0x0f172a)
+    scene.background = new THREE.Color('#0F172A')
 
-    const camera = new THREE.PerspectiveCamera(45, aspect, 0.1, 1000)
+    const camera = new THREE.PerspectiveCamera(45, width / heightPx, 0.1, 2000)
     camera.position.set(0, 50, 150)
-    camera.lookAt(0, 0, 0)
 
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true })
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' })
     renderer.setSize(width, heightPx)
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
     renderer.shadowMap.enabled = true
-    container.appendChild(renderer.domElement)
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap
 
-    // Studio Lighting setup
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.9)
+    mountRef.current.innerHTML = ''
+    mountRef.current.appendChild(renderer.domElement)
+
+    // Lighting setup
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.75)
     scene.add(ambientLight)
 
-    const keyLight = new THREE.DirectionalLight(0xff6b35, 2.5)
-    keyLight.position.set(100, 150, 100)
-    scene.add(keyLight)
+    const mainLight = new THREE.DirectionalLight(0xffffff, 1.2)
+    mainLight.position.set(100, 150, 100)
+    mainLight.castShadow = true
+    scene.add(mainLight)
 
-    const fillLight = new THREE.DirectionalLight(0x38bdf8, 1.4)
-    fillLight.position.set(-100, 50, -100)
+    const fillLight = new THREE.DirectionalLight(0x8b5cf6, 0.6)
+    fillLight.position.set(-100, -50, -100)
     scene.add(fillLight)
 
-    // Build 3D Mesh Group
     const group = new THREE.Group()
     groupRef.current = group
     scene.add(group)
@@ -188,7 +174,7 @@ function ThreeViewerInner({
       color: new THREE.Color(validColor),
       roughness: 0.35,
       metalness: 0.55,
-      wireframe: false,
+      wireframe: wireframe,
     })
     materialRef.current = meshMaterial
 
@@ -199,7 +185,6 @@ function ThreeViewerInner({
       const size = bbox.getSize(new THREE.Vector3())
       const center = bbox.getCenter(new THREE.Vector3())
 
-      // Center object at (0,0,0)
       object.position.sub(center)
 
       const rawX = size.x
@@ -225,13 +210,18 @@ function ThreeViewerInner({
       }
     }
 
-    // Load actual model file based on detected format
     const loadActualModel = async () => {
-      console.log('3D MODEL DEBUG', { modelUrl, modelFormat: format || fileName?.split('.').pop() || detected.format, modelFileName: fileName })
-      console.log(`3D MODEL LOADER: ${detected.format.toUpperCase()}Loader`)
+      console.log('3D MODEL DEBUG', { modelUrl, modelFormat: format || fileName?.split('.').pop() || detectedFormat, modelFileName: fileName })
+      console.log(`3D MODEL LOADER: ${detectedFormat.toUpperCase()}Loader`)
+
+      if (!modelUrl) {
+        setLoadingModel(false)
+        setModelLoadError('No 3D model file URL available.')
+        return
+      }
 
       try {
-        if (detected.format === 'stl') {
+        if (detectedFormat === 'stl') {
           const res = await fetch(modelUrl)
           if (!res.ok) throw new Error(`HTTP ${res.status}: Failed to download STL file`)
           const buffer = await res.arrayBuffer()
@@ -250,7 +240,32 @@ function ThreeViewerInner({
 
           fitObjectToCamera(group)
           setLoadingModel(false)
-        } else if (detected.format === 'obj') {
+        } else if (detectedFormat === '3mf') {
+          const res = await fetch(modelUrl)
+          if (!res.ok) throw new Error(`HTTP ${res.status}: Failed to download 3MF file`)
+          const buffer = await res.arrayBuffer()
+          if (isDisposed) return
+
+          const loader = new ThreeMFLoader()
+          const parsedGroup = loader.parse(buffer)
+          if (!parsedGroup || parsedGroup.children.length === 0) {
+            throw new Error('3MF model contains no object meshes')
+          }
+
+          parsedGroup.traverse((child) => {
+            if (child instanceof THREE.Mesh) {
+              if (!child.material || (Array.isArray(child.material) && child.material.length === 0)) {
+                child.material = meshMaterial
+              }
+              child.castShadow = true
+              child.receiveShadow = true
+            }
+          })
+          group.add(parsedGroup)
+
+          fitObjectToCamera(group)
+          setLoadingModel(false)
+        } else if (detectedFormat === 'obj') {
           const res = await fetch(modelUrl)
           if (!res.ok) throw new Error(`HTTP ${res.status}: Failed to download OBJ file`)
           const text = await res.text()
@@ -275,7 +290,7 @@ function ThreeViewerInner({
 
           fitObjectToCamera(group)
           setLoadingModel(false)
-        } else if (detected.format === 'glb' || detected.format === 'gltf') {
+        } else if (detectedFormat === 'glb' || detectedFormat === 'gltf') {
           const loader = new GLTFLoader()
           loader.load(
             modelUrl,
@@ -297,240 +312,264 @@ function ThreeViewerInner({
               setLoadingModel(false)
             },
             undefined,
-            (err) => {
+            (error: any) => {
               if (isDisposed) return
-              console.error('GLTFLoader error:', err)
-              setErrorMsg('Unable to preview this 3D model.')
+              console.error('GLTF Load Error:', error)
+              setModelLoadError(error?.message || 'Failed to parse GLTF model.')
               setLoadingModel(false)
             }
           )
         } else {
-          throw new Error(`Unsupported model format: ${detected.format}`)
+          setLoadingModel(false)
+          setUnsupportedFormat(detectedFormat.toUpperCase())
         }
       } catch (err: any) {
-        if (isDisposed) return
-        console.error('3D model load error:', err)
-        setErrorMsg('Unable to preview this 3D model.')
-        setLoadingModel(false)
+        console.error('3D Model Loading Exception:', err)
+        if (!isDisposed) {
+          setLoadingModel(false)
+          setModelLoadError(err.message || 'Failed to render 3D model.')
+        }
       }
     }
 
     loadActualModel()
 
-    // Grid Floor
-    const gridHelper = new THREE.GridHelper(300, 30, 0xff6b35, 0x334155)
-    gridHelper.position.y = -40
-    scene.add(gridHelper)
-
-    // Mouse Drag Controls bound directly to canvas
+    // Orbit Drag Controls
     let isDragging = false
-    let prevMouseX = 0
-    let prevMouseY = 0
+    let previousMousePosition = { x: 0, y: 0 }
 
     const onMouseDown = (e: MouseEvent) => {
       isDragging = true
-      prevMouseX = e.clientX
-      prevMouseY = e.clientY
+      previousMousePosition = { x: e.clientX, y: e.clientY }
     }
 
     const onMouseMove = (e: MouseEvent) => {
       if (!isDragging || !groupRef.current) return
-      const deltaX = e.clientX - prevMouseX
-      const deltaY = e.clientY - prevMouseY
+
+      const deltaX = e.clientX - previousMousePosition.x
+      const deltaY = e.clientY - previousMousePosition.y
+
       groupRef.current.rotation.y += deltaX * 0.01
       groupRef.current.rotation.x += deltaY * 0.01
-      prevMouseX = e.clientX
-      prevMouseY = e.clientY
+
+      previousMousePosition = { x: e.clientX, y: e.clientY }
     }
 
     const onMouseUp = () => {
       isDragging = false
     }
 
-    const canvasElem = renderer.domElement
-    canvasElem.addEventListener('mousedown', onMouseDown)
+    const onWheel = (e: WheelEvent) => {
+      e.preventDefault()
+      camera.position.z += e.deltaY * 0.1
+      camera.position.z = Math.max(10, Math.min(camera.position.z, 1000))
+    }
+
+    const domElement = renderer.domElement
+    domElement.addEventListener('mousedown', onMouseDown)
     window.addEventListener('mousemove', onMouseMove)
     window.addEventListener('mouseup', onMouseUp)
+    domElement.addEventListener('wheel', onWheel, { passive: false })
 
-    // Animation Loop reading rotatingRef
-    let animationFrameId: number
+    // Animation Loop
+    let animId: number
     const animate = () => {
+      animId = requestAnimationFrame(animate)
+
       if (groupRef.current && rotatingRef.current && !isDragging) {
-        groupRef.current.rotation.y += 0.008
+        groupRef.current.rotation.y += 0.005
       }
+
       renderer.render(scene, camera)
-      animationFrameId = requestAnimationFrame(animate)
     }
     animate()
 
     const handleResize = () => {
-      if (!container) return
-      const w = container.clientWidth || 500
-      const h = container.clientHeight || (typeof height === 'number' ? height : 440)
-      camera.aspect = w / (h || 1)
+      if (!mountRef.current) return
+      const w = mountRef.current.clientWidth || 600
+      const h = typeof height === 'number' ? height : mountRef.current.clientHeight || 440
+      camera.aspect = w / h
       camera.updateProjectionMatrix()
       renderer.setSize(w, h)
     }
+
     window.addEventListener('resize', handleResize)
 
     return () => {
       isDisposed = true
-      cancelAnimationFrame(animationFrameId)
-      canvasElem.removeEventListener('mousedown', onMouseDown)
+      cancelAnimationFrame(animId)
+      window.removeEventListener('resize', handleResize)
+      domElement.removeEventListener('mousedown', onMouseDown)
       window.removeEventListener('mousemove', onMouseMove)
       window.removeEventListener('mouseup', onMouseUp)
-      window.removeEventListener('resize', handleResize)
+      domElement.removeEventListener('wheel', onWheel)
 
-      scene.traverse((obj) => {
-        if (obj instanceof THREE.Mesh) {
-          if (obj.geometry) obj.geometry.dispose()
-        }
-      })
-      gridHelper.geometry.dispose()
-      meshMaterial.dispose()
+      scene.clear()
       renderer.dispose()
-      if (container.contains(renderer.domElement)) {
-        container.removeChild(renderer.domElement)
-      }
+      meshMaterial.dispose()
     }
-  }, [modelUrl, height, detected.format, detected.isPreviewable, hasModel, modelFormatDisplay])
+  }, [modelUrl, detectedFormat, validColor, height])
 
-  useEffect(() => {
-    if (materialRef.current) {
-      materialRef.current.wireframe = wireframe
-      materialRef.current.color.set(validColor)
-    }
-  }, [wireframe, validColor])
+  if (unsupportedFormat || modelLoadError) {
+    return (
+      <div
+        style={{
+          height,
+          background: 'linear-gradient(135deg, #0F172A 0%, #1E293B 100%)',
+          borderRadius: 20,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: 32,
+          textAlign: 'center',
+          color: '#F8FAFC',
+          border: '1px solid rgba(255,255,255,0.08)',
+        }}
+      >
+        <div style={{ fontSize: 44, marginBottom: 12 }}>🧊</div>
+        <h3 style={{ fontSize: 18, fontWeight: 800, margin: '0 0 6px 0', color: '#F8FAFC' }}>
+          Unable to preview this 3D model.
+        </h3>
+        <p style={{ fontSize: 13, color: '#94A3B8', maxWidth: 380, margin: '0 0 20px 0' }}>
+          {unsupportedFormat
+            ? `${unsupportedFormat} preview is not currently supported in the browser. You can download the original file.`
+            : modelLoadError}
+        </p>
 
-  const toggleFullscreen = () => {
-    if (!mountRef.current) return
-    if (!document.fullscreenElement) {
-      mountRef.current.requestFullscreen().then(() => setIsFullscreen(true)).catch(() => {})
-    } else {
-      document.exitFullscreen().then(() => setIsFullscreen(false)).catch(() => {})
-    }
+        {modelUrl && (
+          <a
+            href={modelUrl}
+            download={fileName || `model.${detectedFormat}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              background: 'linear-gradient(135deg, #FF6B35 0%, #E0531F 100%)',
+              color: '#FFFFFF',
+              padding: '10px 22px',
+              borderRadius: 99,
+              fontSize: 13,
+              fontWeight: 800,
+              textDecoration: 'none',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 8,
+              boxShadow: '0 4px 14px rgba(255,107,53,0.4)',
+            }}
+          >
+            📥 Download Original {detectedFormat.toUpperCase()} File
+          </a>
+        )}
+      </div>
+    )
   }
 
   return (
     <div
-      ref={mountRef}
       style={{
         position: 'relative',
-        width: '100%',
-        height: isFullscreen ? '100vh' : height,
-        borderRadius: isFullscreen ? 0 : 16,
+        height,
         background: '#0F172A',
-        border: '1px solid rgba(255, 107, 53, 0.25)',
+        borderRadius: 20,
         overflow: 'hidden',
-        boxShadow: '0 20px 50px rgba(0,0,0,0.3)',
+        border: '1px solid rgba(255,255,255,0.08)',
+        boxShadow: '0 10px 30px rgba(0,0,0,0.3)',
       }}
     >
-      {/* Loading Indicator */}
-      {loadingModel && !errorMsg && (
-        <div style={{ position: 'absolute', inset: 0, zIndex: 20, background: '#0F172A', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#FF6B35', fontSize: 13, fontWeight: 700 }}>
-          ⚡ Loading 3D model...
-        </div>
-      )}
+      <div ref={mountRef} style={{ width: '100%', height: '100%', cursor: 'grab' }} />
 
-      {/* Error / Unsupported Format Banner Overlay */}
-      {errorMsg && (
+      {loadingModel && (
         <div
           style={{
             position: 'absolute',
             inset: 0,
-            zIndex: 30,
-            background: 'radial-gradient(circle at center, #1e1b4b 0%, #0f172a 100%)',
+            background: 'rgba(15, 23, 42, 0.85)',
+            backdropFilter: 'blur(4px)',
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
-            padding: 24,
-            textAlign: 'center',
-            color: '#F8FAFC',
+            zIndex: 10,
           }}
         >
-          <div style={{ fontSize: 44, marginBottom: 12 }}>🧊</div>
-          <div style={{ fontSize: 16, fontWeight: 800, color: '#F8FAFC', marginBottom: 8 }}>
-            Unable to preview this 3D model.
+          <div style={{ fontSize: 32, marginBottom: 8, animation: 'spin 2s linear infinite' }}>⏳</div>
+          <div style={{ color: '#F8FAFC', fontWeight: 800, fontSize: 14 }}>
+            Loading {detectedFormat.toUpperCase()} 3D Model…
           </div>
-          <div style={{ fontSize: 13, color: '#94A3B8', maxWidth: 440, lineHeight: 1.5, marginBottom: 20 }}>
-            {errorMsg}
-          </div>
-
-          {modelUrl && (
-            <a
-              href={modelUrl}
-              download={fileName || `model-${title.toLowerCase().replace(/\s+/g, '-')}.${detected.format}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{
-                background: 'linear-gradient(135deg, #FF6B35 0%, #E0531F 100%)',
-                color: '#FFFFFF',
-                padding: '10px 22px',
-                borderRadius: 99,
-                fontWeight: 800,
-                fontSize: 13,
-                textDecoration: 'none',
-                boxShadow: '0 4px 14px rgba(255,107,53,0.35)',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 8,
-              }}
-            >
-              📥 Download Original {modelFormatDisplay} File
-            </a>
-          )}
+          <div style={{ color: '#94A3B8', fontSize: 12, marginTop: 4 }}>Parsing WebGL Mesh Data</div>
         </div>
       )}
 
-      {/* Top Header Overlay */}
-      <div style={{ position: 'absolute', top: 14, left: 16, right: 16, zIndex: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'center', pointerEvents: 'none' }}>
-        <span style={{ fontSize: 12, fontWeight: 800, color: '#fff', background: 'rgba(15,23,42,0.85)', padding: '5px 12px', borderRadius: 99, border: '1px solid rgba(255,255,255,0.15)', backdropFilter: 'blur(8px)' }}>
-          🧊 WebGL 3D Viewport · {title}
+      <div
+        style={{
+          position: 'absolute',
+          top: 14,
+          left: 14,
+          zIndex: 5,
+          background: 'rgba(15, 23, 42, 0.75)',
+          backdropFilter: 'blur(8px)',
+          border: '1px solid rgba(255,255,255,0.1)',
+          borderRadius: 12,
+          padding: '8px 14px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 12,
+        }}
+      >
+        <span style={{ fontSize: 12, fontWeight: 800, color: '#F8FAFC' }}>
+          📐 {computedBounds.x} × {computedBounds.y} × {computedBounds.z} mm
         </span>
-        {computedBounds && !errorMsg && (
-          <span style={{ fontSize: 11, fontWeight: 700, color: '#10B981', background: 'rgba(16,185,129,0.15)', padding: '5px 12px', borderRadius: 99, border: '1px solid rgba(16,185,129,0.3)' }}>
-            📐 Bounds: {computedBounds.x} × {computedBounds.y} × {computedBounds.z} mm
-          </span>
-        )}
+        <span style={{ background: '#8B5CF6', color: '#fff', fontSize: 10, fontWeight: 900, padding: '2px 8px', borderRadius: 6, textTransform: 'uppercase' }}>
+          {detectedFormat}
+        </span>
       </div>
 
-      {/* Interactive Controls Bar */}
-      {!errorMsg && (
-        <div style={{ position: 'absolute', bottom: 14, left: 16, right: 16, zIndex: 10, display: 'flex', justifyContent: 'center', gap: 10 }}>
-          <button
-            type="button"
-            aria-pressed={rotating}
-            onClick={() => setRotating(!rotating)}
-            style={{ background: rotating ? '#FF6B35' : 'rgba(255,255,255,0.1)', color: '#fff', border: 'none', padding: '6px 14px', borderRadius: 99, fontSize: 12, fontWeight: 800, cursor: 'pointer' }}
-          >
-            {rotating ? 'Pause Orbit' : 'Rotate Orbit'}
-          </button>
-          <button
-            type="button"
-            aria-pressed={wireframe}
-            onClick={() => setWireframe(!wireframe)}
-            style={{ background: wireframe ? '#FF6B35' : 'rgba(255,255,255,0.1)', color: '#fff', border: 'none', padding: '6px 14px', borderRadius: 99, fontSize: 12, fontWeight: 800, cursor: 'pointer' }}
-          >
-            {wireframe ? 'Solid View' : 'Wireframe'}
-          </button>
-          <button
-            type="button"
-            onClick={toggleFullscreen}
-            style={{ background: 'rgba(255,255,255,0.1)', color: '#fff', border: 'none', padding: '6px 14px', borderRadius: 99, fontSize: 12, fontWeight: 800, cursor: 'pointer' }}
-          >
-            ⛶ Fullscreen
-          </button>
-        </div>
-      )}
-    </div>
-  )
-}
+      <div
+        style={{
+          position: 'absolute',
+          bottom: 14,
+          right: 14,
+          zIndex: 5,
+          display: 'flex',
+          gap: 8,
+        }}
+      >
+        <button
+          type="button"
+          onClick={() => setWireframe(!wireframe)}
+          style={{
+            background: wireframe ? '#8B5CF6' : 'rgba(15, 23, 42, 0.75)',
+            color: '#fff',
+            border: '1px solid rgba(255,255,255,0.15)',
+            borderRadius: 10,
+            padding: '6px 14px',
+            fontSize: 12,
+            fontWeight: 800,
+            cursor: 'pointer',
+            backdropFilter: 'blur(8px)',
+          }}
+        >
+          {wireframe ? 'Solid' : 'Wireframe'}
+        </button>
 
-export default function ThreeViewer(props: ThreeViewerProps) {
-  return (
-    <ThreeViewerErrorBoundary fallbackTitle={props.title}>
-      <ThreeViewerInner {...props} />
-    </ThreeViewerErrorBoundary>
+        <button
+          type="button"
+          onClick={() => setRotating(!rotating)}
+          style={{
+            background: rotating ? '#FF6B35' : 'rgba(15, 23, 42, 0.75)',
+            color: '#fff',
+            border: '1px solid rgba(255,255,255,0.15)',
+            borderRadius: 10,
+            padding: '6px 14px',
+            fontSize: 12,
+            fontWeight: 800,
+            cursor: 'pointer',
+            backdropFilter: 'blur(8px)',
+          }}
+        >
+          {rotating ? 'Pause Orbit' : 'Rotate Orbit'}
+        </button>
+      </div>
+    </div>
   )
 }
