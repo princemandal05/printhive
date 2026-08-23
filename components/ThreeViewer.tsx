@@ -85,6 +85,11 @@ function ThreeViewerInner({
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [computedBounds, setComputedBounds] = useState<{ x: number; y: number; z: number } | null>(dimensions || null)
 
+  const rotatingRef = useRef(rotating)
+  useEffect(() => {
+    rotatingRef.current = rotating
+  }, [rotating])
+
   const materialRef = useRef<THREE.MeshStandardMaterial | null>(null)
   const groupRef = useRef<THREE.Group | null>(null)
 
@@ -92,12 +97,25 @@ function ThreeViewerInner({
   const hasModel = Boolean(modelUrl && modelUrl.trim() !== '')
 
   useEffect(() => {
+    const handleFullscreenChange = () => {
+      if (mountRef.current) {
+        setIsFullscreen(document.fullscreenElement === mountRef.current)
+      }
+    }
+    document.addEventListener('fullscreenchange', handleFullscreenChange)
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange)
+    }
+  }, [])
+
+  useEffect(() => {
+    let isDisposed = false
     const container = mountRef.current
     if (!container) return
 
     const width = container.clientWidth || 500
-    const heightPx = typeof height === 'number' ? height : container.clientHeight || 440
-    const aspect = width / heightPx
+    const heightPx = container.clientHeight || (typeof height === 'number' ? height : 440)
+    const aspect = width / (heightPx || 1)
 
     const scene = new THREE.Scene()
     scene.background = new THREE.Color(0x0f172a)
@@ -145,18 +163,22 @@ function ThreeViewerInner({
       loader.load(
         modelUrl,
         (geometry) => {
+          if (isDisposed) return
           geometry.center()
           geometry.computeBoundingBox()
           const bbox = geometry.boundingBox
           if (bbox) {
-            const sizeX = Math.round(bbox.max.x - bbox.min.x)
-            const sizeY = Math.round(bbox.max.y - bbox.min.y)
-            const sizeZ = Math.round(bbox.max.z - bbox.min.z)
-            setComputedBounds({ x: sizeX, y: sizeY, z: sizeZ })
+            const rawX = bbox.max.x - bbox.min.x
+            const rawY = bbox.max.y - bbox.min.y
+            const rawZ = bbox.max.z - bbox.min.z
 
-            const maxDim = Math.max(sizeX, sizeY, sizeZ)
-            const scaleFactor = 100 / maxDim
-            geometry.scale(scaleFactor, scaleFactor, scaleFactor)
+            setComputedBounds({ x: Math.round(rawX), y: Math.round(rawY), z: Math.round(rawZ) })
+
+            const maxDim = Math.max(rawX, rawY, rawZ)
+            if (maxDim > 0) {
+              const scaleFactor = 100 / maxDim
+              geometry.scale(scaleFactor, scaleFactor, scaleFactor)
+            }
           }
 
           activeMesh = new THREE.Mesh(geometry, meshMaterial)
@@ -167,8 +189,8 @@ function ThreeViewerInner({
         },
         undefined,
         (err) => {
+          if (isDisposed) return
           console.warn('STLLoader fallback:', err)
-          // Fallback procedural geometry if STL file load is restricted
           const fallbackGeo = new THREE.TorusKnotGeometry(40, 12, 128, 16)
           activeMesh = new THREE.Mesh(fallbackGeo, meshMaterial)
           group.add(activeMesh)
@@ -176,7 +198,6 @@ function ThreeViewerInner({
         }
       )
     } else {
-      // Default procedural high-detail 3D geometry mesh
       const geo = new THREE.IcosahedronGeometry(45, 2)
       activeMesh = new THREE.Mesh(geo, meshMaterial)
       group.add(activeMesh)
@@ -188,7 +209,7 @@ function ThreeViewerInner({
     gridHelper.position.y = -60
     scene.add(gridHelper)
 
-    // Mouse Drag Rotation Controls
+    // Mouse Drag Rotation Controls bound directly to canvas
     let isDragging = false
     let prevMouseX = 0
     let prevMouseY = 0
@@ -213,14 +234,15 @@ function ThreeViewerInner({
       isDragging = false
     }
 
-    container.addEventListener('mousedown', onMouseDown)
+    const canvasElem = renderer.domElement
+    canvasElem.addEventListener('mousedown', onMouseDown)
     window.addEventListener('mousemove', onMouseMove)
     window.addEventListener('mouseup', onMouseUp)
 
-    // Animation Loop
+    // Animation Loop reading rotatingRef
     let animationFrameId: number
     const animate = () => {
-      if (groupRef.current && rotating && !isDragging) {
+      if (groupRef.current && rotatingRef.current && !isDragging) {
         groupRef.current.rotation.y += 0.008
       }
       renderer.render(scene, camera)
@@ -231,25 +253,34 @@ function ThreeViewerInner({
     const handleResize = () => {
       if (!container) return
       const w = container.clientWidth || 500
-      const h = typeof height === 'number' ? height : container.clientHeight || 440
-      camera.aspect = w / h
+      const h = container.clientHeight || (typeof height === 'number' ? height : 440)
+      camera.aspect = w / (h || 1)
       camera.updateProjectionMatrix()
       renderer.setSize(w, h)
     }
     window.addEventListener('resize', handleResize)
 
     return () => {
+      isDisposed = true
       cancelAnimationFrame(animationFrameId)
-      container.removeEventListener('mousedown', onMouseDown)
+      canvasElem.removeEventListener('mousedown', onMouseDown)
       window.removeEventListener('mousemove', onMouseMove)
       window.removeEventListener('mouseup', onMouseUp)
       window.removeEventListener('resize', handleResize)
+
+      scene.traverse((obj) => {
+        if (obj instanceof THREE.Mesh) {
+          if (obj.geometry) obj.geometry.dispose()
+        }
+      })
+      gridHelper.geometry.dispose()
+      meshMaterial.dispose()
       renderer.dispose()
       if (container.contains(renderer.domElement)) {
         container.removeChild(renderer.domElement)
       }
     }
-  }, [modelUrl, height, validColor])
+  }, [modelUrl, height])
 
   useEffect(() => {
     if (materialRef.current) {
@@ -304,6 +335,7 @@ function ThreeViewerInner({
       <div style={{ position: 'absolute', bottom: 14, left: 16, right: 16, zIndex: 10, display: 'flex', justifyContent: 'center', gap: 10 }}>
         <button
           type="button"
+          aria-pressed={rotating}
           onClick={() => setRotating(!rotating)}
           style={{ background: rotating ? '#FF6B35' : 'rgba(255,255,255,0.1)', color: '#fff', border: 'none', padding: '6px 14px', borderRadius: 99, fontSize: 12, fontWeight: 800, cursor: 'pointer' }}
         >
@@ -311,6 +343,7 @@ function ThreeViewerInner({
         </button>
         <button
           type="button"
+          aria-pressed={wireframe}
           onClick={() => setWireframe(!wireframe)}
           style={{ background: wireframe ? '#FF6B35' : 'rgba(255,255,255,0.1)', color: '#fff', border: 'none', padding: '6px 14px', borderRadius: 99, fontSize: 12, fontWeight: 800, cursor: 'pointer' }}
         >
