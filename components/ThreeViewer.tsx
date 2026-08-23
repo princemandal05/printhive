@@ -464,15 +464,25 @@ function ThreeViewerInner({
 
   // ─── Error / unsupported fallback ─────────────────────
   if (unsupported || error) {
+    const fallbackBg =
+      theme === 'dark'
+        ? '#0F172A'
+        : theme === 'slate'
+        ? '#1E293B'
+        : '#E2E8F0'
+    const fallbackText = theme === 'pearl' ? '#0F172A' : '#F8FAFC'
+    const fallbackSubtext = theme === 'pearl' ? '#64748B' : '#94A3B8'
+    const fallbackBorder = theme === 'pearl' ? '1px solid #CBD5E1' : '1px solid #334155'
+
     return (
       <div style={{
-        height, background: '#0F172A', borderRadius: 20,
+        height, background: fallbackBg, borderRadius: 20,
         display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-        padding: 32, textAlign: 'center', color: '#F8FAFC', border: '1px solid #334155',
+        padding: 32, textAlign: 'center', color: fallbackText, border: fallbackBorder,
       }}>
         <div style={{ fontSize: 40, marginBottom: 10 }}>🧊</div>
-        <h3 style={{ fontSize: 16, fontWeight: 800, margin: '0 0 6px' }}>Unable to preview</h3>
-        <p style={{ fontSize: 13, color: '#94A3B8', maxWidth: 340, margin: '0 0 18px' }}>
+        <h3 style={{ fontSize: 16, fontWeight: 800, margin: '0 0 6px', color: fallbackText }}>Unable to preview</h3>
+        <p style={{ fontSize: 13, color: fallbackSubtext, maxWidth: 340, margin: '0 0 18px' }}>
           {unsupported ? `${unsupported} preview is not supported. Download the file to view.` : error}
         </p>
         {modelUrl && (
