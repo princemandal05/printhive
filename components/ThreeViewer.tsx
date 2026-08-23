@@ -7,7 +7,6 @@ import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 import { ThreeMFLoader } from 'three/examples/jsm/loaders/3MFLoader.js'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
-import * as BufferGeometryUtils from 'three/examples/jsm/utils/BufferGeometryUtils.js'
 import { detectModelFormat, type ModelFormat } from '@/utils/format-detector'
 
 type CanvasTheme = 'dark' | 'slate' | 'pearl'
@@ -106,7 +105,7 @@ function ThreeViewerInner({
   const controlsRef = useRef<OrbitControls | null>(null)
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null)
   const groupRef = useRef<THREE.Group | null>(null)
-  const matsRef = useRef<THREE.MeshStandardMaterial[]>([])
+  const matsRef = useRef<THREE.MeshPhysicalMaterial[]>([])
   const initialCamPos = useRef<THREE.Vector3>(new THREE.Vector3())
 
   const detected = detectModelFormat({ format, fileName, mimeType, url: modelUrl })
@@ -169,10 +168,9 @@ function ThreeViewerInner({
     sceneRef.current = scene
 
     // Camera
-    const camera = new THREE.PerspectiveCamera(36, w / h, 0.1, 5000)
-    camera.position.set(0, 30, 120)
+    const camera = new THREE.PerspectiveCamera(38, w / h, 0.1, 5000)
+    camera.position.set(0, 40, 120)
     cameraRef.current = camera
-    scene.add(camera)
 
     // Renderer
     const renderer = new THREE.WebGLRenderer({
@@ -200,34 +198,31 @@ function ThreeViewerInner({
     controls.minDistance = 2
     controlsRef.current = controls
 
-    // ─── Studio 5-Point Clean Lighting ───────────────────
-    // 1. Ambient fill for gentle baseline illumination
-    scene.add(new THREE.AmbientLight(0xffffff, 0.9))
+    // ─── Studio Lighting Setup ──────────────────────────
+    // Ambient / Hemisphere
+    scene.add(new THREE.HemisphereLight(0xffffff, 0x1e293b, 0.8))
 
-    // 2. Soft sky/ground hemisphere
-    scene.add(new THREE.HemisphereLight(0xffffff, 0x334155, 0.7))
+    // Main Key light (Top-right front)
+    const key = new THREE.DirectionalLight(0xffffff, 1.35)
+    key.position.set(100, 160, 120)
+    key.castShadow = true
+    key.shadow.bias = -0.0001
+    scene.add(key)
 
-    // 3. Camera Ring Light: illuminates from view direction
-    const cameraRingLight = new THREE.DirectionalLight(0xffffff, 0.75)
-    cameraRingLight.position.set(0, 0, 1)
-    camera.add(cameraRingLight)
+    // Fill light (Soft gentle fill from left)
+    const fill = new THREE.DirectionalLight(0xa5b4fc, 0.7)
+    fill.position.set(-120, 60, 80)
+    scene.add(fill)
 
-    // 4. Primary Studio Key Light
-    const keyLight = new THREE.DirectionalLight(0xffffff, 1.1)
-    keyLight.position.set(70, 90, 100)
-    keyLight.castShadow = true
-    keyLight.shadow.bias = -0.0001
-    scene.add(keyLight)
+    // Rim / backlight (defines edge silhouette)
+    const rim = new THREE.DirectionalLight(0xffedd5, 0.9)
+    rim.position.set(-20, 120, -160)
+    scene.add(rim)
 
-    // 5. Fill Light (Soft cool fill from left)
-    const fillLight = new THREE.DirectionalLight(0xdbeafe, 0.6)
-    fillLight.position.set(-80, 50, 70)
-    scene.add(fillLight)
-
-    // 6. Silhouette Rim Light (Clean edge separation)
-    const rimLight = new THREE.DirectionalLight(0xffedd5, 0.85)
-    rimLight.position.set(0, 90, -120)
-    scene.add(rimLight)
+    // Subtle Under-bounce
+    const bounce = new THREE.DirectionalLight(0x334155, 0.35)
+    bounce.position.set(0, -100, 40)
+    scene.add(bounce)
 
     // ─── Soft Contact Shadow Plane ──────────────────────
     const shadowCanvas = document.createElement('canvas')
@@ -237,7 +232,7 @@ function ThreeViewerInner({
     if (ctx) {
       const grad = ctx.createRadialGradient(64, 64, 0, 64, 64, 64)
       grad.addColorStop(0, 'rgba(0, 0, 0, 0.45)')
-      grad.addColorStop(0.5, 'rgba(0, 0, 0, 0.12)')
+      grad.addColorStop(0.5, 'rgba(0, 0, 0, 0.15)')
       grad.addColorStop(1, 'rgba(0, 0, 0, 0)')
       ctx.fillStyle = grad
       ctx.fillRect(0, 0, 128, 128)
@@ -260,12 +255,15 @@ function ThreeViewerInner({
     groupRef.current = group
     scene.add(group)
 
-    // Clean Satin Filament Material (Smooth, continuous shading, zero faceted artifacts)
-    const makeMat = (): THREE.MeshStandardMaterial => {
-      const mat = new THREE.MeshStandardMaterial({
+    // PBR filament material factory
+    const makeMat = (): THREE.MeshPhysicalMaterial => {
+      const mat = new THREE.MeshPhysicalMaterial({
         color: new THREE.Color(safeColor),
-        roughness: 0.35,
-        metalness: 0.05,
+        roughness: 0.3,
+        metalness: 0.08,
+        clearcoat: 0.3,
+        clearcoatRoughness: 0.18,
+        reflectivity: 0.55,
         wireframe,
         side: THREE.DoubleSide,
       })
@@ -273,31 +271,18 @@ function ThreeViewerInner({
       return mat
     }
 
-    // Helper: Welds duplicate CAD/STL vertices and calculates smooth continuous normals
-    const smoothMeshGeometry = (mesh: THREE.Mesh) => {
-      if (!mesh.geometry) return
-      try {
-        const welded = BufferGeometryUtils.mergeVertices(mesh.geometry, 1e-4)
-        welded.computeVertexNormals()
-        mesh.geometry.dispose()
-        mesh.geometry = welded
-      } catch {
-        mesh.geometry.computeVertexNormals()
-      }
-      mesh.material = makeMat()
-      mesh.castShadow = true
-      mesh.receiveShadow = true
-    }
-
     const styleMeshes = (root: THREE.Object3D) => {
       root.traverse(child => {
         if (child instanceof THREE.Mesh) {
-          smoothMeshGeometry(child)
+          child.geometry?.computeVertexNormals()
+          child.material = makeMat()
+          child.castShadow = true
+          child.receiveShadow = true
         }
       })
     }
 
-    // Fit model to fill camera perfectly with natural 3/4 beauty angle
+    // Fit model to fill camera perfectly
     const fitCamera = (obj: THREE.Object3D) => {
       const box = new THREE.Box3().setFromObject(obj)
       if (box.isEmpty()) return
@@ -319,8 +304,7 @@ function ThreeViewerInner({
         let dist = (maxDim / 2 / Math.tan(fov / 2)) * 1.35
         dist = Math.max(dist, 10)
 
-        // Balanced 3/4 perspective showing full facial details with depth
-        camera.position.set(dist * 0.45, dist * 0.22, dist * 0.85)
+        camera.position.set(dist * 0.6, dist * 0.35, dist * 0.75)
         initialCamPos.current.copy(camera.position)
         camera.lookAt(0, 0, 0)
         controls.target.set(0, 0, 0)
@@ -358,10 +342,11 @@ function ThreeViewerInner({
         if (fmt === 'stl') {
           const buf = (await fetchModelData(modelUrl)) as ArrayBuffer
           if (disposed) return
-          const rawGeo = new STLLoader().parse(buf)
-          if (!rawGeo?.attributes?.position?.count) throw new Error('Empty STL')
-          const mesh = new THREE.Mesh(rawGeo, makeMat())
-          smoothMeshGeometry(mesh)
+          const geo = new STLLoader().parse(buf)
+          if (!geo?.attributes?.position?.count) throw new Error('Empty STL')
+          geo.computeVertexNormals()
+          const mesh = new THREE.Mesh(geo, makeMat())
+          mesh.castShadow = true; mesh.receiveShadow = true
           group.add(mesh)
           fitCamera(group); setLoading(false)
 
@@ -479,25 +464,15 @@ function ThreeViewerInner({
 
   // ─── Error / unsupported fallback ─────────────────────
   if (unsupported || error) {
-    const fallbackBg =
-      theme === 'dark'
-        ? '#0F172A'
-        : theme === 'slate'
-        ? '#1E293B'
-        : '#E2E8F0'
-    const fallbackText = theme === 'pearl' ? '#0F172A' : '#F8FAFC'
-    const fallbackSubtext = theme === 'pearl' ? '#64748B' : '#94A3B8'
-    const fallbackBorder = theme === 'pearl' ? '1px solid #CBD5E1' : '1px solid #334155'
-
     return (
       <div style={{
-        height, background: fallbackBg, borderRadius: 20,
+        height, background: '#0F172A', borderRadius: 20,
         display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-        padding: 32, textAlign: 'center', color: fallbackText, border: fallbackBorder,
+        padding: 32, textAlign: 'center', color: '#F8FAFC', border: '1px solid #334155',
       }}>
         <div style={{ fontSize: 40, marginBottom: 10 }}>🧊</div>
-        <h3 style={{ fontSize: 16, fontWeight: 800, margin: '0 0 6px', color: fallbackText }}>Unable to preview</h3>
-        <p style={{ fontSize: 13, color: fallbackSubtext, maxWidth: 340, margin: '0 0 18px' }}>
+        <h3 style={{ fontSize: 16, fontWeight: 800, margin: '0 0 6px' }}>Unable to preview</h3>
+        <p style={{ fontSize: 13, color: '#94A3B8', maxWidth: 340, margin: '0 0 18px' }}>
           {unsupported ? `${unsupported} preview is not supported. Download the file to view.` : error}
         </p>
         {modelUrl && (
@@ -529,8 +504,8 @@ function ThreeViewerInner({
         background: theme === 'dark'
           ? 'radial-gradient(circle at 50% 40%, #1E293B 0%, #0F172A 100%)'
           : theme === 'slate'
-          ? '#1E293B'
-          : '#E2E8F0',
+            ? '#1E293B'
+            : '#E2E8F0',
         borderRadius: isFullscreen ? 0 : 20,
         overflow: 'hidden',
         border: isFullscreen ? 'none' : theme === 'pearl' ? '1px solid #CBD5E1' : '1px solid #334155',
@@ -634,6 +609,7 @@ function ThreeViewerInner({
           title="Toggle auto rotation"
           isLightMode={isLightMode}
         />
+
         <ViewerBtn
           active={isFullscreen}
           onClick={() => setIsFullscreen(!isFullscreen)}
@@ -670,18 +646,18 @@ function ViewerBtn({
         background: active
           ? activeColor
           : isLightMode
-          ? 'rgba(255,255,255,0.92)'
-          : 'rgba(15,23,42,0.75)',
+            ? 'rgba(255,255,255,0.92)'
+            : 'rgba(15,23,42,0.75)',
         color: active
           ? '#FFFFFF'
           : isLightMode
-          ? '#1E293B'
-          : '#94A3B8',
+            ? '#1E293B'
+            : '#94A3B8',
         border: active
           ? `1px solid ${activeColor}`
           : isLightMode
-          ? '1px solid rgba(0,0,0,0.1)'
-          : '1px solid rgba(255,255,255,0.1)',
+            ? '1px solid rgba(0,0,0,0.1)'
+            : '1px solid rgba(255,255,255,0.1)',
         borderRadius: 8,
         padding: '5px 11px',
         fontSize: 11,

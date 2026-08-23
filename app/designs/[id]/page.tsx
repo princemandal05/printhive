@@ -4,6 +4,9 @@ import Footer from '@/components/Footer'
 import DesignDetailClient from './DesignDetailClient'
 import Link from 'next/link'
 
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
 export default async function DesignDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   console.log('REQUESTED DESIGN ID:', id)
