@@ -35,10 +35,15 @@ export default async function BuyerDashboard() {
     .eq('id', user.id)
     .maybeSingle()
 
+  const rawMetaFullName = user.user_metadata?.full_name
+  const metaFullName = typeof rawMetaFullName === 'string' && rawMetaFullName.trim() ? rawMetaFullName.trim() : undefined
+  const profileFullName = typeof profile?.full_name === 'string' && profile.full_name.trim() ? profile.full_name.trim() : undefined
+  const emailName = user.email && typeof user.email === 'string' ? user.email.split('@')[0] : 'Maker'
+
   const userData = {
     id: user.id,
     email: user.email,
-    name: profile?.full_name || user.user_metadata?.full_name || user.email?.split('@')[0],
+    name: metaFullName || profileFullName || emailName,
     avatar_url: profile?.avatar_url,
   }
 

@@ -187,7 +187,11 @@ export default function BuyerDashboardClient({ user, myRequests, myOrders }: Buy
 
       {/* 📊 SUMMARY METRICS ROW */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 18, marginBottom: 32 }}>
-        <div
+        <button
+          type="button"
+          role="tab"
+          aria-selected={activeTab === 'briefs'}
+          aria-pressed={activeTab === 'briefs'}
           onClick={() => setActiveTab('briefs')}
           style={{
             background: activeTab === 'briefs' ? '#FFF7ED' : '#FFFFFF',
@@ -197,6 +201,9 @@ export default function BuyerDashboardClient({ user, myRequests, myOrders }: Buy
             cursor: 'pointer',
             boxShadow: '0 4px 20px rgba(0,0,0,0.03)',
             transition: 'all 0.2s',
+            textAlign: 'left',
+            width: '100%',
+            display: 'block',
           }}
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -211,9 +218,13 @@ export default function BuyerDashboardClient({ user, myRequests, myOrders }: Buy
           <div style={{ fontSize: 12, color: '#FF6B35', marginTop: 6, fontWeight: 700 }}>
             {myRequests.length > 0 ? 'Accepting Designer Bids' : 'Post your first brief'}
           </div>
-        </div>
+        </button>
 
-        <div
+        <button
+          type="button"
+          role="tab"
+          aria-selected={activeTab === 'orders'}
+          aria-pressed={activeTab === 'orders'}
           onClick={() => setActiveTab('orders')}
           style={{
             background: activeTab === 'orders' ? '#EFF6FF' : '#FFFFFF',
@@ -223,6 +234,9 @@ export default function BuyerDashboardClient({ user, myRequests, myOrders }: Buy
             cursor: 'pointer',
             boxShadow: '0 4px 20px rgba(0,0,0,0.03)',
             transition: 'all 0.2s',
+            textAlign: 'left',
+            width: '100%',
+            display: 'block',
           }}
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -237,9 +251,13 @@ export default function BuyerDashboardClient({ user, myRequests, myOrders }: Buy
           <div style={{ fontSize: 12, color: '#2563EB', marginTop: 6, fontWeight: 700 }}>
             Live Slicing & Delivery Tracking
           </div>
-        </div>
+        </button>
 
-        <div
+        <button
+          type="button"
+          role="tab"
+          aria-selected={activeTab === 'escrow'}
+          aria-pressed={activeTab === 'escrow'}
           onClick={() => setActiveTab('escrow')}
           style={{
             background: activeTab === 'escrow' ? '#ECFDF5' : '#FFFFFF',
@@ -249,6 +267,9 @@ export default function BuyerDashboardClient({ user, myRequests, myOrders }: Buy
             cursor: 'pointer',
             boxShadow: '0 4px 20px rgba(0,0,0,0.03)',
             transition: 'all 0.2s',
+            textAlign: 'left',
+            width: '100%',
+            display: 'block',
           }}
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -263,9 +284,13 @@ export default function BuyerDashboardClient({ user, myRequests, myOrders }: Buy
           <div style={{ fontSize: 12, color: '#059669', marginTop: 6, fontWeight: 700 }}>
             Funds Released Upon Approval
           </div>
-        </div>
+        </button>
 
-        <div
+        <button
+          type="button"
+          role="tab"
+          aria-selected={activeTab === 'tools'}
+          aria-pressed={activeTab === 'tools'}
           onClick={() => setActiveTab('tools')}
           style={{
             background: activeTab === 'tools' ? '#FAF5FF' : '#FFFFFF',
@@ -275,6 +300,9 @@ export default function BuyerDashboardClient({ user, myRequests, myOrders }: Buy
             cursor: 'pointer',
             boxShadow: '0 4px 20px rgba(0,0,0,0.03)',
             transition: 'all 0.2s',
+            textAlign: 'left',
+            width: '100%',
+            display: 'block',
           }}
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -289,7 +317,7 @@ export default function BuyerDashboardClient({ user, myRequests, myOrders }: Buy
           <div style={{ fontSize: 12, color: '#7C3AED', marginTop: 6, fontWeight: 700 }}>
             STL Slicer & GPS Hub Matching
           </div>
-        </div>
+        </button>
       </div>
 
       {/* 🧭 NAVIGATION TABS */}
@@ -603,7 +631,23 @@ export default function BuyerDashboardClient({ user, myRequests, myOrders }: Buy
                 <div key={order.id} style={{ background: '#FFFFFF', borderRadius: 20, border: '1px solid #E2E8F0', padding: 24, boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
                     <div>
-                      <div style={{ fontSize: 16, fontWeight: 900, color: '#0F172A' }}>Order #{order.id.slice(0, 8)}</div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
+                        <div style={{ fontSize: 16, fontWeight: 900, color: '#0F172A' }}>Order #{order.id.slice(0, 8)}</div>
+                        <span
+                          style={{
+                            background: order.status === 'delivered' ? '#ECFDF5' : order.status === 'cancelled' ? '#FEF2F2' : '#EFF6FF',
+                            color: order.status === 'delivered' ? '#059669' : order.status === 'cancelled' ? '#DC2626' : '#2563EB',
+                            border: `1px solid ${order.status === 'delivered' ? '#A7F3D0' : order.status === 'cancelled' ? '#FECACA' : '#BFDBFE'}`,
+                            padding: '2px 8px',
+                            borderRadius: 99,
+                            fontSize: 11,
+                            fontWeight: 800,
+                            textTransform: 'capitalize',
+                          }}
+                        >
+                          {order.status || 'Processing'}
+                        </span>
+                      </div>
                       <div style={{ fontSize: 12, color: '#64748B' }}>Placed on {new Date(order.created_at).toLocaleDateString()}</div>
                     </div>
                     <div style={{ fontSize: 18, fontWeight: 900, color: '#FF6B35' }}>
