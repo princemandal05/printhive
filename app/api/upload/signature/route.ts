@@ -70,7 +70,7 @@ export async function GET(request: Request) {
       signature,
       api_key: apiKey,
       cloud_name: cloudName,
-      resource_type: isModel ? 'auto' : 'image',
+      resource_type: isModel ? 'raw' : 'image',
     })
   } catch (err: unknown) {
     const error = err as Error
