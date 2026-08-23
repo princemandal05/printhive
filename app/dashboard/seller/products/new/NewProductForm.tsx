@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/utils/supabase/client'
@@ -15,6 +15,8 @@ const CATEGORIES = [
   'Educational Kits',
   'Lifestyle Products',
 ]
+
+const DEFAULT_PRODUCT_IMAGE = 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=600&q=80'
 
 export default function NewProductForm() {
   const router = useRouter()
@@ -35,6 +37,9 @@ export default function NewProductForm() {
   const [submitting, setSubmitting] = useState(false)
   const [statusMsg, setStatusMsg] = useState<{ text: string; type: 'info' | 'success' | 'error' } | null>(null)
 
+  const uploadIdRef = useRef(0)
+  const abortControllerRef = useRef<AbortController | null>(null)
+
   // Auto-dismiss success status messages after 5s
   useEffect(() => {
     if (statusMsg?.type === 'success') {
@@ -47,24 +52,46 @@ export default function NewProductForm() {
     const file = e.target.files?.[0]
     if (!file) return
 
+    // Cancel any previous in-flight upload
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort()
+    }
+    const abortController = new AbortController()
+    abortControllerRef.current = abortController
+
+    const currentUploadId = ++uploadIdRef.current
     setPhotoName(file.name)
+
     // Instant local preview for zero-delay UI feedback
     const localBlob = URL.createObjectURL(file)
     setPreviewUrl(localBlob)
+    setCloudinaryUrl('')
 
     setUploadingPhoto(true)
     setUploadProgress(15)
     setStatusMsg({ text: 'Uploading photo to Cloudinary CDN...', type: 'info' })
 
     const progressInterval = setInterval(() => {
-      setUploadProgress(prev => (prev < 85 ? prev + 15 : prev))
+      if (uploadIdRef.current === currentUploadId) {
+        setUploadProgress(prev => (prev < 85 ? prev + 15 : prev))
+      }
     }, 250)
 
     try {
       const formData = new FormData()
       formData.append('file', file)
-      const res = await fetch('/api/upload', { method: 'POST', body: formData })
+      const res = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+        signal: abortController.signal,
+      })
+
       clearInterval(progressInterval)
+
+      if (uploadIdRef.current !== currentUploadId) {
+        return // Superseded by a newer selection
+      }
+
       setUploadProgress(100)
 
       if (!res.ok) {
@@ -73,6 +100,8 @@ export default function NewProductForm() {
       }
 
       const data = await res.json()
+      if (uploadIdRef.current !== currentUploadId) return
+
       if (data.url || data.secure_url) {
         const finalUrl = data.secure_url || data.url
         setCloudinaryUrl(finalUrl)
@@ -83,16 +112,25 @@ export default function NewProductForm() {
       }
     } catch (err: any) {
       clearInterval(progressInterval)
-      console.warn('Cloudinary upload warning:', err)
-      // Keep local preview so user still sees their uploaded image
-      setStatusMsg({ text: `Image selected: ${file.name}`, type: 'success' })
+      if (uploadIdRef.current !== currentUploadId) return
+
+      if (err.name === 'AbortError') return
+
+      console.error('Cloudinary upload error:', err)
+      setCloudinaryUrl('')
+      setStatusMsg({
+        text: `Image upload failed: ${err.message || 'Could not upload photo'}. A default cover will be used if published.`,
+        type: 'error',
+      })
     } finally {
-      setUploadingPhoto(false)
+      if (uploadIdRef.current === currentUploadId) {
+        setUploadingPhoto(false)
+      }
     }
   }
 
   const handleGeminiAiGenerate = async () => {
-    if (!name) {
+    if (!name.trim()) {
       alert('Please enter a product title first so Gemini AI can generate a description.')
       return
     }
@@ -103,7 +141,7 @@ export default function NewProductForm() {
       const res = await fetch('/api/ai/generate-description', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title: name, category, material: 'PLA' }),
+        body: JSON.stringify({ title: name.trim(), category, material: 'PLA' }),
       })
       const data = await res.json()
       if (data.description) {
@@ -126,8 +164,21 @@ export default function NewProductForm() {
       alert('Please enter a product title.')
       return
     }
-    if (!price || parseFloat(price) <= 0) {
-      alert('Please enter a valid price.')
+
+    const parsedPrice = parseFloat(price)
+    if (isNaN(parsedPrice) || parsedPrice <= 0) {
+      alert('Please enter a valid price greater than 0.')
+      return
+    }
+
+    const parsedStock = parseInt(stock.trim(), 10)
+    if (isNaN(parsedStock) || parsedStock < 0) {
+      alert('Please enter a valid non-negative stock quantity (0 or greater).')
+      return
+    }
+
+    if (uploadingPhoto) {
+      alert('Please wait for photo upload to finish.')
       return
     }
 
@@ -135,28 +186,24 @@ export default function NewProductForm() {
     setStatusMsg({ text: 'Publishing product listing live to PrintHive Marketplace...', type: 'info' })
 
     try {
-      const { data: { user } } = await supabase.auth.getUser()
-      let sellerId = user?.id
-
-      // If user is guest/not authenticated, find or use an active seller profile ID
-      if (!sellerId) {
-        const { data: fallbackProfiles } = await supabase
-          .from('profiles')
-          .select('id')
-          .limit(1)
-        sellerId = fallbackProfiles?.[0]?.id || 'ea823140-3478-448d-9278-10b0a501cf41'
+      const { data: { user }, error: authError } = await supabase.auth.getUser()
+      if (authError || !user) {
+        throw new Error('Authentication required: Please sign in as a seller to publish products.')
       }
 
-      const finalImage = cloudinaryUrl || previewUrl || 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=600&q=80'
+      // Strictly use durable Cloudinary URL or verified default image (never local blob URLs)
+      const finalImageUrl = cloudinaryUrl && !cloudinaryUrl.startsWith('blob:')
+        ? cloudinaryUrl
+        : DEFAULT_PRODUCT_IMAGE
 
       const { data, error } = await supabase.from('products').insert({
-        seller_id: sellerId,
+        seller_id: user.id,
         title: name.trim(),
         description: description.trim() || `Handcrafted 3D printed ${name.trim()} made with precision and premium materials.`,
         category: category,
-        price: parseFloat(price) || 299,
-        stock: parseInt(stock) || 15,
-        image_url: finalImage,
+        price: parsedPrice,
+        stock: parsedStock,
+        image_url: finalImageUrl,
         created_at: new Date().toISOString(),
       }).select()
 
@@ -272,13 +319,14 @@ export default function NewProductForm() {
                   border: '2px dashed #CBD5E1',
                   borderRadius: 16,
                   padding: 32,
-                  cursor: 'pointer',
+                  cursor: uploadingPhoto ? 'wait' : 'pointer',
                   textAlign: 'center',
                   display: 'block',
                   background: '#F8FAFC',
                   transition: 'all 0.2s',
                   position: 'relative',
                   overflow: 'hidden',
+                  opacity: uploadingPhoto ? 0.75 : 1,
                 }}
               >
                 {/* Upload Progress Bar Animation */}
@@ -307,7 +355,14 @@ export default function NewProductForm() {
                 <div style={{ fontSize: 13, color: '#64748B', marginTop: 4 }}>
                   Auto-optimized PNG/JPG delivered via Cloudinary CDN
                 </div>
-                <input id="product-photo" type="file" accept="image/*" style={{ display: 'none' }} onChange={handlePhotoSelect} />
+                <input
+                  id="product-photo"
+                  type="file"
+                  accept="image/*"
+                  disabled={uploadingPhoto}
+                  style={{ display: 'none' }}
+                  onChange={handlePhotoSelect}
+                />
               </label>
 
               {previewUrl && (
@@ -315,8 +370,8 @@ export default function NewProductForm() {
                   <img src={previewUrl} alt="Thumbnail" style={{ width: 56, height: 56, borderRadius: 8, objectFit: 'cover' }} />
                   <div>
                     <div style={{ fontSize: 13, fontWeight: 800, color: '#0F172A' }}>{photoName || 'Product Image'}</div>
-                    <span style={{ fontSize: 12, color: '#10B981', fontWeight: 700 }}>
-                      {cloudinaryUrl ? '✅ Cloudinary CDN ready' : '⚡ Live preview active'}
+                    <span style={{ fontSize: 12, color: cloudinaryUrl ? '#10B981' : '#F59E0B', fontWeight: 700 }}>
+                      {cloudinaryUrl ? '✅ Cloudinary CDN ready' : '⚡ Local preview (upload pending)'}
                     </span>
                   </div>
                 </div>
@@ -397,6 +452,8 @@ export default function NewProductForm() {
                   <label style={s.label}>Listing Price (₹) *</label>
                   <input
                     type="number"
+                    min="1"
+                    step="1"
                     style={inputStyle}
                     placeholder="799"
                     value={price}
@@ -407,6 +464,8 @@ export default function NewProductForm() {
                   <label style={s.label}>Stock Quantity *</label>
                   <input
                     type="number"
+                    min="0"
+                    step="1"
                     style={inputStyle}
                     placeholder="15"
                     value={stock}
@@ -453,12 +512,12 @@ export default function NewProductForm() {
               <div style={{ background: '#F8FAFC', borderRadius: 16, border: '1px solid #E2E8F0', overflow: 'hidden' }}>
                 <div style={{ height: 200, background: '#E2E8F0', position: 'relative' }}>
                   <img
-                    src={previewUrl || cloudinaryUrl || 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=600&q=80'}
+                    src={previewUrl || cloudinaryUrl || DEFAULT_PRODUCT_IMAGE}
                     alt="Preview"
                     style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                   />
                   <div style={{ position: 'absolute', top: 12, right: 12, background: '#ECFDF5', color: '#10B981', padding: '4px 10px', borderRadius: 99, fontSize: 11, fontWeight: 800 }}>
-                    In Stock ({stock || 15})
+                    In Stock ({stock || 0})
                   </div>
                 </div>
 

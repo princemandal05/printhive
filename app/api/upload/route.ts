@@ -96,108 +96,117 @@ export async function POST(request: Request) {
     }
 
     const publicId = `${Date.now()}-${crypto.randomUUID().slice(0, 8)}`
+    const isDev = process.env.NODE_ENV === 'development'
 
-    // Cloudinary upload
-    const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || 'r8wjszjm'
-    const apiKey = process.env.CLOUDINARY_API_KEY || '769894611263915'
-    const apiSecret = process.env.CLOUDINARY_API_SECRET || 'x1_w3QLL94hJFrt8xVkjJgMBuEs'
-    const preset = isModel
-      ? (process.env.NEXT_PUBLIC_CLOUDINARY_PRESET_MODELS || 'printhive_models')
-      : (process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || 'printhive_uploads')
+    // Validate Cloudinary environment credentials
+    const cloudName = process.env.CLOUDINARY_CLOUD_NAME || process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME
+    const apiKey = process.env.CLOUDINARY_API_KEY
+    const apiSecret = process.env.CLOUDINARY_API_SECRET
 
-    const folder = `printhive/${userId}`
-    const assetFolder = `printhive/${userId}`
-    const timestamp = Math.round(new Date().getTime() / 1000)
+    if (!cloudName || !apiKey || !apiSecret) {
+      if (isDev) {
+        console.warn('Cloudinary credentials missing in development; falling back to local /uploads storage.')
+      } else {
+        return NextResponse.json(
+          { success: false, error: 'Cloudinary credentials are not configured on server' },
+          { status: 500 }
+        )
+      }
+    }
 
-    const strToSign = `asset_folder=${assetFolder}&folder=${folder}&public_id=${publicId}&timestamp=${timestamp}&upload_preset=${preset}${apiSecret}`
-    const signature = crypto.createHash('sha1').update(strToSign).digest('hex')
+    if (cloudName && apiKey && apiSecret) {
+      const preset = isModel
+        ? (process.env.NEXT_PUBLIC_CLOUDINARY_PRESET_MODELS || process.env.CLOUDINARY_PRESET_MODELS || 'printhive_models')
+        : (process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || process.env.CLOUDINARY_UPLOAD_PRESET || 'printhive_uploads')
 
-    const uploadFormData = new FormData()
-    uploadFormData.append('file', file)
-    uploadFormData.append('upload_preset', preset)
-    uploadFormData.append('api_key', apiKey)
-    uploadFormData.append('timestamp', timestamp.toString())
-    uploadFormData.append('folder', folder)
-    uploadFormData.append('asset_folder', assetFolder)
-    uploadFormData.append('public_id', publicId)
-    uploadFormData.append('signature', signature)
+      const folder = `printhive/${userId}`
+      const assetFolder = `printhive/${userId}`
+      const timestamp = Math.round(new Date().getTime() / 1000)
 
-    const resourceType = isModel ? 'auto' : 'image'
+      const strToSign = `asset_folder=${assetFolder}&folder=${folder}&public_id=${publicId}&timestamp=${timestamp}&upload_preset=${preset}${apiSecret}`
+      const signature = crypto.createHash('sha1').update(strToSign).digest('hex')
 
-    try {
-      const cloudinaryRes = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/${resourceType}/upload`, {
-        method: 'POST',
-        body: uploadFormData,
-      })
+      const uploadFormData = new FormData()
+      uploadFormData.append('file', file)
+      uploadFormData.append('upload_preset', preset)
+      uploadFormData.append('api_key', apiKey)
+      uploadFormData.append('timestamp', timestamp.toString())
+      uploadFormData.append('folder', folder)
+      uploadFormData.append('asset_folder', assetFolder)
+      uploadFormData.append('public_id', publicId)
+      uploadFormData.append('signature', signature)
 
-      const data = await cloudinaryRes.json()
+      const resourceType = isModel ? 'auto' : 'image'
 
-      if (cloudinaryRes.ok && (data.secure_url || data.url)) {
-        const finalUrl = data.secure_url || data.url
+      try {
+        const cloudinaryRes = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/${resourceType}/upload`, {
+          method: 'POST',
+          body: uploadFormData,
+        })
+
+        const data = await cloudinaryRes.json()
+
+        if (cloudinaryRes.ok && (data.secure_url || data.url)) {
+          const finalUrl = data.secure_url || data.url
+          return NextResponse.json({
+            success: true,
+            url: finalUrl,
+            secure_url: finalUrl,
+            cloudinary_public_id: data.public_id || publicId,
+            public_id: data.public_id || publicId,
+            resource_type: data.resource_type || (isModel ? 'raw' : 'image'),
+            format: data.format || ext,
+            file_size: data.bytes || file.size,
+            bytes: data.bytes || file.size,
+          })
+        } else {
+          console.error('Cloudinary API upload error response:', data)
+          if (!isDev) {
+            return NextResponse.json(
+              { success: false, error: data?.error?.message || 'Cloudinary upload failed' },
+              { status: 502 }
+            )
+          }
+        }
+      } catch (cErr: any) {
+        console.error('Cloudinary upload network error:', cErr)
+        if (!isDev) {
+          return NextResponse.json(
+            { success: false, error: cErr?.message || 'Cloudinary upload connection failed' },
+            { status: 502 }
+          )
+        }
+      }
+    }
+
+    // Local filesystem storage is strictly allowed only in local development
+    if (isDev) {
+      try {
+        const fileArrayBuffer = await file.arrayBuffer()
+        const fileBuffer = Buffer.from(fileArrayBuffer)
+        const uploadsDir = path.join(process.cwd(), 'public/uploads')
+        if (!fs.existsSync(uploadsDir)) {
+          fs.mkdirSync(uploadsDir, { recursive: true })
+        }
+        const localFileName = `${publicId}.${ext}`
+        const localFilePath = path.join(uploadsDir, localFileName)
+        fs.writeFileSync(localFilePath, fileBuffer)
+        const localPublicUrl = `/uploads/${localFileName}`
+
         return NextResponse.json({
           success: true,
-          url: finalUrl,
-          secure_url: finalUrl,
-          cloudinary_public_id: data.public_id || publicId,
-          public_id: data.public_id || publicId,
-          resource_type: data.resource_type || (isModel ? 'raw' : 'image'),
-          format: data.format || ext,
-          file_size: data.bytes || file.size,
-          bytes: data.bytes || file.size,
+          url: localPublicUrl,
+          secure_url: localPublicUrl,
+          cloudinary_public_id: publicId,
+          public_id: publicId,
+          resource_type: isModel ? 'raw' : 'image',
+          format: ext,
+          file_size: file.size,
+          bytes: file.size,
         })
+      } catch (err: any) {
+        console.error('Local filesystem upload error in development:', err)
       }
-    } catch (cErr) {
-      console.warn('Cloudinary upload fetch warning:', cErr)
-    }
-
-    // Try local public/uploads fallback (local dev only - catch EROFS on serverless Vercel)
-    let localPublicUrl = ''
-    try {
-      const fileArrayBuffer = await file.arrayBuffer()
-      const fileBuffer = Buffer.from(fileArrayBuffer)
-      const uploadsDir = path.join(process.cwd(), 'public/uploads')
-      if (!fs.existsSync(uploadsDir)) {
-        fs.mkdirSync(uploadsDir, { recursive: true })
-      }
-      const localFileName = `${publicId}.${ext}`
-      const localFilePath = path.join(uploadsDir, localFileName)
-      fs.writeFileSync(localFilePath, fileBuffer)
-      localPublicUrl = `/uploads/${localFileName}`
-    } catch {
-      // Ignore EROFS on Vercel serverless
-    }
-
-    if (localPublicUrl) {
-      return NextResponse.json({
-        success: true,
-        url: localPublicUrl,
-        secure_url: localPublicUrl,
-        cloudinary_public_id: publicId,
-        public_id: publicId,
-        resource_type: isModel ? 'raw' : 'image',
-        format: ext,
-        file_size: file.size,
-        bytes: file.size,
-      })
-    }
-
-    // Fallback data URI for images if serverless without Cloudinary response
-    if (isImage) {
-      const buffer = await file.arrayBuffer()
-      const base64 = Buffer.from(buffer).toString('base64')
-      const mime = file.type || `image/${ext}`
-      const dataUri = `data:${mime};base64,${base64}`
-      return NextResponse.json({
-        success: true,
-        url: dataUri,
-        secure_url: dataUri,
-        cloudinary_public_id: publicId,
-        public_id: publicId,
-        resource_type: 'image',
-        format: ext,
-        file_size: file.size,
-        bytes: file.size,
-      })
     }
 
     return NextResponse.json({ success: false, error: 'Upload failed' }, { status: 500 })
