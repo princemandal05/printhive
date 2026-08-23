@@ -12,7 +12,6 @@ export async function GET(request: Request) {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
 
-    // Support authenticated users and demo guest visitors
     const userId = user?.id || 'guest-demo'
 
     const { searchParams } = new URL(request.url)
@@ -44,20 +43,9 @@ export async function GET(request: Request) {
       }
     }
 
-    const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME
-    const apiKey = process.env.CLOUDINARY_API_KEY
-    const apiSecret = process.env.CLOUDINARY_API_SECRET
-
-    if (!cloudName || !apiKey || !apiSecret) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'Cloudinary credentials missing in environment variables. Using server upload fallback.',
-          fallback_required: true,
-        },
-        { status: 200 }
-      )
-    }
+    const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || 'r8wjszjm'
+    const apiKey = process.env.CLOUDINARY_API_KEY || '769894611263915'
+    const apiSecret = process.env.CLOUDINARY_API_SECRET || 'x1_w3QLL94hJFrt8xVkjJgMBuEs'
 
     const preset = isModel
       ? (process.env.NEXT_PUBLIC_CLOUDINARY_PRESET_MODELS || 'printhive_models')
@@ -68,8 +56,8 @@ export async function GET(request: Request) {
     const assetFolder = `printhive/${userId}`
     const publicId = `${Date.now()}-${crypto.randomUUID().slice(0, 8)}`
 
-    // Alphabetically sorted Cloudinary signature string
-    const strToSign = `asset_folder=${assetFolder}&folder=${folder}&public_id=${publicId}&timestamp=${timestamp}${apiSecret}`
+    // Alphabetically sorted Cloudinary parameters: asset_folder, folder, public_id, timestamp, upload_preset
+    const strToSign = `asset_folder=${assetFolder}&folder=${folder}&public_id=${publicId}&timestamp=${timestamp}&upload_preset=${preset}${apiSecret}`
     const signature = crypto.createHash('sha1').update(strToSign).digest('hex')
 
     return NextResponse.json({
@@ -82,7 +70,7 @@ export async function GET(request: Request) {
       signature,
       api_key: apiKey,
       cloud_name: cloudName,
-      resource_type: isModel ? 'raw' : 'auto',
+      resource_type: isModel ? 'auto' : 'image',
     })
   } catch (err: unknown) {
     const error = err as Error
