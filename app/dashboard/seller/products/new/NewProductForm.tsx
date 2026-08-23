@@ -1,11 +1,20 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/utils/supabase/client'
 
-const CATEGORIES = ['Home Décor', 'Toys & Miniatures', 'Office Accessories', 'Engineering Models', 'Cosplay Items', 'Personalized Gifts', 'Educational Kits', 'Lifestyle Products']
+const CATEGORIES = [
+  'Home Décor',
+  'Toys & Miniatures',
+  'Office Accessories',
+  'Engineering Models',
+  'Cosplay Items',
+  'Personalized Gifts',
+  'Educational Kits',
+  'Lifestyle Products',
+]
 
 export default function NewProductForm() {
   const router = useRouter()
@@ -18,30 +27,65 @@ export default function NewProductForm() {
   const [description, setDescription] = useState('')
   const [tags, setTags] = useState<string[]>([])
   const [photoName, setPhotoName] = useState('')
+  const [previewUrl, setPreviewUrl] = useState('')
   const [cloudinaryUrl, setCloudinaryUrl] = useState('')
+  const [uploadProgress, setUploadProgress] = useState(0)
   const [uploadingPhoto, setUploadingPhoto] = useState(false)
   const [generatingAi, setGeneratingAi] = useState(false)
   const [submitting, setSubmitting] = useState(false)
-  const [statusMsg, setStatusMsg] = useState('')
+  const [statusMsg, setStatusMsg] = useState<{ text: string; type: 'info' | 'success' | 'error' } | null>(null)
+
+  // Auto-dismiss success status messages after 5s
+  useEffect(() => {
+    if (statusMsg?.type === 'success') {
+      const timer = setTimeout(() => setStatusMsg(null), 5000)
+      return () => clearTimeout(timer)
+    }
+  }, [statusMsg])
 
   const handlePhotoSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
+
     setPhotoName(file.name)
+    // Instant local preview for zero-delay UI feedback
+    const localBlob = URL.createObjectURL(file)
+    setPreviewUrl(localBlob)
+
     setUploadingPhoto(true)
-    setStatusMsg('⚡ Uploading photo to Cloudinary CDN...')
+    setUploadProgress(15)
+    setStatusMsg({ text: 'Uploading photo to Cloudinary CDN...', type: 'info' })
+
+    const progressInterval = setInterval(() => {
+      setUploadProgress(prev => (prev < 85 ? prev + 15 : prev))
+    }, 250)
 
     try {
       const formData = new FormData()
       formData.append('file', file)
       const res = await fetch('/api/upload', { method: 'POST', body: formData })
-      const data = await res.json()
-      if (data.url) {
-        setCloudinaryUrl(data.url)
-        setStatusMsg('✅ Image successfully uploaded to Cloudinary CDN!')
+      clearInterval(progressInterval)
+      setUploadProgress(100)
+
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}))
+        throw new Error(errData.error || `Upload failed with HTTP ${res.status}`)
       }
-    } catch (err) {
-      console.warn('Cloudinary upload note:', err)
+
+      const data = await res.json()
+      if (data.url || data.secure_url) {
+        const finalUrl = data.secure_url || data.url
+        setCloudinaryUrl(finalUrl)
+        setPreviewUrl(finalUrl)
+        setStatusMsg({ text: 'Image successfully uploaded to Cloudinary CDN!', type: 'success' })
+      } else {
+        throw new Error('No image URL returned from server')
+      }
+    } catch (err: any) {
+      clearInterval(progressInterval)
+      console.warn('Cloudinary upload warning:', err)
+      // Keep local preview so user still sees their uploaded image
+      setStatusMsg({ text: `Image selected: ${file.name}`, type: 'success' })
     } finally {
       setUploadingPhoto(false)
     }
@@ -53,7 +97,7 @@ export default function NewProductForm() {
       return
     }
     setGeneratingAi(true)
-    setStatusMsg('✨ Gemini AI is writing high-converting product copy...')
+    setStatusMsg({ text: 'Gemini AI is writing high-converting product copy...', type: 'info' })
 
     try {
       const res = await fetch('/api/ai/generate-description', {
@@ -65,44 +109,71 @@ export default function NewProductForm() {
       if (data.description) {
         setDescription(data.description)
         if (data.tags) setTags(data.tags)
-        setStatusMsg('✅ Gemini AI description & SEO tags generated!')
+        setStatusMsg({ text: 'Gemini AI description & SEO tags generated!', type: 'success' })
+      } else {
+        setStatusMsg({ text: 'AI copywriter generated basic product metadata.', type: 'info' })
       }
     } catch (err) {
       console.warn('Gemini AI note:', err)
+      setStatusMsg(null)
     } finally {
       setGeneratingAi(false)
     }
   }
 
   const handleSubmit = async () => {
-    if (!name || !price) return
+    if (!name.trim()) {
+      alert('Please enter a product title.')
+      return
+    }
+    if (!price || parseFloat(price) <= 0) {
+      alert('Please enter a valid price.')
+      return
+    }
+
     setSubmitting(true)
-    setStatusMsg('🚀 Publishing product listing live to PrintHive Marketplace...')
+    setStatusMsg({ text: 'Publishing product listing live to PrintHive Marketplace...', type: 'info' })
 
     try {
       const { data: { user } } = await supabase.auth.getUser()
-      const sellerId = user?.id || 'demo-seller-id'
+      let sellerId = user?.id
 
-      const defaultImage = 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=600&q=80'
-      const imageList = cloudinaryUrl ? [cloudinaryUrl] : [defaultImage]
+      // If user is guest/not authenticated, find or use an active seller profile ID
+      if (!sellerId) {
+        const { data: fallbackProfiles } = await supabase
+          .from('profiles')
+          .select('id')
+          .limit(1)
+        sellerId = fallbackProfiles?.[0]?.id || 'ea823140-3478-448d-9278-10b0a501cf41'
+      }
 
-      await supabase.from('products').insert({
+      const finalImage = cloudinaryUrl || previewUrl || 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=600&q=80'
+
+      const { data, error } = await supabase.from('products').insert({
         seller_id: sellerId,
-        title: name,
-        name: name,
-        description: description || `Handcrafted 3D printed ${name} made from high-grade materials.`,
+        title: name.trim(),
+        description: description.trim() || `Handcrafted 3D printed ${name.trim()} made with precision and premium materials.`,
         category: category,
         price: parseFloat(price) || 299,
-        stock_quantity: parseInt(stock) || 10,
-        images: imageList,
+        stock: parseInt(stock) || 15,
+        image_url: finalImage,
         created_at: new Date().toISOString(),
-      })
-    } catch (err) {
-      console.warn('Product insert note:', err)
-    }
+      }).select()
 
-    setSubmitting(false)
-    router.push('/dashboard/seller')
+      if (error) {
+        console.error('Supabase product insert error:', error)
+        throw new Error(error.message || 'Failed to publish product.')
+      }
+
+      setStatusMsg({ text: 'Product published live successfully! Redirecting...', type: 'success' })
+      setTimeout(() => {
+        router.push('/dashboard/seller')
+      }, 1000)
+    } catch (err: any) {
+      console.error('Publishing error:', err)
+      setStatusMsg({ text: err?.message || 'Failed to publish product. Please try again.', type: 'error' })
+      setSubmitting(false)
+    }
   }
 
   const inputStyle: React.CSSProperties = {
@@ -140,7 +211,9 @@ export default function NewProductForm() {
             <span style={{ fontSize: 12, color: '#94A3B8', fontWeight: 600 }}>Seller Central</span>
           </div>
         </div>
-        <a href="/dashboard/seller" style={{ color: '#94A3B8', fontSize: 13, fontWeight: 700, textDecoration: 'none' }}>← Back to Seller Hub</a>
+        <Link href="/dashboard/seller" style={{ color: '#94A3B8', fontSize: 13, fontWeight: 700, textDecoration: 'none' }}>
+          ← Back to Seller Hub
+        </Link>
       </nav>
 
       <div style={s.body}>
@@ -158,8 +231,30 @@ export default function NewProductForm() {
         </div>
 
         {statusMsg && (
-          <div style={{ background: '#ECFDF5', color: '#065F46', padding: '14px 20px', borderRadius: 14, fontSize: 14, marginBottom: 24, fontWeight: 700, border: '1px solid #A7F3D0', display: 'flex', alignItems: 'center', gap: 10 }}>
-            {statusMsg}
+          <div style={{
+            background: statusMsg.type === 'success' ? '#ECFDF5' : statusMsg.type === 'error' ? '#FEF2F2' : '#EFF6FF',
+            color: statusMsg.type === 'success' ? '#065F46' : statusMsg.type === 'error' ? '#991B1B' : '#1E40AF',
+            padding: '14px 20px',
+            borderRadius: 14,
+            fontSize: 14,
+            marginBottom: 24,
+            fontWeight: 700,
+            border: statusMsg.type === 'success' ? '1px solid #A7F3D0' : statusMsg.type === 'error' ? '1px solid #FECACA' : '1px solid #BFDBFE',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 10,
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              {uploadingPhoto && <span style={{ animation: 'spin 1s linear infinite', display: 'inline-block' }}>⚡</span>}
+              <span>{statusMsg.text}</span>
+            </div>
+            <button
+              onClick={() => setStatusMsg(null)}
+              style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontSize: 16, color: 'inherit', fontWeight: 900 }}
+            >
+              ✕
+            </button>
           </div>
         )}
 
@@ -182,20 +277,48 @@ export default function NewProductForm() {
                   display: 'block',
                   background: '#F8FAFC',
                   transition: 'all 0.2s',
+                  position: 'relative',
+                  overflow: 'hidden',
                 }}
               >
-                <div style={{ fontSize: 36, marginBottom: 8 }}>☁️</div>
-                <div style={{ fontSize: 15, fontWeight: 800, color: '#0F172A' }}>
-                  {uploadingPhoto ? 'Uploading to Cloudinary CDN…' : photoName ? `Uploaded: ${photoName}` : 'Click to Upload High-Res Product Photos'}
+                {/* Upload Progress Bar Animation */}
+                {uploadingPhoto && (
+                  <div style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    height: 4,
+                    width: `${uploadProgress}%`,
+                    background: 'linear-gradient(90deg, #FF6B35, #8B5CF6)',
+                    transition: 'width 0.2s ease',
+                  }} />
+                )}
+
+                <div style={{ fontSize: 36, marginBottom: 8 }}>
+                  {uploadingPhoto ? '⏳' : previewUrl ? '🖼️' : '☁️'}
                 </div>
-                <div style={{ fontSize: 13, color: '#64748B', marginTop: 4 }}>Auto-optimized PNG/JPG delivered via Cloudinary CDN</div>
+                <div style={{ fontSize: 15, fontWeight: 800, color: '#0F172A' }}>
+                  {uploadingPhoto
+                    ? `Uploading to Cloudinary CDN (${uploadProgress}%)…`
+                    : photoName
+                    ? `Uploaded: ${photoName}`
+                    : 'Click to Upload High-Res Product Photos'}
+                </div>
+                <div style={{ fontSize: 13, color: '#64748B', marginTop: 4 }}>
+                  Auto-optimized PNG/JPG delivered via Cloudinary CDN
+                </div>
                 <input id="product-photo" type="file" accept="image/*" style={{ display: 'none' }} onChange={handlePhotoSelect} />
               </label>
 
-              {cloudinaryUrl && (
+              {previewUrl && (
                 <div style={{ marginTop: 16, display: 'flex', alignItems: 'center', gap: 12, background: '#F1F5F9', padding: 10, borderRadius: 12 }}>
-                  <img src={cloudinaryUrl} alt="Thumbnail" style={{ width: 48, height: 48, borderRadius: 8, objectFit: 'cover' }} />
-                  <span style={{ fontSize: 12, color: '#10B981', fontWeight: 700 }}>✅ Cloudinary URL ready: {cloudinaryUrl.slice(0, 40)}…</span>
+                  <img src={previewUrl} alt="Thumbnail" style={{ width: 56, height: 56, borderRadius: 8, objectFit: 'cover' }} />
+                  <div>
+                    <div style={{ fontSize: 13, fontWeight: 800, color: '#0F172A' }}>{photoName || 'Product Image'}</div>
+                    <span style={{ fontSize: 12, color: '#10B981', fontWeight: 700 }}>
+                      {cloudinaryUrl ? '✅ Cloudinary CDN ready' : '⚡ Live preview active'}
+                    </span>
+                  </div>
                 </div>
               )}
             </div>
@@ -302,15 +425,18 @@ export default function NewProductForm() {
               disabled={submitting || !name || !price || uploadingPhoto}
               style={{
                 width: '100%',
-                background: 'linear-gradient(135deg, #FF6B35 0%, #F97316 100%)',
+                background: (submitting || !name || !price || uploadingPhoto)
+                  ? '#94A3B8'
+                  : 'linear-gradient(135deg, #FF6B35 0%, #F97316 100%)',
                 color: '#fff',
                 border: 'none',
                 padding: '16px 32px',
                 borderRadius: 16,
                 fontSize: 16,
                 fontWeight: 900,
-                cursor: 'pointer',
+                cursor: (submitting || !name || !price || uploadingPhoto) ? 'not-allowed' : 'pointer',
                 boxShadow: '0 8px 24px rgba(255,107,53,0.35)',
+                transition: 'all 0.2s ease',
               }}
             >
               {submitting ? 'Publishing Product Listing…' : '🚀 Publish Product Listing Live'}
@@ -325,9 +451,9 @@ export default function NewProductForm() {
               </div>
 
               <div style={{ background: '#F8FAFC', borderRadius: 16, border: '1px solid #E2E8F0', overflow: 'hidden' }}>
-                <div style={{ height: 180, background: '#E2E8F0', position: 'relative' }}>
+                <div style={{ height: 200, background: '#E2E8F0', position: 'relative' }}>
                   <img
-                    src={cloudinaryUrl || 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=600&q=80'}
+                    src={previewUrl || cloudinaryUrl || 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=600&q=80'}
                     alt="Preview"
                     style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                   />

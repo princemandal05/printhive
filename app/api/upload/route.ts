@@ -46,7 +46,7 @@ export async function POST(request: Request) {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
 
-    const userId = user?.id || 'guest-demo'
+    const userId = user?.id || 'guest-seller'
 
     const formData = await request.formData()
     const entry = formData.get('file')
@@ -97,22 +97,7 @@ export async function POST(request: Request) {
 
     const publicId = `${Date.now()}-${crypto.randomUUID().slice(0, 8)}`
 
-    // Save actual file bytes to local public/uploads storage so files are 100% accessible via URL
-    const fileArrayBuffer = await file.arrayBuffer()
-    const fileBuffer = Buffer.from(fileArrayBuffer)
-
-    const uploadsDir = path.join(process.cwd(), 'public/uploads')
-    if (!fs.existsSync(uploadsDir)) {
-      fs.mkdirSync(uploadsDir, { recursive: true })
-    }
-
-    const localFileName = `${publicId}.${ext}`
-    const localFilePath = path.join(uploadsDir, localFileName)
-    fs.writeFileSync(localFilePath, fileBuffer)
-
-    const localPublicUrl = `/uploads/${localFileName}`
-
-    // Attempt Cloudinary upload as secondary CDN distribution
+    // Cloudinary upload
     const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || 'r8wjszjm'
     const apiKey = process.env.CLOUDINARY_API_KEY || '769894611263915'
     const apiSecret = process.env.CLOUDINARY_API_SECRET || 'x1_w3QLL94hJFrt8xVkjJgMBuEs'
@@ -147,35 +132,75 @@ export async function POST(request: Request) {
 
       const data = await cloudinaryRes.json()
 
-      if (cloudinaryRes.ok && data.secure_url) {
+      if (cloudinaryRes.ok && (data.secure_url || data.url)) {
+        const finalUrl = data.secure_url || data.url
         return NextResponse.json({
           success: true,
-          url: data.secure_url,
-          secure_url: data.secure_url,
-          cloudinary_public_id: data.public_id,
-          public_id: data.public_id,
+          url: finalUrl,
+          secure_url: finalUrl,
+          cloudinary_public_id: data.public_id || publicId,
+          public_id: data.public_id || publicId,
           resource_type: data.resource_type || (isModel ? 'raw' : 'image'),
           format: data.format || ext,
           file_size: data.bytes || file.size,
           bytes: data.bytes || file.size,
         })
       }
-    } catch {
-      // Continue to return real local file URL
+    } catch (cErr) {
+      console.warn('Cloudinary upload fetch warning:', cErr)
     }
 
-    // Return the actual saved file URL from public/uploads
-    return NextResponse.json({
-      success: true,
-      url: localPublicUrl,
-      secure_url: localPublicUrl,
-      cloudinary_public_id: publicId,
-      public_id: publicId,
-      resource_type: isModel ? 'raw' : 'image',
-      format: ext,
-      file_size: file.size,
-      bytes: file.size,
-    })
+    // Try local public/uploads fallback (local dev only - catch EROFS on serverless Vercel)
+    let localPublicUrl = ''
+    try {
+      const fileArrayBuffer = await file.arrayBuffer()
+      const fileBuffer = Buffer.from(fileArrayBuffer)
+      const uploadsDir = path.join(process.cwd(), 'public/uploads')
+      if (!fs.existsSync(uploadsDir)) {
+        fs.mkdirSync(uploadsDir, { recursive: true })
+      }
+      const localFileName = `${publicId}.${ext}`
+      const localFilePath = path.join(uploadsDir, localFileName)
+      fs.writeFileSync(localFilePath, fileBuffer)
+      localPublicUrl = `/uploads/${localFileName}`
+    } catch {
+      // Ignore EROFS on Vercel serverless
+    }
+
+    if (localPublicUrl) {
+      return NextResponse.json({
+        success: true,
+        url: localPublicUrl,
+        secure_url: localPublicUrl,
+        cloudinary_public_id: publicId,
+        public_id: publicId,
+        resource_type: isModel ? 'raw' : 'image',
+        format: ext,
+        file_size: file.size,
+        bytes: file.size,
+      })
+    }
+
+    // Fallback data URI for images if serverless without Cloudinary response
+    if (isImage) {
+      const buffer = await file.arrayBuffer()
+      const base64 = Buffer.from(buffer).toString('base64')
+      const mime = file.type || `image/${ext}`
+      const dataUri = `data:${mime};base64,${base64}`
+      return NextResponse.json({
+        success: true,
+        url: dataUri,
+        secure_url: dataUri,
+        cloudinary_public_id: publicId,
+        public_id: publicId,
+        resource_type: 'image',
+        format: ext,
+        file_size: file.size,
+        bytes: file.size,
+      })
+    }
+
+    return NextResponse.json({ success: false, error: 'Upload failed' }, { status: 500 })
   } catch (err: unknown) {
     const error = err as Error
     console.error('Upload route failure:', error)
