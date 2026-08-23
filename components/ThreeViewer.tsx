@@ -9,6 +9,8 @@ import { ThreeMFLoader } from 'three/examples/jsm/loaders/3MFLoader.js'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import { detectModelFormat, type ModelFormat } from '@/utils/format-detector'
 
+type CanvasTheme = 'dark' | 'slate' | 'pearl'
+
 interface ThreeViewerProps {
   title?: string
   color?: string
@@ -20,6 +22,7 @@ interface ThreeViewerProps {
   mimeType?: string | null
   dimensions?: { x: number; y: number; z: number }
   autoRotateDefault?: boolean
+  initialTheme?: CanvasTheme
 }
 
 interface ErrorBoundaryProps {
@@ -49,12 +52,12 @@ class ThreeViewerErrorBoundary extends Component<ErrorBoundaryProps, ErrorBounda
     if (this.state.hasError) {
       return (
         <div style={{
-          height: 440, background: '#FFFFFF', borderRadius: 20,
+          height: 440, background: '#0F172A', borderRadius: 20,
           display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-          color: '#0F172A', border: '1px solid #E2E8F0',
+          color: '#F8FAFC', border: '1px solid rgba(255,255,255,0.08)',
         }}>
           <div style={{ fontSize: 40, marginBottom: 10 }}>🧊</div>
-          <p style={{ fontSize: 14, fontWeight: 700, color: '#64748B' }}>Unable to preview this model</p>
+          <p style={{ fontSize: 14, fontWeight: 700, color: '#94A3B8' }}>Unable to preview this model</p>
         </div>
       )
     }
@@ -75,6 +78,7 @@ function ThreeViewerInner({
   color = '#FF6B35',
   wireframeDefault = false,
   autoRotateDefault = false,
+  initialTheme = 'dark',
   height = 460,
   modelUrl,
   format,
@@ -91,11 +95,13 @@ function ThreeViewerInner({
   const [wireframe, setWireframe] = useState(wireframeDefault)
   const [rotating, setRotating] = useState(autoRotateDefault)
   const rotatingRef = useRef(rotating)
+  const [theme, setTheme] = useState<CanvasTheme>(initialTheme)
   const [bounds, setBounds] = useState(dimensions)
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [showHint, setShowHint] = useState(true)
   const [isGrabbing, setIsGrabbing] = useState(false)
 
+  const sceneRef = useRef<THREE.Scene | null>(null)
   const controlsRef = useRef<OrbitControls | null>(null)
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null)
   const groupRef = useRef<THREE.Group | null>(null)
@@ -106,7 +112,7 @@ function ThreeViewerInner({
   const fmt: ModelFormat = detected.format
   const safeColor = /^#[0-9A-Fa-f]{6}$/.test(color || '') ? color! : '#FF6B35'
 
-  // Hide gesture hint after 4 seconds or interaction
+  // Hide gesture hint after 4 seconds
   useEffect(() => {
     const timer = setTimeout(() => setShowHint(false), 4000)
     return () => clearTimeout(timer)
@@ -129,6 +135,13 @@ function ThreeViewerInner({
     matsRef.current.forEach(m => { m.color.copy(c); m.needsUpdate = true })
   }, [safeColor])
 
+  // Dynamic canvas theme background update
+  useEffect(() => {
+    if (!sceneRef.current) return
+    const bgHex = theme === 'dark' ? '#0F172A' : theme === 'slate' ? '#1E293B' : '#E2E8F0'
+    sceneRef.current.background = new THREE.Color(bgHex)
+  }, [theme])
+
   // Escape key exits fullscreen
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -148,9 +161,11 @@ function ThreeViewerInner({
     let disposed = false
     matsRef.current = []
 
-    // Scene with clean white studio background
+    // Scene with Studio Background
     const scene = new THREE.Scene()
-    scene.background = new THREE.Color('#FFFFFF')
+    const bgHex = theme === 'dark' ? '#0F172A' : theme === 'slate' ? '#1E293B' : '#E2E8F0'
+    scene.background = new THREE.Color(bgHex)
+    sceneRef.current = scene
 
     // Camera
     const camera = new THREE.PerspectiveCamera(38, w / h, 0.1, 5000)
@@ -166,7 +181,7 @@ function ThreeViewerInner({
     renderer.setSize(w, h)
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
     renderer.toneMapping = THREE.ACESFilmicToneMapping
-    renderer.toneMappingExposure = 1.08
+    renderer.toneMappingExposure = 1.15
     renderer.shadowMap.enabled = true
     renderer.shadowMap.type = THREE.PCFSoftShadowMap
     container.innerHTML = ''
@@ -183,41 +198,41 @@ function ThreeViewerInner({
     controls.minDistance = 2
     controlsRef.current = controls
 
-    // ─── Studio Lighting Setup (White Studio Calibrated) ──
-    // Soft Ambient / Hemisphere
-    scene.add(new THREE.HemisphereLight(0xffffff, 0xe2e8f0, 0.85))
+    // ─── Studio Lighting Setup ──────────────────────────
+    // Ambient / Hemisphere
+    scene.add(new THREE.HemisphereLight(0xffffff, 0x1e293b, 0.8))
 
     // Main Key light (Top-right front)
-    const key = new THREE.DirectionalLight(0xffffff, 1.25)
+    const key = new THREE.DirectionalLight(0xffffff, 1.35)
     key.position.set(100, 160, 120)
     key.castShadow = true
     key.shadow.bias = -0.0001
     scene.add(key)
 
     // Fill light (Soft gentle fill from left)
-    const fill = new THREE.DirectionalLight(0xf1f5f9, 0.7)
+    const fill = new THREE.DirectionalLight(0xa5b4fc, 0.7)
     fill.position.set(-120, 60, 80)
     scene.add(fill)
 
-    // Rim / backlight
-    const rim = new THREE.DirectionalLight(0xffffff, 0.5)
+    // Rim / backlight (defines edge silhouette)
+    const rim = new THREE.DirectionalLight(0xffedd5, 0.9)
     rim.position.set(-20, 120, -160)
     scene.add(rim)
 
     // Subtle Under-bounce
-    const bounce = new THREE.DirectionalLight(0xe2e8f0, 0.3)
+    const bounce = new THREE.DirectionalLight(0x334155, 0.35)
     bounce.position.set(0, -100, 40)
     scene.add(bounce)
 
-    // ─── Clean Soft Contact Shadow on White Ground ───────
+    // ─── Soft Contact Shadow Plane ──────────────────────
     const shadowCanvas = document.createElement('canvas')
     shadowCanvas.width = 128
     shadowCanvas.height = 128
     const ctx = shadowCanvas.getContext('2d')
     if (ctx) {
       const grad = ctx.createRadialGradient(64, 64, 0, 64, 64, 64)
-      grad.addColorStop(0, 'rgba(0, 0, 0, 0.22)')
-      grad.addColorStop(0.4, 'rgba(0, 0, 0, 0.08)')
+      grad.addColorStop(0, 'rgba(0, 0, 0, 0.45)')
+      grad.addColorStop(0.5, 'rgba(0, 0, 0, 0.15)')
       grad.addColorStop(1, 'rgba(0, 0, 0, 0)')
       ctx.fillStyle = grad
       ctx.fillRect(0, 0, 128, 128)
@@ -443,17 +458,21 @@ function ThreeViewerInner({
     }
   }
 
+  const cycleTheme = () => {
+    setTheme(prev => prev === 'dark' ? 'slate' : prev === 'slate' ? 'pearl' : 'dark')
+  }
+
   // ─── Error / unsupported fallback ─────────────────────
   if (unsupported || error) {
     return (
       <div style={{
-        height, background: '#FFFFFF', borderRadius: 20,
+        height, background: '#0F172A', borderRadius: 20,
         display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-        padding: 32, textAlign: 'center', color: '#0F172A', border: '1px solid #E2E8F0',
+        padding: 32, textAlign: 'center', color: '#F8FAFC', border: '1px solid #334155',
       }}>
         <div style={{ fontSize: 40, marginBottom: 10 }}>🧊</div>
         <h3 style={{ fontSize: 16, fontWeight: 800, margin: '0 0 6px' }}>Unable to preview</h3>
-        <p style={{ fontSize: 13, color: '#64748B', maxWidth: 340, margin: '0 0 18px' }}>
+        <p style={{ fontSize: 13, color: '#94A3B8', maxWidth: 340, margin: '0 0 18px' }}>
           {unsupported ? `${unsupported} preview is not supported. Download the file to view.` : error}
         </p>
         {modelUrl && (
@@ -470,6 +489,8 @@ function ThreeViewerInner({
     )
   }
 
+  const isLightMode = theme === 'pearl'
+
   // ─── Main Viewer ──────────────────────────────────────
   return (
     <div
@@ -480,11 +501,15 @@ function ThreeViewerInner({
         zIndex: isFullscreen ? 99999 : 1,
         width: '100%',
         height: isFullscreen ? '100vh' : height,
-        background: '#FFFFFF',
+        background: theme === 'dark'
+          ? 'radial-gradient(circle at 50% 40%, #1E293B 0%, #0F172A 100%)'
+          : theme === 'slate'
+          ? '#1E293B'
+          : '#E2E8F0',
         borderRadius: isFullscreen ? 0 : 20,
         overflow: 'hidden',
-        border: isFullscreen ? 'none' : '1px solid #E2E8F0',
-        boxShadow: isFullscreen ? 'none' : '0 4px 24px rgba(0,0,0,0.06)',
+        border: isFullscreen ? 'none' : theme === 'pearl' ? '1px solid #CBD5E1' : '1px solid #334155',
+        boxShadow: isFullscreen ? 'none' : '0 8px 32px rgba(0,0,0,0.12)',
       }}
     >
       <div
@@ -499,23 +524,29 @@ function ThreeViewerInner({
       {/* Loading Overlay */}
       {loading && (
         <div style={{
-          position: 'absolute', inset: 0, background: 'rgba(255,255,255,0.92)', backdropFilter: 'blur(6px)',
+          position: 'absolute', inset: 0,
+          background: isLightMode ? 'rgba(226, 232, 240, 0.92)' : 'rgba(15, 23, 42, 0.92)',
+          backdropFilter: 'blur(6px)',
           display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', zIndex: 10,
         }}>
           <div style={{ fontSize: 32, marginBottom: 8, animation: 'spin 1.5s linear infinite' }}>⏳</div>
-          <div style={{ color: '#0F172A', fontWeight: 800, fontSize: 14 }}>Loading {fmt.toUpperCase()} Model…</div>
+          <div style={{ color: isLightMode ? '#0F172A' : '#F8FAFC', fontWeight: 800, fontSize: 14 }}>
+            Loading {fmt.toUpperCase()} Model…
+          </div>
         </div>
       )}
 
       {/* Top-left: Minimal Specs Badge */}
       <div style={{
         position: 'absolute', top: 12, left: 12, zIndex: 5,
-        background: 'rgba(255,255,255,0.9)', backdropFilter: 'blur(10px)',
-        border: '1px solid rgba(0,0,0,0.08)', borderRadius: 10,
+        background: isLightMode ? 'rgba(255,255,255,0.9)' : 'rgba(15,23,42,0.75)',
+        backdropFilter: 'blur(10px)',
+        border: isLightMode ? '1px solid rgba(0,0,0,0.08)' : '1px solid rgba(255,255,255,0.08)',
+        borderRadius: 10,
         padding: '5px 12px', display: 'flex', alignItems: 'center', gap: 8,
         boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
       }}>
-        <span style={{ fontSize: 11, fontWeight: 700, color: '#334155' }}>
+        <span style={{ fontSize: 11, fontWeight: 700, color: isLightMode ? '#334155' : '#CBD5E1' }}>
           {bounds.x} × {bounds.y} × {bounds.z} mm
         </span>
         <span style={{
@@ -530,9 +561,13 @@ function ThreeViewerInner({
       {showHint && !loading && (
         <div style={{
           position: 'absolute', top: 12, right: 12, zIndex: 4,
-          background: 'rgba(255,255,255,0.88)', backdropFilter: 'blur(8px)',
-          border: '1px solid rgba(0,0,0,0.06)', borderRadius: 8,
-          padding: '4px 10px', color: '#64748B', fontSize: 11, fontWeight: 600,
+          background: isLightMode ? 'rgba(255,255,255,0.85)' : 'rgba(15,23,42,0.6)',
+          backdropFilter: 'blur(8px)',
+          border: isLightMode ? '1px solid rgba(0,0,0,0.06)' : '1px solid rgba(255,255,255,0.06)',
+          borderRadius: 8,
+          padding: '4px 10px',
+          color: isLightMode ? '#475569' : '#94A3B8',
+          fontSize: 11, fontWeight: 600,
           pointerEvents: 'none', transition: 'opacity 0.5s ease',
           boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
         }}>
@@ -550,12 +585,21 @@ function ThreeViewerInner({
           onClick={handleResetView}
           label="🎯 Center"
           title="Reset camera angle (or double-click)"
+          isLightMode={isLightMode}
+        />
+        <ViewerBtn
+          active={false}
+          onClick={cycleTheme}
+          label={theme === 'dark' ? '🌙 Dark' : theme === 'slate' ? '🏢 Slate' : '☁️ Pearl'}
+          title="Switch Canvas Background Theme"
+          isLightMode={isLightMode}
         />
         <ViewerBtn
           active={wireframe}
           onClick={() => setWireframe(!wireframe)}
           label={wireframe ? '◼ Solid' : '◻ Wireframe'}
           title="Toggle wireframe mode"
+          isLightMode={isLightMode}
         />
         <ViewerBtn
           active={rotating}
@@ -563,12 +607,14 @@ function ThreeViewerInner({
           label={rotating ? '⏸ Pause' : '🔄 Rotate'}
           activeColor="#FF6B35"
           title="Toggle auto rotation"
+          isLightMode={isLightMode}
         />
         <ViewerBtn
           active={isFullscreen}
           onClick={() => setIsFullscreen(!isFullscreen)}
           label={isFullscreen ? '✖ Exit' : '⛶ Full'}
           title="Toggle fullscreen view"
+          isLightMode={isLightMode}
         />
       </div>
     </div>
@@ -581,12 +627,14 @@ function ViewerBtn({
   label,
   activeColor = '#8B5CF6',
   title,
+  isLightMode = false,
 }: {
   active: boolean
   onClick: () => void
   label: string
   activeColor?: string
   title?: string
+  isLightMode?: boolean
 }) {
   return (
     <button
@@ -594,9 +642,21 @@ function ViewerBtn({
       onClick={onClick}
       title={title}
       style={{
-        background: active ? activeColor : 'rgba(255,255,255,0.92)',
-        color: active ? '#FFFFFF' : '#334155',
-        border: active ? `1px solid ${activeColor}` : '1px solid rgba(0,0,0,0.1)',
+        background: active
+          ? activeColor
+          : isLightMode
+          ? 'rgba(255,255,255,0.92)'
+          : 'rgba(15,23,42,0.75)',
+        color: active
+          ? '#FFFFFF'
+          : isLightMode
+          ? '#1E293B'
+          : '#94A3B8',
+        border: active
+          ? `1px solid ${activeColor}`
+          : isLightMode
+          ? '1px solid rgba(0,0,0,0.1)'
+          : '1px solid rgba(255,255,255,0.1)',
         borderRadius: 8,
         padding: '5px 11px',
         fontSize: 11,
