@@ -39,14 +39,12 @@ const ROLE_NAV_LINKS: Record<string, { href: string; label: string }[]> = {
   seller: [
     { href: '/', label: 'Home' },
     { href: '/shop', label: '🛍️ Shop' },
-    { href: '/dashboard/seller', label: 'My Products' },
     { href: '/dashboard/seller/products/new', label: '+ Add Product' },
   ],
   designer: [
     { href: '/', label: 'Home' },
     { href: '/shop', label: '🛍️ Shop' },
     { href: '/browse', label: '🧊 3D Models' },
-    { href: '/dashboard/designer', label: 'Creator Studio' },
     { href: '/dashboard/designer/upload', label: '+ Upload Model' },
   ],
   printer_owner: [
