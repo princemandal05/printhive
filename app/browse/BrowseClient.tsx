@@ -1,10 +1,12 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import Link from 'next/link'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 import ThreeViewer from '@/components/ThreeViewer'
+import { createClient } from '@/utils/supabase/client'
+
 export interface DesignRow {
   id: string
   title: string
@@ -106,32 +108,95 @@ function Quick3DModal({ design, onClose }: { design: DesignRow; onClose: () => v
   )
 }
 
-export default function BrowseClient({ designs }: { designs: DesignRow[] }) {
+export default function BrowseClient({ designs = [] }: { designs: DesignRow[] }) {
+  const [modelList, setModelList] = useState<DesignRow[]>(designs)
   const [search, setSearch] = useState('')
   const [category, setCategory] = useState('All')
   const [sort, setSort] = useState('popular')
   const [previewDesign, setPreviewDesign] = useState<DesignRow | null>(null)
 
+  // Real-time client-side sync with Supabase to always reflect latest models
+  useEffect(() => {
+    const supabase = createClient()
+    let isMounted = true
+
+    async function fetchLatestDesigns() {
+      try {
+        const { data, error } = await supabase
+          .from('designs')
+          .select('id, title, price, rating, rating_count, thumbnail_url, preview_url, file_url, category, tags, designer_id')
+          .order('created_at', { ascending: false })
+
+        if (!error && data && data.length > 0 && isMounted) {
+          const designerIds = Array.from(new Set(data.map((d: any) => d.designer_id).filter(Boolean)))
+          const profileMap: Record<string, string> = {}
+
+          if (designerIds.length > 0) {
+            const { data: profiles } = await supabase
+              .from('profiles')
+              .select('id, full_name')
+              .in('id', designerIds)
+
+            if (profiles) {
+              profiles.forEach((p: any) => {
+                profileMap[p.id] = p.full_name
+              })
+            }
+          }
+
+          const parsed: DesignRow[] = data.map((d: any) => {
+            const tags = Array.isArray(d.tags) ? d.tags : []
+            return {
+              id: d.id,
+              title: d.title,
+              price: Number(d.price ?? 0),
+              category: d.category || tags[0] || 'Toys & Games',
+              rating: d.rating != null ? Number(d.rating) : 5,
+              rating_count: d.rating_count != null ? Number(d.rating_count) : 0,
+              thumbnail_url: d.thumbnail_url || d.preview_url || 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=600&q=80',
+              file_url: d.file_url || '',
+              designer: { full_name: profileMap[d.designer_id] || 'PrintHive Creator' },
+            }
+          })
+
+          setModelList(parsed)
+        }
+      } catch (err) {
+        console.warn('Live designs fetch warning:', err)
+      }
+    }
+
+    fetchLatestDesigns()
+
+    return () => {
+      isMounted = false
+    }
+  }, [])
+
   const categories = useMemo(() => {
     const set = new Set<string>()
-    designs.forEach((d) => {
+    modelList.forEach((d) => {
       if (d.category) set.add(d.category)
     })
     const fromData = Array.from(set)
     const combined = Array.from(new Set(['All', ...FALLBACK_CATEGORIES, ...fromData]))
     return combined
-  }, [designs])
+  }, [modelList])
 
   const filteredDesigns = useMemo(() => {
-    return designs
+    return modelList
       .filter((d) => {
-        const matchesCategory = category === 'All' || d.category === category
+        const matchesCategory =
+          category === 'All' ||
+          d.category?.toLowerCase() === category.toLowerCase()
+
         const q = search.toLowerCase().trim()
         const matchesSearch =
           !q ||
-          d.title.toLowerCase().includes(q) ||
+          d.title?.toLowerCase().includes(q) ||
           (d.category && d.category.toLowerCase().includes(q)) ||
           (d.designer?.full_name && d.designer.full_name.toLowerCase().includes(q))
+
         return matchesCategory && matchesSearch
       })
       .sort((a, b) => {
@@ -140,7 +205,7 @@ export default function BrowseClient({ designs }: { designs: DesignRow[] }) {
         if (sort === 'price-high') return b.price - a.price
         return 0
       })
-  }, [designs, search, category, sort])
+  }, [modelList, search, category, sort])
 
   return (
     <main style={{ minHeight: '100vh' }}>
@@ -194,7 +259,7 @@ export default function BrowseClient({ designs }: { designs: DesignRow[] }) {
 
           <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
             {categories.map((cat) => {
-              const active = category === cat
+              const active = category.toLowerCase() === cat.toLowerCase()
               return (
                 <button
                   key={cat}
@@ -252,7 +317,7 @@ export default function BrowseClient({ designs }: { designs: DesignRow[] }) {
 
                   {/* Category Pill */}
                   <div style={{ position: 'absolute', top: 10, left: 10, background: 'rgba(255,107,53,0.9)', color: '#fff', fontSize: 10, fontWeight: 800, padding: '3px 10px', borderRadius: 99, backdropFilter: 'blur(4px)' }}>
-                    {design.category || '3D STL Model'}
+                    {design.category || 'Toys & Games'}
                   </div>
 
                   {/* Quick 3D View Button */}
@@ -277,7 +342,7 @@ export default function BrowseClient({ designs }: { designs: DesignRow[] }) {
                       gap: 4,
                     }}
                   >
-                    <span>Inspect 3D</span>
+                    <span>Inspect 3D 🧊</span>
                   </button>
                 </div>
 
@@ -285,7 +350,7 @@ export default function BrowseClient({ designs }: { designs: DesignRow[] }) {
                 <div style={{ padding: 16, flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                   <div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-                      <span style={{ fontSize: 11, color: 'var(--text-sub)', fontWeight: 600 }}>By {design.designer?.full_name || 'PrintHive Designer'}</span>
+                      <span style={{ fontSize: 11, color: 'var(--text-sub)', fontWeight: 600 }}>By {design.designer?.full_name || 'PrintHive Creator'}</span>
                       <span style={{ fontSize: 11, fontWeight: 800, color: '#D97706' }}>★ {design.rating}</span>
                     </div>
 
@@ -298,8 +363,8 @@ export default function BrowseClient({ designs }: { designs: DesignRow[] }) {
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 12, paddingTop: 12, borderTop: '1px solid var(--border-color)' }}>
                       <div>
                         <div style={{ fontSize: 10, color: 'var(--text-sub)', fontWeight: 700, textTransform: 'uppercase' }}>Royalty / Price</div>
-                        <div style={{ fontSize: 16, fontWeight: 900, color: design.price === 0 ? '#10B981' : 'var(--text-main)' }}>
-                          {design.price === 0 ? 'Free (₹0)' : `₹${design.price}`}
+                        <div style={{ fontSize: 18, fontWeight: 900, color: design.price === 0 ? '#10B981' : '#FF6B35' }}>
+                          {design.price === 0 ? 'Free' : `₹${design.price}`}
                         </div>
                       </div>
 
@@ -307,13 +372,17 @@ export default function BrowseClient({ designs }: { designs: DesignRow[] }) {
                         href={`/designs/${design.id}`}
                         style={{
                           background: 'var(--bg-card-hover)',
-                          border: '1px solid var(--border-color)',
                           color: 'var(--text-main)',
+                          border: '1px solid var(--border-color)',
+                          borderRadius: 99,
                           padding: '6px 14px',
-                          borderRadius: 12,
                           fontSize: 12,
                           fontWeight: 800,
                           textDecoration: 'none',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: 4,
+                          transition: 'all 0.2s ease',
                         }}
                       >
                         Details →
