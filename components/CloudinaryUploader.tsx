@@ -8,6 +8,9 @@ export type CloudinaryMetadata = {
   resource_type: string
   format: string
   file_size: number
+  original_filename: string
+  extension: string
+  mime_type: string
 }
 
 type CloudinaryUploaderProps = {
@@ -60,7 +63,6 @@ export default function CloudinaryUploader({
     setErrorMsg(null)
     const ext = file.name.split('.').pop()?.toLowerCase() || ''
 
-    // Client-side extension validation
     if (!acceptedExtensions.includes(ext)) {
       const err = `Invalid file format .${ext}. Allowed formats: ${acceptedExtensions.join(', ')}`
       setErrorMsg(err)
@@ -68,7 +70,6 @@ export default function CloudinaryUploader({
       return
     }
 
-    // Client-side size validation
     const isImg = ALLOWED_IMAGES.includes(ext)
     const maxSize = isImg ? 10 * 1024 * 1024 : 100 * 1024 * 1024
     if (file.size > maxSize) {
@@ -78,7 +79,6 @@ export default function CloudinaryUploader({
       return
     }
 
-    // Start upload via XMLHttpRequest for progress & cancel support
     startUpload(file)
   }
 
@@ -89,9 +89,9 @@ export default function CloudinaryUploader({
 
     const ext = file.name.split('.').pop()?.toLowerCase() || ''
     const isModel = ALLOWED_MODELS.includes(ext)
+    const fallbackMime = isModel ? `model/${ext}` : `image/${ext}`
 
     try {
-      // 1. Fetch signed parameters from backend signature route with file metadata
       const sigRes = await fetch(`/api/upload/signature?isModel=${isModel}&fileName=${encodeURIComponent(file.name)}&fileSize=${file.size}&ext=${ext}`)
       const sigData = await sigRes.json()
 
@@ -132,6 +132,9 @@ export default function CloudinaryUploader({
                   resource_type: data.resource_type || (isModel ? 'raw' : 'image'),
                   format: data.format || ext,
                   file_size: data.bytes || file.size,
+                  original_filename: file.name,
+                  extension: ext,
+                  mime_type: file.type || fallbackMime,
                 }
                 setUploadedUrl(data.secure_url)
                 setUploadedMeta(meta)
@@ -160,13 +163,16 @@ export default function CloudinaryUploader({
       console.warn('Signed direct upload fallback:', err)
     }
 
-    // Fallback to server route /api/upload
     uploadViaServerRoute(file)
   }
 
   const uploadViaServerRoute = (file: File) => {
     const formData = new FormData()
     formData.append('file', file)
+
+    const ext = file.name.split('.').pop()?.toLowerCase() || ''
+    const isModel = ALLOWED_MODELS.includes(ext)
+    const fallbackMime = isModel ? `model/${ext}` : `image/${ext}`
 
     const xhr = new XMLHttpRequest()
     xhrRef.current = xhr
@@ -188,8 +194,11 @@ export default function CloudinaryUploader({
               secure_url: data.secure_url,
               cloudinary_public_id: data.cloudinary_public_id || data.public_id,
               resource_type: data.resource_type || 'auto',
-              format: data.format || 'unknown',
+              format: data.format || ext,
               file_size: data.file_size || file.size,
+              original_filename: file.name,
+              extension: ext,
+              mime_type: file.type || fallbackMime,
             }
             setUploadedUrl(data.secure_url)
             setUploadedMeta(meta)
@@ -218,135 +227,85 @@ export default function CloudinaryUploader({
       if (onUploadError) onUploadError(err)
     }
 
-    xhr.onabort = () => {
-      setUploading(false)
-      setProgress(0)
-      setErrorMsg('Upload canceled by user.')
-    }
-
     xhr.open('POST', '/api/upload', true)
     xhr.send(formData)
   }
 
-  const cancelUpload = () => {
-    if (xhrRef.current) {
-      xhrRef.current.abort()
-      xhrRef.current = null
-    }
-  }
-
   return (
-    <div style={{ background: 'var(--bg-card)', padding: 18, borderRadius: 16, border: '1px solid var(--border-color)' }}>
-      <label style={{ display: 'block', fontSize: 13, fontWeight: 800, color: 'var(--text-main)', marginBottom: 8 }}>
-        ☁️ {label}
-      </label>
-
-      {/* Hidden File Input */}
+    <div
+      style={{
+        background: '#F8FAFC',
+        border: '2px dashed #CBD5E1',
+        borderRadius: 16,
+        padding: 24,
+        textAlign: 'center',
+        position: 'relative',
+      }}
+    >
       <input
-        ref={fileInputRef}
         type="file"
-        accept={acceptAttribute}
+        ref={fileInputRef}
         onChange={handleFileSelect}
+        accept={acceptAttribute}
         style={{ display: 'none' }}
       />
 
-      {/* Action Buttons */}
-      {!uploading && (
-        <button
-          type="button"
-          onClick={() => fileInputRef.current?.click()}
-          style={{
-            background: 'linear-gradient(135deg, #FF6B35 0%, #EA580C 100%)',
-            color: '#fff',
-            border: 'none',
-            padding: '10px 20px',
-            borderRadius: 12,
-            fontSize: 13,
-            fontWeight: 800,
-            cursor: 'pointer',
-            boxShadow: '0 4px 14px rgba(255,107,53,0.3)',
-          }}
-        >
-          Select & Upload {acceptType === 'model' ? '3D Model' : acceptType === 'image' ? 'Image' : 'File'}
-        </button>
-      )}
+      <div style={{ marginBottom: 12 }}>
+        <span style={{ fontSize: 13, fontWeight: 800, color: '#475569', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+          {label}
+        </span>
+      </div>
 
-      {/* Uploading Progress & Cancel */}
-      {uploading && (
-        <div style={{ marginTop: 8 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-            <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-main)' }}>
-              ⚡ Uploading to Cloudinary... ({progress}%)
-            </span>
-            <button
-              type="button"
-              onClick={cancelUpload}
-              style={{
-                background: 'rgba(239, 68, 68, 0.15)',
-                color: '#EF4444',
-                border: '1px solid rgba(239, 68, 68, 0.3)',
-                borderRadius: 8,
-                padding: '4px 10px',
-                fontSize: 11,
-                fontWeight: 800,
-                cursor: 'pointer',
-              }}
-            >
-              ✕ Cancel
-            </button>
+      {uploadedUrl ? (
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: '#ECFDF5', color: '#065F46', padding: '6px 14px', borderRadius: 99, fontSize: 12, fontWeight: 800, border: '1px solid #A7F3D0' }}>
+            <span>✅ Media Uploaded Successfully</span>
           </div>
-          <div style={{ width: '100%', height: 8, background: 'var(--bg-card-hover)', borderRadius: 99, overflow: 'hidden' }}>
-            <div
-              style={{
-                width: `${progress}%`,
-                height: '100%',
-                background: 'linear-gradient(90deg, #FF6B35 0%, #10B981 100%)',
-                transition: 'width 0.2s linear',
-              }}
-            />
-          </div>
-        </div>
-      )}
-
-      {/* Error Message */}
-      {errorMsg && (
-        <div style={{ marginTop: 10, background: '#FEF2F2', color: '#DC2626', padding: '8px 12px', borderRadius: 10, fontSize: 12, fontWeight: 700, border: '1px solid #FCA5A5' }}>
-          ⚠️ {errorMsg}
-        </div>
-      )}
-
-      {/* Live Media Preview */}
-      {uploadedUrl && !uploading && (
-        <div style={{ marginTop: 14, paddingTop: 12, borderTop: '1px dashed var(--border-color)', display: 'flex', alignItems: 'center', gap: 12 }}>
-          {uploadedUrl.match(/\.(jpeg|jpg|png|webp)/i) ? (
-            <img
-              src={uploadedUrl}
-              alt="Uploaded preview"
-              style={{ width: 64, height: 64, objectFit: 'cover', borderRadius: 10, border: '1px solid var(--border-color)' }}
-            />
-          ) : (
-            <div style={{ width: 48, height: 48, background: 'rgba(255,107,53,0.1)', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24 }}>
-              🧊
-            </div>
-          )}
-          <div style={{ overflow: 'hidden' }}>
-            <div style={{ fontSize: 12, fontWeight: 800, color: '#10B981', marginBottom: 2 }}>
-              ✅ Media Uploaded Successfully
-            </div>
-            <a
-              href={uploadedUrl}
-              target="_blank"
-              rel="noreferrer"
-              style={{ fontSize: 11, color: 'var(--text-sub)', textDecoration: 'underline', wordBreak: 'break-all' }}
-            >
+          <div style={{ fontSize: 11, color: '#64748B', maxWidth: 360, wordBreak: 'break-all' }}>
+            <a href={uploadedUrl} target="_blank" rel="noopener noreferrer" style={{ color: '#2563EB', fontWeight: 600 }}>
               {uploadedUrl}
             </a>
-            {uploadedMeta && (
-              <div style={{ fontSize: 10, color: 'var(--text-sub)', marginTop: 2 }}>
-                Format: {uploadedMeta.format} · Size: {(uploadedMeta.file_size / 1024).toFixed(1)} KB · Public ID: {uploadedMeta.cloudinary_public_id}
-              </div>
-            )}
           </div>
+          {uploadedMeta && (
+            <div style={{ fontSize: 10, color: '#94A3B8' }}>
+              Format: {uploadedMeta.extension || uploadedMeta.format} · Size: {(uploadedMeta.file_size / 1024).toFixed(1)} KB · File: {uploadedMeta.original_filename}
+            </div>
+          )}
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            style={{ marginTop: 8, background: '#E2E8F0', border: 'none', borderRadius: 8, padding: '6px 14px', fontSize: 12, fontWeight: 700, cursor: 'pointer', color: '#334155' }}
+          >
+            Change File
+          </button>
+        </div>
+      ) : (
+        <div>
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={uploading}
+            style={{
+              background: 'linear-gradient(135deg, #FF6B35 0%, #E0531F 100%)',
+              color: '#FFFFFF',
+              border: 'none',
+              borderRadius: 12,
+              padding: '12px 24px',
+              fontSize: 14,
+              fontWeight: 800,
+              cursor: uploading ? 'not-allowed' : 'pointer',
+              boxShadow: '0 4px 14px rgba(255,107,53,0.35)',
+              opacity: uploading ? 0.6 : 1,
+            }}
+          >
+            {uploading ? `Uploading (${progress}%)` : `Select & ${label}`}
+          </button>
+        </div>
+      )}
+
+      {errorMsg && (
+        <div style={{ marginTop: 12, color: '#DC2626', background: '#FEF2F2', border: '1px solid #FECACA', padding: '8px 14px', borderRadius: 8, fontSize: 12, fontWeight: 700 }}>
+          ⚠️ {errorMsg}
         </div>
       )}
     </div>

@@ -15,6 +15,8 @@ type Design = {
   rating: number
   rating_count: number
   file_url?: string
+  file_format?: string
+  file_name?: string
   materials: string[] | null
   description: string | null
   designer: { id: string; full_name: string | null; avatar_url?: string } | null
@@ -57,7 +59,7 @@ export default function DesignDetailClient({ design, reviews }: { design: Design
     }
     addToCart({
       id: design.id,
-      name: `${design.title} (Digital 3D STL)`,
+      name: `${design.title} (Digital 3D Model)`,
       seller: design.designer?.full_name || 'PrintHive Designer',
       price: design.price,
       stock: 99,
@@ -76,7 +78,9 @@ export default function DesignDetailClient({ design, reviews }: { design: Design
               title={design.title}
               color={getColorHex(color)}
               height={440}
-              modelUrl={design.file_url || '/models/demo.stl'}
+              modelUrl={design.file_url}
+              format={design.file_format}
+              fileName={design.file_name}
             />
           </div>
 
@@ -121,94 +125,145 @@ export default function DesignDetailClient({ design, reviews }: { design: Design
           </div>
         </div>
 
-        {/* Order Configuration & Purchase Panel */}
+        {/* RIGHT SIDEBAR: ORDER & ROYALTY ACTION */}
         <div>
-          {design.category && (
-            <span className="badge badge-neutral" style={{ background: '#334155', color: '#f8fafc', padding: '4px 12px', borderRadius: 99, fontSize: 12, fontWeight: 600, display: 'inline-block', marginBottom: 12 }}>
-              {design.category}
-            </span>
-          )}
-          <h1 style={{ fontSize: 32, fontWeight: 800, color: '#fff', marginBottom: 12 }}>
-            {design.title}
-          </h1>
+          <div className="card text-left" style={{ background: '#1e293b', border: '1px solid #334155', padding: 24, borderRadius: 20, marginBottom: 24 }}>
+            <div style={{ fontSize: 12, fontWeight: 800, color: '#8b5cf6', textTransform: 'uppercase', marginBottom: 6 }}>
+              {design.category || '3D Printing Model'}
+            </div>
+            <h1 style={{ fontSize: 26, fontWeight: 900, color: '#f8fafc', margin: '0 0 12px', letterSpacing: '-0.5px' }}>
+              {design.title}
+            </h1>
 
-          <div className="flex items-center gap-2" style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 24 }}>
-            <span className="rating" style={{ color: '#fbbf24', fontWeight: 700 }}>★ {design.rating || '4.9'}</span>
-            <span className="rating-count" style={{ color: '#64748b', fontSize: 13 }}>({design.rating_count ?? 18} orders completed)</span>
-          </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
+              <div style={{ fontSize: 28, fontWeight: 900, color: design.price === 0 ? '#10b981' : '#f8fafc' }}>
+                {design.price === 0 ? 'Free (₹0)' : `₹${design.price}`}
+              </div>
+              <span style={{ fontSize: 12, background: 'rgba(139,92,246,0.15)', color: '#a78bfa', padding: '4px 12px', borderRadius: 99, fontWeight: 700, border: '1px solid rgba(139,92,246,0.3)' }}>
+                {design.price === 0 ? 'Open Source' : '15% Royalty Protected'}
+              </span>
+            </div>
 
-          {/* Designer Card */}
-          {design.designer && (
-            <div className="card" style={{ background: '#1e293b', border: '1px solid #334155', padding: 16, borderRadius: 12, marginBottom: 24 }}>
-              <div className="flex items-center gap-3" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                {design.designer.avatar_url ? (
-                  <img src={design.designer.avatar_url} alt="Designer avatar" style={{ width: 40, height: 40, borderRadius: '50%', objectFit: 'cover' }} />
-                ) : (
-                  <div className="avatar" style={{ width: 40, height: 40, borderRadius: '50%', background: '#ff6b35', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700 }}>
-                    {(design.designer.full_name ?? 'D').charAt(0)}
-                  </div>
-                )}
-                <div>
-                  <div className="text-sm" style={{ fontWeight: 600, color: '#f8fafc' }}>{design.designer.full_name ?? 'PrintHive designer'}</div>
-                  <div style={{ fontSize: 12, color: '#94a3b8' }}>Verified 3D Modeler · 15% Royalty</div>
-                </div>
+            {/* DESIGNER / CREATOR PROFILE */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: 14, background: 'rgba(255,255,255,0.03)', borderRadius: 14, border: '1px solid rgba(255,255,255,0.06)', marginBottom: 20 }}>
+              <div style={{ width: 40, height: 40, borderRadius: '50%', background: '#ff6b35', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: 16 }}>
+                {design.designer?.full_name?.charAt(0) || 'C'}
+              </div>
+              <div>
+                <div style={{ fontSize: 11, color: '#94a3b8', fontWeight: 700, textTransform: 'uppercase' }}>Created By</div>
+                <div style={{ fontSize: 14, fontWeight: 800, color: '#f8fafc' }}>{design.designer?.full_name || 'PrintHive Designer'}</div>
               </div>
             </div>
-          )}
 
-          {/* Pricing & Customization Panel */}
-          <div className="card" style={{ background: 'rgba(30, 41, 59, 0.7)', backdropFilter: 'blur(12px)', border: '1px solid rgba(255, 255, 255, 0.1)', padding: 24, borderRadius: 16 }}>
-            <div className="design-card-price" style={{ fontSize: 32, fontWeight: 800, color: '#ff6b35', marginBottom: 20 }}>
-              ₹{design.price}
+            {/* MATERIAL SELECTION */}
+            <div style={{ marginBottom: 18 }}>
+              <label style={{ fontSize: 12, fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase', display: 'block', marginBottom: 8 }}>
+                Select Print Material
+              </label>
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                {materials.map((m) => (
+                  <button
+                    key={m}
+                    type="button"
+                    onClick={() => setMaterial(m)}
+                    style={{
+                      background: material === m ? '#ff6b35' : 'rgba(255,255,255,0.05)',
+                      color: '#fff',
+                      border: 'none',
+                      borderRadius: 10,
+                      padding: '8px 16px',
+                      fontSize: 13,
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    {m}
+                  </button>
+                ))}
+              </div>
             </div>
 
-            {/* Material Selector */}
-            <div className="form-group" style={{ marginBottom: 16 }}>
-              <label className="label" style={{ display: 'block', color: '#cbd5e1', fontSize: 13, fontWeight: 600, marginBottom: 6 }}>Supported Materials</label>
-              <select className="select" value={material} onChange={(e) => setMaterial(e.target.value)} style={{ width: '100%', padding: '10px 14px', background: '#0f172a', border: '1px solid #334155', borderRadius: 8, color: '#fff' }}>
-                {materials.map((m) => <option key={m} value={m}>{m}</option>)}
-              </select>
+            {/* COLOR SELECTION */}
+            <div style={{ marginBottom: 24 }}>
+              <label style={{ fontSize: 12, fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase', display: 'block', marginBottom: 8 }}>
+                Select Filament Color
+              </label>
+              <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                {DEFAULT_COLORS.map((cName) => (
+                  <button
+                    key={cName}
+                    type="button"
+                    onClick={() => setColor(cName)}
+                    style={{
+                      width: 32,
+                      height: 32,
+                      borderRadius: '50%',
+                      background: getColorHex(cName),
+                      border: color === cName ? '3px solid #ff6b35' : '1px solid rgba(255,255,255,0.2)',
+                      cursor: 'pointer',
+                      boxShadow: color === cName ? '0 0 10px rgba(255,107,53,0.5)' : 'none',
+                    }}
+                    title={cName}
+                  />
+                ))}
+              </div>
             </div>
 
-            {/* Colour Selector */}
-            <div className="form-group" style={{ marginBottom: 24 }}>
-              <label className="label" style={{ display: 'block', color: '#cbd5e1', fontSize: 13, fontWeight: 600, marginBottom: 6 }}>Colour</label>
-              <select className="select" value={color} onChange={(e) => setColor(e.target.value)} style={{ width: '100%', padding: '10px 14px', background: '#0f172a', border: '1px solid #334155', borderRadius: 8, color: '#fff' }}>
-                {DEFAULT_COLORS.map((c) => <option key={c} value={c}>{c}</option>)}
-              </select>
-            </div>
-
-            {/* Action Buttons: Print Now & Buy Model */}
+            {/* ACTION BUTTONS */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               <Link
-                href={`/designs/${design.id}/order?material=${material}&color=${color}`}
-                className="btn btn-primary btn-block btn-lg"
-                style={{ display: 'block', textAlign: 'center', padding: '14px 0', background: 'linear-gradient(135deg, #ff6b35 0%, #f97316 100%)', color: '#fff', borderRadius: 12, fontWeight: 800, textDecoration: 'none', boxShadow: '0 8px 20px rgba(255, 107, 53, 0.4)' }}
+                href={`/designs/${design.id}/order?material=${encodeURIComponent(material)}&color=${encodeURIComponent(color)}`}
+                style={{
+                  display: 'block',
+                  textAlign: 'center',
+                  background: 'linear-gradient(135deg, #ff6b35 0%, #ea580c 100%)',
+                  color: '#fff',
+                  padding: '14px 24px',
+                  borderRadius: 14,
+                  fontWeight: 900,
+                  fontSize: 15,
+                  textDecoration: 'none',
+                  boxShadow: '0 8px 24px rgba(255,107,53,0.35)',
+                }}
               >
-                🚀 Print Now (Local Hub Match)
+                🖨️ Order Physical Print From Hub
               </Link>
 
               <button
                 type="button"
                 onClick={handleBuyModel}
-                style={{ width: '100%', padding: '14px 0', background: '#1e293b', border: '1px solid #3b82f6', color: '#60a5fa', borderRadius: 12, cursor: 'pointer', fontWeight: 800, fontSize: 14 }}
+                style={{
+                  width: '100%',
+                  background: 'rgba(255,255,255,0.06)',
+                  border: '1px solid rgba(255,255,255,0.15)',
+                  color: '#f8fafc',
+                  padding: '12px 24px',
+                  borderRadius: 14,
+                  fontWeight: 800,
+                  fontSize: 14,
+                  cursor: 'pointer',
+                }}
               >
-                📥 Buy Model File (Download STL / 3MF)
+                📥 Add Digital 3D STL to Cart (₹{design.price})
               </button>
 
               <button
                 type="button"
-                style={{ width: '100%', padding: '12px 0', background: 'transparent', border: '1px solid #475569', color: '#cbd5e1', borderRadius: 12, cursor: 'pointer', fontWeight: 600, fontSize: 13 }}
                 onClick={() => addToWishlist({ id: design.id, name: design.title, price: design.price, type: 'design' })}
-                disabled={wished}
+                style={{
+                  width: '100%',
+                  background: 'transparent',
+                  border: 'none',
+                  color: wished ? '#ef4444' : '#94a3b8',
+                  fontSize: 13,
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  marginTop: 4,
+                }}
               >
-                {wished ? '♥ Saved in Wishlist' : '♡ Save to Wishlist'}
+                {wished ? '❤️ In Your Wishlist' : '🤍 Save to Wishlist'}
               </button>
             </div>
-
-            <p className="help-text" style={{ textAlign: 'center', marginTop: 16, color: '#64748b', fontSize: 12 }}>
-              🔒 Razorpay Escrow Protection · Funds held until delivery confirmation
-            </p>
           </div>
         </div>
       </div>

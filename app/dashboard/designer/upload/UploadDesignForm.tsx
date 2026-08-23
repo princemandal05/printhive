@@ -18,9 +18,11 @@ export default function UploadDesignForm() {
   const [pricingType, setPricingType] = useState<'free' | 'one_time' | 'royalty'>('royalty')
   const [price, setPrice] = useState('150')
   const [description, setDescription] = useState('')
-  const [fileName, setFileName] = useState('')
   const [cloudinaryFileUrl, setCloudinaryFileUrl] = useState('')
-  const [cloudinaryPublicId, setCloudinaryPublicId] = useState('')
+  const [fileName, setFileName] = useState('')
+  const [fileFormat, setFileFormat] = useState('')
+  const [fileMimeType, setFileMimeType] = useState('')
+  const [fileSize, setFileSize] = useState<number>(0)
   const [previewImageUrl, setPreviewImageUrl] = useState('')
   const [isUploadingModel, setIsUploadingModel] = useState(false)
   const [generatingAi, setGeneratingAi] = useState(false)
@@ -33,14 +35,17 @@ export default function UploadDesignForm() {
 
   const handleModelUploadSuccess = (meta: CloudinaryMetadata) => {
     setCloudinaryFileUrl(meta.secure_url)
-    setCloudinaryPublicId(meta.cloudinary_public_id)
+    setFileName(meta.original_filename || '')
+    setFileFormat(meta.extension || meta.format || '')
+    setFileMimeType(meta.mime_type || '')
+    setFileSize(meta.file_size || 0)
     setIsUploadingModel(false)
-    setStatusMsg(`✅ 3D Model successfully uploaded to Cloudinary! (${meta.format.toUpperCase()}, ${(meta.file_size / 1024).toFixed(1)} KB)`)
+    setStatusMsg(`✅ 3D Model successfully uploaded! (${(meta.extension || meta.format).toUpperCase()}, ${(meta.file_size / 1024).toFixed(1)} KB)`)
   }
 
   const handleImageUploadSuccess = (meta: CloudinaryMetadata) => {
     setPreviewImageUrl(meta.secure_url)
-    setStatusMsg(`✅ Product preview image uploaded to Cloudinary!`)
+    setStatusMsg(`✅ Product preview image uploaded!`)
   }
 
   const handleGeminiAiGenerate = async () => {
@@ -70,12 +75,24 @@ export default function UploadDesignForm() {
   }
 
   const handleSubmit = async () => {
-    if (!title || isUploadingModel) return
+    if (!title) {
+      setStatusMsg('❌ Please enter a model title.')
+      return
+    }
+
+    if (isUploadingModel) {
+      setStatusMsg('⏳ Please wait for the 3D model upload to finish...')
+      return
+    }
+
+    if (!cloudinaryFileUrl) {
+      setStatusMsg('❌ Please upload a valid 3D model file before publishing.')
+      return
+    }
+
     setSubmitting(true)
     setStatusMsg('🚀 Publishing 3D Model to PrintHive Creator Studio...')
 
-    const defaultStlUrl = '/models/demo.stl'
-    const fileUrl = cloudinaryFileUrl || defaultStlUrl
     const previewUrl = previewImageUrl || 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=600&q=80'
 
     const designPayload = {
@@ -85,7 +102,11 @@ export default function UploadDesignForm() {
       materials,
       pricing_type: pricingType,
       price: pricingType === 'free' ? 0 : Number(price) || 0,
-      file_url: fileUrl,
+      file_url: cloudinaryFileUrl,
+      file_name: fileName,
+      file_format: fileFormat,
+      file_mime_type: fileMimeType,
+      file_size: fileSize,
       preview_url: previewUrl,
     }
 
@@ -97,7 +118,12 @@ export default function UploadDesignForm() {
       })
       const data = await res.json()
 
-      // Also persist to localStorage for instant client rendering
+      if (!res.ok || data.error) {
+        setStatusMsg(`❌ Error publishing design: ${data.error || 'Failed to publish design'}`)
+        setSubmitting(false)
+        return
+      }
+
       const existingStr = localStorage.getItem('printhive_uploaded_designs') || '[]'
       const existing = JSON.parse(existingStr)
       const newDesignObj = data.design || {
@@ -168,7 +194,7 @@ export default function UploadDesignForm() {
         </div>
 
         {statusMsg && (
-          <div style={{ background: '#ECFDF5', color: '#065F46', padding: '14px 20px', borderRadius: 14, fontSize: 14, marginBottom: 24, fontWeight: 700, border: '1px solid #A7F3D0' }}>
+          <div style={{ background: statusMsg.startsWith('❌') ? '#FEF2F2' : '#ECFDF5', color: statusMsg.startsWith('❌') ? '#991B1B' : '#065F46', padding: '14px 20px', borderRadius: 14, fontSize: 14, marginBottom: 24, fontWeight: 700, border: statusMsg.startsWith('❌') ? '1px solid #FECACA' : '1px solid #A7F3D0' }}>
             {statusMsg}
           </div>
         )}
@@ -318,7 +344,7 @@ export default function UploadDesignForm() {
 
             <button
               onClick={handleSubmit}
-              disabled={submitting || isUploadingModel || !title}
+              disabled={submitting || isUploadingModel || !title || !cloudinaryFileUrl}
               style={{
                 width: '100%',
                 background: 'linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)',
@@ -330,7 +356,7 @@ export default function UploadDesignForm() {
                 fontWeight: 900,
                 cursor: 'pointer',
                 boxShadow: '0 8px 24px rgba(139,92,246,0.35)',
-                opacity: submitting || isUploadingModel || !title ? 0.6 : 1,
+                opacity: submitting || isUploadingModel || !title || !cloudinaryFileUrl ? 0.6 : 1,
               }}
             >
               {submitting ? 'Publishing 3D Model…' : isUploadingModel ? 'Uploading 3D Model…' : '🚀 Publish 3D Model Live'}

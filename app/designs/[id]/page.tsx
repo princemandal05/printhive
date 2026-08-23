@@ -2,8 +2,9 @@ import { createClient } from '@/utils/supabase/server'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 import DesignDetailClient from './DesignDetailClient'
+import Link from 'next/link'
 
-const FALLBACK_DESIGNS: Record<string, any> = {
+const DEMO_DESIGNS: Record<string, any> = {
   d1: {
     id: 'd1',
     title: 'Ergonomic Headphone Stand v2',
@@ -12,6 +13,8 @@ const FALLBACK_DESIGNS: Record<string, any> = {
     price: 150,
     materials: ['PLA', 'PETG'],
     file_url: '/models/demo.stl',
+    file_format: 'stl',
+    file_name: 'headphone_stand.stl',
     preview_url: 'https://images.unsplash.com/photo-1612815150546-a3a1617296e8?auto=format&fit=crop&w=600&q=80',
     designer: { id: 'designer-1', full_name: 'Alex Rivera (3D Master)' },
   },
@@ -23,6 +26,8 @@ const FALLBACK_DESIGNS: Record<string, any> = {
     price: 200,
     materials: ['PLA', 'ABS'],
     file_url: '/models/demo.stl',
+    file_format: 'stl',
+    file_name: 'flexi_dragon.stl',
     preview_url: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=600&q=80',
     designer: { id: 'designer-2', full_name: 'Kolkata Additive Studio' },
   },
@@ -34,6 +39,8 @@ const FALLBACK_DESIGNS: Record<string, any> = {
     price: 450,
     materials: ['PETG', 'Resin'],
     file_url: '/models/demo.stl',
+    file_format: 'stl',
+    file_name: 'helmet_visor.stl',
     preview_url: 'https://images.unsplash.com/photo-1534447677768-be436bb09401?auto=format&fit=crop&w=600&q=80',
     designer: { id: 'designer-3', full_name: 'PropForge Labs' },
   },
@@ -41,7 +48,7 @@ const FALLBACK_DESIGNS: Record<string, any> = {
 
 export default async function DesignDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  let design = FALLBACK_DESIGNS[id] || null
+  let design = DEMO_DESIGNS[id] || null
 
   try {
     const supabase = await createClient()
@@ -58,19 +65,35 @@ export default async function DesignDetailPage({ params }: { params: Promise<{ i
     console.warn('Design query note:', err)
   }
 
-  // Generic fallback if not in DB or demo list
+  // If design not found in DB or demo set, display clean 404 page (NO fake fallback model)
   if (!design) {
-    design = {
-      id,
-      title: `3D Model Design #${id}`,
-      description: 'High-quality 3D STL model for precision additive manufacturing. Verified slicing geometry.',
-      category: '3D Printing',
-      price: 199,
-      materials: ['PLA', 'PETG'],
-      file_url: '/models/demo.stl',
-      preview_url: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=600&q=80',
-      designer: { id: 'designer-demo', full_name: 'PrintHive Verified Designer' },
-    }
+    return (
+      <main style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+        <Navbar />
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '60px 20px', textAlign: 'center' }}>
+          <div style={{ fontSize: 54, marginBottom: 16 }}>📦</div>
+          <h1 style={{ fontSize: 24, fontWeight: 900, color: 'var(--text-main)', marginBottom: 8 }}>3D Model Not Found</h1>
+          <p style={{ color: 'var(--text-sub)', fontSize: 14, maxWidth: 420, marginBottom: 24 }}>
+            The 3D design model you are looking for does not exist or may have been removed.
+          </p>
+          <Link
+            href="/browse"
+            style={{
+              background: '#FF6B35',
+              color: '#fff',
+              padding: '10px 22px',
+              borderRadius: 99,
+              fontWeight: 800,
+              fontSize: 13,
+              textDecoration: 'none',
+            }}
+          >
+            ← Explore 3D Models Directory
+          </Link>
+        </div>
+        <Footer />
+      </main>
+    )
   }
 
   const reviews = [

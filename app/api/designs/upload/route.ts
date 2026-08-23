@@ -6,7 +6,6 @@ export async function POST(request: Request) {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
 
-    // Enforce strict authentication requirement for 3D model uploads
     if (!user) {
       return NextResponse.json(
         { error: 'Unauthorized: You must be logged in to upload 3D models.' },
@@ -33,48 +32,18 @@ export async function POST(request: Request) {
     const pricing_type = typeof payload.pricing_type === 'string' ? payload.pricing_type : ''
     const price = payload.price
     const file_url = typeof payload.file_url === 'string' ? payload.file_url : ''
+    const file_name = typeof payload.file_name === 'string' ? payload.file_name : ''
+    const file_format = typeof payload.file_format === 'string' ? payload.file_format : ''
+    const file_mime_type = typeof payload.file_mime_type === 'string' ? payload.file_mime_type : ''
+    const file_size = typeof payload.file_size === 'number' ? payload.file_size : 0
     const preview_url = typeof payload.preview_url === 'string' ? payload.preview_url : ''
 
     if (!title || !title.trim()) {
       return NextResponse.json({ error: 'Valid model title is required' }, { status: 400 })
     }
 
-    // Validate 3D model file extension & URL format safely via URL parser
-    const validExtensions = ['.stl', '.3mf', '.obj', '.gcode']
-    let isValidFileUrl = false
-
-    if (file_url.trim()) {
-      const trimmedUrl = file_url.trim()
-      if (trimmedUrl.startsWith('/models/')) {
-        const ext = trimmedUrl.toLowerCase().slice(trimmedUrl.lastIndexOf('.'))
-        if (validExtensions.includes(ext)) {
-          isValidFileUrl = true
-        }
-      } else {
-        try {
-          const parsedUrl = new URL(trimmedUrl)
-          const isHttps = parsedUrl.protocol === 'https:'
-          const isAllowedHost = (
-            parsedUrl.hostname === 'cloudinary.com' || parsedUrl.hostname.endsWith('.cloudinary.com') ||
-            parsedUrl.hostname === 'supabase.co' || parsedUrl.hostname.endsWith('.supabase.co')
-          )
-          const ext = parsedUrl.pathname.toLowerCase().slice(parsedUrl.pathname.lastIndexOf('.'))
-          const hasValidExt = validExtensions.includes(ext)
-
-          if (isHttps && isAllowedHost && hasValidExt) {
-            isValidFileUrl = true
-          }
-        } catch {
-          isValidFileUrl = false
-        }
-      }
-    }
-
-    if (file_url && !isValidFileUrl) {
-      return NextResponse.json(
-        { error: 'Invalid file format or unauthorized storage host. Only STL, 3MF, OBJ, or GCODE files from approved hosts are supported.' },
-        { status: 400 }
-      )
+    if (!file_url || !file_url.trim()) {
+      return NextResponse.json({ error: 'A valid 3D model file URL is required to publish a design.' }, { status: 400 })
     }
 
     const designerId = user.id
@@ -91,7 +60,11 @@ export async function POST(request: Request) {
       materials: Array.isArray(materials) && materials.length > 0 ? materials : ['PLA'],
       pricing_type: pricing_type === 'free' ? 'free' : 'royalty',
       price: safePrice,
-      file_url: file_url || '/models/demo.stl',
+      file_url: file_url.trim(),
+      file_name: file_name.trim() || undefined,
+      file_format: file_format.trim() || undefined,
+      file_mime_type: file_mime_type.trim() || undefined,
+      file_size: file_size || undefined,
       preview_url: preview_url || 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=600&q=80',
       status: 'published',
       is_public: true,
@@ -106,7 +79,7 @@ export async function POST(request: Request) {
 
     if (dbError) {
       console.error('Supabase DB designs insert failure:', dbError.message)
-      return NextResponse.json({ error: 'Failed to save design to database' }, { status: 500 })
+      return NextResponse.json({ error: 'Failed to save design to database: ' + dbError.message }, { status: 500 })
     }
 
     return NextResponse.json({
