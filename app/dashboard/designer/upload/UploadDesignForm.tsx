@@ -131,7 +131,7 @@ export default function UploadDesignForm() {
         return
       }
 
-      console.log('REDIRECTING TO NEWLY CREATED DESIGN PAGE:', createdDesignId)
+      console.log('REDIRECT DESIGN ID:', createdDesignId)
 
       // Save design object to local storage array for offline/guest persistence
       const existingStr = localStorage.getItem('printhive_uploaded_designs') || '[]'

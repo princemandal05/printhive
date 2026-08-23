@@ -13,7 +13,16 @@ export async function POST(request: Request) {
       const cookieStore = await cookies()
       const guestRole = cookieStore.get('printhive_guest_role')?.value
       if (guestRole) {
-        designerId = `guest-${guestRole}`
+        // Fetch a valid fallback profile ID for guest mode if user session is omitted
+        try {
+          const adminSupabase = await createAdminClient()
+          const { data: profile } = await adminSupabase.from('profiles').select('id').limit(1).single()
+          if (profile?.id) {
+            designerId = profile.id
+          }
+        } catch {
+          // Fallback if needed
+        }
       }
     }
 
@@ -39,14 +48,11 @@ export async function POST(request: Request) {
     const title = typeof payload.title === 'string' ? payload.title : ''
     const description = typeof payload.description === 'string' ? payload.description : ''
     const category = typeof payload.category === 'string' ? payload.category : ''
-    const materials = payload.materials
     const pricing_type = typeof payload.pricing_type === 'string' ? payload.pricing_type : ''
     const price = payload.price
     const file_url = typeof payload.file_url === 'string' ? payload.file_url : ''
     const file_name = typeof payload.file_name === 'string' ? payload.file_name : ''
     const file_format = typeof payload.file_format === 'string' ? payload.file_format : ''
-    const file_mime_type = typeof payload.file_mime_type === 'string' ? payload.file_mime_type : ''
-    const file_size = typeof payload.file_size === 'number' ? payload.file_size : 0
     const preview_url = typeof payload.preview_url === 'string' ? payload.preview_url : ''
 
     if (!title || !title.trim()) {
@@ -60,28 +66,20 @@ export async function POST(request: Request) {
     const numPrice = Number(price)
     const safePrice = pricing_type === 'free' ? 0 : (Number.isFinite(numPrice) ? Math.max(0, numPrice) : 0)
 
+    // Build payload matching exact Supabase designs table columns
     const newDesignData = {
       designer_id: designerId,
       title: title.trim(),
       description: description.trim()
         ? description.trim()
         : `Original 3D model ${title} designed for precision printing.`,
-      category: category.trim() ? category.trim() : '3D Printing',
-      materials: Array.isArray(materials) && materials.length > 0 ? materials : ['PLA'],
-      pricing_type: pricing_type === 'free' ? 'free' : 'royalty',
-      price: safePrice,
       file_url: file_url.trim(),
-      file_name: file_name.trim() || undefined,
-      file_format: file_format.trim() || undefined,
-      file_mime_type: file_mime_type.trim() || undefined,
-      file_size: file_size || undefined,
-      preview_url: preview_url || 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=600&q=80',
-      status: 'published',
+      thumbnail_url: preview_url || 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=600&q=80',
+      price: safePrice,
+      tags: [category.trim() || '3D Printing', file_format.trim() || 'stl', file_name.trim() || 'model.stl'],
       is_public: true,
-      created_at: new Date().toISOString(),
     }
 
-    // Use admin client to ensure database row is ALWAYS inserted cleanly
     const adminSupabase = await createAdminClient()
     const { data: insertedDesign, error: dbError } = await adminSupabase
       .from('designs')
@@ -94,12 +92,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Failed to save design to database: ' + dbError.message }, { status: 500 })
     }
 
-    console.log('UPLOAD DESIGN RESULT SUCCESS:', {
-      designId: insertedDesign.id,
-      title: insertedDesign.title,
-      file_url: insertedDesign.file_url,
-      file_format: insertedDesign.file_format,
-    })
+    console.log('CREATED DESIGN ID:', insertedDesign.id)
+    console.log('CREATED DESIGN FILE URL:', insertedDesign.file_url)
 
     return NextResponse.json({
       success: true,

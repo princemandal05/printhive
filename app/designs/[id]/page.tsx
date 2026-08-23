@@ -48,7 +48,7 @@ const DEMO_DESIGNS: Record<string, any> = {
 
 export default async function DesignDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  console.log('DESIGN DETAIL PARAM ID:', id)
+  console.log('REQUESTED DESIGN ID:', id)
 
   let design = DEMO_DESIGNS[id] || null
 
@@ -61,16 +61,21 @@ export default async function DesignDetailPage({ params }: { params: Promise<{ i
         .eq('id', id)
         .maybeSingle()
 
-      console.log('DESIGN DETAIL QUERY RESULT:', {
-        id,
-        found: Boolean(dbDesign),
-        dbError: dbError?.message || null,
-        file_url: dbDesign?.file_url || null,
-        file_format: dbDesign?.file_format || null,
-      })
+      console.log('SUPABASE FETCH RESULT:', dbDesign)
+      console.log('SUPABASE FETCH ERROR:', dbError?.message || null)
 
       if (dbDesign) {
-        design = dbDesign
+        const tags = Array.isArray(dbDesign.tags) ? dbDesign.tags : []
+        const category = tags[0] || '3D Printing'
+        const file_format = dbDesign.file_format || tags[1] || 'stl'
+        const file_name = dbDesign.file_name || tags[2] || `${dbDesign.title.toLowerCase().replace(/\s+/g, '-')}.${file_format}`
+
+        design = {
+          ...dbDesign,
+          category,
+          file_format,
+          file_name,
+        }
       }
     } catch (err) {
       console.error('Design fetch error:', err)
@@ -79,7 +84,7 @@ export default async function DesignDetailPage({ params }: { params: Promise<{ i
 
   // If design not found in DB or demo set, display clean 404 page (NO fake fallback model)
   if (!design) {
-    console.error('DESIGN FETCH ERROR: No design found in database with id:', id)
+    console.error('SUPABASE FETCH ERROR: No design found in database with id:', id)
     return (
       <main style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
         <Navbar />

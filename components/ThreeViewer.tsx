@@ -227,6 +227,9 @@ function ThreeViewerInner({
 
     // Load actual model file based on detected format
     const loadActualModel = async () => {
+      console.log('3D MODEL DEBUG', { modelUrl, modelFormat: format || fileName?.split('.').pop() || detected.format, modelFileName: fileName })
+      console.log(`3D MODEL LOADER: ${detected.format.toUpperCase()}Loader`)
+
       try {
         if (detected.format === 'stl') {
           const res = await fetch(modelUrl)
