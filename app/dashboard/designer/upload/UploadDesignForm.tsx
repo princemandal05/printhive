@@ -118,27 +118,35 @@ export default function UploadDesignForm() {
       })
       const data = await res.json()
 
-      if (!res.ok || data.error) {
+      if (!res.ok || !data.success || data.error) {
         setStatusMsg(`❌ Error publishing design: ${data.error || 'Failed to publish design'}`)
         setSubmitting(false)
         return
       }
 
+      const createdDesignId = data.designId || data.design?.id
+      if (!createdDesignId) {
+        setStatusMsg('❌ Server did not return a valid design ID.')
+        setSubmitting(false)
+        return
+      }
+
+      console.log('REDIRECTING TO NEWLY CREATED DESIGN PAGE:', createdDesignId)
+
+      // Save design object to local storage array for offline/guest persistence
       const existingStr = localStorage.getItem('printhive_uploaded_designs') || '[]'
       const existing = JSON.parse(existingStr)
-      const newDesignObj = data.design || {
-        id: `custom-${Date.now()}`,
-        ...designPayload,
-        status: 'published',
-      }
-      localStorage.setItem('printhive_uploaded_designs', JSON.stringify([newDesignObj, ...existing]))
-    } catch (insertError: any) {
-      console.warn('Design insert note:', insertError)
-    }
+      localStorage.setItem('printhive_uploaded_designs', JSON.stringify([data.design, ...existing]))
 
-    setSubmitting(false)
-    router.push('/dashboard/designer')
-    router.refresh()
+      setSubmitting(false)
+      // Redirect directly to the newly inserted model page
+      router.push(`/designs/${createdDesignId}`)
+      router.refresh()
+    } catch (insertError: any) {
+      console.error('Design submit error:', insertError)
+      setStatusMsg(`❌ Failed to publish 3D model: ${insertError.message || 'Network error'}`)
+      setSubmitting(false)
+    }
   }
 
   const inputStyle: React.CSSProperties = {

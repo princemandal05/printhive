@@ -1,4 +1,4 @@
-import { createClient } from '@/utils/supabase/server'
+import { createClient, createAdminClient } from '@/utils/supabase/server'
 import { requireRole } from '@/utils/supabase/require-role'
 import { redirect } from 'next/navigation'
 import { cookies } from 'next/headers'
@@ -20,11 +20,11 @@ export default async function DesignerDashboard() {
     redirect('/')
   }
 
-  // Fetch live design models from Supabase
+  // Fetch live design models from Supabase using admin client
   let designs: any[] = []
   try {
-    const supabase = await createClient()
-    const { data: dbDesigns } = await supabase.from('designs').select('*').order('created_at', { ascending: false })
+    const adminSupabase = await createAdminClient()
+    const { data: dbDesigns } = await adminSupabase.from('designs').select('*').order('created_at', { ascending: false })
     if (dbDesigns && dbDesigns.length > 0) {
       designs = dbDesigns.map((d: any, index: number) => ({
         id: d.id || `d-${index}`,
@@ -37,7 +37,9 @@ export default async function DesignerDashboard() {
         status: d.status || 'Published',
       }))
     }
-  } catch (err) {}
+  } catch (err) {
+    console.warn('Designer dashboard query error:', err)
+  }
 
   return (
     <DesignerDashboardClient

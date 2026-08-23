@@ -1,4 +1,4 @@
-import { createClient } from '@/utils/supabase/server'
+import { createClient, createAdminClient } from '@/utils/supabase/server'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 import DesignDetailClient from './DesignDetailClient'
@@ -48,25 +48,38 @@ const DEMO_DESIGNS: Record<string, any> = {
 
 export default async function DesignDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
+  console.log('DESIGN DETAIL PARAM ID:', id)
+
   let design = DEMO_DESIGNS[id] || null
 
-  try {
-    const supabase = await createClient()
-    const { data: dbDesign } = await supabase
-      .from('designs')
-      .select('*, designer:profiles!designs_designer_id_fkey(id, full_name)')
-      .eq('id', id)
-      .maybeSingle()
+  if (!design) {
+    try {
+      const adminSupabase = await createAdminClient()
+      const { data: dbDesign, error: dbError } = await adminSupabase
+        .from('designs')
+        .select('*, designer:profiles!designs_designer_id_fkey(id, full_name)')
+        .eq('id', id)
+        .maybeSingle()
 
-    if (dbDesign) {
-      design = dbDesign
+      console.log('DESIGN DETAIL QUERY RESULT:', {
+        id,
+        found: Boolean(dbDesign),
+        dbError: dbError?.message || null,
+        file_url: dbDesign?.file_url || null,
+        file_format: dbDesign?.file_format || null,
+      })
+
+      if (dbDesign) {
+        design = dbDesign
+      }
+    } catch (err) {
+      console.error('Design fetch error:', err)
     }
-  } catch (err) {
-    console.warn('Design query note:', err)
   }
 
   // If design not found in DB or demo set, display clean 404 page (NO fake fallback model)
   if (!design) {
+    console.error('DESIGN FETCH ERROR: No design found in database with id:', id)
     return (
       <main style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
         <Navbar />

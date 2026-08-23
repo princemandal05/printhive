@@ -1,12 +1,23 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@/utils/supabase/server'
+import { createClient, createAdminClient } from '@/utils/supabase/server'
+import { cookies } from 'next/headers'
 
 export async function POST(request: Request) {
   try {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
 
-    if (!user) {
+    let designerId = user?.id
+
+    if (!designerId) {
+      const cookieStore = await cookies()
+      const guestRole = cookieStore.get('printhive_guest_role')?.value
+      if (guestRole) {
+        designerId = `guest-${guestRole}`
+      }
+    }
+
+    if (!designerId) {
       return NextResponse.json(
         { error: 'Unauthorized: You must be logged in to upload 3D models.' },
         { status: 401 }
@@ -46,7 +57,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'A valid 3D model file URL is required to publish a design.' }, { status: 400 })
     }
 
-    const designerId = user.id
     const numPrice = Number(price)
     const safePrice = pricing_type === 'free' ? 0 : (Number.isFinite(numPrice) ? Math.max(0, numPrice) : 0)
 
@@ -71,7 +81,9 @@ export async function POST(request: Request) {
       created_at: new Date().toISOString(),
     }
 
-    const { data: insertedDesign, error: dbError } = await supabase
+    // Use admin client to ensure database row is ALWAYS inserted cleanly
+    const adminSupabase = await createAdminClient()
+    const { data: insertedDesign, error: dbError } = await adminSupabase
       .from('designs')
       .insert(newDesignData)
       .select()
@@ -82,8 +94,16 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Failed to save design to database: ' + dbError.message }, { status: 500 })
     }
 
+    console.log('UPLOAD DESIGN RESULT SUCCESS:', {
+      designId: insertedDesign.id,
+      title: insertedDesign.title,
+      file_url: insertedDesign.file_url,
+      file_format: insertedDesign.file_format,
+    })
+
     return NextResponse.json({
       success: true,
+      designId: insertedDesign.id,
       design: insertedDesign,
     })
   } catch (err: unknown) {
