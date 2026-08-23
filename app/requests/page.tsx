@@ -80,24 +80,26 @@ export default function RequestsListPage() {
             </p>
           </div>
 
-          <Link
-            href="/requests/new"
-            style={{
-              background: '#FF6B35',
-              color: '#fff',
-              padding: '14px 28px',
-              borderRadius: 99,
-              fontSize: 14,
-              fontWeight: 800,
-              textDecoration: 'none',
-              boxShadow: '0 6px 20px rgba(255,107,53,0.3)',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 8,
-            }}
-          >
-            + Post New Custom Brief
-          </Link>
+          {!isFreelancerOrHub && (
+            <Link
+              href="/requests/new"
+              style={{
+                background: '#FF6B35',
+                color: '#fff',
+                padding: '14px 28px',
+                borderRadius: 99,
+                fontSize: 14,
+                fontWeight: 800,
+                textDecoration: 'none',
+                boxShadow: '0 6px 20px rgba(255,107,53,0.3)',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 8,
+              }}
+            >
+              + Post New Custom Brief
+            </Link>
+          )}
         </div>
 
         {/* SEARCH BAR */}
@@ -128,9 +130,11 @@ export default function RequestsListPage() {
                 ? 'As soon as buyers submit custom 3D modeling or print requests, they will appear here for you to bid on.'
                 : 'Post your custom 3D printing brief to receive competitive quotes and proposals from verified creators!'}
             </div>
-            <Link href="/requests/new" style={{ background: '#FF6B35', color: '#fff', padding: '12px 24px', borderRadius: 12, fontWeight: 800, textDecoration: 'none', display: 'inline-block' }}>
-              + Post Custom Brief
-            </Link>
+            {!isFreelancerOrHub && (
+              <Link href="/requests/new" style={{ background: '#FF6B35', color: '#fff', padding: '12px 24px', borderRadius: 12, fontWeight: 800, textDecoration: 'none', display: 'inline-block' }}>
+                + Post Custom Brief
+              </Link>
+            )}
           </div>
         ) : (
           <div style={{ display: 'grid', gap: 20 }}>
