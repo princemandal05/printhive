@@ -28,15 +28,13 @@ export default function RequestsListPage() {
         if (!error && data && data.length > 0) {
           const mapped = data.map((r: any) => ({
             id: r.id,
-            purpose: r.purpose || r.title || 'Custom 3D Brief',
-            dimensions: r.dimensions || 'Custom Size',
-            material: r.material || 'PLA',
-            budgetMin: r.budget_min ?? r.budget_min_inr ?? 300,
-            budgetMax: r.budget_max ?? r.budget_max_inr ?? 1000,
-            buyer: r.buyer_name || 'Verified Buyer',
+            purpose: r.title || r.purpose || 'Custom 3D Brief',
+            description: r.description || '',
+            budget: r.budget ? `₹${r.budget}` : '₹500',
+            buyer: 'Verified Buyer',
             postedAt: r.created_at ? new Date(r.created_at).toLocaleDateString() : 'Recently',
-            urgency: r.urgency || 'Standard',
-            bidCount: r.bids_count || 0,
+            status: r.status || 'open',
+            bidCount: 0,
           }))
           if (isMounted) setRequests(mapped)
         }
@@ -53,8 +51,7 @@ export default function RequestsListPage() {
 
   const filtered = requests.filter((r) =>
     (r.purpose || '').toLowerCase().includes(search.toLowerCase()) ||
-    (r.material || '').toLowerCase().includes(search.toLowerCase()) ||
-    (r.buyer || '').toLowerCase().includes(search.toLowerCase())
+    (r.description || '').toLowerCase().includes(search.toLowerCase())
   )
 
   const isFreelancerOrHub = userRole === 'designer' || userRole === 'printer_owner' || userRole === 'admin'
@@ -158,14 +155,14 @@ export default function RequestsListPage() {
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                    <span style={{ background: r.urgency === 'High Urgency' ? '#FEF2F2' : '#ECFDF5', color: r.urgency === 'High Urgency' ? '#EF4444' : '#10B981', border: `1px solid ${r.urgency === 'High Urgency' ? '#FCA5A5' : '#A7F3D0'}`, borderRadius: 99, padding: '4px 12px', fontSize: 11, fontWeight: 800 }}>
-                      ⚡ {r.urgency}
+                    <span style={{ background: '#ECFDF5', color: '#10B981', border: '1px solid #A7F3D0', borderRadius: 99, padding: '4px 12px', fontSize: 11, fontWeight: 800 }}>
+                      ⚡ Open for Bids
                     </span>
-                    <span style={{ fontSize: 13, color: 'var(--text-sub)', fontWeight: 600 }}>Posted by {r.buyer} • {r.postedAt}</span>
+                    <span style={{ fontSize: 13, color: 'var(--text-sub)', fontWeight: 600 }}>Posted • {r.postedAt}</span>
                   </div>
 
                   <div style={{ fontSize: 22, fontWeight: 900, color: '#FF6B35' }}>
-                    ₹{r.budgetMin} – ₹{r.budgetMax}
+                    {r.budget}
                   </div>
                 </div>
 
@@ -174,14 +171,9 @@ export default function RequestsListPage() {
                     {r.purpose}
                   </h3>
 
-                  <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 12 }}>
-                    <span style={{ background: 'var(--bg-card-hover)', border: '1px solid var(--border-color)', padding: '6px 14px', borderRadius: 99, fontSize: 12, fontWeight: 700, color: 'var(--text-sub)' }}>
-                      📏 {r.dimensions}
-                    </span>
-                    <span style={{ background: 'var(--bg-card-hover)', border: '1px solid var(--border-color)', padding: '6px 14px', borderRadius: 99, fontSize: 12, fontWeight: 700, color: 'var(--text-sub)' }}>
-                      🧪 {r.material}
-                    </span>
-                  </div>
+                  <p style={{ fontSize: 14, color: 'var(--text-sub)', lineHeight: 1.5, margin: 0, whiteSpace: 'pre-line', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                    {r.description}
+                  </p>
                 </div>
 
                 <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>

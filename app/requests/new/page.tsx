@@ -73,25 +73,32 @@ export default function NewRequestPage() {
         }
       }
 
-      const { error: insertErr } = await supabase.from('design_requests').insert({
+      const fullDescription = [
+        description.trim() || `Custom 3D model specification for ${purpose.trim()}.`,
+        dimensions.trim() ? `\n📐 Dimensions: ${dimensions.trim()}` : '',
+        material ? `\n🧪 Preferred Material: ${material}` : '',
+        (budgetMin || budgetMax) ? `\n💰 Budget Range: ₹${budgetMin || '0'} – ₹${budgetMax || budgetMin || '0'}` : '',
+        uploadedUrls.length > 0 ? `\n📎 Reference Attachments:\n${uploadedUrls.map((url, i) => `[Attachment ${i+1}](${url})`).join('\n')}` : '',
+      ].filter(Boolean).join('\n')
+
+      const finalBudget = Number(budgetMax || budgetMin || 500)
+
+      const { data: insertResult, error: insertErr } = await supabase.from('design_requests').insert({
         buyer_id: user.id,
-        buyer_name: user.user_metadata?.full_name || user.email || 'Verified Buyer',
-        purpose: purpose.trim(),
-        dimensions: dimensions.trim() || 'Custom Size',
-        material: material || 'PLA',
-        budget_min: Number(budgetMin || 0),
-        budget_max: Number(budgetMax || 0),
-        description: description.trim() || `Custom 3D model specification for ${purpose.trim()}.`,
-        urgency: 'Standard',
-        attachment_urls: uploadedUrls,
-      })
+        title: purpose.trim(),
+        description: fullDescription,
+        budget: finalBudget,
+        status: 'open',
+      }).select().single()
 
       if (insertErr) {
+        console.error('Insert error:', insertErr)
         setFormError(insertErr.message || 'Failed to submit request. Please try again.')
+        setSubmitting(false)
         return
       }
 
-      router.push('/dashboard/buyer')
+      router.push(`/requests/${insertResult.id}`)
     } catch (err: unknown) {
       console.error('Error inserting design request into Supabase:', err)
       const msg = err instanceof Error ? err.message : 'An error occurred while submitting your brief.'
