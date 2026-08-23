@@ -180,8 +180,7 @@ function ThreeViewerInner({
     controls.autoRotateSpeed = 1.2
     controls.enableZoom = true
     controls.enablePan = true
-    controls.minDistance = 5
-    controls.maxDistance = 1200
+    controls.minDistance = 2
     controlsRef.current = controls
 
     // ─── Studio Lighting Setup ──────────────────────────
@@ -297,7 +296,26 @@ function ThreeViewerInner({
         camera.near = Math.max(maxDim / 200, 0.05)
         camera.far = Math.max(maxDim * 50, 3000)
         camera.updateProjectionMatrix()
+
+        // Derive OrbitControls limits dynamically from maxDim and computed fit distance
+        controls.minDistance = Math.max(maxDim * 0.05, 0.5)
+        controls.maxDistance = Math.max(dist * 8, maxDim * 15, 100)
         controls.update()
+      }
+    }
+
+    // Shared fetch helper with abort timeout and non-OK response handling
+    const fetchModelData = async (url: string, asText = false) => {
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 30000)
+      try {
+        const res = await fetch(url, { signal: controller.signal })
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status}: Failed to fetch model file`)
+        }
+        return asText ? await res.text() : await res.arrayBuffer()
+      } finally {
+        clearTimeout(timeoutId)
       }
     }
 
@@ -307,7 +325,7 @@ function ThreeViewerInner({
 
       try {
         if (fmt === 'stl') {
-          const buf = await (await fetch(modelUrl)).arrayBuffer()
+          const buf = (await fetchModelData(modelUrl)) as ArrayBuffer
           if (disposed) return
           const geo = new STLLoader().parse(buf)
           if (!geo?.attributes?.position?.count) throw new Error('Empty STL')
@@ -318,7 +336,7 @@ function ThreeViewerInner({
           fitCamera(group); setLoading(false)
 
         } else if (fmt === '3mf') {
-          const buf = await (await fetch(modelUrl)).arrayBuffer()
+          const buf = (await fetchModelData(modelUrl)) as ArrayBuffer
           if (disposed) return
           const parsed = new ThreeMFLoader().parse(buf)
           if (!parsed?.children?.length) throw new Error('Empty 3MF')
@@ -327,7 +345,7 @@ function ThreeViewerInner({
           fitCamera(group); setLoading(false)
 
         } else if (fmt === 'obj') {
-          const txt = await (await fetch(modelUrl)).text()
+          const txt = (await fetchModelData(modelUrl, true)) as string
           if (disposed) return
           const parsed = new OBJLoader().parse(txt)
           if (!parsed?.children?.length) throw new Error('Empty OBJ')
@@ -340,7 +358,11 @@ function ThreeViewerInner({
             (gltf) => {
               if (disposed) return
               const s = gltf.scene || gltf.scenes[0]
-              if (!s) throw new Error('Empty GLTF')
+              if (!s) {
+                setError('Empty GLTF')
+                setLoading(false)
+                return
+              }
               styleMeshes(s)
               group.add(s)
               fitCamera(group); setLoading(false)
