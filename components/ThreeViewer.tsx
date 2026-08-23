@@ -168,9 +168,10 @@ function ThreeViewerInner({
     sceneRef.current = scene
 
     // Camera
-    const camera = new THREE.PerspectiveCamera(38, w / h, 0.1, 5000)
-    camera.position.set(0, 40, 120)
+    const camera = new THREE.PerspectiveCamera(36, w / h, 0.1, 5000)
+    camera.position.set(0, 30, 120)
     cameraRef.current = camera
+    scene.add(camera)
 
     // Renderer
     const renderer = new THREE.WebGLRenderer({
@@ -181,7 +182,7 @@ function ThreeViewerInner({
     renderer.setSize(w, h)
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
     renderer.toneMapping = THREE.ACESFilmicToneMapping
-    renderer.toneMappingExposure = 1.15
+    renderer.toneMappingExposure = 1.2
     renderer.shadowMap.enabled = true
     renderer.shadowMap.type = THREE.PCFSoftShadowMap
     container.innerHTML = ''
@@ -198,31 +199,35 @@ function ThreeViewerInner({
     controls.minDistance = 2
     controlsRef.current = controls
 
-    // ─── Studio Lighting Setup ──────────────────────────
-    // Ambient / Hemisphere
-    scene.add(new THREE.HemisphereLight(0xffffff, 0x1e293b, 0.8))
+    // ─── Studio 5-Point Portrait & Product Lighting ──────────
+    // 1. Balanced Ambient Light: lifts dark crevices and facial shadows
+    scene.add(new THREE.AmbientLight(0xffffff, 0.85))
 
-    // Main Key light (Top-right front)
-    const key = new THREE.DirectionalLight(0xffffff, 1.35)
-    key.position.set(100, 160, 120)
-    key.castShadow = true
-    key.shadow.bias = -0.0001
-    scene.add(key)
+    // 2. Soft Sky/Ground Hemisphere Light
+    scene.add(new THREE.HemisphereLight(0xffffff, 0x475569, 0.65))
 
-    // Fill light (Soft gentle fill from left)
-    const fill = new THREE.DirectionalLight(0xa5b4fc, 0.7)
-    fill.position.set(-120, 60, 80)
-    scene.add(fill)
+    // 3. Camera-Attached Frontal Headlight / Ring-Light:
+    // Follows the user's view so the front face and contours are ALWAYS crystal clear!
+    const cameraRingLight = new THREE.DirectionalLight(0xffffff, 0.8)
+    cameraRingLight.position.set(0, 0, 1)
+    camera.add(cameraRingLight)
 
-    // Rim / backlight (defines edge silhouette)
-    const rim = new THREE.DirectionalLight(0xffedd5, 0.9)
-    rim.position.set(-20, 120, -160)
-    scene.add(rim)
+    // 4. Primary Studio Key Light (gentle 45° angle, not harsh top-down)
+    const keyLight = new THREE.DirectionalLight(0xffffff, 1.1)
+    keyLight.position.set(60, 80, 100)
+    keyLight.castShadow = true
+    keyLight.shadow.bias = -0.0001
+    scene.add(keyLight)
 
-    // Subtle Under-bounce
-    const bounce = new THREE.DirectionalLight(0x334155, 0.35)
-    bounce.position.set(0, -100, 40)
-    scene.add(bounce)
+    // 5. Fill Light (Soft cool light from front-left)
+    const fillLight = new THREE.DirectionalLight(0xdbeafe, 0.65)
+    fillLight.position.set(-80, 50, 80)
+    scene.add(fillLight)
+
+    // 6. Silhouette Rim Light (Warm backlight from behind)
+    const rimLight = new THREE.DirectionalLight(0xffedd5, 0.9)
+    rimLight.position.set(0, 80, -120)
+    scene.add(rimLight)
 
     // ─── Soft Contact Shadow Plane ──────────────────────
     const shadowCanvas = document.createElement('canvas')
@@ -231,8 +236,8 @@ function ThreeViewerInner({
     const ctx = shadowCanvas.getContext('2d')
     if (ctx) {
       const grad = ctx.createRadialGradient(64, 64, 0, 64, 64, 64)
-      grad.addColorStop(0, 'rgba(0, 0, 0, 0.45)')
-      grad.addColorStop(0.5, 'rgba(0, 0, 0, 0.15)')
+      grad.addColorStop(0, 'rgba(0, 0, 0, 0.4)')
+      grad.addColorStop(0.5, 'rgba(0, 0, 0, 0.12)')
       grad.addColorStop(1, 'rgba(0, 0, 0, 0)')
       ctx.fillStyle = grad
       ctx.fillRect(0, 0, 128, 128)
@@ -255,15 +260,15 @@ function ThreeViewerInner({
     groupRef.current = group
     scene.add(group)
 
-    // PBR filament material factory
+    // PBR filament material factory with balanced satin-diffuse sheen
     const makeMat = (): THREE.MeshPhysicalMaterial => {
       const mat = new THREE.MeshPhysicalMaterial({
         color: new THREE.Color(safeColor),
-        roughness: 0.3,
-        metalness: 0.08,
-        clearcoat: 0.3,
-        clearcoatRoughness: 0.18,
-        reflectivity: 0.55,
+        roughness: 0.42, // Smooth satin finish that reveals fine sculpt folds & contours
+        metalness: 0.04,
+        clearcoat: 0.2,
+        clearcoatRoughness: 0.25,
+        reflectivity: 0.5,
         wireframe,
         side: THREE.DoubleSide,
       })
@@ -282,7 +287,7 @@ function ThreeViewerInner({
       })
     }
 
-    // Fit model to fill camera perfectly
+    // Fit model to fill camera perfectly with natural 3/4 beauty angle
     const fitCamera = (obj: THREE.Object3D) => {
       const box = new THREE.Box3().setFromObject(obj)
       if (box.isEmpty()) return
@@ -304,7 +309,8 @@ function ThreeViewerInner({
         let dist = (maxDim / 2 / Math.tan(fov / 2)) * 1.35
         dist = Math.max(dist, 10)
 
-        camera.position.set(dist * 0.6, dist * 0.35, dist * 0.75)
+        // Balanced 3/4 perspective showing full facial details with depth
+        camera.position.set(dist * 0.45, dist * 0.22, dist * 0.85)
         initialCamPos.current.copy(camera.position)
         camera.lookAt(0, 0, 0)
         controls.target.set(0, 0, 0)
