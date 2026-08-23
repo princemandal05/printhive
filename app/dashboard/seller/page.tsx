@@ -55,7 +55,11 @@ export default async function SellerDashboard() {
 
   try {
     const supabase = await createClient()
-    const { data: dbProducts, error } = await supabase.from('products').select('*').order('created_at', { ascending: false })
+    let query = supabase.from('products').select('*')
+    if (user?.id) {
+      query = query.eq('seller_id', user.id)
+    }
+    const { data: dbProducts, error } = await query.order('created_at', { ascending: false })
 
     if (error) {
       loadError = error.message
