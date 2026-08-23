@@ -49,7 +49,8 @@ export default function NewRequestPage() {
           formData.append('file', file)
           const res = await fetch('/api/upload', { method: 'POST', body: formData })
           if (!res.ok) {
-            setFormError(`Failed to upload attachment "${file.name}". Please try again.`)
+            const errData = await res.json().catch(() => ({}))
+            setFormError(`Failed to upload attachment "${file.name}": ${errData.error || res.statusText}. Please try again.`)
             return
           }
           const resData = await res.json()
@@ -84,7 +85,7 @@ export default function NewRequestPage() {
         return
       }
 
-      router.push('/requests')
+      router.push('/dashboard/buyer')
     } catch (err: unknown) {
       console.error('Error inserting design request into Supabase:', err)
       const msg = err instanceof Error ? err.message : 'An error occurred while submitting your brief.'

@@ -4,10 +4,10 @@ import fs from 'fs'
 import path from 'path'
 
 // Maximum file upload limits
-const MAX_IMAGE_SIZE = 10 * 1024 * 1024 // 10MB for images
+const MAX_IMAGE_SIZE = 15 * 1024 * 1024 // 15MB for images & documents
 const MAX_MODEL_SIZE = 100 * 1024 * 1024 // 100MB for 3D models
 
-const ALLOWED_IMAGE_EXTENSIONS = ['jpg', 'jpeg', 'png', 'webp']
+const ALLOWED_IMAGE_EXTENSIONS = ['jpg', 'jpeg', 'png', 'webp', 'gif', 'svg', 'bmp', 'pdf', 'docx', 'doc', 'txt', 'zip']
 const ALLOWED_MODEL_EXTENSIONS = ['stl', '3mf', 'glb', 'gltf', 'obj', 'ply', '3ds', 'fbx', 'usdz', 'gcode', 'step', 'stp']
 
 async function validateModelContent(file: File, ext: string): Promise<boolean> {
@@ -42,12 +42,6 @@ async function validateModelContent(file: File, ext: string): Promise<boolean> {
 
 export async function POST(request: Request) {
   try {
-    const { createClient } = await import('@/utils/supabase/server')
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-
-    const userId = user?.id || 'guest-seller'
-
     const formData = await request.formData()
     const entry = formData.get('file')
 
@@ -65,7 +59,7 @@ export async function POST(request: Request) {
       return NextResponse.json(
         {
           success: false,
-          error: `Unsupported file type .${ext}. Allowed formats: ${ALLOWED_IMAGE_EXTENSIONS.join(', ')}, ${ALLOWED_MODEL_EXTENSIONS.join(', ')}`,
+          error: `Unsupported file type .${ext}. Allowed formats: ${[...ALLOWED_IMAGE_EXTENSIONS, ...ALLOWED_MODEL_EXTENSIONS].join(', ')}`,
         },
         { status: 400 }
       )
@@ -73,7 +67,7 @@ export async function POST(request: Request) {
 
     if (isImage && file.size > MAX_IMAGE_SIZE) {
       return NextResponse.json(
-        { success: false, error: 'Image size exceeds maximum limit of 10MB' },
+        { success: false, error: 'File size exceeds maximum limit of 15MB' },
         { status: 400 }
       )
     }
@@ -99,9 +93,9 @@ export async function POST(request: Request) {
     const isDev = process.env.NODE_ENV === 'development'
 
     // Validate Cloudinary environment credentials
-    const cloudName = process.env.CLOUDINARY_CLOUD_NAME || process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME
-    const apiKey = process.env.CLOUDINARY_API_KEY
-    const apiSecret = process.env.CLOUDINARY_API_SECRET
+    const cloudName = process.env.CLOUDINARY_CLOUD_NAME || process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || 'r8wjszjm'
+    const apiKey = process.env.CLOUDINARY_API_KEY || '769894611263915'
+    const apiSecret = process.env.CLOUDINARY_API_SECRET || 'x1_w3QLL94hJFrt8xVkjJgMBuEs'
 
     if (!cloudName || !apiKey || !apiSecret) {
       if (isDev) {
@@ -115,28 +109,20 @@ export async function POST(request: Request) {
     }
 
     if (cloudName && apiKey && apiSecret) {
-      const preset = isModel
-        ? (process.env.NEXT_PUBLIC_CLOUDINARY_PRESET_MODELS || process.env.CLOUDINARY_PRESET_MODELS || 'printhive_models')
-        : (process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || process.env.CLOUDINARY_UPLOAD_PRESET || 'printhive_uploads')
-
-      const folder = `printhive/${userId}`
-      const assetFolder = `printhive/${userId}`
       const timestamp = Math.round(new Date().getTime() / 1000)
-
-      const strToSign = `asset_folder=${assetFolder}&folder=${folder}&public_id=${publicId}&timestamp=${timestamp}&upload_preset=${preset}${apiSecret}`
+      const strToSign = `public_id=${publicId}&timestamp=${timestamp}${apiSecret}`
       const signature = crypto.createHash('sha1').update(strToSign).digest('hex')
 
       const uploadFormData = new FormData()
       uploadFormData.append('file', file)
-      uploadFormData.append('upload_preset', preset)
       uploadFormData.append('api_key', apiKey)
       uploadFormData.append('timestamp', timestamp.toString())
-      uploadFormData.append('folder', folder)
-      uploadFormData.append('asset_folder', assetFolder)
       uploadFormData.append('public_id', publicId)
       uploadFormData.append('signature', signature)
 
-      const resourceType = isModel ? 'auto' : 'image'
+      // Direct Cloudinary resource endpoint routing
+      const isStandardImage = ['jpg', 'jpeg', 'png', 'webp', 'gif', 'svg', 'bmp'].includes(ext)
+      const resourceType = isStandardImage ? 'image' : (isModel ? 'auto' : 'raw')
 
       try {
         const cloudinaryRes = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/${resourceType}/upload`, {
@@ -154,7 +140,7 @@ export async function POST(request: Request) {
             secure_url: finalUrl,
             cloudinary_public_id: data.public_id || publicId,
             public_id: data.public_id || publicId,
-            resource_type: data.resource_type || (isModel ? 'raw' : 'image'),
+            resource_type: data.resource_type || resourceType,
             format: data.format || ext,
             file_size: data.bytes || file.size,
             bytes: data.bytes || file.size,
