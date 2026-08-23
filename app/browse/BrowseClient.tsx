@@ -32,7 +32,7 @@ function Quick3DModal({ design, onClose }: { design: DesignRow; onClose: () => v
         position: 'fixed',
         inset: 0,
         zIndex: 9999,
-        background: 'rgba(11, 15, 25, 0.85)',
+        background: 'rgba(15, 23, 42, 0.75)',
         backdropFilter: 'blur(12px)',
         display: 'flex',
         alignItems: 'center',
@@ -43,13 +43,13 @@ function Quick3DModal({ design, onClose }: { design: DesignRow; onClose: () => v
     >
       <div
         style={{
-          background: '#0F172A',
-          border: '1px solid rgba(255, 107, 53, 0.3)',
+          background: '#FFFFFF',
+          border: '1px solid #E2E8F0',
           borderRadius: 24,
           padding: 28,
-          maxWidth: 620,
+          maxWidth: 640,
           width: '100%',
-          boxShadow: '0 25px 60px rgba(0,0,0,0.5)',
+          boxShadow: '0 25px 60px rgba(0,0,0,0.15)',
           position: 'relative',
         }}
         onClick={(e) => e.stopPropagation()}
@@ -59,14 +59,14 @@ function Quick3DModal({ design, onClose }: { design: DesignRow; onClose: () => v
             <span style={{ fontSize: 11, fontWeight: 800, color: '#FF6B35', textTransform: 'uppercase', letterSpacing: 1 }}>
               WebGL 3D Orbit Inspection
             </span>
-            <h2 style={{ fontSize: 20, fontWeight: 900, color: '#fff', margin: '2px 0 0' }}>{design.title}</h2>
+            <h2 style={{ fontSize: 20, fontWeight: 900, color: '#0F172A', margin: '2px 0 0' }}>{design.title}</h2>
           </div>
           <button
             type="button"
             onClick={onClose}
             style={{
-              background: 'rgba(255,255,255,0.1)',
-              color: '#fff',
+              background: '#F1F5F9',
+              color: '#0F172A',
               border: 'none',
               borderRadius: '50%',
               width: 32,
@@ -81,7 +81,7 @@ function Quick3DModal({ design, onClose }: { design: DesignRow; onClose: () => v
         </div>
 
         {/* Standard canonical 3D WebGL Viewport */}
-        <div style={{ width: '100%', borderRadius: 16, overflow: 'hidden' }}>
+        <div style={{ width: '100%', borderRadius: 16, overflow: 'hidden', border: '1px solid #E2E8F0' }}>
           <ThreeViewer title={design.title} modelUrl={modelUrl} height={380} />
         </div>
 
