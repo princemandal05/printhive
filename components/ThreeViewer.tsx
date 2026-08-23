@@ -6,6 +6,7 @@ import { STLLoader } from 'three/examples/jsm/loaders/STLLoader.js'
 import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 import { ThreeMFLoader } from 'three/examples/jsm/loaders/3MFLoader.js'
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import { detectModelFormat, type ModelFormat } from '@/utils/format-detector'
 
 interface ThreeViewerProps {
@@ -18,6 +19,7 @@ interface ThreeViewerProps {
   fileName?: string | null
   mimeType?: string | null
   dimensions?: { x: number; y: number; z: number }
+  autoRotateDefault?: boolean
 }
 
 interface ErrorBoundaryProps {
@@ -89,6 +91,7 @@ function ThreeViewerContent({
   title = '3D Model',
   color = '#8B5CF6',
   wireframeDefault = false,
+  autoRotateDefault = false,
   height = 440,
   modelUrl,
   format,
@@ -100,14 +103,22 @@ function ThreeViewerContent({
 
   const [loadingModel, setLoadingModel] = useState(true)
   const [wireframe, setWireframe] = useState(wireframeDefault)
-  const [rotating, setRotating] = useState(true)
+  // Stable/static by default — no unwanted auto-spinning
+  const [rotating, setRotating] = useState(autoRotateDefault)
   const rotatingRef = useRef(rotating)
   const [computedBounds, setComputedBounds] = useState({ x: dimensions.x, y: dimensions.y, z: dimensions.z })
   const [unsupportedFormat, setUnsupportedFormat] = useState<string | null>(null)
   const [modelLoadError, setModelLoadError] = useState<string | null>(null)
 
+  const controlsRef = useRef<OrbitControls | null>(null)
+  const initialCameraPos = useRef<THREE.Vector3>(new THREE.Vector3(0, 50, 150))
+  const initialTarget = useRef<THREE.Vector3>(new THREE.Vector3(0, 0, 0))
+
   useEffect(() => {
     rotatingRef.current = rotating
+    if (controlsRef.current) {
+      controlsRef.current.autoRotate = rotating
+    }
   }, [rotating])
 
   const groupRef = useRef<THREE.Group | null>(null)
@@ -153,8 +164,18 @@ function ThreeViewerContent({
     mountRef.current.innerHTML = ''
     mountRef.current.appendChild(renderer.domElement)
 
+    // Standard OrbitControls for smooth, stable interaction
+    const controls = new OrbitControls(camera, renderer.domElement)
+    controls.enableDamping = true
+    controls.dampingFactor = 0.08
+    controls.autoRotate = rotatingRef.current
+    controls.autoRotateSpeed = 1.2
+    controls.enableZoom = true
+    controls.enablePan = true
+    controlsRef.current = controls
+
     // Lighting setup
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.75)
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.85)
     scene.add(ambientLight)
 
     const mainLight = new THREE.DirectionalLight(0xffffff, 1.2)
@@ -165,6 +186,10 @@ function ThreeViewerContent({
     const fillLight = new THREE.DirectionalLight(0x8b5cf6, 0.6)
     fillLight.position.set(-100, -50, -100)
     scene.add(fillLight)
+
+    const backLight = new THREE.DirectionalLight(0xffffff, 0.4)
+    backLight.position.set(0, -100, -100)
+    scene.add(backLight)
 
     const group = new THREE.Group()
     groupRef.current = group
@@ -201,12 +226,17 @@ function ThreeViewerContent({
         let cameraDist = Math.abs(maxDim / 2 / Math.tan(fovRad / 2)) * 1.5
         cameraDist = Math.max(cameraDist, 10)
 
-        camera.position.set(0, maxDim * 0.3, cameraDist)
+        camera.position.set(0, maxDim * 0.35, cameraDist)
         camera.lookAt(0, 0, 0)
 
+        initialCameraPos.current.copy(camera.position)
+        initialTarget.current.set(0, 0, 0)
+        controls.target.set(0, 0, 0)
+
         camera.near = Math.max(maxDim / 100, 0.1)
-        camera.far = Math.max(maxDim * 100, 1000)
+        camera.far = Math.max(maxDim * 100, 2000)
         camera.updateProjectionMatrix()
+        controls.update()
       }
     }
 
@@ -233,6 +263,7 @@ function ThreeViewerContent({
             throw new Error('STL geometry contains no vertex positions')
           }
 
+          geometry.computeVertexNormals()
           const mesh = new THREE.Mesh(geometry, meshMaterial)
           mesh.castShadow = true
           mesh.receiveShadow = true
@@ -334,52 +365,11 @@ function ThreeViewerContent({
 
     loadActualModel()
 
-    // Orbit Drag Controls
-    let isDragging = false
-    let previousMousePosition = { x: 0, y: 0 }
-
-    const onMouseDown = (e: MouseEvent) => {
-      isDragging = true
-      previousMousePosition = { x: e.clientX, y: e.clientY }
-    }
-
-    const onMouseMove = (e: MouseEvent) => {
-      if (!isDragging || !groupRef.current) return
-
-      const deltaX = e.clientX - previousMousePosition.x
-      const deltaY = e.clientY - previousMousePosition.y
-
-      groupRef.current.rotation.y += deltaX * 0.01
-      groupRef.current.rotation.x += deltaY * 0.01
-
-      previousMousePosition = { x: e.clientX, y: e.clientY }
-    }
-
-    const onMouseUp = () => {
-      isDragging = false
-    }
-
-    const onWheel = (e: WheelEvent) => {
-      e.preventDefault()
-      camera.position.z += e.deltaY * 0.1
-      camera.position.z = Math.max(10, Math.min(camera.position.z, 1000))
-    }
-
-    const domElement = renderer.domElement
-    domElement.addEventListener('mousedown', onMouseDown)
-    window.addEventListener('mousemove', onMouseMove)
-    window.addEventListener('mouseup', onMouseUp)
-    domElement.addEventListener('wheel', onWheel, { passive: false })
-
-    // Animation Loop
+    // Animation Loop with OrbitControls
     let animId: number
     const animate = () => {
       animId = requestAnimationFrame(animate)
-
-      if (groupRef.current && rotatingRef.current && !isDragging) {
-        groupRef.current.rotation.y += 0.005
-      }
-
+      controls.update()
       renderer.render(scene, camera)
     }
     animate()
@@ -399,16 +389,18 @@ function ThreeViewerContent({
       isDisposed = true
       cancelAnimationFrame(animId)
       window.removeEventListener('resize', handleResize)
-      domElement.removeEventListener('mousedown', onMouseDown)
-      window.removeEventListener('mousemove', onMouseMove)
-      window.removeEventListener('mouseup', onMouseUp)
-      domElement.removeEventListener('wheel', onWheel)
-
+      controls.dispose()
       scene.clear()
       renderer.dispose()
       meshMaterial.dispose()
     }
   }, [modelUrl, detectedFormat, validColor, height])
+
+  const handleResetView = () => {
+    if (controlsRef.current) {
+      controlsRef.current.reset()
+    }
+  }
 
   if (unsupportedFormat || modelLoadError) {
     return (
@@ -500,6 +492,7 @@ function ThreeViewerContent({
         </div>
       )}
 
+      {/* Model Specs Overlay */}
       <div
         style={{
           position: 'absolute',
@@ -524,6 +517,7 @@ function ThreeViewerContent({
         </span>
       </div>
 
+      {/* Quick Controls */}
       <div
         style={{
           position: 'absolute',
@@ -534,6 +528,25 @@ function ThreeViewerContent({
           gap: 8,
         }}
       >
+        <button
+          type="button"
+          onClick={handleResetView}
+          title="Reset Camera View"
+          style={{
+            background: 'rgba(15, 23, 42, 0.75)',
+            color: '#94A3B8',
+            border: '1px solid rgba(255,255,255,0.15)',
+            borderRadius: 10,
+            padding: '6px 12px',
+            fontSize: 12,
+            fontWeight: 800,
+            cursor: 'pointer',
+            backdropFilter: 'blur(8px)',
+          }}
+        >
+          🎯 Reset View
+        </button>
+
         <button
           type="button"
           onClick={() => setWireframe(!wireframe)}
@@ -567,7 +580,7 @@ function ThreeViewerContent({
             backdropFilter: 'blur(8px)',
           }}
         >
-          {rotating ? 'Pause Orbit' : 'Rotate Orbit'}
+          {rotating ? '⏸ Pause Orbit' : '🔄 Auto Rotate'}
         </button>
       </div>
     </div>
