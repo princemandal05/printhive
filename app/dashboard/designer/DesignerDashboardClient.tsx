@@ -32,18 +32,19 @@ export default function DesignerDashboardClient({ userEmail, initialDesigns, sig
       if (localStr) {
         const localItems = JSON.parse(localStr)
         if (Array.isArray(localItems) && localItems.length > 0) {
-          const formatted = localItems.map((d: any, index: number) => ({
-            id: d.id || `custom-${index}`,
-            title: d.title || '3D Model Design',
-            category: d.category || '3D Printing',
-            price: d.pricing_type === 'free' ? 0 : Number(d.price) || 0,
-            royalty: d.pricing_type === 'free' ? 'Open Source' : '15% per print',
-            prints: 0,
-            preview: d.preview_url || 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=600&q=80',
-            status: d.status || 'Published',
-          }))
+          const formatted = localItems
+            .filter((d: any) => d && d.id && !d.id.startsWith('custom-'))
+            .map((d: any) => ({
+              id: d.id,
+              title: d.title || '3D Model Design',
+              category: d.category || '3D Printing',
+              price: d.pricing_type === 'free' ? 0 : Number(d.price) || 0,
+              royalty: d.pricing_type === 'free' ? 'Open Source' : '15% per print',
+              prints: 0,
+              preview: d.preview_url || 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=600&q=80',
+              status: d.status || 'Published',
+            }))
 
-          // Merge without duplicate IDs
           const existingIds = new Set(initialDesigns.map((x) => x.id))
           const uniqueLocal = formatted.filter((x: any) => !existingIds.has(x.id))
 
