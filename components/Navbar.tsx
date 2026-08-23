@@ -26,38 +26,42 @@ const ROLE_LABELS: Record<string, string> = {
 const ROLE_NAV_LINKS: Record<string, { href: string; label: string }[]> = {
   public: [
     { href: '/', label: 'Home' },
-    { href: '/shop', label: 'Shop' },
+    { href: '/shop', label: '🛍️ Shop' },
+    { href: '/browse', label: '🧊 3D Models' },
   ],
   buyer: [
     { href: '/', label: 'Home' },
-    { href: '/shop', label: 'Shop' },
+    { href: '/shop', label: '🛍️ Shop' },
+    { href: '/browse', label: '🧊 3D Models' },
     { href: '/print-on-demand', label: 'Print File' },
     { href: '/requests', label: 'Custom Briefs' },
-    { href: '/orders', label: 'My Orders' },
   ],
   seller: [
     { href: '/', label: 'Home' },
-    { href: '/shop', label: 'Shop' },
+    { href: '/shop', label: '🛍️ Shop' },
+    { href: '/browse', label: '🧊 3D Models' },
     { href: '/dashboard/seller', label: 'My Products' },
     { href: '/dashboard/seller/products/new', label: '+ Add Product' },
   ],
   designer: [
     { href: '/', label: 'Home' },
-    { href: '/browse', label: '3D Models' },
+    { href: '/shop', label: '🛍️ Shop' },
+    { href: '/browse', label: '🧊 3D Models' },
     { href: '/dashboard/designer', label: 'Creator Studio' },
     { href: '/dashboard/designer/upload', label: '+ Upload Model' },
   ],
   printer_owner: [
     { href: '/', label: 'Home' },
-    { href: '/shop', label: 'Shop' },
+    { href: '/shop', label: '🛍️ Shop' },
+    { href: '/browse', label: '🧊 3D Models' },
     { href: '/printers', label: 'Nearby Hubs' },
-    { href: '/dashboard/printer-owner/register', label: 'Register Hub' },
   ],
   admin: [
     { href: '/', label: 'Home' },
-    { href: '/shop', label: 'Shop' },
-    { href: '/printers', label: 'Hubs Directory' },
-    { href: '/dashboard/admin', label: 'Admin Overview' },
+    { href: '/shop', label: '🛍️ Shop' },
+    { href: '/browse', label: '🧊 3D Models' },
+    { href: '/printers', label: 'Hubs' },
+    { href: '/dashboard/admin', label: 'Admin' },
   ],
 }
 
