@@ -5,7 +5,19 @@ import Link from 'next/link'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 import ThreeViewer from '@/components/ThreeViewer'
-import type { DesignRow } from './page'
+export interface DesignRow {
+  id: string
+  title: string
+  price: number
+  category: string
+  rating: number
+  rating_count: number
+  thumbnail_url: string
+  file_url: string
+  designer?: {
+    full_name?: string
+  }
+}
 
 const FALLBACK_CATEGORIES = ['Toys & Games', 'Home & Office', 'Home & Decor', 'Personalized', 'Repair Parts']
 
