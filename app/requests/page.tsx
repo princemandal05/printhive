@@ -6,49 +6,11 @@ import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 import { createClient } from '@/utils/supabase/client'
 
-const SEED_REQUESTS = [
-  {
-    id: 'r1',
-    purpose: 'Replacement Knob for Washing Machine (High ABS)',
-    dimensions: '5cm x 5cm x 2cm',
-    material: 'ABS',
-    budgetMin: 200,
-    budgetMax: 500,
-    buyer: 'Aarav M.',
-    postedAt: '2 days ago',
-    urgency: 'Standard',
-    bidCount: 2,
-  },
-  {
-    id: 'r2',
-    purpose: 'Custom Iron Man Mark 85 Cosplay Helmet (1:1 Scale)',
-    dimensions: '28cm x 22cm x 26cm',
-    material: 'PETG (Durable)',
-    budgetMin: 3500,
-    budgetMax: 6000,
-    buyer: 'Vikram S.',
-    postedAt: '5 hours ago',
-    urgency: 'High Urgency',
-    bidCount: 5,
-  },
-  {
-    id: 'r3',
-    purpose: 'Batch 50x Ergonomic Cable Organizer Clips',
-    dimensions: '3cm x 2cm x 1cm',
-    material: 'PLA (Standard)',
-    budgetMin: 800,
-    budgetMax: 1500,
-    buyer: 'TechLabs Hyd',
-    postedAt: '1 day ago',
-    urgency: 'Standard',
-    bidCount: 3,
-  },
-]
-
 export default function RequestsListPage() {
-  const [requests, setRequests] = useState<any[]>(SEED_REQUESTS)
+  const [requests, setRequests] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
+  const [userRole, setUserRole] = useState<string>('buyer')
 
   useEffect(() => {
     const supabase = createClient()
@@ -56,6 +18,12 @@ export default function RequestsListPage() {
 
     async function fetchRequests() {
       try {
+        const { data: { user } } = await supabase.auth.getUser()
+        if (user) {
+          const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).maybeSingle()
+          if (profile?.role && isMounted) setUserRole(profile.role)
+        }
+
         const { data, error } = await supabase.from('design_requests').select('*').order('created_at', { ascending: false })
         if (!error && data && data.length > 0) {
           const mapped = data.map((r: any) => ({
@@ -89,6 +57,8 @@ export default function RequestsListPage() {
     (r.buyer || '').toLowerCase().includes(search.toLowerCase())
   )
 
+  const isFreelancerOrHub = userRole === 'designer' || userRole === 'printer_owner' || userRole === 'admin'
+
   return (
     <main style={{ minHeight: '100vh' }}>
       <Navbar />
@@ -98,13 +68,15 @@ export default function RequestsListPage() {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 20, marginBottom: 36 }}>
           <div>
             <div className="ateion-pill" style={{ marginBottom: 12 }}>
-              ✏️ Bidding Engine & Freelance Briefs
+              {isFreelancerOrHub ? '💼 Freelance Bidding Engine' : '✨ Custom Design & Print Briefs'}
             </div>
             <h1 style={{ fontSize: 36, fontWeight: 900, color: 'var(--text-main)', marginBottom: 8, letterSpacing: '-0.5px' }}>
-              Custom Design & Manufacturing Briefs
+              {isFreelancerOrHub ? 'Client Briefs & Print Job Board' : 'Custom Design & Manufacturing Briefs'}
             </h1>
             <p style={{ color: 'var(--text-sub)', fontSize: 16, maxWidth: 720, lineHeight: 1.6 }}>
-              Browse custom requests posted by buyers looking for 3D CAD modeling or on-demand batch manufacturing. Submit competitive bids to win print jobs.
+              {isFreelancerOrHub
+                ? 'Browse custom 3D modeling and manufacturing briefs posted by buyers. Submit competitive bids to win paid print jobs.'
+                : 'Need a custom 3D model designed or manufactured from scratch? Post a brief to get competitive quotes from top designers and 3D print hubs.'}
             </p>
           </div>
 
@@ -143,11 +115,19 @@ export default function RequestsListPage() {
         </div>
 
         {/* REQUESTS LIST GRID */}
-        {filtered.length === 0 ? (
+        {loading ? (
+          <div style={{ textAlign: 'center', padding: '60px 24px', color: 'var(--text-sub)' }}>
+            Loading active briefs...
+          </div>
+        ) : filtered.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '60px 24px', background: 'var(--bg-card)', borderRadius: 24, border: '2px dashed var(--border-color)' }}>
             <div style={{ fontSize: 40, marginBottom: 12 }}>✏️</div>
-            <div style={{ fontSize: 18, fontWeight: 900, color: 'var(--text-main)', marginBottom: 6 }}>No Custom Design Briefs Posted Yet</div>
-            <div style={{ fontSize: 14, color: 'var(--text-sub)', marginBottom: 20 }}>Post a custom 3D printing brief to get competitive bids from verified designers across India!</div>
+            <div style={{ fontSize: 18, fontWeight: 900, color: 'var(--text-main)', marginBottom: 6 }}>No Custom Design Briefs Active</div>
+            <div style={{ fontSize: 14, color: 'var(--text-sub)', marginBottom: 20 }}>
+              {isFreelancerOrHub
+                ? 'As soon as buyers submit custom 3D modeling or print requests, they will appear here for you to bid on.'
+                : 'Post your custom 3D printing brief to receive competitive quotes and proposals from verified creators!'}
+            </div>
             <Link href="/requests/new" style={{ background: '#FF6B35', color: '#fff', padding: '12px 24px', borderRadius: 12, fontWeight: 800, textDecoration: 'none', display: 'inline-block' }}>
               + Post Custom Brief
             </Link>
@@ -205,7 +185,7 @@ export default function RequestsListPage() {
                     💬 {r.bidCount === 0 ? 'No bids submitted — Be first to bid!' : `${r.bidCount} Designer Bids Received`}
                   </div>
                   <div style={{ background: '#0F172A', color: '#fff', padding: '8px 20px', borderRadius: 99, fontSize: 13, fontWeight: 800 }}>
-                    View Brief & Bid
+                    {isFreelancerOrHub ? 'Submit Bid →' : 'View Brief Details'}
                   </div>
                 </div>
               </Link>

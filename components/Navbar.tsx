@@ -34,7 +34,7 @@ const ROLE_NAV_LINKS: Record<string, { href: string; label: string }[]> = {
     { href: '/shop', label: '🛍️ Shop' },
     { href: '/browse', label: '🧊 3D Models' },
     { href: '/print-on-demand', label: 'Print File' },
-    { href: '/requests', label: 'Custom Briefs' },
+    { href: '/requests/new', label: '✨ Request Custom 3D' },
   ],
   seller: [
     { href: '/', label: 'Home' },
@@ -45,12 +45,14 @@ const ROLE_NAV_LINKS: Record<string, { href: string; label: string }[]> = {
     { href: '/', label: 'Home' },
     { href: '/shop', label: '🛍️ Shop' },
     { href: '/browse', label: '🧊 3D Models' },
+    { href: '/requests', label: '💼 Client Briefs & Bids' },
     { href: '/dashboard/designer/upload', label: '+ Upload Model' },
   ],
   printer_owner: [
     { href: '/', label: 'Home' },
     { href: '/shop', label: '🛍️ Shop' },
     { href: '/browse', label: '🧊 3D Models' },
+    { href: '/requests', label: '💼 Print Job Briefs' },
     { href: '/printers', label: 'Nearby Hubs' },
   ],
   admin: [
