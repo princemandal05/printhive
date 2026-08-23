@@ -95,17 +95,20 @@ export default function CloudinaryUploader({
       const sigRes = await fetch(`/api/upload/signature?isModel=${isModel}&fileName=${encodeURIComponent(file.name)}&fileSize=${file.size}&ext=${ext}`)
       const sigData = await sigRes.json()
 
-      if (sigData.success && sigData.signature) {
-        const directUrl = `https://api.cloudinary.com/v1_1/${sigData.cloud_name}/${sigData.resource_type}/upload`
+      if (sigData.success && (sigData.signature || sigData.unsigned)) {
+        const resourceEndpoint = isModel ? 'auto' : (sigData.resource_type || 'auto')
+        const directUrl = `https://api.cloudinary.com/v1_1/${sigData.cloud_name}/${resourceEndpoint}/upload`
         const formData = new FormData()
         formData.append('file', file)
-        formData.append('api_key', sigData.api_key)
-        formData.append('timestamp', sigData.timestamp.toString())
-        if (sigData.asset_folder) formData.append('asset_folder', sigData.asset_folder)
+        if (sigData.upload_preset) formData.append('upload_preset', sigData.upload_preset)
         if (sigData.folder) formData.append('folder', sigData.folder)
         if (sigData.public_id) formData.append('public_id', sigData.public_id)
-        if (sigData.upload_preset) formData.append('upload_preset', sigData.upload_preset)
-        formData.append('signature', sigData.signature)
+        if (!sigData.unsigned) {
+          formData.append('api_key', sigData.api_key)
+          formData.append('timestamp', sigData.timestamp.toString())
+          if (sigData.asset_folder) formData.append('asset_folder', sigData.asset_folder)
+          if (sigData.signature) formData.append('signature', sigData.signature)
+        }
 
         const xhr = new XMLHttpRequest()
         xhrRef.current = xhr

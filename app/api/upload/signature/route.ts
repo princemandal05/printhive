@@ -56,7 +56,7 @@ export async function GET(request: Request) {
     const assetFolder = `printhive/${userId}`
     const publicId = `${Date.now()}-${crypto.randomUUID().slice(0, 8)}`
 
-    // Alphabetically sorted Cloudinary parameters: asset_folder, folder, public_id, timestamp, upload_preset
+    // Generate signed parameter string for fallback signed endpoints
     const strToSign = `asset_folder=${assetFolder}&folder=${folder}&public_id=${publicId}&timestamp=${timestamp}&upload_preset=${preset}${apiSecret}`
     const signature = crypto.createHash('sha1').update(strToSign).digest('hex')
 
@@ -70,7 +70,8 @@ export async function GET(request: Request) {
       signature,
       api_key: apiKey,
       cloud_name: cloudName,
-      resource_type: isModel ? 'raw' : 'image',
+      resource_type: 'auto',
+      unsigned: true,
     })
   } catch (err: unknown) {
     const error = err as Error
