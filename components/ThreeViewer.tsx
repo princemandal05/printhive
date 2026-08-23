@@ -1,6 +1,8 @@
 'use client'
 
-import React, { useState, useRef, Component, ErrorInfo, ReactNode } from 'react'
+import React, { useState, useEffect, useRef, Component, ErrorInfo, ReactNode } from 'react'
+import * as THREE from 'three'
+import { STLLoader } from 'three/examples/jsm/loaders/STLLoader.js'
 
 interface ThreeViewerProps {
   title?: string
@@ -61,9 +63,6 @@ class ThreeViewerErrorBoundary extends Component<ErrorBoundaryProps, ErrorBounda
           <div style={{ fontSize: 13, color: '#a5b4fc', maxWidth: 400, lineHeight: 1.5, marginBottom: 16 }}>
             {this.state.errorMessage || 'Standard 3D mesh preview active.'}
           </div>
-          <span style={{ fontSize: 12, background: 'rgba(239,68,68,0.2)', color: '#fca5a5', padding: '4px 12px', borderRadius: 99, fontWeight: 700 }}>
-            ● Preview Unavailable — Click to Retry
-          </span>
         </div>
       )
     }
@@ -74,49 +73,195 @@ class ThreeViewerErrorBoundary extends Component<ErrorBoundaryProps, ErrorBounda
 
 function ThreeViewerInner({
   title = '3D Model Viewport',
-  color = '#ff6b35',
-  height = 420,
+  color = '#FF6B35',
+  height = 440,
   modelUrl,
   dimensions,
 }: ThreeViewerProps) {
-  const containerRef = useRef<HTMLDivElement>(null)
+  const mountRef = useRef<HTMLDivElement>(null)
   const [wireframe, setWireframe] = useState(false)
   const [rotating, setRotating] = useState(true)
-  const [zoom, setZoom] = useState(100)
+  const [loadingModel, setLoadingModel] = useState(true)
   const [isFullscreen, setIsFullscreen] = useState(false)
+  const [computedBounds, setComputedBounds] = useState<{ x: number; y: number; z: number } | null>(dimensions || null)
 
-  React.useEffect(() => {
-    const handleFullscreenChange = () => {
-      if (containerRef.current) {
-        setIsFullscreen(document.fullscreenElement === containerRef.current)
-      }
-    }
-    document.addEventListener('fullscreenchange', handleFullscreenChange)
-    return () => {
-      document.removeEventListener('fullscreenchange', handleFullscreenChange)
-    }
-  }, [])
+  const materialRef = useRef<THREE.MeshStandardMaterial | null>(null)
+  const groupRef = useRef<THREE.Group | null>(null)
 
-  // Safe color validator
-  const validColor = /^#[0-9A-F]{6}$/i.test(color) ? color : '#ff6b35'
-
+  const validColor = /^#[0-9A-F]{6}$/i.test(color) ? color : '#FF6B35'
   const hasModel = Boolean(modelUrl && modelUrl.trim() !== '')
 
-  // Extract file extension format
-  const fileExtension = hasModel && modelUrl
-    ? modelUrl.split('.').pop()?.toUpperCase() || '3D STL'
-    : '3D MESH'
+  useEffect(() => {
+    const container = mountRef.current
+    if (!container) return
 
-  const handleResetView = () => {
-    setZoom(100)
-    setRotating(true)
-    setWireframe(false)
-  }
+    const width = container.clientWidth || 500
+    const heightPx = typeof height === 'number' ? height : container.clientHeight || 440
+    const aspect = width / heightPx
+
+    const scene = new THREE.Scene()
+    scene.background = new THREE.Color(0x0f172a)
+
+    const camera = new THREE.PerspectiveCamera(40, aspect, 0.1, 1000)
+    camera.position.set(0, 80, 200)
+    camera.lookAt(0, 0, 0)
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true })
+    renderer.setSize(width, heightPx)
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+    renderer.shadowMap.enabled = true
+    container.appendChild(renderer.domElement)
+
+    // Studio Lighting
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.9)
+    scene.add(ambientLight)
+
+    const keyLight = new THREE.DirectionalLight(0xff6b35, 2.5)
+    keyLight.position.set(100, 150, 100)
+    scene.add(keyLight)
+
+    const fillLight = new THREE.DirectionalLight(0x38bdf8, 1.4)
+    fillLight.position.set(-100, 50, -100)
+    scene.add(fillLight)
+
+    // Build 3D Mesh Group
+    const group = new THREE.Group()
+    groupRef.current = group
+    scene.add(group)
+
+    const meshMaterial = new THREE.MeshStandardMaterial({
+      color: new THREE.Color(validColor),
+      roughness: 0.3,
+      metalness: 0.65,
+      wireframe: false,
+    })
+    materialRef.current = meshMaterial
+
+    let activeMesh: THREE.Mesh | null = null
+
+    if (hasModel && modelUrl && modelUrl.toLowerCase().includes('.stl')) {
+      setLoadingModel(true)
+      const loader = new STLLoader()
+      loader.load(
+        modelUrl,
+        (geometry) => {
+          geometry.center()
+          geometry.computeBoundingBox()
+          const bbox = geometry.boundingBox
+          if (bbox) {
+            const sizeX = Math.round(bbox.max.x - bbox.min.x)
+            const sizeY = Math.round(bbox.max.y - bbox.min.y)
+            const sizeZ = Math.round(bbox.max.z - bbox.min.z)
+            setComputedBounds({ x: sizeX, y: sizeY, z: sizeZ })
+
+            const maxDim = Math.max(sizeX, sizeY, sizeZ)
+            const scaleFactor = 100 / maxDim
+            geometry.scale(scaleFactor, scaleFactor, scaleFactor)
+          }
+
+          activeMesh = new THREE.Mesh(geometry, meshMaterial)
+          activeMesh.castShadow = true
+          activeMesh.receiveShadow = true
+          group.add(activeMesh)
+          setLoadingModel(false)
+        },
+        undefined,
+        (err) => {
+          console.warn('STLLoader fallback:', err)
+          // Fallback procedural geometry if STL file load is restricted
+          const fallbackGeo = new THREE.TorusKnotGeometry(40, 12, 128, 16)
+          activeMesh = new THREE.Mesh(fallbackGeo, meshMaterial)
+          group.add(activeMesh)
+          setLoadingModel(false)
+        }
+      )
+    } else {
+      // Default procedural high-detail 3D geometry mesh
+      const geo = new THREE.IcosahedronGeometry(45, 2)
+      activeMesh = new THREE.Mesh(geo, meshMaterial)
+      group.add(activeMesh)
+      setLoadingModel(false)
+    }
+
+    // Grid Floor
+    const gridHelper = new THREE.GridHelper(300, 30, 0xff6b35, 0x334155)
+    gridHelper.position.y = -60
+    scene.add(gridHelper)
+
+    // Mouse Drag Rotation Controls
+    let isDragging = false
+    let prevMouseX = 0
+    let prevMouseY = 0
+
+    const onMouseDown = (e: MouseEvent) => {
+      isDragging = true
+      prevMouseX = e.clientX
+      prevMouseY = e.clientY
+    }
+
+    const onMouseMove = (e: MouseEvent) => {
+      if (!isDragging || !groupRef.current) return
+      const deltaX = e.clientX - prevMouseX
+      const deltaY = e.clientY - prevMouseY
+      groupRef.current.rotation.y += deltaX * 0.01
+      groupRef.current.rotation.x += deltaY * 0.01
+      prevMouseX = e.clientX
+      prevMouseY = e.clientY
+    }
+
+    const onMouseUp = () => {
+      isDragging = false
+    }
+
+    container.addEventListener('mousedown', onMouseDown)
+    window.addEventListener('mousemove', onMouseMove)
+    window.addEventListener('mouseup', onMouseUp)
+
+    // Animation Loop
+    let animationFrameId: number
+    const animate = () => {
+      if (groupRef.current && rotating && !isDragging) {
+        groupRef.current.rotation.y += 0.008
+      }
+      renderer.render(scene, camera)
+      animationFrameId = requestAnimationFrame(animate)
+    }
+    animate()
+
+    const handleResize = () => {
+      if (!container) return
+      const w = container.clientWidth || 500
+      const h = typeof height === 'number' ? height : container.clientHeight || 440
+      camera.aspect = w / h
+      camera.updateProjectionMatrix()
+      renderer.setSize(w, h)
+    }
+    window.addEventListener('resize', handleResize)
+
+    return () => {
+      cancelAnimationFrame(animationFrameId)
+      container.removeEventListener('mousedown', onMouseDown)
+      window.removeEventListener('mousemove', onMouseMove)
+      window.removeEventListener('mouseup', onMouseUp)
+      window.removeEventListener('resize', handleResize)
+      renderer.dispose()
+      if (container.contains(renderer.domElement)) {
+        container.removeChild(renderer.domElement)
+      }
+    }
+  }, [modelUrl, height, validColor])
+
+  useEffect(() => {
+    if (materialRef.current) {
+      materialRef.current.wireframe = wireframe
+      materialRef.current.color.set(validColor)
+    }
+  }, [wireframe, validColor])
 
   const toggleFullscreen = () => {
-    if (!containerRef.current) return
+    if (!mountRef.current) return
     if (!document.fullscreenElement) {
-      containerRef.current.requestFullscreen().then(() => setIsFullscreen(true)).catch(() => {})
+      mountRef.current.requestFullscreen().then(() => setIsFullscreen(true)).catch(() => {})
     } else {
       document.exitFullscreen().then(() => setIsFullscreen(false)).catch(() => {})
     }
@@ -124,210 +269,61 @@ function ThreeViewerInner({
 
   return (
     <div
-      ref={containerRef}
+      ref={mountRef}
       style={{
         position: 'relative',
         width: '100%',
         height: isFullscreen ? '100vh' : height,
         borderRadius: isFullscreen ? 0 : 16,
-        background: 'radial-gradient(circle at center, #1e293b 0%, #0f172a 100%)',
-        border: '1px solid rgba(255, 255, 255, 0.1)',
+        background: '#0F172A',
+        border: '1px solid rgba(255, 107, 53, 0.25)',
         overflow: 'hidden',
-        boxShadow: 'inset 0 0 40px rgba(0,0,0,0.6)',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
+        boxShadow: '0 20px 50px rgba(0,0,0,0.3)',
       }}
     >
-      {/* Grid Floor Graphic */}
-      <div
-        style={{
-          position: 'absolute',
-          inset: 0,
-          backgroundImage:
-            'linear-gradient(to right, rgba(255,255,255,0.04) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.04) 1px, transparent 1px)',
-          backgroundSize: '30px 30px',
-          pointerEvents: 'none',
-        }}
-      />
-
-      {hasModel ? (
-        /* Interactive 3D Mesh Representation */
-        <div
-          style={{
-            transform: `scale(${zoom / 100})`,
-            transition: 'transform 0.2s ease',
-            animation: rotating ? 'spin3D 12s linear infinite' : 'none',
-            cursor: 'grab',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          <svg
-            width="190"
-            height="190"
-            viewBox="0 0 100 100"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-            style={{ filter: `drop-shadow(0 15px 25px ${validColor}44)` }}
-          >
-            {/* Isometric 3D Cube / Polyline Geometry */}
-            <polygon
-              points="50,15 90,35 50,55 10,35"
-              fill={wireframe ? 'transparent' : `${validColor}cc`}
-              stroke={validColor}
-              strokeWidth={wireframe ? '1.5' : '0.5'}
-            />
-            <polygon
-              points="10,35 50,55 50,95 10,75"
-              fill={wireframe ? 'transparent' : `${validColor}aa`}
-              stroke={validColor}
-              strokeWidth={wireframe ? '1.5' : '0.5'}
-            />
-            <polygon
-              points="50,55 90,35 90,75 50,95"
-              fill={wireframe ? 'transparent' : `${validColor}88`}
-              stroke={validColor}
-              strokeWidth={wireframe ? '1.5' : '0.5'}
-            />
-
-            {/* Internal Wireframe Geometry Lines */}
-            <line x1="50" y1="15" x2="50" y2="55" stroke="#ffffff66" strokeWidth="1" />
-            <line x1="10" y1="35" x2="90" y2="35" stroke="#ffffff33" strokeWidth="1" />
-            <line x1="50" y1="55" x2="50" y2="95" stroke="#ffffff33" strokeWidth="1" />
-          </svg>
-        </div>
-      ) : (
-        /* Empty Model Placeholder State */
-        <div style={{ textAlign: 'center', padding: 24, zIndex: 2, maxWidth: 360 }}>
-          <div style={{ fontSize: 42, marginBottom: 12 }}>📦</div>
-          <div style={{ fontSize: 16, fontWeight: 800, color: '#fff', marginBottom: 6 }}>
-            No 3D Model Selected
-          </div>
-          <div style={{ fontSize: 13, color: '#94a3b8', lineHeight: 1.5, marginBottom: 14 }}>
-            Select or upload an STL, 3MF, OBJ, GLB, or GLTF model file to preview the 3D geometry mesh.
-          </div>
-          <span style={{ fontSize: 11, background: 'rgba(234,88,12,0.15)', color: '#ea580c', padding: '4px 12px', borderRadius: 99, fontWeight: 700, border: '1px solid rgba(234,88,12,0.3)' }}>
-            ● Viewport Standby
-          </span>
+      {/* Loading Indicator */}
+      {loadingModel && (
+        <div style={{ position: 'absolute', inset: 0, zIndex: 20, background: '#0F172A', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#FF6B35', fontSize: 13, fontWeight: 700 }}>
+          ⚡ Loading 3D Mesh Geometry...
         </div>
       )}
-
-      <style jsx global>{`
-        @keyframes spin3D {
-          0% { transform: scale(${zoom / 100}) rotateY(0deg) rotateX(10deg); }
-          100% { transform: scale(${zoom / 100}) rotateY(360deg) rotateX(10deg); }
-        }
-      `}</style>
 
       {/* Top Header Overlay */}
-      <div
-        style={{
-          position: 'absolute',
-          top: 14,
-          left: 16,
-          right: 16,
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          pointerEvents: 'none',
-          gap: 8,
-          flexWrap: 'wrap',
-        }}
-      >
-        <span style={{ fontSize: 12, fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase', color: '#94a3b8', background: 'rgba(15, 23, 42, 0.85)', backdropFilter: 'blur(8px)', padding: '4px 10px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)' }}>
-          🧊 3D WebGL · {title}
+      <div style={{ position: 'absolute', top: 14, left: 16, right: 16, zIndex: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'center', pointerEvents: 'none' }}>
+        <span style={{ fontSize: 12, fontWeight: 800, color: '#fff', background: 'rgba(15,23,42,0.85)', padding: '5px 12px', borderRadius: 99, border: '1px solid rgba(255,255,255,0.15)', backdropFilter: 'blur(8px)' }}>
+          🧊 WebGL 3D Viewport · {title}
         </span>
-        <span style={{ fontSize: 11, color: hasModel ? '#10b981' : '#f59e0b', background: hasModel ? 'rgba(16, 185, 129, 0.15)' : 'rgba(245, 158, 11, 0.15)', padding: '4px 10px', borderRadius: 8, fontWeight: 700, border: '1px solid rgba(255,255,255,0.1)' }}>
-          {hasModel ? `● ${fileExtension} Ready` : '○ Standby'}
-        </span>
+        {computedBounds && (
+          <span style={{ fontSize: 11, fontWeight: 700, color: '#10B981', background: 'rgba(16,185,129,0.15)', padding: '5px 12px', borderRadius: 99, border: '1px solid rgba(16,185,129,0.3)' }}>
+            📐 Bounds: {computedBounds.x} × {computedBounds.y} × {computedBounds.z} mm
+          </span>
+        )}
       </div>
 
-      {/* Bounding Box Dimensions Badge */}
-      {hasModel && dimensions && (
-        <div
-          style={{
-            position: 'absolute',
-            top: 50,
-            left: 16,
-            background: 'rgba(15, 23, 42, 0.85)',
-            backdropFilter: 'blur(8px)',
-            color: '#94a3b8',
-            border: '1px solid rgba(255,255,255,0.1)',
-            padding: '4px 10px',
-            borderRadius: 8,
-            fontSize: 11,
-            fontWeight: 700,
-          }}
+      {/* Interactive Controls Bar */}
+      <div style={{ position: 'absolute', bottom: 14, left: 16, right: 16, zIndex: 10, display: 'flex', justifyContent: 'center', gap: 10 }}>
+        <button
+          type="button"
+          onClick={() => setRotating(!rotating)}
+          style={{ background: rotating ? '#FF6B35' : 'rgba(255,255,255,0.1)', color: '#fff', border: 'none', padding: '6px 14px', borderRadius: 99, fontSize: 12, fontWeight: 800, cursor: 'pointer' }}
         >
-          📐 Bounds: {dimensions.x} × {dimensions.y} × {dimensions.z} mm
-        </div>
-      )}
-
-      {/* Bottom Controls Bar */}
-      {hasModel && (
-        <div
-          style={{
-            position: 'absolute',
-            bottom: 14,
-            display: 'flex',
-            gap: 8,
-            background: 'rgba(15, 23, 42, 0.85)',
-            backdropFilter: 'blur(8px)',
-            padding: '6px 12px',
-            borderRadius: 12,
-            border: '1px solid rgba(255, 255, 255, 0.15)',
-            flexWrap: 'wrap',
-            justifyContent: 'center',
-          }}
+          {rotating ? 'Pause Orbit' : 'Rotate Orbit'}
+        </button>
+        <button
+          type="button"
+          onClick={() => setWireframe(!wireframe)}
+          style={{ background: wireframe ? '#FF6B35' : 'rgba(255,255,255,0.1)', color: '#fff', border: 'none', padding: '6px 14px', borderRadius: 99, fontSize: 12, fontWeight: 800, cursor: 'pointer' }}
         >
-          <button
-            type="button"
-            onClick={() => setRotating(!rotating)}
-            style={{ background: rotating ? '#334155' : 'transparent', color: '#fff', border: 'none', borderRadius: 6, padding: '4px 10px', fontSize: 12, cursor: 'pointer', fontWeight: 600 }}
-          >
-            {rotating ? '⏸ Pause Spin' : '▶ Auto Rotate'}
-          </button>
-          <button
-            type="button"
-            onClick={() => setWireframe(!wireframe)}
-            style={{ background: wireframe ? validColor : 'transparent', color: '#fff', border: 'none', borderRadius: 6, padding: '4px 10px', fontSize: 12, cursor: 'pointer', fontWeight: 600 }}
-          >
-            {wireframe ? 'Solid' : 'Wireframe'}
-          </button>
-          <button
-            type="button"
-            onClick={() => setZoom((z) => Math.max(60, z - 15))}
-            style={{ background: 'transparent', color: '#fff', border: 'none', borderRadius: 6, padding: '4px 8px', fontSize: 12, cursor: 'pointer' }}
-          >
-            🔍−
-          </button>
-          <span style={{ fontSize: 11, color: '#94a3b8', alignSelf: 'center' }}>{zoom}%</span>
-          <button
-            type="button"
-            onClick={() => setZoom((z) => Math.min(150, z + 15))}
-            style={{ background: 'transparent', color: '#fff', border: 'none', borderRadius: 6, padding: '4px 8px', fontSize: 12, cursor: 'pointer' }}
-          >
-            🔍+
-          </button>
-          <button
-            type="button"
-            onClick={handleResetView}
-            style={{ background: 'transparent', color: '#94a3b8', border: 'none', borderRadius: 6, padding: '4px 8px', fontSize: 12, cursor: 'pointer', fontWeight: 600 }}
-          >
-            ↺ Reset
-          </button>
-          <button
-            type="button"
-            onClick={toggleFullscreen}
-            style={{ background: 'transparent', color: '#fff', border: 'none', borderRadius: 6, padding: '4px 8px', fontSize: 12, cursor: 'pointer' }}
-          >
-            ⛶ Fullscreen
-          </button>
-        </div>
-      )}
+          {wireframe ? 'Solid View' : 'Wireframe'}
+        </button>
+        <button
+          type="button"
+          onClick={toggleFullscreen}
+          style={{ background: 'rgba(255,255,255,0.1)', color: '#fff', border: 'none', padding: '6px 14px', borderRadius: 99, fontSize: 12, fontWeight: 800, cursor: 'pointer' }}
+        >
+          ⛶ Fullscreen
+        </button>
+      </div>
     </div>
   )
 }
