@@ -16,11 +16,11 @@ const DASHBOARD_PATH: Record<string, string> = {
 }
 
 const ROLE_LABELS: Record<string, string> = {
-  buyer: 'Buyer Portal',
-  seller: 'Seller Central',
-  designer: 'Creator Studio',
-  printer_owner: 'Printer Hub',
-  admin: 'Admin Operations',
+  buyer: '🛍️ Buyer Mode',
+  seller: '🏬 Seller Mode',
+  designer: '🎨 Designer Mode',
+  printer_owner: '🖨️ Printer Owner Mode',
+  admin: '🛡️ Admin Mode',
 }
 
 const ROLE_NAV_LINKS: Record<string, { href: string; label: string }[]> = {
