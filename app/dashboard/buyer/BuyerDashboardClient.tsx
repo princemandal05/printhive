@@ -2,6 +2,24 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import {
+  Sparkles,
+  Package,
+  ShieldCheck,
+  Printer,
+  PlusCircle,
+  Search,
+  Clock,
+  MapPin,
+  Box,
+  CheckCircle2,
+  ArrowRight,
+  ShoppingBag,
+  Zap,
+  Lock,
+  Layers,
+  HelpCircle,
+} from 'lucide-react'
 
 interface CustomBrief {
   id: string
@@ -79,15 +97,15 @@ export default function BuyerDashboardClient({ user, myRequests, myOrders }: Buy
           <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
             <div
               style={{
-                width: 68,
-                height: 68,
+                width: 64,
+                height: 64,
                 borderRadius: '50%',
                 background: 'linear-gradient(135deg, #FF6B35 0%, #F97316 100%)',
                 color: '#FFFFFF',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                fontSize: 28,
+                fontSize: 26,
                 fontWeight: 900,
                 boxShadow: '0 6px 20px rgba(255,107,53,0.4)',
                 border: '3px solid rgba(255,255,255,0.2)',
@@ -97,7 +115,7 @@ export default function BuyerDashboardClient({ user, myRequests, myOrders }: Buy
             </div>
 
             <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
                 <h1 style={{ fontSize: 26, fontWeight: 900, margin: 0, letterSpacing: '-0.5px' }}>
                   Welcome back, {userName}!
                 </h1>
@@ -111,13 +129,16 @@ export default function BuyerDashboardClient({ user, myRequests, myOrders }: Buy
                     fontSize: 11,
                     fontWeight: 800,
                     textTransform: 'uppercase',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 4,
                   }}
                 >
-                  ✓ Verified Buyer
+                  <CheckCircle2 size={12} /> Verified Buyer
                 </span>
               </div>
               <p style={{ color: '#94A3B8', fontSize: 14, margin: 0 }}>
-                Manage your custom 3D design briefs, track manufacturing orders, and explore physical & digital CAD models.
+                Manage custom 3D modeling briefs, track physical manufacturing orders, and explore CAD models.
               </p>
             </div>
           </div>
@@ -128,7 +149,7 @@ export default function BuyerDashboardClient({ user, myRequests, myOrders }: Buy
               style={{
                 background: 'linear-gradient(135deg, #FF6B35 0%, #F97316 100%)',
                 color: '#fff',
-                padding: '12px 24px',
+                padding: '12px 22px',
                 borderRadius: 14,
                 fontWeight: 900,
                 fontSize: 14,
@@ -137,10 +158,9 @@ export default function BuyerDashboardClient({ user, myRequests, myOrders }: Buy
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: 8,
-                transition: 'transform 0.2s',
               }}
             >
-              ✨ + Request Custom 3D Part
+              <Sparkles size={16} /> Request Custom 3D Part
             </Link>
             <Link
               href="/print-on-demand"
@@ -159,7 +179,7 @@ export default function BuyerDashboardClient({ user, myRequests, myOrders }: Buy
                 gap: 6,
               }}
             >
-              ⚡ Instant 3D Slicer
+              <Zap size={16} /> Instant 3D Slicer
             </Link>
           </div>
         </div>
@@ -181,7 +201,9 @@ export default function BuyerDashboardClient({ user, myRequests, myOrders }: Buy
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <span style={{ fontSize: 11, fontWeight: 800, color: '#64748B', textTransform: 'uppercase', letterSpacing: 0.5 }}>Custom 3D Briefs</span>
-            <span style={{ fontSize: 24 }}>✨</span>
+            <div style={{ width: 36, height: 36, borderRadius: 10, background: '#FFF7ED', color: '#EA580C', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Sparkles size={18} />
+            </div>
           </div>
           <div style={{ fontSize: 28, fontWeight: 900, color: '#0F172A', marginTop: 6, letterSpacing: '-0.5px' }}>
             {myRequests.length} Active
@@ -205,7 +227,9 @@ export default function BuyerDashboardClient({ user, myRequests, myOrders }: Buy
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <span style={{ fontSize: 11, fontWeight: 800, color: '#64748B', textTransform: 'uppercase', letterSpacing: 0.5 }}>Physical Orders</span>
-            <span style={{ fontSize: 24 }}>📦</span>
+            <div style={{ width: 36, height: 36, borderRadius: 10, background: '#EFF6FF', color: '#2563EB', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Package size={18} />
+            </div>
           </div>
           <div style={{ fontSize: 28, fontWeight: 900, color: '#0F172A', marginTop: 6, letterSpacing: '-0.5px' }}>
             {myOrders.length} Orders
@@ -229,7 +253,9 @@ export default function BuyerDashboardClient({ user, myRequests, myOrders }: Buy
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <span style={{ fontSize: 11, fontWeight: 800, color: '#64748B', textTransform: 'uppercase', letterSpacing: 0.5 }}>Escrow Protection</span>
-            <span style={{ fontSize: 24 }}>🔒</span>
+            <div style={{ width: 36, height: 36, borderRadius: 10, background: '#ECFDF5', color: '#059669', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <ShieldCheck size={18} />
+            </div>
           </div>
           <div style={{ fontSize: 28, fontWeight: 900, color: '#0F172A', marginTop: 6, letterSpacing: '-0.5px' }}>
             100% Safe
@@ -253,7 +279,9 @@ export default function BuyerDashboardClient({ user, myRequests, myOrders }: Buy
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <span style={{ fontSize: 11, fontWeight: 800, color: '#64748B', textTransform: 'uppercase', letterSpacing: 0.5 }}>3D Tools Hub</span>
-            <span style={{ fontSize: 24 }}>🖨️</span>
+            <div style={{ width: 36, height: 36, borderRadius: 10, background: '#FAF5FF', color: '#7C3AED', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Printer size={18} />
+            </div>
           </div>
           <div style={{ fontSize: 28, fontWeight: 900, color: '#0F172A', marginTop: 6, letterSpacing: '-0.5px' }}>
             On-Demand
@@ -272,7 +300,7 @@ export default function BuyerDashboardClient({ user, myRequests, myOrders }: Buy
             background: activeTab === 'briefs' ? '#0F172A' : 'transparent',
             color: activeTab === 'briefs' ? '#FFFFFF' : '#64748B',
             border: 'none',
-            padding: '10px 20px',
+            padding: '10px 18px',
             borderRadius: 12,
             fontWeight: 800,
             fontSize: 14,
@@ -283,7 +311,7 @@ export default function BuyerDashboardClient({ user, myRequests, myOrders }: Buy
             transition: 'all 0.2s',
           }}
         >
-          <span>✨</span> My Custom Briefs ({myRequests.length})
+          <Sparkles size={16} /> My Custom Briefs ({myRequests.length})
         </button>
 
         <button
@@ -292,7 +320,7 @@ export default function BuyerDashboardClient({ user, myRequests, myOrders }: Buy
             background: activeTab === 'orders' ? '#0F172A' : 'transparent',
             color: activeTab === 'orders' ? '#FFFFFF' : '#64748B',
             border: 'none',
-            padding: '10px 20px',
+            padding: '10px 18px',
             borderRadius: 12,
             fontWeight: 800,
             fontSize: 14,
@@ -303,7 +331,7 @@ export default function BuyerDashboardClient({ user, myRequests, myOrders }: Buy
             transition: 'all 0.2s',
           }}
         >
-          <span>📦</span> Orders & Tracking ({myOrders.length})
+          <Package size={16} /> Orders & Tracking ({myOrders.length})
         </button>
 
         <button
@@ -312,7 +340,7 @@ export default function BuyerDashboardClient({ user, myRequests, myOrders }: Buy
             background: activeTab === 'tools' ? '#0F172A' : 'transparent',
             color: activeTab === 'tools' ? '#FFFFFF' : '#64748B',
             border: 'none',
-            padding: '10px 20px',
+            padding: '10px 18px',
             borderRadius: 12,
             fontWeight: 800,
             fontSize: 14,
@@ -323,7 +351,7 @@ export default function BuyerDashboardClient({ user, myRequests, myOrders }: Buy
             transition: 'all 0.2s',
           }}
         >
-          <span>🖨️</span> 3D Slicing & Print Tools
+          <Printer size={16} /> 3D Slicing & Print Tools
         </button>
 
         <button
@@ -332,7 +360,7 @@ export default function BuyerDashboardClient({ user, myRequests, myOrders }: Buy
             background: activeTab === 'escrow' ? '#0F172A' : 'transparent',
             color: activeTab === 'escrow' ? '#FFFFFF' : '#64748B',
             border: 'none',
-            padding: '10px 20px',
+            padding: '10px 18px',
             borderRadius: 12,
             fontWeight: 800,
             fontSize: 14,
@@ -343,7 +371,7 @@ export default function BuyerDashboardClient({ user, myRequests, myOrders }: Buy
             transition: 'all 0.2s',
           }}
         >
-          <span>🛡️</span> Escrow & Security Policy
+          <ShieldCheck size={16} /> Escrow & Security Policy
         </button>
       </div>
 
@@ -362,8 +390,8 @@ export default function BuyerDashboardClient({ user, myRequests, myOrders }: Buy
             </div>
 
             <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
-              <div style={{ background: '#FFFFFF', border: '1px solid #CBD5E1', borderRadius: 12, padding: '8px 16px', display: 'flex', alignItems: 'center', gap: 8 }}>
-                <span>🔍</span>
+              <div style={{ background: '#FFFFFF', border: '1px solid #CBD5E1', borderRadius: 12, padding: '8px 14px', display: 'flex', alignItems: 'center', gap: 8 }}>
+                <Search size={16} color="#64748B" />
                 <input
                   type="text"
                   placeholder="Search your briefs..."
@@ -389,14 +417,16 @@ export default function BuyerDashboardClient({ user, myRequests, myOrders }: Buy
                   boxShadow: '0 4px 14px rgba(255,107,53,0.25)',
                 }}
               >
-                + New Brief
+                <PlusCircle size={15} /> New Brief
               </Link>
             </div>
           </div>
 
           {filteredBriefs.length === 0 ? (
             <div style={{ background: '#FFFFFF', borderRadius: 24, border: '2px dashed #CBD5E1', padding: '60px 24px', textAlign: 'center', boxShadow: '0 4px 20px rgba(0,0,0,0.02)' }}>
-              <div style={{ fontSize: 44, marginBottom: 12 }}>✨</div>
+              <div style={{ width: 56, height: 56, borderRadius: '50%', background: '#FFF7ED', color: '#FF6B35', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
+                <Sparkles size={28} />
+              </div>
               <h3 style={{ fontSize: 20, fontWeight: 900, color: '#0F172A', margin: '0 0 6px' }}>
                 {myRequests.length === 0 ? 'No Custom 3D Briefs Posted Yet' : 'No Briefs Matching Your Search'}
               </h3>
@@ -413,11 +443,13 @@ export default function BuyerDashboardClient({ user, myRequests, myOrders }: Buy
                   fontWeight: 900,
                   fontSize: 14,
                   textDecoration: 'none',
-                  display: 'inline-block',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 8,
                   boxShadow: '0 6px 20px rgba(255,107,53,0.35)',
                 }}
               >
-                🚀 Post Your First Custom 3D Brief
+                <Sparkles size={16} /> Post Your First Custom 3D Brief
               </Link>
             </div>
           ) : (
@@ -436,7 +468,6 @@ export default function BuyerDashboardClient({ user, myRequests, myOrders }: Buy
                     alignItems: 'center',
                     flexWrap: 'wrap',
                     gap: 20,
-                    transition: 'all 0.2s',
                   }}
                 >
                   <div style={{ flex: 1, minWidth: 280 }}>
@@ -450,16 +481,19 @@ export default function BuyerDashboardClient({ user, myRequests, myOrders }: Buy
                           borderRadius: 99,
                           fontSize: 12,
                           fontWeight: 800,
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: 4,
                         }}
                       >
-                        ⚡ {b.status === 'open' ? 'Open for Bids' : b.status}
+                        <Zap size={12} /> {b.status === 'open' ? 'Open for Bids' : b.status}
                       </span>
-                      <span style={{ fontSize: 13, color: '#64748B', fontWeight: 600 }}>
-                        Posted on {b.created_at ? new Date(b.created_at).toLocaleDateString() : 'Recently'}
+                      <span style={{ fontSize: 13, color: '#64748B', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                        <Clock size={13} /> {b.created_at ? new Date(b.created_at).toLocaleDateString() : 'Recently'}
                       </span>
                       {b.budget > 0 && (
-                        <span style={{ fontSize: 14, fontWeight: 900, color: '#FF6B35', background: '#FFF7ED', border: '1px solid #FFEDD5', padding: '4px 10px', borderRadius: 8 }}>
-                          💰 Target Budget: ₹{b.budget}
+                        <span style={{ fontSize: 13, fontWeight: 900, color: '#FF6B35', background: '#FFF7ED', border: '1px solid #FFEDD5', padding: '3px 10px', borderRadius: 8 }}>
+                          Budget: ₹{b.budget}
                         </span>
                       )}
                     </div>
@@ -479,7 +513,7 @@ export default function BuyerDashboardClient({ user, myRequests, myOrders }: Buy
                       style={{
                         background: '#0F172A',
                         color: '#FFFFFF',
-                        padding: '12px 24px',
+                        padding: '12px 22px',
                         borderRadius: 12,
                         fontWeight: 800,
                         fontSize: 14,
@@ -490,7 +524,7 @@ export default function BuyerDashboardClient({ user, myRequests, myOrders }: Buy
                         boxShadow: '0 4px 14px rgba(15,23,42,0.2)',
                       }}
                     >
-                      View Brief & Proposals →
+                      View Brief & Proposals <ArrowRight size={16} />
                     </Link>
                   </div>
                 </div>
@@ -512,21 +546,23 @@ export default function BuyerDashboardClient({ user, myRequests, myOrders }: Buy
                 Follow your prints through CAD slicing, 3D printing, QA inspection, and courier delivery.
               </p>
             </div>
-            <Link href="/shop" style={{ color: '#FF6B35', fontWeight: 800, fontSize: 14, textDecoration: 'none' }}>
-              🛒 Browse Shop →
+            <Link href="/shop" style={{ color: '#FF6B35', fontWeight: 800, fontSize: 14, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+              Browse Shop <ArrowRight size={14} />
             </Link>
           </div>
 
           {myOrders.length === 0 ? (
             <div style={{ background: '#FFFFFF', borderRadius: 24, border: '2px dashed #CBD5E1', padding: '60px 24px', textAlign: 'center' }}>
-              <div style={{ fontSize: 44, marginBottom: 12 }}>📦</div>
+              <div style={{ width: 56, height: 56, borderRadius: '50%', background: '#EFF6FF', color: '#2563EB', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
+                <Package size={28} />
+              </div>
               <h3 style={{ fontSize: 20, fontWeight: 900, color: '#0F172A', margin: '0 0 6px' }}>
                 No Active Orders
               </h3>
               <p style={{ color: '#64748B', fontSize: 14, maxWidth: 440, margin: '0 auto 24px' }}>
                 You have not placed any orders yet. Discover functional 3D printed gadgets or print your own 3D file on demand!
               </p>
-              <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
+              <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
                 <Link
                   href="/shop"
                   style={{
@@ -536,9 +572,12 @@ export default function BuyerDashboardClient({ user, myRequests, myOrders }: Buy
                     borderRadius: 12,
                     fontWeight: 800,
                     textDecoration: 'none',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 6,
                   }}
                 >
-                  Explore Ready-Made Shop
+                  <ShoppingBag size={16} /> Explore Ready-Made Shop
                 </Link>
                 <Link
                   href="/print-on-demand"
@@ -549,9 +588,12 @@ export default function BuyerDashboardClient({ user, myRequests, myOrders }: Buy
                     borderRadius: 12,
                     fontWeight: 800,
                     textDecoration: 'none',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 6,
                   }}
                 >
-                  Print an STL File
+                  <Printer size={16} /> Print an STL File
                 </Link>
               </div>
             </div>
@@ -568,8 +610,8 @@ export default function BuyerDashboardClient({ user, myRequests, myOrders }: Buy
                       ₹{order.total_amount}
                     </div>
                   </div>
-                  <Link href={`/orders/${order.id}`} style={{ color: '#2563EB', fontWeight: 800, fontSize: 13, textDecoration: 'none' }}>
-                    Track Manufacturing Pipeline →
+                  <Link href={`/orders/${order.id}`} style={{ color: '#2563EB', fontWeight: 800, fontSize: 13, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                    Track Manufacturing Pipeline <ArrowRight size={14} />
                   </Link>
                 </div>
               ))}
@@ -592,7 +634,9 @@ export default function BuyerDashboardClient({ user, myRequests, myOrders }: Buy
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 20 }}>
             <div style={{ background: '#FFFFFF', borderRadius: 20, border: '1px solid #E2E8F0', padding: 28, boxShadow: '0 6px 24px rgba(0,0,0,0.03)' }}>
-              <div style={{ fontSize: 36, marginBottom: 12 }}>⚡</div>
+              <div style={{ width: 48, height: 48, borderRadius: 14, background: '#FFF7ED', color: '#FF6B35', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
+                <Zap size={24} />
+              </div>
               <h3 style={{ fontSize: 18, fontWeight: 900, color: '#0F172A', margin: '0 0 8px' }}>
                 Instant Slicer & Quotation
               </h3>
@@ -609,15 +653,19 @@ export default function BuyerDashboardClient({ user, myRequests, myOrders }: Buy
                   fontWeight: 800,
                   fontSize: 13,
                   textDecoration: 'none',
-                  display: 'inline-block',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 6,
                 }}
               >
-                Launch 3D Slicer →
+                Launch 3D Slicer <ArrowRight size={14} />
               </Link>
             </div>
 
             <div style={{ background: '#FFFFFF', borderRadius: 20, border: '1px solid #E2E8F0', padding: 28, boxShadow: '0 6px 24px rgba(0,0,0,0.03)' }}>
-              <div style={{ fontSize: 36, marginBottom: 12 }}>📍</div>
+              <div style={{ width: 48, height: 48, borderRadius: 14, background: '#F1F5F9', color: '#0F172A', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
+                <MapPin size={24} />
+              </div>
               <h3 style={{ fontSize: 18, fontWeight: 900, color: '#0F172A', margin: '0 0 8px' }}>
                 Nearby Printer Hubs Map
               </h3>
@@ -634,15 +682,19 @@ export default function BuyerDashboardClient({ user, myRequests, myOrders }: Buy
                   fontWeight: 800,
                   fontSize: 13,
                   textDecoration: 'none',
-                  display: 'inline-block',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 6,
                 }}
               >
-                View Nearby Hubs →
+                View Nearby Hubs <ArrowRight size={14} />
               </Link>
             </div>
 
             <div style={{ background: '#FFFFFF', borderRadius: 20, border: '1px solid #E2E8F0', padding: 28, boxShadow: '0 6px 24px rgba(0,0,0,0.03)' }}>
-              <div style={{ fontSize: 36, marginBottom: 12 }}>🧊</div>
+              <div style={{ width: 48, height: 48, borderRadius: 14, background: '#EFF6FF', color: '#2563EB', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
+                <Box size={24} />
+              </div>
               <h3 style={{ fontSize: 18, fontWeight: 900, color: '#0F172A', margin: '0 0 8px' }}>
                 3D Model Marketplace
               </h3>
@@ -659,10 +711,12 @@ export default function BuyerDashboardClient({ user, myRequests, myOrders }: Buy
                   fontWeight: 800,
                   fontSize: 13,
                   textDecoration: 'none',
-                  display: 'inline-block',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 6,
                 }}
               >
-                Browse 3D Models →
+                Browse 3D Models <ArrowRight size={14} />
               </Link>
             </div>
           </div>
@@ -672,13 +726,17 @@ export default function BuyerDashboardClient({ user, myRequests, myOrders }: Buy
       {/* 🛡️ TAB CONTENT: ESCROW PROTECTION */}
       {activeTab === 'escrow' && (
         <div style={{ background: '#FFFFFF', borderRadius: 24, border: '1px solid #E2E8F0', padding: 36, boxShadow: '0 6px 24px rgba(0,0,0,0.03)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
-            <span style={{ fontSize: 32 }}>🔒</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 16 }}>
+            <div style={{ width: 52, height: 52, borderRadius: 16, background: '#ECFDF5', color: '#059669', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Lock size={26} />
+            </div>
             <div>
               <h2 style={{ fontSize: 22, fontWeight: 900, color: '#0F172A', margin: 0 }}>
                 PrintHive Escrow Guarantee
               </h2>
-              <div style={{ color: '#10B981', fontSize: 13, fontWeight: 800 }}>100% Protected via Razorpay Escrow</div>
+              <div style={{ color: '#10B981', fontSize: 13, fontWeight: 800, display: 'flex', alignItems: 'center', gap: 4 }}>
+                <CheckCircle2 size={14} /> 100% Protected via Razorpay Escrow
+              </div>
             </div>
           </div>
 
@@ -687,16 +745,22 @@ export default function BuyerDashboardClient({ user, myRequests, myOrders }: Buy
           </p>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 16, marginBottom: 28 }}>
-            <div style={{ background: '#F8FAFC', padding: 18, borderRadius: 14, border: '1px solid #E2E8F0' }}>
-              <div style={{ fontWeight: 800, color: '#0F172A', marginBottom: 4 }}>1. Deposit & Lock</div>
+            <div style={{ background: '#F8FAFC', padding: 20, borderRadius: 14, border: '1px solid #E2E8F0' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontWeight: 800, color: '#0F172A', marginBottom: 6 }}>
+                <Lock size={16} color="#FF6B35" /> 1. Deposit & Lock
+              </div>
               <div style={{ fontSize: 13, color: '#64748B' }}>Payment is securely locked in Razorpay Escrow when order starts.</div>
             </div>
-            <div style={{ background: '#F8FAFC', padding: 18, borderRadius: 14, border: '1px solid #E2E8F0' }}>
-              <div style={{ fontWeight: 800, color: '#0F172A', marginBottom: 4 }}>2. Print & Verification</div>
+            <div style={{ background: '#F8FAFC', padding: 20, borderRadius: 14, border: '1px solid #E2E8F0' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontWeight: 800, color: '#0F172A', marginBottom: 6 }}>
+                <Layers size={16} color="#2563EB" /> 2. Print & Verification
+              </div>
               <div style={{ fontSize: 13, color: '#64748B' }}>Hub prints with high tolerance and uploads QA photos.</div>
             </div>
-            <div style={{ background: '#F8FAFC', padding: 18, borderRadius: 14, border: '1px solid #E2E8F0' }}>
-              <div style={{ fontWeight: 800, color: '#0F172A', marginBottom: 4 }}>3. Delivery & Release</div>
+            <div style={{ background: '#F8FAFC', padding: 20, borderRadius: 14, border: '1px solid #E2E8F0' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontWeight: 800, color: '#0F172A', marginBottom: 6 }}>
+                <CheckCircle2 size={16} color="#10B981" /> 3. Delivery & Release
+              </div>
               <div style={{ fontSize: 13, color: '#64748B' }}>You inspect the product. If satisfied, funds are released.</div>
             </div>
           </div>
@@ -712,9 +776,12 @@ export default function BuyerDashboardClient({ user, myRequests, myOrders }: Buy
                 fontWeight: 800,
                 fontSize: 13,
                 textDecoration: 'none',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
               }}
             >
-              Contact Dispute Resolution
+              <HelpCircle size={15} /> Contact Dispute Resolution
             </Link>
           </div>
         </div>
