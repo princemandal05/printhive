@@ -5,7 +5,7 @@ import Link from 'next/link'
 import ThreeViewer from '@/components/ThreeViewer'
 import { useStore } from '@/lib/cart-context'
 
-const DEFAULT_COLORS = ['Red', 'Black', 'White', 'Blue', 'Green', 'Grey']
+const DEFAULT_COLORS = ['Orange', 'Red', 'Black', 'White', 'Blue', 'Green', 'Grey']
 
 type Design = {
   id: string
