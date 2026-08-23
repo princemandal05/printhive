@@ -12,9 +12,8 @@ export async function GET(request: Request) {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
 
-    if (!user) {
-      return NextResponse.json({ success: false, error: 'Unauthorized: Please log in to generate upload signature' }, { status: 401 })
-    }
+    // Support authenticated users and demo guest visitors
+    const userId = user?.id || 'guest-demo'
 
     const { searchParams } = new URL(request.url)
     const isModel = searchParams.get('isModel') === 'true'
@@ -50,7 +49,14 @@ export async function GET(request: Request) {
     const apiSecret = process.env.CLOUDINARY_API_SECRET
 
     if (!cloudName || !apiKey || !apiSecret) {
-      return NextResponse.json({ success: false, error: 'Cloudinary upload signature parameters unconfigured on server' }, { status: 500 })
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Cloudinary credentials missing in environment variables. Using server upload fallback.',
+          fallback_required: true,
+        },
+        { status: 200 }
+      )
     }
 
     const preset = isModel
@@ -58,12 +64,11 @@ export async function GET(request: Request) {
       : (process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || 'printhive_uploads')
 
     const timestamp = Math.round(new Date().getTime() / 1000)
-    const folder = `printhive/${user.id}`
-    const assetFolder = `printhive/${user.id}`
+    const folder = `printhive/${userId}`
+    const assetFolder = `printhive/${userId}`
     const publicId = `${Date.now()}-${crypto.randomUUID().slice(0, 8)}`
 
     // Alphabetically sorted Cloudinary signature string
-    // Parameters included: asset_folder, folder, public_id, timestamp
     const strToSign = `asset_folder=${assetFolder}&folder=${folder}&public_id=${publicId}&timestamp=${timestamp}${apiSecret}`
     const signature = crypto.createHash('sha1').update(strToSign).digest('hex')
 
