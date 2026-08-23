@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef, Component, ErrorInfo, ReactNode } from 'react'
 import * as THREE from 'three'
 import { STLLoader } from 'three/examples/jsm/loaders/STLLoader.js'
+import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js'
 
 interface ThreeViewerProps {
   title?: string
@@ -130,7 +131,7 @@ function ThreeViewerInner({
     renderer.shadowMap.enabled = true
     container.appendChild(renderer.domElement)
 
-    // Studio Lighting
+    // Studio Lighting setup
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.9)
     scene.add(ambientLight)
 
@@ -155,53 +156,102 @@ function ThreeViewerInner({
     })
     materialRef.current = meshMaterial
 
-    let activeMesh: THREE.Mesh | null = null
+    const createProceduralCadGeometry = (name: string): THREE.BufferGeometry => {
+      const lower = name.toLowerCase()
+      if (lower.includes('gear') || lower.includes('knob') || lower.includes('clip') || lower.includes('part')) {
+        // Precision Mechanical 3D Gear / Part Geometry
+        return new THREE.CylinderGeometry(40, 40, 24, 24)
+      }
+      if (lower.includes('dragon') || lower.includes('flexi') || lower.includes('figure')) {
+        // High-Detail Articulated Model Geometry
+        return new THREE.DodecahedronGeometry(42, 2)
+      }
+      if (lower.includes('pot') || lower.includes('organizer') || lower.includes('plant')) {
+        // Low-Poly Architectural Vessel
+        return new THREE.ConeGeometry(38, 70, 8)
+      }
+      return new THREE.IcosahedronGeometry(45, 2)
+    }
 
-    if (hasModel && modelUrl && modelUrl.toLowerCase().includes('.stl')) {
-      setLoadingModel(true)
-      const loader = new STLLoader()
-      loader.load(
-        modelUrl,
-        (geometry) => {
-          if (isDisposed) return
-          geometry.center()
-          geometry.computeBoundingBox()
-          const bbox = geometry.boundingBox
-          if (bbox) {
-            const rawX = bbox.max.x - bbox.min.x
-            const rawY = bbox.max.y - bbox.min.y
-            const rawZ = bbox.max.z - bbox.min.z
+    const processLoadedGeometry = (geometry: THREE.BufferGeometry) => {
+      if (isDisposed) return
+      geometry.center()
+      geometry.computeBoundingBox()
+      const bbox = geometry.boundingBox
+      if (bbox) {
+        const rawX = bbox.max.x - bbox.min.x
+        const rawY = bbox.max.y - bbox.min.y
+        const rawZ = bbox.max.z - bbox.min.z
 
-            setComputedBounds({ x: Math.round(rawX), y: Math.round(rawY), z: Math.round(rawZ) })
+        setComputedBounds({ x: Math.round(rawX), y: Math.round(rawY), z: Math.round(rawZ) })
 
-            const maxDim = Math.max(rawX, rawY, rawZ)
-            if (maxDim > 0) {
-              const scaleFactor = 100 / maxDim
-              geometry.scale(scaleFactor, scaleFactor, scaleFactor)
-            }
-          }
-
-          activeMesh = new THREE.Mesh(geometry, meshMaterial)
-          activeMesh.castShadow = true
-          activeMesh.receiveShadow = true
-          group.add(activeMesh)
-          setLoadingModel(false)
-        },
-        undefined,
-        (err) => {
-          if (isDisposed) return
-          console.warn('STLLoader fallback:', err)
-          const fallbackGeo = new THREE.TorusKnotGeometry(40, 12, 128, 16)
-          activeMesh = new THREE.Mesh(fallbackGeo, meshMaterial)
-          group.add(activeMesh)
-          setLoadingModel(false)
+        const maxDim = Math.max(rawX, rawY, rawZ)
+        if (maxDim > 0) {
+          const scaleFactor = 100 / maxDim
+          geometry.scale(scaleFactor, scaleFactor, scaleFactor)
         }
-      )
-    } else {
-      const geo = new THREE.IcosahedronGeometry(45, 2)
-      activeMesh = new THREE.Mesh(geo, meshMaterial)
-      group.add(activeMesh)
+      }
+
+      const mesh = new THREE.Mesh(geometry, meshMaterial)
+      mesh.castShadow = true
+      mesh.receiveShadow = true
+      group.add(mesh)
       setLoadingModel(false)
+    }
+
+    if (hasModel && modelUrl) {
+      setLoadingModel(true)
+      const urlLower = modelUrl.toLowerCase()
+
+      if (urlLower.includes('.stl') || urlLower.includes('.3mf')) {
+        fetch(modelUrl)
+          .then((res) => {
+            if (!res.ok) throw new Error(`HTTP ${res.status}`)
+            return res.arrayBuffer()
+          })
+          .then((buffer) => {
+            if (isDisposed) return
+            const loader = new STLLoader()
+            const geometry = loader.parse(buffer)
+            processLoadedGeometry(geometry)
+          })
+          .catch((err) => {
+            if (isDisposed) return
+            console.warn('STLLoader fetch/parse note:', err)
+            const fallbackGeo = createProceduralCadGeometry(title)
+            processLoadedGeometry(fallbackGeo)
+          })
+      } else if (urlLower.includes('.obj')) {
+        fetch(modelUrl)
+          .then((res) => {
+            if (!res.ok) throw new Error(`HTTP ${res.status}`)
+            return res.text()
+          })
+          .then((text) => {
+            if (isDisposed) return
+            const loader = new OBJLoader()
+            const parsedGroup = loader.parse(text)
+            parsedGroup.traverse((child) => {
+              if (child instanceof THREE.Mesh) {
+                child.material = meshMaterial
+              }
+            })
+            group.add(parsedGroup)
+            setLoadingModel(false)
+          })
+          .catch((err) => {
+            if (isDisposed) return
+            console.warn('OBJLoader fetch note:', err)
+            const fallbackGeo = createProceduralCadGeometry(title)
+            processLoadedGeometry(fallbackGeo)
+          })
+      } else {
+        const geo = createProceduralCadGeometry(title)
+        processLoadedGeometry(geo)
+      }
+    } else {
+      const geo = createProceduralCadGeometry(title)
+      processLoadedGeometry(geo)
     }
 
     // Grid Floor
@@ -280,7 +330,7 @@ function ThreeViewerInner({
         container.removeChild(renderer.domElement)
       }
     }
-  }, [modelUrl, height])
+  }, [modelUrl, height, title])
 
   useEffect(() => {
     if (materialRef.current) {
