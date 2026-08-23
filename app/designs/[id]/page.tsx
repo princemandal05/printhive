@@ -55,23 +55,51 @@ export default async function DesignDetailPage({ params }: { params: Promise<{ i
   if (!design) {
     try {
       const adminSupabase = await createAdminClient()
+
+      // STEP 1 — Fetch design row directly WITHOUT foreign key join
       const { data: dbDesign, error: dbError } = await adminSupabase
         .from('designs')
-        .select('*, designer:profiles!designs_designer_id_fkey(id, full_name)')
+        .select('*')
         .eq('id', id)
         .maybeSingle()
 
-      console.log('SUPABASE FETCH RESULT:', dbDesign)
-      console.log('SUPABASE FETCH ERROR:', dbError?.message || null)
+      console.log('DESIGN FETCH RESULT:', dbDesign)
+      console.log('DESIGN FETCH ERROR:', dbError?.message || null)
 
       if (dbDesign) {
+        console.log('DATABASE DESIGN:', {
+          id: dbDesign.id,
+          title: dbDesign.title,
+          file_url: dbDesign.file_url,
+          file_format: dbDesign.file_format,
+          tags: dbDesign.tags,
+          designer_id: dbDesign.designer_id,
+        })
+
+        // STEP 2 — Decoupled profile lookup
+        let designer = null
+        if (dbDesign.designer_id) {
+          const { data: designerData, error: designerError } = await adminSupabase
+            .from('profiles')
+            .select('id, full_name')
+            .eq('id', dbDesign.designer_id)
+            .maybeSingle()
+
+          console.log('DESIGNER RESULT:', designerData)
+          console.log('DESIGNER ERROR:', designerError?.message || null)
+
+          designer = designerData
+        }
+
         const tags = Array.isArray(dbDesign.tags) ? dbDesign.tags : []
         const category = tags[0] || '3D Printing'
         const file_format = dbDesign.file_format || tags[1] || 'stl'
         const file_name = dbDesign.file_name || tags[2] || `${dbDesign.title.toLowerCase().replace(/\s+/g, '-')}.${file_format}`
 
+        // STEP 3 — Design is FOUND regardless of designer profile lookup outcome
         design = {
           ...dbDesign,
+          designer: designer || { id: dbDesign.designer_id || 'designer-unknown', full_name: 'PrintHive Designer' },
           category,
           file_format,
           file_name,
@@ -84,7 +112,7 @@ export default async function DesignDetailPage({ params }: { params: Promise<{ i
 
   // If design not found in DB or demo set, display clean 404 page (NO fake fallback model)
   if (!design) {
-    console.error('SUPABASE FETCH ERROR: No design found in database with id:', id)
+    console.error('DESIGN FETCH ERROR: No design found in database with id:', id)
     return (
       <main style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
         <Navbar />
