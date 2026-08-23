@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/utils/supabase/client'
+import SellerCardPreview from '@/components/SellerCardPreview'
 
 const CATEGORIES = [
   'Home Décor',
@@ -502,43 +503,16 @@ export default function NewProductForm() {
             </button>
           </div>
 
-          {/* RIGHT SIDE: LIVE PRODUCT CARD PREVIEW */}
-          <div style={{ position: 'sticky', top: 24 }}>
-            <div style={s.card}>
-              <div style={{ fontSize: 13, fontWeight: 800, color: '#FF6B35', textTransform: 'uppercase', marginBottom: 12 }}>
-                Live Marketplace Preview
-              </div>
-
-              <div style={{ background: '#F8FAFC', borderRadius: 16, border: '1px solid #E2E8F0', overflow: 'hidden' }}>
-                <div style={{ height: 200, background: '#E2E8F0', position: 'relative' }}>
-                  <img
-                    src={previewUrl || cloudinaryUrl || DEFAULT_PRODUCT_IMAGE}
-                    alt="Preview"
-                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                  />
-                  <div style={{ position: 'absolute', top: 12, right: 12, background: '#ECFDF5', color: '#10B981', padding: '4px 10px', borderRadius: 99, fontSize: 11, fontWeight: 800 }}>
-                    In Stock ({stock || 0})
-                  </div>
-                </div>
-
-                <div style={{ padding: 18 }}>
-                  <div style={{ fontSize: 11, color: '#FF6B35', fontWeight: 800, textTransform: 'uppercase', marginBottom: 4 }}>{category}</div>
-                  <div style={{ fontSize: 16, fontWeight: 900, color: '#0F172A', marginBottom: 8, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                    {name || 'Product Title Preview'}
-                  </div>
-                  <div style={{ fontSize: 12, color: '#64748B', marginBottom: 14, height: 36, overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                    {description || 'Product description preview will appear here as you type...'}
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div style={{ fontSize: 20, fontWeight: 900, color: '#0F172A' }}>₹{price || '799'}</div>
-                    <span style={{ background: '#FF6B35', color: '#fff', padding: '6px 12px', borderRadius: 8, fontSize: 12, fontWeight: 800 }}>
-                      Add to Cart
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+          {/* RIGHT SIDE: INTERACTIVE 3D & MINI-GAME PRODUCT CARD PREVIEW */}
+          <SellerCardPreview
+            name={name}
+            category={category}
+            price={price}
+            stock={stock}
+            description={description}
+            previewUrl={previewUrl}
+            cloudinaryUrl={cloudinaryUrl}
+          />
         </div>
       </div>
     </div>
