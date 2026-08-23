@@ -29,11 +29,11 @@ export default async function DesignerDashboard() {
       designs = dbDesigns.map((d: any, index: number) => ({
         id: d.id || `d-${index}`,
         title: d.title || '3D Model Design',
-        category: d.category || '3D Printing',
+        category: d.category || (Array.isArray(d.tags) ? d.tags[0] : null) || '3D Printing',
         price: d.price || 0,
-        royalty: d.pricing_type === 'free' ? 'Open Source' : '15% per print',
+        royalty: d.pricing_type === 'free' || d.price === 0 ? 'Open Source' : '15% per print',
         prints: 0,
-        preview: d.preview_url || 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=600&q=80',
+        preview: d.thumbnail_url || d.preview_url || d.image_url || 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=600&q=80',
         status: d.status || 'Published',
       }))
     }

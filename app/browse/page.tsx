@@ -1,6 +1,9 @@
 import { createAdminClient } from '@/utils/supabase/server'
 import BrowseClient, { type DesignRow } from './BrowseClient'
 
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
 export default async function BrowsePage() {
   let loadedDesigns: DesignRow[] = []
 
@@ -37,8 +40,8 @@ export default async function BrowsePage() {
           id: d.id,
           title: d.title,
           price: Number(d.price ?? 0),
-          category: d.category || tags[0] || '3D Printing',
-          rating: d.rating != null ? Number(d.rating) : 0,
+          category: d.category || tags[0] || 'Toys & Games',
+          rating: d.rating != null ? Number(d.rating) : 5,
           rating_count: d.rating_count != null ? Number(d.rating_count) : 0,
           thumbnail_url: d.thumbnail_url || d.preview_url || 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=600&q=80',
           file_url: d.file_url || '',

@@ -219,8 +219,7 @@ export default function ShopPage() {
         // Fetch published 3D designs from Supabase
         const { data: designRows, error: designError } = await supabase
           .from('designs')
-          .select('*, designer:profiles!designs_designer_id_fkey(full_name)')
-          .in('status', ['approved', 'published', 'active'])
+          .select('*')
           .order('created_at', { ascending: false })
 
         if (designError) {
@@ -233,10 +232,10 @@ export default function ShopPage() {
             id: d.id,
             name: d.title || 'Custom 3D Model',
             price: Number(d.price ?? 299),
-            category: d.category || 'Toys & Miniatures',
+            category: d.category || (Array.isArray(d.tags) ? d.tags[0] : null) || 'Toys & Miniatures',
             rating: Number(d.rating ?? 5.0),
             reviewsCount: Number(d.rating_count ?? 1),
-            seller: d.designer?.full_name || 'PrintHive Creator',
+            seller: 'PrintHive Creator',
             stock: 25,
             image: d.thumbnail_url || d.preview_url || 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=800&q=80',
             newest: true,
