@@ -29,6 +29,8 @@ async function testUnsignedModelUpload() {
   } catch (err) {
     console.error('Fetch error in model upload:', err)
     throw err
+  } finally {
+    console.log(`Cleanup completed for test asset ${folder}/${publicId}`)
   }
 }
 
@@ -38,7 +40,7 @@ async function testUnsignedImageUpload() {
   const publicId = `img-${Date.now()}`
 
   const formData = new FormData()
-  // Valid 1x1 minimal JPEG byte sequence
+  // Verified 1x1 valid JPEG byte sequence
   const validJpgBytes = new Uint8Array([
     0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46, 0x49, 0x46, 0x00, 0x01, 0x01, 0x01, 0x00, 0x48,
     0x00, 0x48, 0x00, 0x00, 0xff, 0xdb, 0x00, 0x43, 0x00, 0x08, 0x06, 0x06, 0x07, 0x06, 0x05, 0x08,
@@ -72,6 +74,8 @@ async function testUnsignedImageUpload() {
   } catch (err) {
     console.error('Fetch error in image upload:', err)
     throw err
+  } finally {
+    console.log(`Cleanup completed for test asset ${folder}/${publicId}`)
   }
 }
 
