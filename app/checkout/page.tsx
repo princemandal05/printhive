@@ -28,7 +28,8 @@ export default function CheckoutPage() {
   // Net Banking State
   const [selectedBank, setSelectedBank] = useState('HDFC Bank')
 
-  // COD Captcha State
+  // COD Captcha State (Unique 4-digit code generated every time)
+  const [codCaptchaCode, setCodCaptchaCode] = useState(() => Math.floor(1000 + Math.random() * 9000).toString())
   const [codCaptchaInput, setCodCaptchaInput] = useState('')
 
   const [placing, setPlacing] = useState(false)
@@ -44,10 +45,25 @@ export default function CheckoutPage() {
   const designerShare = Math.round(subtotal * 0.15)
   const platformShare = Math.round(subtotal * 0.15)
 
-  // Toggle selection (Clicking selected option unselects it)
+  // Toggle selection & generate unique code each time COD is selected
   const togglePaymentCategory = (cat: 'upi' | 'card' | 'netbanking' | 'cod') => {
-    setPaymentCategory((prev) => (prev === cat ? null : cat))
+    setPaymentCategory((prev) => {
+      if (prev === cat) return null
+      if (cat === 'cod') {
+        setCodCaptchaCode(Math.floor(1000 + Math.random() * 9000).toString())
+        setCodCaptchaInput('')
+      }
+      return cat
+    })
   }
+
+  const refreshCodCaptcha = () => {
+    setCodCaptchaCode(Math.floor(1000 + Math.random() * 9000).toString())
+    setCodCaptchaInput('')
+  }
+
+  const isCodVerified = paymentCategory === 'cod' && codCaptchaInput.trim() === codCaptchaCode
+  const isPaymentValid = Boolean(paymentCategory && (paymentCategory !== 'cod' || isCodVerified))
 
   const handleVerifyVpa = () => {
     if (!vpaId || !vpaId.includes('@')) {
@@ -66,8 +82,8 @@ export default function CheckoutPage() {
       alert('Please enter your UPI ID')
       return
     }
-    if (paymentCategory === 'cod' && codCaptchaInput !== '7391') {
-      alert('Please enter the correct 4-digit security code (7391) for Pay on Delivery.')
+    if (paymentCategory === 'cod' && !isCodVerified) {
+      alert(`Please enter the correct 4-digit security code (${codCaptchaCode}) for Pay on Delivery.`)
       return
     }
     setShowModal(true)
@@ -447,22 +463,53 @@ export default function CheckoutPage() {
 
                 {paymentCategory === 'cod' && (
                   <div style={{ padding: '0 28px 24px 60px', background: 'rgba(234,88,12,0.03)', borderTop: '1px dashed rgba(234,88,12,0.2)' }}>
-                    <div style={{ background: 'var(--bg-card)', padding: 16, borderRadius: 14, border: '1px solid var(--border-color)', maxWidth: 400, marginTop: 14 }}>
-                      <div style={{ fontSize: 12, fontWeight: 800, color: '#ea580c', marginBottom: 4 }}>Security Code Verification:</div>
-                      <div style={{ fontSize: 13, color: 'var(--text-sub)', marginBottom: 10 }}>
-                        Type the 4-digit code shown below to confirm Pay on Delivery:
+                    <div style={{ background: 'var(--bg-card)', padding: 18, borderRadius: 16, border: isCodVerified ? '1px solid #10B981' : '1px solid var(--border-color)', maxWidth: 440, marginTop: 14 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                        <div style={{ fontSize: 12, fontWeight: 800, color: isCodVerified ? '#10B981' : '#ea580c' }}>
+                          {isCodVerified ? '✅ Security Code Verified' : '🔒 Security Code Verification'}
+                        </div>
+                        <button
+                          type="button"
+                          onClick={refreshCodCaptcha}
+                          title="Generate New Code"
+                          style={{ background: 'transparent', border: 'none', color: 'var(--text-sub)', fontSize: 13, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}
+                        >
+                          🔄 Refresh Code
+                        </button>
                       </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-                        <div style={{ background: '#0F172A', color: '#10B981', padding: '8px 16px', borderRadius: 10, fontWeight: 900, letterSpacing: 4, fontSize: 18, userSelect: 'none' }}>
-                          7 3 9 1
+
+                      <div style={{ fontSize: 13, color: 'var(--text-sub)', marginBottom: 12 }}>
+                        Type the 4-digit code shown below to enable Pay on Delivery:
+                      </div>
+
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 10 }}>
+                        <div style={{ background: '#0F172A', color: '#10B981', padding: '10px 18px', borderRadius: 12, fontWeight: 900, letterSpacing: 6, fontSize: 20, userSelect: 'none', border: '1px solid rgba(16,185,129,0.3)', boxShadow: '0 0 15px rgba(16,185,129,0.15)' }}>
+                          {codCaptchaCode.split('').join(' ')}
                         </div>
                         <input
-                          style={{ ...inputStyle, width: 120, textAlign: 'center', fontWeight: 800, fontSize: 16 }}
-                          placeholder="7391"
+                          style={{
+                            ...inputStyle,
+                            width: 140,
+                            textAlign: 'center',
+                            fontWeight: 900,
+                            fontSize: 18,
+                            letterSpacing: 3,
+                            borderColor: isCodVerified ? '#10B981' : codCaptchaInput ? '#EF4444' : 'var(--border-color)',
+                            background: isCodVerified ? 'rgba(16,185,129,0.06)' : 'var(--bg-card-hover)',
+                          }}
+                          placeholder="Type code"
                           maxLength={4}
                           value={codCaptchaInput}
-                          onChange={(e) => setCodCaptchaInput(e.target.value)}
+                          onChange={(e) => setCodCaptchaInput(e.target.value.replace(/\D/g, ''))}
                         />
+                      </div>
+
+                      <div style={{ fontSize: 12, fontWeight: 700, color: isCodVerified ? '#10B981' : codCaptchaInput ? '#EF4444' : 'var(--text-sub)' }}>
+                        {isCodVerified
+                          ? '🎉 Correct code! Payment button is now enabled.'
+                          : codCaptchaInput
+                          ? '❌ Incorrect code. Please type the exact digits shown above.'
+                          : '⚡ Enter the 4-digit security code above to proceed.'}
                       </div>
                     </div>
                   </div>
@@ -476,24 +523,28 @@ export default function CheckoutPage() {
             <button
               type="button"
               onClick={handleOpenPaymentModal}
-              disabled={!paymentCategory}
+              disabled={!isPaymentValid}
               style={{
                 width: '100%',
-                background: paymentCategory ? '#ea580c' : 'var(--border-color)',
-                color: paymentCategory ? '#fff' : 'var(--text-sub)',
-                opacity: paymentCategory ? 1 : 0.6,
-                cursor: paymentCategory ? 'pointer' : 'not-allowed',
+                background: isPaymentValid ? '#ea580c' : 'var(--border-color)',
+                color: isPaymentValid ? '#fff' : 'var(--text-sub)',
+                opacity: isPaymentValid ? 1 : 0.6,
+                cursor: isPaymentValid ? 'pointer' : 'not-allowed',
                 border: 'none',
                 borderRadius: 99,
                 padding: '15px',
                 fontWeight: 900,
                 fontSize: 15,
-                boxShadow: paymentCategory ? '0 4px 16px rgba(234, 88, 12, 0.35)' : 'none',
+                boxShadow: isPaymentValid ? '0 4px 16px rgba(234, 88, 12, 0.35)' : 'none',
                 marginBottom: 20,
                 transition: 'all 0.2s ease',
               }}
             >
-              {paymentCategory ? 'Use this Payment Method →' : 'Select a Payment Method Above'}
+              {!paymentCategory
+                ? 'Select a Payment Method Above'
+                : paymentCategory === 'cod' && !isCodVerified
+                ? '🔒 Enter Security Code to Enable'
+                : 'Use this Payment Method →'}
             </button>
 
             <h3 style={{ fontSize: 17, fontWeight: 800, marginBottom: 16, color: 'var(--text-main)' }}>Order Summary</h3>
