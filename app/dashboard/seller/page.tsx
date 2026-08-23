@@ -5,6 +5,8 @@ import { cookies } from 'next/headers'
 import Link from 'next/link'
 import Navbar from '@/components/Navbar'
 
+export const dynamic = 'force-dynamic'
+
 interface SellerProductCard {
   id: string
   title: string
@@ -25,10 +27,12 @@ interface DbProductRow {
   name?: string
   category?: string
   price?: number
+  stock?: number
   stock_quantity?: number
   rating?: number
   seller?: string
   seller_name?: string
+  image_url?: string
   images?: string[]
 }
 
@@ -57,7 +61,7 @@ export default async function SellerDashboard() {
       loadError = error.message
     } else if (dbProducts && dbProducts.length > 0) {
       products = dbProducts.map((p: DbProductRow, index: number) => {
-        const stock = p.stock_quantity ?? 0
+        const stock = p.stock ?? p.stock_quantity ?? 0
         let status: 'Out of Stock' | 'Low Stock' | 'Active' = 'Active'
         if (stock === 0) {
           status = 'Out of Stock'
@@ -77,7 +81,7 @@ export default async function SellerDashboard() {
           rating: ratingVal,
           ratingText: ratingVal !== null ? `⭐ ${ratingVal}` : 'No ratings yet',
           seller: p.seller || p.seller_name || user.email?.split('@')[0] || 'Seller',
-          image: Array.isArray(p.images) && p.images[0] ? p.images[0] : 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=600&q=80',
+          image: p.image_url || (Array.isArray(p.images) && p.images[0] ? p.images[0] : 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=600&q=80'),
           status,
         }
       })
