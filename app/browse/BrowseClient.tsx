@@ -115,7 +115,7 @@ export default function BrowseClient({ designs = [] }: { designs: DesignRow[] })
   const [sort, setSort] = useState('popular')
   const [previewDesign, setPreviewDesign] = useState<DesignRow | null>(null)
 
-  // Real-time client-side sync with Supabase to always reflect latest models
+  // Real-time client-side sync with Supabase
   useEffect(() => {
     const supabase = createClient()
     let isMounted = true
@@ -124,7 +124,7 @@ export default function BrowseClient({ designs = [] }: { designs: DesignRow[] })
       try {
         const { data, error } = await supabase
           .from('designs')
-          .select('id, title, price, rating, rating_count, thumbnail_url, preview_url, file_url, category, tags, designer_id')
+          .select('id, title, description, file_url, thumbnail_url, price, tags, is_public, designer_id, created_at')
           .order('created_at', { ascending: false })
 
         if (!error && data && data.length > 0 && isMounted) {
@@ -148,12 +148,12 @@ export default function BrowseClient({ designs = [] }: { designs: DesignRow[] })
             const tags = Array.isArray(d.tags) ? d.tags : []
             return {
               id: d.id,
-              title: d.title,
+              title: d.title || '3D Model',
               price: Number(d.price ?? 0),
-              category: d.category || tags[0] || 'Toys & Games',
-              rating: d.rating != null ? Number(d.rating) : 5,
-              rating_count: d.rating_count != null ? Number(d.rating_count) : 0,
-              thumbnail_url: d.thumbnail_url || d.preview_url || 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=600&q=80',
+              category: tags[0] || 'Toys & Games',
+              rating: 5,
+              rating_count: 1,
+              thumbnail_url: d.thumbnail_url || 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=600&q=80',
               file_url: d.file_url || '',
               designer: { full_name: profileMap[d.designer_id] || 'PrintHive Creator' },
             }
