@@ -9,6 +9,7 @@ export type DesignRow = {
   rating: number
   rating_count: number
   thumbnail_url: string | null
+  file_url?: string | null
   designer: { full_name: string | null } | null
 }
 
@@ -21,6 +22,7 @@ const FALLBACK_DESIGNS: DesignRow[] = [
     rating: 4.9,
     rating_count: 38,
     thumbnail_url: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=600&q=80',
+    file_url: '/models/demo.stl',
     designer: { full_name: 'Aarav Sharma' },
   },
   {
@@ -31,6 +33,7 @@ const FALLBACK_DESIGNS: DesignRow[] = [
     rating: 4.8,
     rating_count: 24,
     thumbnail_url: 'https://images.unsplash.com/photo-1586075010923-2dd4570fb338?auto=format&fit=crop&w=600&q=80',
+    file_url: '/models/demo.stl',
     designer: { full_name: 'Priya Patel' },
   },
   {
@@ -41,6 +44,7 @@ const FALLBACK_DESIGNS: DesignRow[] = [
     rating: 4.95,
     rating_count: 52,
     thumbnail_url: 'https://images.unsplash.com/photo-1485955900006-10f4d324d411?auto=format&fit=crop&w=600&q=80',
+    file_url: '/models/demo.stl',
     designer: { full_name: 'Vikram Malhotra' },
   },
   {
@@ -51,6 +55,7 @@ const FALLBACK_DESIGNS: DesignRow[] = [
     rating: 4.7,
     rating_count: 19,
     thumbnail_url: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=600&q=80',
+    file_url: '/models/demo.stl',
     designer: { full_name: 'Neha Gupta' },
   },
   {
@@ -61,6 +66,7 @@ const FALLBACK_DESIGNS: DesignRow[] = [
     rating: 5.0,
     rating_count: 14,
     thumbnail_url: 'https://images.unsplash.com/photo-1581092335397-9583fe92d232?auto=format&fit=crop&w=600&q=80',
+    file_url: '/models/demo.stl',
     designer: { full_name: 'Rohan Verma' },
   },
 ]
@@ -72,7 +78,7 @@ export default async function BrowsePage() {
     const supabase = await createClient()
     const { data, error } = await supabase
       .from('designs')
-      .select('id, title, price, rating, rating_count, thumbnail_url, preview_url, category, designer:profiles!designs_designer_id_fkey(full_name)')
+      .select('id, title, price, rating, rating_count, thumbnail_url, preview_url, file_url, category, designer:profiles!designs_designer_id_fkey(full_name)')
       .in('status', ['approved', 'published', 'active'])
       .order('created_at', { ascending: false })
 
@@ -87,6 +93,7 @@ export default async function BrowsePage() {
         rating: d.rating != null ? Number(d.rating) : 0,
         rating_count: d.rating_count != null ? Number(d.rating_count) : 0,
         thumbnail_url: d.thumbnail_url || d.preview_url || 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=600&q=80',
+        file_url: d.file_url || '/models/demo.stl',
         designer: { full_name: d.designer?.full_name || 'PrintHive Creator' },
       }))
     }
