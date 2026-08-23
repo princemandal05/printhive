@@ -217,11 +217,15 @@ export default function ShopPage() {
         }
 
         // Fetch published 3D designs from Supabase
-        const { data: designRows } = await supabase
+        const { data: designRows, error: designError } = await supabase
           .from('designs')
           .select('*, designer:profiles!designs_designer_id_fkey(full_name)')
           .in('status', ['approved', 'published', 'active'])
           .order('created_at', { ascending: false })
+
+        if (designError) {
+          console.warn('Error fetching designs for shop marketplace:', designError)
+        }
 
         let mappedDesigns: Product[] = []
         if (designRows && designRows.length > 0) {
@@ -229,7 +233,7 @@ export default function ShopPage() {
             id: d.id,
             name: d.title || 'Custom 3D Model',
             price: Number(d.price ?? 299),
-            category: d.category || 'Toys & Games',
+            category: d.category || 'Toys & Miniatures',
             rating: Number(d.rating ?? 5.0),
             reviewsCount: Number(d.rating_count ?? 1),
             seller: d.designer?.full_name || 'PrintHive Creator',

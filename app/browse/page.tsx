@@ -76,16 +76,18 @@ export default async function BrowsePage() {
       .in('status', ['approved', 'published', 'active'])
       .order('created_at', { ascending: false })
 
-    if (!error && data && data.length > 0) {
+    if (error) {
+      console.warn('Error fetching designs from Supabase:', error)
+    } else if (data && data.length > 0) {
       loadedDesigns = data.map((d: any) => ({
         id: d.id,
         title: d.title,
         price: Number(d.price ?? 0),
         category: d.category || 'Toys & Games',
-        rating: Number(d.rating ?? 5.0),
-        rating_count: Number(d.rating_count ?? 1),
+        rating: d.rating != null ? Number(d.rating) : 0,
+        rating_count: d.rating_count != null ? Number(d.rating_count) : 0,
         thumbnail_url: d.thumbnail_url || d.preview_url || 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=600&q=80',
-        designer: d.designer || { full_name: 'PrintHive Creator' },
+        designer: { full_name: d.designer?.full_name || 'PrintHive Creator' },
       }))
     }
   } catch (err) {
