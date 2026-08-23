@@ -63,7 +63,7 @@ export default function DesignDetailClient({ design, reviews }: { design: Design
       seller: design.designer?.full_name || 'PrintHive Designer',
       price: design.price,
       stock: 99,
-      image: design.file_url,
+      image: (design as any).thumbnail_url || (design as any).preview_url || 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=600&q=80',
     })
     alert(`Added "${design.title}" 3D model file to cart!`)
   }

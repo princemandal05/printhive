@@ -1,6 +1,7 @@
 'use client'
 
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react'
+import { createContext, useContext, useEffect, useState, useRef, ReactNode } from 'react'
+import { createClient } from '@/utils/supabase/client'
 
 export type CartItem = {
   id: string
@@ -31,43 +32,117 @@ type StoreContextType = {
   isInWishlist: (id: string) => boolean
   cartCount: number
   cartSubtotal: number
+  activeUserKey: string
 }
 
 const StoreContext = createContext<StoreContextType | undefined>(undefined)
 
-const CART_KEY = 'printhive:cart'
-const WISHLIST_KEY = 'printhive:wishlist'
-
 export function StoreProvider({ children }: { children: ReactNode }) {
+  const supabase = createClient()
+  const [activeUserKey, setActiveUserKey] = useState<string>('public')
   const [cart, setCart] = useState<CartItem[]>([])
   const [wishlist, setWishlist] = useState<WishlistItem[]>([])
-  const [hydrated, setHydrated] = useState(false)
+  const isHydratedRef = useRef(false)
+  const activeKeyRef = useRef('public')
+
+  // Helper to construct isolated storage keys
+  const getStorageKeys = (userKey: string) => ({
+    cartKey: `printhive:${userKey}:cart`,
+    wishlistKey: `printhive:${userKey}:wishlist`,
+  })
+
+  // Load cart and wishlist for a specific user/role partition
+  const loadPartition = (userKey: string) => {
+    activeKeyRef.current = userKey
+    setActiveUserKey(userKey)
+    const { cartKey, wishlistKey } = getStorageKeys(userKey)
+
+    try {
+      const savedCart = localStorage.getItem(cartKey)
+      const savedWishlist = localStorage.getItem(wishlistKey)
+      const parsedCart = savedCart ? JSON.parse(savedCart) : []
+      const parsedWishlist = savedWishlist ? JSON.parse(savedWishlist) : []
+
+      setCart(Array.isArray(parsedCart) ? parsedCart : [])
+      setWishlist(Array.isArray(parsedWishlist) ? parsedWishlist : [])
+    } catch {
+      setCart([])
+      setWishlist([])
+    }
+    isHydratedRef.current = true
+  }
 
   useEffect(() => {
-    try {
-      const savedCart = localStorage.getItem(CART_KEY)
-      const savedWishlist = localStorage.getItem(WISHLIST_KEY)
-      const parsedCart = savedCart ? JSON.parse(savedCart) : null
-      const parsedWishlist = savedWishlist ? JSON.parse(savedWishlist) : null
-      if (Array.isArray(parsedCart) || Array.isArray(parsedWishlist)) {
-        Promise.resolve().then(() => {
-          if (Array.isArray(parsedCart)) setCart(parsedCart)
-          if (Array.isArray(parsedWishlist)) setWishlist(parsedWishlist)
-        })
+    let isMounted = true
+
+    async function initUserSession() {
+      try {
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!isMounted) return
+
+        let key = 'public'
+        if (user?.id) {
+          // Check user role in profile for role-based separation
+          const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).maybeSingle()
+          const role = profile?.role || 'buyer'
+          key = `user_${user.id}_${role}`
+        } else if (typeof document !== 'undefined') {
+          const guestMatch = document.cookie.match(/printhive_guest_role=([^;]+)/)
+          const guestRole = guestMatch ? guestMatch[1] : 'public'
+          key = `guest_${guestRole}`
+        }
+
+        loadPartition(key)
+      } catch {
+        if (isMounted) loadPartition('public')
       }
-    } catch {
-      // ignore corrupt storage
     }
-    Promise.resolve().then(() => setHydrated(true))
+
+    initUserSession()
+
+    // Listen to Supabase Auth state & cookie changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      if (!isMounted) return
+      let key = 'public'
+      if (session?.user?.id) {
+        const { data: profile } = await supabase.from('profiles').select('role').eq('id', session.user.id).maybeSingle()
+        const role = profile?.role || 'buyer'
+        key = `user_${session.user.id}_${role}`
+      } else if (typeof document !== 'undefined') {
+        const guestMatch = document.cookie.match(/printhive_guest_role=([^;]+)/)
+        const guestRole = guestMatch ? guestMatch[1] : 'public'
+        key = `guest_${guestRole}`
+      }
+      loadPartition(key)
+    })
+
+    return () => {
+      isMounted = false
+      subscription.unsubscribe()
+    }
   }, [])
 
+  // Sync cart to active user's partition
   useEffect(() => {
-    if (hydrated) localStorage.setItem(CART_KEY, JSON.stringify(cart))
-  }, [cart, hydrated])
+    if (!isHydratedRef.current) return
+    const { cartKey } = getStorageKeys(activeKeyRef.current)
+    try {
+      localStorage.setItem(cartKey, JSON.stringify(cart))
+    } catch {
+      // ignore storage write errors
+    }
+  }, [cart])
 
+  // Sync wishlist to active user's partition
   useEffect(() => {
-    if (hydrated) localStorage.setItem(WISHLIST_KEY, JSON.stringify(wishlist))
-  }, [wishlist, hydrated])
+    if (!isHydratedRef.current) return
+    const { wishlistKey } = getStorageKeys(activeKeyRef.current)
+    try {
+      localStorage.setItem(wishlistKey, JSON.stringify(wishlist))
+    } catch {
+      // ignore storage write errors
+    }
+  }, [wishlist])
 
   const addToCart: StoreContextType['addToCart'] = (item, qty = 1) => {
     setCart((prev) => {
@@ -98,21 +173,35 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
   const isInWishlist = (id: string) => wishlist.some((i) => i.id === id)
 
-  const cartCount = cart.reduce((sum, i) => sum + i.quantity, 0)
-  const cartSubtotal = cart.reduce((sum, i) => sum + i.quantity * i.price, 0)
+  const cartCount = cart.reduce((total, item) => total + item.quantity, 0)
+  const cartSubtotal = cart.reduce((total, item) => total + item.price * item.quantity, 0)
 
   return (
-    <StoreContext.Provider value={{
-      cart, wishlist, addToCart, removeFromCart, updateCartQuantity, clearCart,
-      addToWishlist, removeFromWishlist, isInWishlist, cartCount, cartSubtotal,
-    }}>
+    <StoreContext.Provider
+      value={{
+        cart,
+        wishlist,
+        addToCart,
+        removeFromCart,
+        updateCartQuantity,
+        clearCart,
+        addToWishlist,
+        removeFromWishlist,
+        isInWishlist,
+        cartCount,
+        cartSubtotal,
+        activeUserKey,
+      }}
+    >
       {children}
     </StoreContext.Provider>
   )
 }
 
 export function useStore() {
-  const ctx = useContext(StoreContext)
-  if (!ctx) throw new Error('useStore must be used within a StoreProvider')
-  return ctx
+  const context = useContext(StoreContext)
+  if (!context) {
+    throw new Error('useStore must be used within a StoreProvider')
+  }
+  return context
 }

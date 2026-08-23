@@ -13,7 +13,8 @@ export default function CartPage() {
   const [coupon, setCoupon] = useState('')
 
   const subtotal = cartSubtotal
-  const shipping = subtotal > 1500 ? 0 : 99
+  const isAllDigital = cart.length > 0 && cart.every(i => i.name.toLowerCase().includes('digital') || i.name.toLowerCase().includes('stl') || i.name.toLowerCase().includes('3d model') || i.name.toLowerCase().includes('model'))
+  const shipping = isAllDigital || subtotal === 0 || subtotal > 1500 ? 0 : 99
   const tax = Math.round(subtotal * 0.18)
   const total = subtotal + shipping + tax
 
