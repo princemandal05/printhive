@@ -72,21 +72,28 @@ export default async function BrowsePage() {
     const supabase = await createClient()
     const { data, error } = await supabase
       .from('designs')
-      .select('id, title, price, rating, rating_count, thumbnail_url, designer:profiles!designs_designer_id_fkey(full_name)')
-      .eq('status', 'approved')
+      .select('id, title, price, rating, rating_count, thumbnail_url, preview_url, category, designer:profiles!designs_designer_id_fkey(full_name)')
+      .in('status', ['approved', 'published', 'active'])
       .order('created_at', { ascending: false })
 
     if (!error && data && data.length > 0) {
       loadedDesigns = data.map((d: any) => ({
-        ...d,
-        category: d.category || '3D Models',
+        id: d.id,
+        title: d.title,
+        price: Number(d.price ?? 0),
+        category: d.category || 'Toys & Games',
+        rating: Number(d.rating ?? 5.0),
+        rating_count: Number(d.rating_count ?? 1),
+        thumbnail_url: d.thumbnail_url || d.preview_url || 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=600&q=80',
+        designer: d.designer || { full_name: 'PrintHive Creator' },
       }))
     }
   } catch (err) {
-    console.warn('Using fallback designs array:', err)
+    console.warn('Error fetching designs from Supabase:', err)
   }
 
-  const finalDesigns = loadedDesigns.length > 0 ? loadedDesigns : FALLBACK_DESIGNS
+  // Prepend live database uploaded models to browse catalog
+  const finalDesigns = loadedDesigns.length > 0 ? [...loadedDesigns, ...FALLBACK_DESIGNS] : FALLBACK_DESIGNS
 
   return <BrowseClient designs={finalDesigns} />
 }

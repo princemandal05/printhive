@@ -216,8 +216,33 @@ export default function ShopPage() {
           }
         }
 
+        // Fetch published 3D designs from Supabase
+        const { data: designRows } = await supabase
+          .from('designs')
+          .select('*, designer:profiles!designs_designer_id_fkey(full_name)')
+          .in('status', ['approved', 'published', 'active'])
+          .order('created_at', { ascending: false })
+
+        let mappedDesigns: Product[] = []
+        if (designRows && designRows.length > 0) {
+          mappedDesigns = designRows.map((d: any) => ({
+            id: d.id,
+            name: d.title || 'Custom 3D Model',
+            price: Number(d.price ?? 299),
+            category: d.category || 'Toys & Games',
+            rating: Number(d.rating ?? 5.0),
+            reviewsCount: Number(d.rating_count ?? 1),
+            seller: d.designer?.full_name || 'PrintHive Creator',
+            stock: 25,
+            image: d.thumbnail_url || d.preview_url || 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=800&q=80',
+            newest: true,
+            deliveryDays: '2-3 Days',
+          }))
+        }
+
+        let mappedProducts: Product[] = []
         if (allRows.length > 0) {
-          const mapped: Product[] = allRows.map((item: ProductRow) => ({
+          mappedProducts = allRows.map((item: ProductRow) => ({
             id: item.id,
             name: item.title || item.name || 'Untitled Product',
             price: Number(item.price ?? 499),
@@ -233,7 +258,11 @@ export default function ShopPage() {
             newest: Boolean(item.newest),
             deliveryDays: item.delivery_days || '2-4 Days',
           }))
-          if (isMounted) setProducts(mapped)
+        }
+
+        const combinedList = [...mappedDesigns, ...mappedProducts, ...SEED_PRODUCTS]
+        if (isMounted && combinedList.length > 0) {
+          setProducts(combinedList)
         }
       } catch (err) {
         console.error('Error fetching products from Supabase:', err)
