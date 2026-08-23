@@ -26,93 +26,6 @@ type Product = {
   deliveryDays: string
 }
 
-const SEED_PRODUCTS: Product[] = [
-  {
-    id: 'prod-1',
-    name: 'Articulated Mechanical Dragon',
-    price: 1499,
-    originalPrice: 1999,
-    category: 'Toys & Miniatures',
-    rating: 4.9,
-    reviewsCount: 142,
-    seller: 'DragonForge 3D',
-    stock: 24,
-    image: 'https://images.unsplash.com/photo-1563089145-599997674d42?w=800&auto=format&fit=crop&q=80',
-    featured: true,
-    trending: true,
-    deliveryDays: '2-3 Days',
-  },
-  {
-    id: 'prod-2',
-    name: 'Cyberpunk LED Desk Organizer',
-    price: 899,
-    originalPrice: 1200,
-    category: 'Office Accessories',
-    rating: 4.8,
-    reviewsCount: 98,
-    seller: 'NexusPrints',
-    stock: 15,
-    image: 'https://images.unsplash.com/photo-1586717791821-3f44a563fa4c?w=800&auto=format&fit=crop&q=80',
-    trending: true,
-    deliveryDays: '1-2 Days',
-  },
-  {
-    id: 'prod-3',
-    name: 'Geometric Voronoi Table Lamp',
-    price: 2499,
-    originalPrice: 3200,
-    category: 'Home Décor',
-    rating: 5.0,
-    reviewsCount: 64,
-    seller: 'LuminaCrafts',
-    stock: 8,
-    image: 'https://images.unsplash.com/photo-1507473885765-e6ed057f782c?w=800&auto=format&fit=crop&q=80',
-    featured: true,
-    deliveryDays: '3-5 Days',
-  },
-  {
-    id: 'prod-4',
-    name: 'Custom Lithophane Photo Frame',
-    price: 699,
-    originalPrice: 999,
-    category: 'Personalized Gifts',
-    rating: 4.9,
-    reviewsCount: 210,
-    seller: 'MemoriesIn3D',
-    stock: 50,
-    image: 'https://images.unsplash.com/photo-1513519245088-0e12902e5a38?w=800&auto=format&fit=crop&q=80',
-    newest: true,
-    deliveryDays: '2-4 Days',
-  },
-  {
-    id: 'prod-5',
-    name: 'Full-Scale Helmet Replica (PETG)',
-    price: 3999,
-    originalPrice: 4999,
-    category: 'Cosplay Items',
-    rating: 4.9,
-    reviewsCount: 37,
-    seller: 'TitanProps',
-    stock: 5,
-    image: 'https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?w=800&auto=format&fit=crop&q=80',
-    featured: true,
-    deliveryDays: '4-6 Days',
-  },
-  {
-    id: 'prod-6',
-    name: 'Solar System Planetary Gear Model',
-    price: 1299,
-    originalPrice: 1699,
-    category: 'Educational Kits',
-    rating: 4.7,
-    reviewsCount: 83,
-    seller: 'EduPrint Lab',
-    stock: 18,
-    image: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&auto=format&fit=crop&q=80',
-    deliveryDays: '2-3 Days',
-  },
-]
-
 const CATEGORIES = [
   'All',
   'Home Décor',
@@ -121,13 +34,6 @@ const CATEGORIES = [
   'Personalized Gifts',
   'Cosplay Items',
   'Educational Kits',
-]
-
-const STATS = [
-  { value: '25K+', label: 'Ready-Made Products' },
-  { value: '850+', label: 'Verified Creators' },
-  { value: '15+', label: 'Print Categories' },
-  { value: '4.9★', label: 'Customer Rating' },
 ]
 
 type ProductRow = {
@@ -174,7 +80,7 @@ function ShopReviewBanner() {
 
 export default function ShopPage() {
   const { addToCart, addToWishlist, removeFromWishlist, isInWishlist } = useStore()
-  const [products, setProducts] = useState<Product[]>(SEED_PRODUCTS)
+  const [products, setProducts] = useState<Product[]>([])
   const [loadingProducts, setLoadingProducts] = useState(true)
   const [search, setSearch] = useState('')
   const [category, setCategory] = useState('All')
@@ -228,7 +134,7 @@ export default function ShopPage() {
             reviewsCount: Number(item.reviews_count ?? 12),
             seller: item.seller_name || item.seller || 'PrintHive Verified',
             stock: Number(item.stock ?? 10),
-            image: item.image_url || item.image || SEED_PRODUCTS[0].image,
+            image: item.image_url || item.image || 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=600&q=80',
             featured: Boolean(item.featured),
             trending: Boolean(item.trending),
             newest: Boolean(item.newest),
@@ -236,9 +142,8 @@ export default function ShopPage() {
           }))
         }
 
-        const combinedList = mappedProducts.length > 0 ? mappedProducts : SEED_PRODUCTS
-        if (isMounted && combinedList.length > 0) {
-          setProducts(combinedList)
+        if (isMounted) {
+          setProducts(mappedProducts)
         }
       } catch (err) {
         console.error('Error fetching products from Supabase:', err)
@@ -333,7 +238,7 @@ export default function ShopPage() {
         p.seller.toLowerCase().includes(search.toLowerCase()) ||
         p.category.toLowerCase().includes(search.toLowerCase())
 
-      const matchesCategory = category === 'All' || p.category === category
+      const matchesCategory = category === 'All' || p.category.toLowerCase() === category.toLowerCase()
 
       return matchesSearch && matchesCategory
     }).sort((a, b) => {
@@ -371,16 +276,6 @@ export default function ShopPage() {
           <p style={{ color: 'var(--text-sub)', fontSize: 14, maxWidth: 680, lineHeight: 1.5 }}>
             Browse ready-made physical 3D printed items from verified sellers & local print hubs. Escrow protected delivery right to your doorstep.
           </p>
-        </div>
-
-        {/* METRICS STATS BAR */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 14, marginBottom: 28 }}>
-          {STATS.map((item) => (
-            <div key={item.label} style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 16, padding: '16px 20px', textAlign: 'center', boxShadow: '0 2px 10px rgba(0,0,0,0.02)' }}>
-              <div style={{ fontSize: 22, color: '#FF6B35', fontWeight: 900 }}>{item.value}</div>
-              <div style={{ fontSize: 12, color: 'var(--text-sub)', fontWeight: 600, marginTop: 2 }}>{item.label}</div>
-            </div>
-          ))}
         </div>
 
         {/* SEARCH & CATEGORY FILTER BAR */}
@@ -436,10 +331,15 @@ export default function ShopPage() {
         </div>
 
         {/* PRODUCT CATALOG GRID */}
-        {filtered.length === 0 ? (
+        {loadingProducts ? (
+          <div style={{ textAlign: 'center', padding: '60px 24px' }}>
+            <div style={{ fontSize: 32, marginBottom: 12 }}>⏳</div>
+            <div style={{ fontSize: 16, fontWeight: 800, color: 'var(--text-main)' }}>Loading Physical Marketplace Products…</div>
+          </div>
+        ) : filtered.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '60px 24px', background: 'var(--bg-card-hover)', borderRadius: 24, border: '2px dashed var(--border-color)' }}>
             <div style={{ fontSize: 40, marginBottom: 12 }}>🛒</div>
-            <div style={{ fontSize: 18, fontWeight: 900, color: 'var(--text-main)', marginBottom: 6 }}>No Products Listed Yet</div>
+            <div style={{ fontSize: 18, fontWeight: 900, color: 'var(--text-main)', marginBottom: 6 }}>No Physical Products Listed Yet</div>
             <div style={{ fontSize: 14, color: 'var(--text-sub)', marginBottom: 20 }}>
               {roleLoading
                 ? 'Loading user permissions...'
@@ -467,7 +367,6 @@ export default function ShopPage() {
         ) : (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 16 }}>
             {filtered.map((product) => {
-              const saved = isInWishlist(product.id)
               return (
                 <Link
                   key={product.id}

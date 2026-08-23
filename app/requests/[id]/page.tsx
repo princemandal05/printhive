@@ -40,29 +40,12 @@ export type BidRow = {
   proposal?: string
 }
 
-const MOCK_REQUEST: RequestType = {
-  id: 'r1',
-  purpose: 'Replacement knob for a washing machine',
-  dimensions: '5cm x 5cm x 2cm',
-  material: 'ABS',
-  budgetMin: 200,
-  budgetMax: 500,
-  description:
-    'The original knob cracked. Need something durable in ABS that matches the attached photo as closely as possible — a rounded top with a small grip texture.',
-  postedAt: '2 days ago',
-}
-
-const MOCK_BIDS: BidType[] = [
-  { id: 'b1', designer: 'Aarav Mehta', rating: 4.8, price: 380, days: 3, note: 'Can match the exact shape from your photo, printed in ABS with a matte finish.' },
-  { id: 'b2', designer: 'Sneha Kulkarni', rating: 4.6, price: 420, days: 2, note: 'Reinforced design so it won’t crack again — slightly thicker walls.' },
-]
-
 export default function RequestDetailPage() {
   const params = useParams()
-  const reqId = (params?.id as string) || 'r1'
+  const reqId = params?.id as string
 
-  const [request, setRequest] = useState<RequestType | null>(reqId === 'r1' ? MOCK_REQUEST : null)
-  const [bids, setBids] = useState<BidType[]>(reqId === 'r1' ? MOCK_BIDS : [])
+  const [request, setRequest] = useState<RequestType | null>(null)
+  const [bids, setBids] = useState<BidType[]>([])
   const [notFound, setNotFound] = useState(false)
   const [showBidForm, setShowBidForm] = useState(false)
   const [bidPrice, setBidPrice] = useState('')
@@ -80,24 +63,18 @@ export default function RequestDetailPage() {
     setBidPrice('')
     setBidDays('')
     setBidNote('')
-    if (reqId === 'r1') {
-      setRequest(MOCK_REQUEST)
-      setBids(MOCK_BIDS)
-    } else {
-      setRequest(null)
-      setBids([])
-    }
+    setRequest(null)
+    setBids([])
 
     const supabase = createClient()
     let isMounted = true
 
     async function loadData() {
+      if (!reqId) return
       try {
         const { data: reqData, error: reqErr } = await supabase.from('design_requests').select('*').eq('id', reqId).maybeSingle()
         if (reqErr || !reqData) {
-          if (reqId === 'r1') {
-            setRequest(MOCK_REQUEST)
-          } else if (isMounted) {
+          if (isMounted) {
             setRequest(null)
             setNotFound(true)
             setBids([])
@@ -106,13 +83,13 @@ export default function RequestDetailPage() {
         } else if (isMounted) {
           setRequest({
             id: reqData.id,
-            purpose: reqData.purpose || reqData.title || MOCK_REQUEST.purpose,
-            dimensions: reqData.dimensions || MOCK_REQUEST.dimensions,
-            material: reqData.material || MOCK_REQUEST.material,
-            budgetMin: reqData.budget_min ?? reqData.budget_min_inr ?? MOCK_REQUEST.budgetMin,
-            budgetMax: reqData.budget_max ?? reqData.budget_max_inr ?? MOCK_REQUEST.budgetMax,
-            description: reqData.description || MOCK_REQUEST.description,
-            postedAt: reqData.created_at ? new Date(reqData.created_at).toLocaleDateString() : MOCK_REQUEST.postedAt,
+            purpose: reqData.purpose || reqData.title || 'Custom 3D Request',
+            dimensions: reqData.dimensions || 'Custom Dimensions',
+            material: reqData.material || 'PLA',
+            budgetMin: reqData.budget_min ?? reqData.budget_min_inr ?? 0,
+            budgetMax: reqData.budget_max ?? reqData.budget_max_inr ?? 0,
+            description: reqData.description || 'No description provided.',
+            postedAt: reqData.created_at ? new Date(reqData.created_at).toLocaleDateString() : 'Recently',
           })
         }
 
