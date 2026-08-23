@@ -5,7 +5,6 @@ import Link from 'next/link'
 import dynamic from 'next/dynamic'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
-
 import { createClient } from '@/utils/supabase/client'
 
 const Hero3D = dynamic(() => import('@/components/Hero3D'), {
@@ -17,22 +16,39 @@ const Hero3D = dynamic(() => import('@/components/Hero3D'), {
   ),
 })
 
+function IconBadge({ children }: { children: React.ReactNode }) {
+  return (
+    <div
+      style={{
+        width: 44,
+        height: 44,
+        borderRadius: 12,
+        background: 'rgba(255, 107, 53, 0.12)',
+        border: '1px solid rgba(255, 107, 53, 0.25)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        flexShrink: 0,
+      }}
+    >
+      {children}
+    </div>
+  )
+}
+
 const PROBLEMS = [
   {
-    icon: '🛒',
-    iconClass: 'feature-icon-success',
+    type: 'buyer',
     title: 'Buyers',
     text: "Can't access custom 3D printed products without owning a ₹15,000–₹80,000 printer or learning CAD. Existing commercial services are expensive and unverified.",
   },
   {
-    icon: '🎨',
-    iconClass: 'feature-icon-primary',
+    type: 'designer',
     title: 'Designers',
     text: 'Publish high-quality models on open platforms for free, with no automatic monetization, copyright protection, or marketplace connecting designs to buyers.',
   },
   {
-    icon: '🖨️',
-    iconClass: 'feature-icon-info',
+    type: 'printer',
     title: 'Printer Owners',
     text: 'Own 3D printers that sit idle 18–20 hours a day, with no organized local system to find print jobs, manage orders, or earn consistent income.',
   },
@@ -62,12 +78,12 @@ const STEPS = [
 ]
 
 const FEATURES = [
-  { icon: '🧠', title: 'Gemini AI Intelligence', text: 'Natural language search, automated description generator, and instant material slicer cost calculator.' },
-  { icon: '🧊', title: 'In-Browser 3D Viewport', text: 'Real-time Three.js WebGL viewer lets buyers inspect model geometry, wireframes, and slice readiness.' },
-  { icon: '📍', title: 'Nearby Geolocation Matching', text: 'Leaflet.js + OpenStreetMap engine connects orders to closest active printer hubs without high shipping fees.' },
-  { icon: '🔒', title: 'Razorpay Escrow Protection', text: 'Escrow holds buyer funds securely until physical delivery is verified by the customer.' },
-  { icon: '⚡', title: 'Supabase Realtime Tracking', text: 'Live websocket status pushing from slicing, printing, quality check, to courier dispatch.' },
-  { icon: '⭐', title: 'Verified Print Community', text: 'Authentic buyer photos and star ratings build verified seller reputations.' },
+  { type: 'ai', title: 'Gemini AI Intelligence', text: 'Natural language search, automated description generator, and instant material slicer cost calculator.' },
+  { type: 'viewport', title: 'In-Browser 3D Viewport', text: 'Real-time Three.js WebGL viewer lets buyers inspect model geometry, wireframes, and slice readiness.' },
+  { type: 'geo', title: 'Nearby Geolocation Matching', text: 'Leaflet.js + OpenStreetMap engine connects orders to closest active printer hubs without high shipping fees.' },
+  { type: 'escrow', title: 'Razorpay Escrow Protection', text: 'Escrow holds buyer funds securely until physical delivery is verified by the customer.' },
+  { type: 'realtime', title: 'Supabase Realtime Tracking', text: 'Live websocket status pushing from slicing, printing, quality check, to courier dispatch.' },
+  { type: 'community', title: 'Verified Print Community', text: 'Authentic buyer photos and star ratings build verified seller reputations.' },
 ]
 
 export default function Home() {
@@ -76,7 +92,6 @@ export default function Home() {
   const [activeRoleTab, setActiveRoleTab] = useState<'buyer' | 'designer' | 'printer'>('buyer')
   const [isLoggedIn, setIsLoggedIn] = useState(false)
 
-  // Detect logged in state
   useEffect(() => {
     async function checkAuth() {
       try {
@@ -91,11 +106,87 @@ export default function Home() {
     checkAuth()
   }, [])
 
+  const renderIcon = (type: string) => {
+    switch (type) {
+      case 'buyer':
+        return (
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FF6B35" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
+            <line x1="3" y1="6" x2="21" y2="6" />
+            <path d="M16 10a4 4 0 0 1-8 0" />
+          </svg>
+        )
+      case 'designer':
+        return (
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FF6B35" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M12 19l7-7 3 3-7 7-3-3z" />
+            <path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z" />
+            <path d="M2 2l7.586 7.586" />
+            <circle cx="11" cy="11" r="2" />
+          </svg>
+        )
+      case 'printer':
+        return (
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FF6B35" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M6 9V2h12v7" />
+            <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
+            <path d="M6 14h12v8H6z" />
+          </svg>
+        )
+      case 'ai':
+        return (
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FF6B35" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83" />
+          </svg>
+        )
+      case 'viewport':
+        return (
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FF6B35" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+            <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
+            <line x1="12" y1="22.08" x2="12" y2="12" />
+          </svg>
+        )
+      case 'geo':
+        return (
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FF6B35" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+            <circle cx="12" cy="10" r="3" />
+          </svg>
+        )
+      case 'escrow':
+        return (
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FF6B35" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+            <rect x="9" y="10" width="6" height="5" rx="1" />
+          </svg>
+        )
+      case 'realtime':
+        return (
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FF6B35" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
+          </svg>
+        )
+      case 'community':
+        return (
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FF6B35" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+          </svg>
+        )
+      default:
+        return (
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FF6B35" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="10" />
+          </svg>
+        )
+    }
+  }
+
   return (
     <main style={{ minHeight: '100vh', transition: 'background 0.3s ease' }}>
       <Navbar />
 
-      {/* HERO SECTION — SLEEK & CLEAN ATEION STYLE */}
+      {/* HERO SECTION */}
       <section className="grid-pattern-bg" style={{ padding: '70px 0 60px', position: 'relative', overflow: 'hidden' }}>
         <div className="container">
           <div className="hero-grid" style={{ alignItems: 'center' }}>
@@ -106,7 +197,7 @@ export default function Home() {
               
               <h1 style={{ fontSize: '3.25rem', fontWeight: 900, lineHeight: 1.12, marginBottom: 20, color: 'var(--text-main)', letterSpacing: '-0.02em' }}>
                 Where Ideas Become{' '}
-                <span style={{ color: '#ea580c', background: 'linear-gradient(135deg, #ea580c, #f97316)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+                <span style={{ color: '#FF6B35', background: 'linear-gradient(135deg, #FF6B35, #EA580C)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
                   Physical Products
                 </span>
               </h1>
@@ -128,7 +219,7 @@ export default function Home() {
                 <Link
                   href={aiSearchQuery ? `/browse?q=${encodeURIComponent(aiSearchQuery)}` : '/browse'}
                   className="btn btn-primary"
-                  style={{ background: '#ea580c', color: '#fff', border: 'none', borderRadius: 99, padding: '12px 24px', fontWeight: 700, fontSize: 13, textDecoration: 'none', whiteSpace: 'nowrap' }}
+                  style={{ background: '#FF6B35', color: '#fff', border: 'none', borderRadius: 99, padding: '12px 24px', fontWeight: 700, fontSize: 13, textDecoration: 'none', whiteSpace: 'nowrap' }}
                 >
                   AI Search
                 </Link>
@@ -137,7 +228,7 @@ export default function Home() {
               {/* Quick Feature Stats */}
               <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
                 <div style={{ background: 'var(--bg-card)', padding: '14px 20px', borderRadius: 16, border: '1px solid var(--border-color)', flex: 1, minWidth: 120 }}>
-                  <div style={{ fontSize: 22, fontWeight: 900, color: '#ea580c' }}>3-Sided</div>
+                  <div style={{ fontSize: 22, fontWeight: 900, color: '#FF6B35' }}>3-Sided</div>
                   <div style={{ fontSize: 12, color: 'var(--text-sub)', fontWeight: 600 }}>Marketplace</div>
                 </div>
                 <div style={{ background: 'var(--bg-card)', padding: '14px 20px', borderRadius: 16, border: '1px solid var(--border-color)', flex: 1, minWidth: 120 }}>
@@ -154,7 +245,7 @@ export default function Home() {
             {/* 3D WebGL Orbit Viewport */}
             <div style={{ background: 'var(--bg-card)', borderRadius: 28, padding: 16, border: '1px solid var(--border-color)', boxShadow: '0 20px 50px rgba(0,0,0,0.08)', position: 'relative' }}>
               <div style={{ position: 'absolute', top: 24, left: 24, zIndex: 10 }}>
-                <span className="ateion-pill" style={{ background: 'rgba(234, 88, 12, 0.12)', color: '#ea580c', fontSize: 11 }}>
+                <span className="ateion-pill" style={{ background: 'rgba(255, 107, 53, 0.12)', color: '#FF6B35', fontSize: 11 }}>
                   🧊 Live WebGL Model Viewport
                 </span>
               </div>
@@ -167,7 +258,7 @@ export default function Home() {
       {/* PROBLEM STATEMENT */}
       <section className="container section" style={{ padding: '80px 0' }}>
         <div style={{ textAlign: 'center', marginBottom: 48 }}>
-          <div className="ateion-pill" style={{ color: '#d97706', background: 'rgba(217,119,6,0.1)', borderColor: 'rgba(217,119,6,0.3)', marginBottom: 12 }}>The Problem</div>
+          <div className="ateion-pill" style={{ color: '#FF6B35', background: 'rgba(255,107,53,0.1)', borderColor: 'rgba(255,107,53,0.3)', marginBottom: 12 }}>The Problem</div>
           <h2 style={{ fontSize: 32, fontWeight: 800, marginBottom: 12, color: 'var(--text-main)' }}>
             Three Gaps. One Ecosystem.
           </h2>
@@ -179,7 +270,9 @@ export default function Home() {
         <div className="grid grid-cols-3 gap-6">
           {PROBLEMS.map((p) => (
             <div key={p.title} style={{ background: 'var(--bg-card)', padding: 32, borderRadius: 24, border: '1px solid var(--border-color)', boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
-              <div className={`feature-icon ${p.iconClass}`} style={{ fontSize: 24, marginBottom: 16 }}>{p.icon}</div>
+              <div style={{ marginBottom: 20 }}>
+                <IconBadge>{renderIcon(p.type)}</IconBadge>
+              </div>
               <div style={{ fontSize: 20, fontWeight: 700, color: 'var(--text-main)', marginBottom: 8 }}>{p.title}</div>
               <div style={{ fontSize: 14, color: 'var(--text-sub)', lineHeight: 1.7 }}>{p.text}</div>
             </div>
@@ -208,15 +301,23 @@ export default function Home() {
                   padding: '10px 24px',
                   borderRadius: 99,
                   border: 'none',
-                  background: activeRoleTab === 'buyer' ? '#10B981' : 'transparent',
+                  background: activeRoleTab === 'buyer' ? '#FF6B35' : 'transparent',
                   color: activeRoleTab === 'buyer' ? '#fff' : 'var(--text-main)',
                   fontWeight: 700,
                   fontSize: 14,
                   cursor: 'pointer',
                   transition: 'all 0.2s',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 8,
                 }}
               >
-                🛒 Buyer
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
+                  <line x1="3" y1="6" x2="21" y2="6" />
+                  <path d="M16 10a4 4 0 0 1-8 0" />
+                </svg>
+                <span>Buyer Portal</span>
               </button>
               <button
                 type="button"
@@ -225,15 +326,24 @@ export default function Home() {
                   padding: '10px 24px',
                   borderRadius: 99,
                   border: 'none',
-                  background: activeRoleTab === 'designer' ? '#ea580c' : 'transparent',
+                  background: activeRoleTab === 'designer' ? '#FF6B35' : 'transparent',
                   color: activeRoleTab === 'designer' ? '#fff' : 'var(--text-main)',
                   fontWeight: 700,
                   fontSize: 14,
                   cursor: 'pointer',
                   transition: 'all 0.2s',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 8,
                 }}
               >
-                🎨 3D Designer
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 19l7-7 3 3-7 7-3-3z" />
+                  <path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z" />
+                  <path d="M2 2l7.586 7.586" />
+                  <circle cx="11" cy="11" r="2" />
+                </svg>
+                <span>Creator Studio</span>
               </button>
               <button
                 type="button"
@@ -242,15 +352,23 @@ export default function Home() {
                   padding: '10px 24px',
                   borderRadius: 99,
                   border: 'none',
-                  background: activeRoleTab === 'printer' ? '#2563eb' : 'transparent',
+                  background: activeRoleTab === 'printer' ? '#FF6B35' : 'transparent',
                   color: activeRoleTab === 'printer' ? '#fff' : 'var(--text-main)',
                   fontWeight: 700,
                   fontSize: 14,
                   cursor: 'pointer',
                   transition: 'all 0.2s',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 8,
                 }}
               >
-                🖨️ Printer Owner
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M6 9V2h12v7" />
+                  <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
+                  <path d="M6 14h12v8H6z" />
+                </svg>
+                <span>Printer Hub</span>
               </button>
             </div>
           </div>
@@ -267,7 +385,7 @@ export default function Home() {
                     Browse ready-made products, order custom CAD briefs, or upload your own 3D file on our Slicer page. Payments are held safely in Razorpay escrow until delivery.
                   </p>
                   <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-                    <Link href="/browse" className="btn btn-primary" style={{ background: '#10B981', color: '#fff', padding: '12px 24px', borderRadius: 99, fontWeight: 700, textDecoration: 'none' }}>
+                    <Link href="/browse" className="btn btn-primary" style={{ background: '#FF6B35', color: '#fff', padding: '12px 24px', borderRadius: 99, fontWeight: 700, textDecoration: 'none' }}>
                       Browse Designs
                     </Link>
                     <Link href="/print-on-demand" className="btn btn-outline" style={{ borderColor: 'var(--border-color)', color: 'var(--text-main)', padding: '12px 24px', borderRadius: 99, textDecoration: 'none', fontWeight: 600 }}>
@@ -296,7 +414,7 @@ export default function Home() {
                     Upload STL/3MF files once. Every time a buyer orders a physical print, you earn a 15% royalty automatically paid out to your wallet upon delivery.
                   </p>
                   <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-                    <Link href="/dashboard/designer/upload" className="btn btn-primary" style={{ background: '#ea580c', color: '#fff', padding: '12px 24px', borderRadius: 99, fontWeight: 700, textDecoration: 'none' }}>
+                    <Link href="/dashboard/designer/upload" className="btn btn-primary" style={{ background: '#FF6B35', color: '#fff', padding: '12px 24px', borderRadius: 99, fontWeight: 700, textDecoration: 'none' }}>
                       Upload 3D Model
                     </Link>
                     <Link href="/dashboard/designer/earnings" className="btn btn-outline" style={{ borderColor: 'var(--border-color)', color: 'var(--text-main)', padding: '12px 24px', borderRadius: 99, textDecoration: 'none', fontWeight: 600 }}>
@@ -306,7 +424,7 @@ export default function Home() {
                 </div>
                 <div style={{ background: 'var(--bg-card-hover)', padding: 28, borderRadius: 20, border: '1px solid var(--border-color)' }}>
                   <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-main)', marginBottom: 8 }}>💰 Creator Payout Share:</div>
-                  <div style={{ fontSize: 24, fontWeight: 900, color: '#ea580c', marginBottom: 6 }}>15% Royalty on Every Order</div>
+                  <div style={{ fontSize: 24, fontWeight: 900, color: '#FF6B35', marginBottom: 6 }}>15% Royalty on Every Order</div>
                   <div style={{ fontSize: 13, color: 'var(--text-sub)' }}>Earn passive income from your designs without handling shipping or hardware.</div>
                 </div>
               </div>
@@ -322,7 +440,7 @@ export default function Home() {
                     List your Bambu Lab, Prusa, or Resin machines. Accept nearby orders matched via Leaflet GPS, print, deliver, and earn 70% per job.
                   </p>
                   <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-                    <Link href="/printers" className="btn btn-primary" style={{ background: '#2563eb', color: '#fff', padding: '12px 24px', borderRadius: 99, fontWeight: 700, textDecoration: 'none' }}>
+                    <Link href="/printers" className="btn btn-primary" style={{ background: '#FF6B35', color: '#fff', padding: '12px 24px', borderRadius: 99, fontWeight: 700, textDecoration: 'none' }}>
                       View Printer Hubs Map
                     </Link>
                     <Link href="/dashboard/printer-owner/register" className="btn btn-outline" style={{ borderColor: 'var(--border-color)', color: 'var(--text-main)', padding: '12px 24px', borderRadius: 99, textDecoration: 'none', fontWeight: 600 }}>
@@ -332,7 +450,7 @@ export default function Home() {
                 </div>
                 <div style={{ background: 'var(--bg-card-hover)', padding: 28, borderRadius: 20, border: '1px solid var(--border-color)' }}>
                   <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-main)', marginBottom: 8 }}>🖨️ Printer Payout Share:</div>
-                  <div style={{ fontSize: 24, fontWeight: 900, color: '#2563eb', marginBottom: 6 }}>70% Direct Payout</div>
+                  <div style={{ fontSize: 24, fontWeight: 900, color: '#FF6B35', marginBottom: 6 }}>70% Direct Payout</div>
                   <div style={{ fontSize: 13, color: 'var(--text-sub)' }}>Consistent local print job queue sent right to your printer dashboard.</div>
                 </div>
               </div>
@@ -375,7 +493,9 @@ export default function Home() {
         <div className="grid grid-cols-3 gap-6">
           {FEATURES.map((f) => (
             <div key={f.title} style={{ background: 'var(--bg-card)', padding: 30, borderRadius: 24, border: '1px solid var(--border-color)', boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
-              <div style={{ fontSize: 28, marginBottom: 16 }}>{f.icon}</div>
+              <div style={{ marginBottom: 16 }}>
+                <IconBadge>{renderIcon(f.type)}</IconBadge>
+              </div>
               <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-main)', marginBottom: 8 }}>{f.title}</div>
               <div style={{ fontSize: 14, color: 'var(--text-sub)', lineHeight: 1.6 }}>{f.text}</div>
             </div>
@@ -383,7 +503,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* FINAL CTA BAND — AUTH AWARE */}
+      {/* FINAL CTA BAND */}
       <section className="container section-sm" style={{ paddingBottom: 80 }}>
         <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', padding: '54px 36px', textAlign: 'center', borderRadius: 28, boxShadow: '0 10px 40px rgba(0,0,0,0.05)' }}>
           <h2 style={{ fontSize: 34, fontWeight: 900, marginBottom: 12, color: 'var(--text-main)' }}>
@@ -397,7 +517,7 @@ export default function Home() {
           <div style={{ display: 'flex', gap: 16, justifyContent: 'center', flexWrap: 'wrap' }}>
             {isLoggedIn ? (
               <>
-                <Link href="/dashboard/buyer" className="btn btn-primary btn-lg" style={{ background: '#ea580c', color: '#fff', padding: '14px 36px', borderRadius: 99, fontWeight: 800, textDecoration: 'none', boxShadow: '0 4px 16px rgba(234,88,12,0.35)' }}>
+                <Link href="/dashboard/buyer" className="btn btn-primary btn-lg" style={{ background: '#FF6B35', color: '#fff', padding: '14px 36px', borderRadius: 99, fontWeight: 800, textDecoration: 'none', boxShadow: '0 4px 16px rgba(255,107,53,0.35)' }}>
                   🚀 Go to My Dashboard
                 </Link>
                 <Link href="/shop" className="btn btn-outline btn-lg" style={{ borderColor: 'var(--border-color)', color: 'var(--text-main)', padding: '14px 32px', borderRadius: 99, background: 'var(--bg-card-hover)', textDecoration: 'none', fontWeight: 600 }}>
@@ -406,7 +526,7 @@ export default function Home() {
               </>
             ) : (
               <>
-                <Link href="/signup" className="btn btn-primary btn-lg" style={{ background: '#ea580c', color: '#fff', padding: '14px 36px', borderRadius: 99, fontWeight: 800, textDecoration: 'none', boxShadow: '0 4px 16px rgba(234,88,12,0.35)' }}>
+                <Link href="/signup" className="btn btn-primary btn-lg" style={{ background: '#FF6B35', color: '#fff', padding: '14px 36px', borderRadius: 99, fontWeight: 800, textDecoration: 'none', boxShadow: '0 4px 16px rgba(255,107,53,0.35)' }}>
                   Create Free Account
                 </Link>
                 <button
