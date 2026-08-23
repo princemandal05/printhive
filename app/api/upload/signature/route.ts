@@ -20,7 +20,6 @@ export async function GET(request: Request) {
     const fileSize = Number(searchParams.get('fileSize') || 0)
     const ext = searchParams.get('ext')?.toLowerCase() || (fileName ? fileName.split('.').pop()?.toLowerCase() || '' : '')
 
-    // Server-side extension and file size validation
     if (ext) {
       const isImgExt = ALLOWED_IMAGES.includes(ext)
       const isModelExt = ALLOWED_MODELS.includes(ext)
@@ -47,17 +46,14 @@ export async function GET(request: Request) {
     const apiKey = process.env.CLOUDINARY_API_KEY || '769894611263915'
     const apiSecret = process.env.CLOUDINARY_API_SECRET || 'x1_w3QLL94hJFrt8xVkjJgMBuEs'
 
-    const preset = isModel
-      ? (process.env.NEXT_PUBLIC_CLOUDINARY_PRESET_MODELS || 'printhive_models')
-      : (process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || 'printhive_uploads')
-
     const timestamp = Math.round(new Date().getTime() / 1000)
-    const folder = `printhive/${userId}`
-    const assetFolder = `printhive/${userId}`
+    const folder = isModel ? `printhive/${userId}/models` : `printhive/${userId}/images`
+    const assetFolder = folder
     const publicId = `${Date.now()}-${crypto.randomUUID().slice(0, 8)}`
+    const resourceType = isModel ? 'raw' : 'image'
 
-    // Generate signed parameter string for fallback signed endpoints
-    const strToSign = `asset_folder=${assetFolder}&folder=${folder}&public_id=${publicId}&timestamp=${timestamp}&upload_preset=${preset}${apiSecret}`
+    // Signed parameters for raw and image Cloudinary uploads
+    const strToSign = `asset_folder=${assetFolder}&folder=${folder}&public_id=${publicId}&timestamp=${timestamp}${apiSecret}`
     const signature = crypto.createHash('sha1').update(strToSign).digest('hex')
 
     return NextResponse.json({
@@ -66,12 +62,11 @@ export async function GET(request: Request) {
       folder,
       asset_folder: assetFolder,
       public_id: publicId,
-      upload_preset: preset,
       signature,
       api_key: apiKey,
       cloud_name: cloudName,
-      resource_type: 'auto',
-      unsigned: true,
+      resource_type: resourceType,
+      unsigned: false,
     })
   } catch (err: unknown) {
     const error = err as Error

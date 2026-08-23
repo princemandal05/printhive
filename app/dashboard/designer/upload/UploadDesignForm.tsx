@@ -217,6 +217,7 @@ export default function UploadDesignForm() {
               
               <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                 <CloudinaryUploader
+                  uploadType="model"
                   acceptType="model"
                   label="Upload 3D Model (.stl, .3mf, .obj, .glb, .gltf)"
                   onUploadStart={() => setIsUploadingModel(true)}
@@ -226,6 +227,7 @@ export default function UploadDesignForm() {
                 />
 
                 <CloudinaryUploader
+                  uploadType="image"
                   acceptType="image"
                   label="Upload Product Cover Image (.jpg, .png, .webp)"
                   onUploadSuccess={handleImageUploadSuccess}
