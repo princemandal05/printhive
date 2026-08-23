@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 
@@ -15,7 +16,6 @@ export default function NewRequestPage() {
   const [description, setDescription] = useState('')
   const [attachedFiles, setAttachedFiles] = useState<File[]>([])
   const [submitting, setSubmitting] = useState(false)
-
   const [formError, setFormError] = useState<string | null>(null)
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -30,15 +30,21 @@ export default function NewRequestPage() {
   }
 
   const handleSubmit = async () => {
+    if (!purpose.trim()) {
+      setFormError('Please enter what you want designed or manufactured.')
+      return
+    }
+
     setSubmitting(true)
     setFormError(null)
+
     try {
       const { createClient } = await import('@/utils/supabase/client')
       const supabase = createClient()
       const { data: { user }, error: authError } = await supabase.auth.getUser()
 
       if (authError || !user) {
-        setFormError('Authentication required. Please log in to post a brief.')
+        setFormError('Authentication required: Please log in to post a custom brief.')
         return
       }
 
@@ -70,12 +76,12 @@ export default function NewRequestPage() {
       const { error: insertErr } = await supabase.from('design_requests').insert({
         buyer_id: user.id,
         buyer_name: user.user_metadata?.full_name || user.email || 'Verified Buyer',
-        purpose,
-        dimensions,
-        material,
+        purpose: purpose.trim(),
+        dimensions: dimensions.trim() || 'Custom Size',
+        material: material || 'PLA',
         budget_min: Number(budgetMin || 0),
         budget_max: Number(budgetMax || 0),
-        description,
+        description: description.trim() || `Custom 3D model specification for ${purpose.trim()}.`,
         urgency: 'Standard',
         attachment_urls: uploadedUrls,
       })
@@ -95,115 +101,157 @@ export default function NewRequestPage() {
     }
   }
 
+  const inputStyle: React.CSSProperties = {
+    width: '100%',
+    background: '#F8FAFC',
+    border: '1px solid #CBD5E1',
+    borderRadius: 12,
+    padding: '12px 16px',
+    fontSize: 14,
+    color: '#0F172A',
+    outline: 'none',
+    boxSizing: 'border-box',
+    fontWeight: 600,
+  }
+
+  const labelStyle: React.CSSProperties = {
+    display: 'block',
+    fontSize: 13,
+    fontWeight: 800,
+    color: '#334155',
+    marginBottom: 6,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  }
+
   return (
-    <main style={{ minHeight: '100vh', background: 'var(--color-bg-dark, #0b0f19)', color: '#f8fafc' }}>
+    <main style={{ minHeight: '100vh', background: '#FAF8F5', color: '#0F172A' }}>
       <Navbar />
 
-      <section className="container section-sm" style={{ maxWidth: 720, margin: '0 auto', padding: '40px 20px' }}>
-        <div className="section-eyebrow" style={{ color: '#ff6b35', textTransform: 'uppercase', letterSpacing: 1.5, fontSize: 12, fontWeight: 700 }}>
-          Custom design request
+      <section style={{ maxWidth: 760, margin: '0 auto', padding: '40px 20px' }}>
+        {/* HEADER SECTION */}
+        <div style={{ marginBottom: 28 }}>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'rgba(255,107,53,0.12)', color: '#FF6B35', border: '1px solid rgba(255,107,53,0.3)', padding: '6px 16px', borderRadius: 99, fontSize: 12, fontWeight: 800, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 12 }}>
+            ✨ Custom 3D Design & Print Brief
+          </div>
+          <h1 style={{ fontSize: 32, fontWeight: 900, color: '#0F172A', margin: '0 0 8px', letterSpacing: '-0.5px' }}>
+            Request a Custom 3D Part
+          </h1>
+          <p style={{ color: '#64748B', fontSize: 15, lineHeight: 1.5, margin: 0 }}>
+            Describe what you need designed or manufactured. Top freelance 3D designers and verified print hubs will review your brief and submit competitive quotes.
+          </p>
         </div>
-        <h1 className="section-heading" style={{ fontSize: 32, fontWeight: 800, marginBottom: 8, background: 'linear-gradient(135deg, #fff 0%, #cbd5e1 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-          Post a Brief for 3D Designers
-        </h1>
-        <p className="section-subheading" style={{ color: '#94a3b8', marginBottom: 32, fontSize: 15 }}>
-          Describe what you need or upload your Word document specification brief. Top 3D designers will submit competitive bids with price and timeline.
-        </p>
 
-        <div className="card" style={{ background: 'rgba(30, 41, 59, 0.7)', backdropFilter: 'blur(12px)', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: 16, padding: 32, marginBottom: 24, boxShadow: '0 20px 40px rgba(0,0,0,0.3)' }}>
-          <div className="form-group" style={{ marginBottom: 20 }}>
-            <label className="label label-required" style={{ display: 'block', color: '#cbd5e1', fontSize: 14, fontWeight: 600, marginBottom: 8 }}>
-              What is this model for? *
+        {/* ERROR NOTIFICATION BANNER */}
+        {formError && (
+          <div style={{ background: '#FEF2F2', border: '1px solid #FECACA', color: '#991B1B', padding: '14px 20px', borderRadius: 14, fontSize: 14, fontWeight: 700, marginBottom: 24, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span>⚠️</span>
+              <span>{formError}</span>
+            </div>
+            <button
+              onClick={() => setFormError(null)}
+              style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontSize: 16, color: 'inherit', fontWeight: 900 }}
+            >
+              ✕
+            </button>
+          </div>
+        )}
+
+        {/* MAIN FORM CARD */}
+        <div style={{ background: '#FFFFFF', borderRadius: 20, border: '1px solid #E2E8F0', padding: 32, boxShadow: '0 8px 30px rgba(0,0,0,0.04)', marginBottom: 24 }}>
+          {/* PURPOSE */}
+          <div style={{ marginBottom: 20 }}>
+            <label style={labelStyle}>
+              What do you need designed or printed? *
             </label>
             <input
-              className="input"
-              placeholder="e.g. Replacement knob for washing machine, Iron Man helmet with custom name"
+              style={inputStyle}
+              placeholder="e.g. Replacement knob for washing machine, Custom Drone Battery Mount"
               value={purpose}
               onChange={(e) => setPurpose(e.target.value)}
-              style={{ width: '100%', padding: '12px 16px', background: '#0f172a', border: '1px solid #334155', borderRadius: 8, color: '#fff' }}
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 20 }}>
+          {/* DIMENSIONS & MATERIAL */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 20 }}>
             <div>
-              <label className="label" style={{ display: 'block', color: '#cbd5e1', fontSize: 14, fontWeight: 600, marginBottom: 8 }}>
-                Approximate dimensions
+              <label style={labelStyle}>
+                Approximate Dimensions
               </label>
               <input
-                className="input"
+                style={inputStyle}
                 placeholder="e.g. 15cm x 5cm x 2cm"
                 value={dimensions}
                 onChange={(e) => setDimensions(e.target.value)}
-                style={{ width: '100%', padding: '12px 16px', background: '#0f172a', border: '1px solid #334155', borderRadius: 8, color: '#fff' }}
               />
             </div>
             <div>
-              <label className="label" style={{ display: 'block', color: '#cbd5e1', fontSize: 14, fontWeight: 600, marginBottom: 8 }}>
-                Preferred material
+              <label style={labelStyle}>
+                Preferred Material
               </label>
               <select
-                className="select"
+                style={inputStyle}
                 value={material}
                 onChange={(e) => setMaterial(e.target.value)}
-                style={{ width: '100%', padding: '12px 16px', background: '#0f172a', border: '1px solid #334155', borderRadius: 8, color: '#fff' }}
               >
-                <option value="">No preference</option>
-                <option>PLA (Standard)</option>
-                <option>PETG (Durable)</option>
+                <option value="">No preference (Designer decides)</option>
+                <option>PLA (Standard Prototyping)</option>
+                <option>PETG (Durable & Weatherproof)</option>
                 <option>ABS (High Heat / Tough)</option>
-                <option>TPU (Flexible)</option>
-                <option>Resin (High Detail)</option>
+                <option>TPU (Flexible Rubber-like)</option>
+                <option>Resin (Ultra High Detail)</option>
               </select>
             </div>
           </div>
 
-          <div className="form-group" style={{ marginBottom: 20 }}>
-            <label className="label" style={{ display: 'block', color: '#cbd5e1', fontSize: 14, fontWeight: 600, marginBottom: 8 }}>
-              Budget range (₹)
+          {/* BUDGET RANGE */}
+          <div style={{ marginBottom: 20 }}>
+            <label style={labelStyle}>
+              Target Budget Range (₹)
             </label>
-            <div className="flex gap-3" style={{ display: 'flex', gap: 12 }}>
+            <div style={{ display: 'flex', gap: 14 }}>
               <input
-                className="input"
                 type="number"
-                placeholder="Min ₹"
+                min="0"
+                style={inputStyle}
+                placeholder="Min Budget (₹ e.g. 300)"
                 value={budgetMin}
                 onChange={(e) => setBudgetMin(e.target.value)}
-                style={{ flex: 1, padding: '12px 16px', background: '#0f172a', border: '1px solid #334155', borderRadius: 8, color: '#fff' }}
               />
               <input
-                className="input"
                 type="number"
-                placeholder="Max ₹"
+                min="0"
+                style={inputStyle}
+                placeholder="Max Budget (₹ e.g. 800)"
                 value={budgetMax}
                 onChange={(e) => setBudgetMax(e.target.value)}
-                style={{ flex: 1, padding: '12px 16px', background: '#0f172a', border: '1px solid #334155', borderRadius: 8, color: '#fff' }}
               />
             </div>
           </div>
 
-          <div className="form-group" style={{ marginBottom: 20 }}>
-            <label className="label label-required" style={{ display: 'block', color: '#cbd5e1', fontSize: 14, fontWeight: 600, marginBottom: 8 }}>
-              Detailed Description *
+          {/* DESCRIPTION */}
+          <div style={{ marginBottom: 20 }}>
+            <label style={labelStyle}>
+              Detailed Description & Requirements *
             </label>
             <textarea
-              className="textarea"
-              rows={4}
-              placeholder="Describe what you need in detail — shape, texture, function, mounting holes, or special features..."
+              style={{ ...inputStyle, minHeight: 110, resize: 'vertical' }}
+              placeholder="Describe your requirements in detail — shape, texture, function, mounting holes, or special constraints..."
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              style={{ width: '100%', padding: '12px 16px', background: '#0f172a', border: '1px solid #334155', borderRadius: 8, color: '#fff', resize: 'vertical' }}
             />
           </div>
 
-          {/* Reference Files: Images, Word Docs (.doc, .docx), PDFs */}
-          <div className="form-group" style={{ marginBottom: 12 }}>
-            <label className="label" style={{ display: 'block', color: '#cbd5e1', fontSize: 14, fontWeight: 600, marginBottom: 8 }}>
+          {/* REFERENCE ATTACHMENTS */}
+          <div style={{ marginBottom: 20 }}>
+            <label style={labelStyle}>
               Reference Specifications & Files
             </label>
             <input
               type="file"
               multiple
-              accept="image/*,.pdf,.doc,.docx"
+              accept="image/*,.pdf,.doc,.docx,.txt"
               onChange={handleFileChange}
               style={{ display: 'none' }}
               id="file-upload-input"
@@ -211,27 +259,36 @@ export default function NewRequestPage() {
             <label
               htmlFor="file-upload-input"
               style={{
-                display: 'inline-flex',
+                display: 'flex',
+                flexDirection: 'column',
                 alignItems: 'center',
-                gap: 8,
-                padding: '10px 18px',
-                background: '#1e293b',
-                border: '1px dashed #475569',
-                borderRadius: 8,
-                color: '#38bdf8',
-                fontSize: 13,
-                fontWeight: 600,
+                justifyContent: 'center',
+                gap: 6,
+                padding: '24px 20px',
+                background: '#F8FAFC',
+                border: '2px dashed #CBD5E1',
+                borderRadius: 14,
                 cursor: 'pointer',
+                textAlign: 'center',
+                transition: 'all 0.2s',
               }}
             >
-              📁 Attach Images or Word Docs (.docx)
+              <div style={{ fontSize: 28 }}>📁</div>
+              <div style={{ fontSize: 14, fontWeight: 800, color: '#0F172A' }}>
+                Click to attach reference photos, sketches, or Word/PDF specs
+              </div>
+              <div style={{ fontSize: 12, color: '#64748B' }}>
+                Supports PNG, JPG, PDF, DOCX, and TXT files (Up to 15MB each)
+              </div>
             </label>
           </div>
 
-          {/* Attached Files List */}
+          {/* ATTACHED FILES LIST */}
           {attachedFiles.length > 0 && (
-            <div style={{ marginBottom: 20 }}>
-              <div style={{ fontSize: 12, color: '#94a3b8', marginBottom: 8 }}>Attached files ({attachedFiles.length}):</div>
+            <div style={{ marginBottom: 24 }}>
+              <div style={{ fontSize: 12, fontWeight: 800, color: '#64748B', textTransform: 'uppercase', marginBottom: 8 }}>
+                Attached files ({attachedFiles.length}):
+              </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {attachedFiles.map((file, idx) => (
                   <div
@@ -240,28 +297,22 @@ export default function NewRequestPage() {
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'space-between',
-                      background: '#0f172a',
-                      padding: '10px 14px',
-                      borderRadius: 8,
-                      border: '1px solid #334155',
+                      background: '#F1F5F9',
+                      padding: '10px 16px',
+                      borderRadius: 10,
+                      border: '1px solid #E2E8F0',
                       fontSize: 13,
                     }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                      <span>
-                        {file.name.endsWith('.doc') || file.name.endsWith('.docx')
-                          ? '📝'
-                          : file.name.endsWith('.pdf')
-                          ? '📄'
-                          : '🖼️'}
-                      </span>
-                      <span style={{ color: '#f1f5f9', fontWeight: 500 }}>{file.name}</span>
-                      <span style={{ color: '#64748b', fontSize: 11 }}>({(file.size / 1024 / 1024).toFixed(2)} MB)</span>
+                      <span>📄</span>
+                      <span style={{ fontWeight: 800, color: '#0F172A' }}>{file.name}</span>
+                      <span style={{ fontSize: 11, color: '#64748B' }}>({(file.size / 1024 / 1024).toFixed(2)} MB)</span>
                     </div>
                     <button
                       type="button"
                       onClick={() => removeFile(idx)}
-                      style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', fontWeight: 700 }}
+                      style={{ background: 'transparent', border: 'none', color: '#EF4444', fontSize: 16, cursor: 'pointer', fontWeight: 900 }}
                     >
                       ✕
                     </button>
@@ -270,34 +321,30 @@ export default function NewRequestPage() {
               </div>
             </div>
           )}
+
+          {/* SUBMIT BUTTON */}
+          <button
+            onClick={handleSubmit}
+            disabled={submitting || !purpose.trim()}
+            style={{
+              width: '100%',
+              background: submitting || !purpose.trim()
+                ? '#94A3B8'
+                : 'linear-gradient(135deg, #FF6B35 0%, #F97316 100%)',
+              color: '#fff',
+              border: 'none',
+              padding: '16px 32px',
+              borderRadius: 16,
+              fontSize: 16,
+              fontWeight: 900,
+              cursor: submitting || !purpose.trim() ? 'not-allowed' : 'pointer',
+              boxShadow: '0 8px 24px rgba(255,107,53,0.35)',
+              transition: 'all 0.2s ease',
+            }}
+          >
+            {submitting ? 'Submitting Your Custom Brief…' : '🚀 Post Custom Design Brief'}
+          </button>
         </div>
-
-        {formError && (
-          <div role="alert" style={{ background: '#7F1D1D', border: '1px solid #EF4444', color: '#FCA5A5', padding: '12px 16px', borderRadius: 8, fontSize: 14, marginBottom: 16, fontWeight: 600 }}>
-            ⚠️ {formError}
-          </div>
-        )}
-
-        <button
-          className="btn btn-primary btn-block btn-lg"
-          disabled={submitting || !purpose || !description}
-          onClick={handleSubmit}
-          style={{
-            width: '100%',
-            padding: '16px 0',
-            background: 'linear-gradient(135deg, #ff6b35 0%, #f97316 100%)',
-            color: '#fff',
-            border: 'none',
-            borderRadius: 10,
-            fontSize: 16,
-            fontWeight: 700,
-            cursor: 'pointer',
-            boxShadow: '0 10px 25px rgba(255, 107, 53, 0.4)',
-            opacity: submitting || !purpose || !description ? 0.6 : 1,
-          }}
-        >
-          {submitting ? 'Posting brief to marketplace...' : 'Post Custom Design Brief'}
-        </button>
       </section>
 
       <Footer />
