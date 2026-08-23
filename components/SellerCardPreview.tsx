@@ -49,9 +49,14 @@ export default function SellerCardPreview({
     setTilt({ x: 0, y: 0 })
   }
 
+  const hasStockInput = stock.trim().length > 0
   const stockNum = parseInt(stock, 10)
-  const isInStock = !isNaN(stockNum) ? stockNum > 0 : true
-  const displayStock = !isNaN(stockNum) ? stockNum : 15
+  const isInStock = hasStockInput ? !isNaN(stockNum) && stockNum > 0 : true
+  const stockBadgeText = hasStockInput
+    ? isInStock
+      ? `In Stock (${stockNum})`
+      : 'Out of Stock'
+    : 'Stock (--)'
 
   return (
     <div style={{ position: 'sticky', top: 24 }}>
@@ -186,7 +191,11 @@ export default function SellerCardPreview({
                 position: 'absolute',
                 top: 12,
                 right: 12,
-                background: isInStock ? 'rgba(16, 185, 129, 0.95)' : 'rgba(239, 68, 68, 0.95)',
+                background: hasStockInput
+                  ? isInStock
+                    ? 'rgba(16, 185, 129, 0.95)'
+                    : 'rgba(239, 68, 68, 0.95)'
+                  : 'rgba(100, 116, 139, 0.85)',
                 color: '#FFFFFF',
                 padding: '4px 10px',
                 borderRadius: 99,
@@ -197,27 +206,27 @@ export default function SellerCardPreview({
                 zIndex: 6,
               }}
             >
-              {isInStock ? `In Stock (${displayStock})` : 'Out of Stock'}
+              {stockBadgeText}
             </div>
           </div>
 
           {/* CARD METADATA BODY */}
           <div style={{ padding: 18 }}>
             <div style={{ fontSize: 11, color: '#FF6B35', fontWeight: 800, textTransform: 'uppercase', marginBottom: 4, letterSpacing: 0.5 }}>
-              {category || 'Home Décor'}
+              {category || 'Category'}
             </div>
 
-            <div style={{ fontSize: 16, fontWeight: 900, color: '#0F172A', marginBottom: 8, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-              {name.trim() || 'Product Title Preview'}
+            <div style={{ fontSize: 16, fontWeight: 900, color: name.trim() ? '#0F172A' : '#94A3B8', marginBottom: 8, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              {name.trim() || 'Product Title'}
             </div>
 
-            <div style={{ fontSize: 12, color: '#64748B', marginBottom: 14, height: 36, overflow: 'hidden', textOverflow: 'ellipsis', lineHeight: 1.4 }}>
-              {description.trim() || 'Product description preview will appear here as you type...'}
+            <div style={{ fontSize: 12, color: description.trim() ? '#64748B' : '#94A3B8', marginBottom: 14, height: 36, overflow: 'hidden', textOverflow: 'ellipsis', lineHeight: 1.4 }}>
+              {description.trim() || 'Product description will appear here as you type...'}
             </div>
 
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div style={{ fontSize: 22, fontWeight: 900, color: '#0F172A', letterSpacing: '-0.5px' }}>
-                ₹{price || '799'}
+              <div style={{ fontSize: 22, fontWeight: 900, color: price ? '#0F172A' : '#94A3B8', letterSpacing: '-0.5px' }}>
+                {price ? `₹${price}` : '₹---'}
               </div>
               <span
                 style={{

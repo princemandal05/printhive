@@ -26,7 +26,7 @@ export default function NewProductForm() {
   const [name, setName] = useState('')
   const [category, setCategory] = useState(CATEGORIES[0])
   const [price, setPrice] = useState('')
-  const [stock, setStock] = useState('15')
+  const [stock, setStock] = useState('')
   const [description, setDescription] = useState('')
   const [tags, setTags] = useState<string[]>([])
   const [photoName, setPhotoName] = useState('')
@@ -456,7 +456,7 @@ export default function NewProductForm() {
                     min="1"
                     step="1"
                     style={inputStyle}
-                    placeholder="799"
+                    placeholder="e.g. 799"
                     value={price}
                     onChange={(e) => setPrice(e.target.value)}
                   />
@@ -468,7 +468,7 @@ export default function NewProductForm() {
                     min="0"
                     step="1"
                     style={inputStyle}
-                    placeholder="15"
+                    placeholder="e.g. 15"
                     value={stock}
                     onChange={(e) => setStock(e.target.value)}
                   />
