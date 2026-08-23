@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server'
 import crypto from 'crypto'
+import fs from 'fs'
+import path from 'path'
 
 // Maximum file upload limits
 const MAX_IMAGE_SIZE = 10 * 1024 * 1024 // 10MB for images
@@ -93,6 +95,24 @@ export async function POST(request: Request) {
       }
     }
 
+    const publicId = `${Date.now()}-${crypto.randomUUID().slice(0, 8)}`
+
+    // Save actual file bytes to local public/uploads storage so files are 100% accessible via URL
+    const fileArrayBuffer = await file.arrayBuffer()
+    const fileBuffer = Buffer.from(fileArrayBuffer)
+
+    const uploadsDir = path.join(process.cwd(), 'public/uploads')
+    if (!fs.existsSync(uploadsDir)) {
+      fs.mkdirSync(uploadsDir, { recursive: true })
+    }
+
+    const localFileName = `${publicId}.${ext}`
+    const localFilePath = path.join(uploadsDir, localFileName)
+    fs.writeFileSync(localFilePath, fileBuffer)
+
+    const localPublicUrl = `/uploads/${localFileName}`
+
+    // Attempt Cloudinary upload as secondary CDN distribution
     const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || 'r8wjszjm'
     const apiKey = process.env.CLOUDINARY_API_KEY || '769894611263915'
     const apiSecret = process.env.CLOUDINARY_API_SECRET || 'x1_w3QLL94hJFrt8xVkjJgMBuEs'
@@ -102,7 +122,6 @@ export async function POST(request: Request) {
 
     const folder = `printhive/${userId}`
     const assetFolder = `printhive/${userId}`
-    const publicId = `${Date.now()}-${crypto.randomUUID().slice(0, 8)}`
     const timestamp = Math.round(new Date().getTime() / 1000)
 
     const strToSign = `asset_folder=${assetFolder}&folder=${folder}&public_id=${publicId}&timestamp=${timestamp}&upload_preset=${preset}${apiSecret}`
@@ -141,42 +160,22 @@ export async function POST(request: Request) {
           bytes: data.bytes || file.size,
         })
       }
-
-      // If Cloudinary rejects 3D raw format or returns an upload restriction, return resilient storage URL
-      console.warn('Cloudinary API response note:', data.error?.message)
-      const storageUrl = isModel
-        ? `https://storage.googleapis.com/printhive-demo-models/${publicId}.${ext}`
-        : 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=800&q=80'
-
-      return NextResponse.json({
-        success: true,
-        url: storageUrl,
-        secure_url: storageUrl,
-        cloudinary_public_id: publicId,
-        public_id: publicId,
-        resource_type: isModel ? 'raw' : 'image',
-        format: ext,
-        file_size: file.size,
-        bytes: file.size,
-      })
-    } catch (err) {
-      console.warn('Cloudinary network exception, returning verified asset URL:', err)
-      const storageUrl = isModel
-        ? `https://storage.googleapis.com/printhive-demo-models/${publicId}.${ext}`
-        : 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=800&q=80'
-
-      return NextResponse.json({
-        success: true,
-        url: storageUrl,
-        secure_url: storageUrl,
-        cloudinary_public_id: publicId,
-        public_id: publicId,
-        resource_type: isModel ? 'raw' : 'image',
-        format: ext,
-        file_size: file.size,
-        bytes: file.size,
-      })
+    } catch {
+      // Continue to return real local file URL
     }
+
+    // Return the actual saved file URL from public/uploads
+    return NextResponse.json({
+      success: true,
+      url: localPublicUrl,
+      secure_url: localPublicUrl,
+      cloudinary_public_id: publicId,
+      public_id: publicId,
+      resource_type: isModel ? 'raw' : 'image',
+      format: ext,
+      file_size: file.size,
+      bytes: file.size,
+    })
   } catch (err: unknown) {
     const error = err as Error
     console.error('Upload route failure:', error)
