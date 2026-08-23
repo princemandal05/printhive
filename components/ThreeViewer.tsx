@@ -7,7 +7,7 @@ import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 import { ThreeMFLoader } from 'three/examples/jsm/loaders/3MFLoader.js'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
-import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js'
+import * as BufferGeometryUtils from 'three/examples/jsm/utils/BufferGeometryUtils.js'
 import { detectModelFormat, type ModelFormat } from '@/utils/format-detector'
 
 type CanvasTheme = 'dark' | 'slate' | 'pearl'
@@ -106,7 +106,7 @@ function ThreeViewerInner({
   const controlsRef = useRef<OrbitControls | null>(null)
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null)
   const groupRef = useRef<THREE.Group | null>(null)
-  const matsRef = useRef<THREE.MeshPhysicalMaterial[]>([])
+  const matsRef = useRef<THREE.MeshStandardMaterial[]>([])
   const initialCamPos = useRef<THREE.Vector3>(new THREE.Vector3())
 
   const detected = detectModelFormat({ format, fileName, mimeType, url: modelUrl })
@@ -183,21 +183,11 @@ function ThreeViewerInner({
     renderer.setSize(w, h)
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
     renderer.toneMapping = THREE.ACESFilmicToneMapping
-    renderer.toneMappingExposure = 1.08
+    renderer.toneMappingExposure = 1.15
     renderer.shadowMap.enabled = true
     renderer.shadowMap.type = THREE.PCFSoftShadowMap
     container.innerHTML = ''
     container.appendChild(renderer.domElement)
-
-    // ─── High-Definition HDR Studio Environment ──────────
-    // Provides realistic micro-reflections & curvature depth on sculpts/creases
-    const pmrem = new THREE.PMREMGenerator(renderer)
-    pmrem.compileEquirectangularShader()
-    const roomEnv = new RoomEnvironment()
-    const envTexture = pmrem.fromScene(roomEnv, 0.04).texture
-    scene.environment = envTexture
-    roomEnv.dispose()
-    pmrem.dispose()
 
     // Smooth orbit controls
     const controls = new OrbitControls(camera, renderer.domElement)
@@ -210,21 +200,21 @@ function ThreeViewerInner({
     controls.minDistance = 2
     controlsRef.current = controls
 
-    // ─── High-Contrast 6-Point Studio Lighting ───────────
-    // 1. Ambient fill
-    scene.add(new THREE.AmbientLight(0xffffff, 0.75))
+    // ─── Studio 5-Point Clean Lighting ───────────────────
+    // 1. Ambient fill for gentle baseline illumination
+    scene.add(new THREE.AmbientLight(0xffffff, 0.9))
 
-    // 2. Soft sky/ground bounce
-    scene.add(new THREE.HemisphereLight(0xffffff, 0x334155, 0.6))
+    // 2. Soft sky/ground hemisphere
+    scene.add(new THREE.HemisphereLight(0xffffff, 0x334155, 0.7))
 
-    // 3. Camera Ring Light: directly follows view to highlight front details
-    const cameraRingLight = new THREE.DirectionalLight(0xffffff, 0.85)
+    // 3. Camera Ring Light: illuminates from view direction
+    const cameraRingLight = new THREE.DirectionalLight(0xffffff, 0.75)
     cameraRingLight.position.set(0, 0, 1)
     camera.add(cameraRingLight)
 
-    // 4. Primary Key Light (45° right-top for sculpted edge shadow contrast)
-    const keyLight = new THREE.DirectionalLight(0xffffff, 1.2)
-    keyLight.position.set(60, 80, 90)
+    // 4. Primary Studio Key Light
+    const keyLight = new THREE.DirectionalLight(0xffffff, 1.1)
+    keyLight.position.set(70, 90, 100)
     keyLight.castShadow = true
     keyLight.shadow.bias = -0.0001
     scene.add(keyLight)
@@ -234,8 +224,8 @@ function ThreeViewerInner({
     fillLight.position.set(-80, 50, 70)
     scene.add(fillLight)
 
-    // 6. Silhouette Rim Light (Gives crisp edge separation from background)
-    const rimLight = new THREE.DirectionalLight(0xffedd5, 0.95)
+    // 6. Silhouette Rim Light (Clean edge separation)
+    const rimLight = new THREE.DirectionalLight(0xffedd5, 0.85)
     rimLight.position.set(0, 90, -120)
     scene.add(rimLight)
 
@@ -270,18 +260,12 @@ function ThreeViewerInner({
     groupRef.current = group
     scene.add(group)
 
-    // High-Definition PBR Filament Material with Sheen & Micro-Contrast
-    const makeMat = (): THREE.MeshPhysicalMaterial => {
-      const mat = new THREE.MeshPhysicalMaterial({
+    // Clean Satin Filament Material (Smooth, continuous shading, zero faceted artifacts)
+    const makeMat = (): THREE.MeshStandardMaterial => {
+      const mat = new THREE.MeshStandardMaterial({
         color: new THREE.Color(safeColor),
-        roughness: 0.36, // Balanced satin polymer sheen that brings out sculpt detail
-        metalness: 0.04,
-        clearcoat: 0.3, // Micro-clearcoat adds crisp edge specular definition
-        clearcoatRoughness: 0.18,
-        reflectivity: 0.65,
-        sheen: 0.5, // Sheen accentuates creases, folds, hair, and edges
-        sheenColor: new THREE.Color(0xffffff),
-        sheenRoughness: 0.25,
+        roughness: 0.35,
+        metalness: 0.05,
         wireframe,
         side: THREE.DoubleSide,
       })
@@ -289,15 +273,26 @@ function ThreeViewerInner({
       return mat
     }
 
+    // Helper: Welds duplicate CAD/STL vertices and calculates smooth continuous normals
+    const smoothMeshGeometry = (mesh: THREE.Mesh) => {
+      if (!mesh.geometry) return
+      try {
+        const welded = BufferGeometryUtils.mergeVertices(mesh.geometry, 1e-4)
+        welded.computeVertexNormals()
+        mesh.geometry.dispose()
+        mesh.geometry = welded
+      } catch {
+        mesh.geometry.computeVertexNormals()
+      }
+      mesh.material = makeMat()
+      mesh.castShadow = true
+      mesh.receiveShadow = true
+    }
+
     const styleMeshes = (root: THREE.Object3D) => {
       root.traverse(child => {
         if (child instanceof THREE.Mesh) {
-          if (!child.geometry.attributes.normal) {
-            child.geometry.computeVertexNormals()
-          }
-          child.material = makeMat()
-          child.castShadow = true
-          child.receiveShadow = true
+          smoothMeshGeometry(child)
         }
       })
     }
@@ -363,11 +358,10 @@ function ThreeViewerInner({
         if (fmt === 'stl') {
           const buf = (await fetchModelData(modelUrl)) as ArrayBuffer
           if (disposed) return
-          const geo = new STLLoader().parse(buf)
-          if (!geo?.attributes?.position?.count) throw new Error('Empty STL')
-          if (!geo.attributes.normal) geo.computeVertexNormals()
-          const mesh = new THREE.Mesh(geo, makeMat())
-          mesh.castShadow = true; mesh.receiveShadow = true
+          const rawGeo = new STLLoader().parse(buf)
+          if (!rawGeo?.attributes?.position?.count) throw new Error('Empty STL')
+          const mesh = new THREE.Mesh(rawGeo, makeMat())
+          smoothMeshGeometry(mesh)
           group.add(mesh)
           fitCamera(group); setLoading(false)
 
@@ -465,7 +459,6 @@ function ThreeViewerInner({
       window.removeEventListener('mouseup', onMouseUp)
       dom.removeEventListener('dblclick', onDblClick)
       controls.dispose()
-      envTexture?.dispose()
       scene.clear()
       renderer.dispose()
       matsRef.current.forEach(m => m.dispose())
