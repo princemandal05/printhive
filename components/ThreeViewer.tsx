@@ -7,6 +7,7 @@ import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 import { ThreeMFLoader } from 'three/examples/jsm/loaders/3MFLoader.js'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
+import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js'
 import { detectModelFormat, type ModelFormat } from '@/utils/format-detector'
 
 type CanvasTheme = 'dark' | 'slate' | 'pearl'
@@ -182,11 +183,21 @@ function ThreeViewerInner({
     renderer.setSize(w, h)
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
     renderer.toneMapping = THREE.ACESFilmicToneMapping
-    renderer.toneMappingExposure = 1.2
+    renderer.toneMappingExposure = 1.08
     renderer.shadowMap.enabled = true
     renderer.shadowMap.type = THREE.PCFSoftShadowMap
     container.innerHTML = ''
     container.appendChild(renderer.domElement)
+
+    // ─── High-Definition HDR Studio Environment ──────────
+    // Provides realistic micro-reflections & curvature depth on sculpts/creases
+    const pmrem = new THREE.PMREMGenerator(renderer)
+    pmrem.compileEquirectangularShader()
+    const roomEnv = new RoomEnvironment()
+    const envTexture = pmrem.fromScene(roomEnv, 0.04).texture
+    scene.environment = envTexture
+    roomEnv.dispose()
+    pmrem.dispose()
 
     // Smooth orbit controls
     const controls = new OrbitControls(camera, renderer.domElement)
@@ -199,34 +210,33 @@ function ThreeViewerInner({
     controls.minDistance = 2
     controlsRef.current = controls
 
-    // ─── Studio 5-Point Portrait & Product Lighting ──────────
-    // 1. Balanced Ambient Light: lifts dark crevices and facial shadows
-    scene.add(new THREE.AmbientLight(0xffffff, 0.85))
+    // ─── High-Contrast 6-Point Studio Lighting ───────────
+    // 1. Ambient fill
+    scene.add(new THREE.AmbientLight(0xffffff, 0.75))
 
-    // 2. Soft Sky/Ground Hemisphere Light
-    scene.add(new THREE.HemisphereLight(0xffffff, 0x475569, 0.65))
+    // 2. Soft sky/ground bounce
+    scene.add(new THREE.HemisphereLight(0xffffff, 0x334155, 0.6))
 
-    // 3. Camera-Attached Frontal Headlight / Ring-Light:
-    // Follows the user's view so the front face and contours are ALWAYS crystal clear!
-    const cameraRingLight = new THREE.DirectionalLight(0xffffff, 0.8)
+    // 3. Camera Ring Light: directly follows view to highlight front details
+    const cameraRingLight = new THREE.DirectionalLight(0xffffff, 0.85)
     cameraRingLight.position.set(0, 0, 1)
     camera.add(cameraRingLight)
 
-    // 4. Primary Studio Key Light (gentle 45° angle, not harsh top-down)
-    const keyLight = new THREE.DirectionalLight(0xffffff, 1.1)
-    keyLight.position.set(60, 80, 100)
+    // 4. Primary Key Light (45° right-top for sculpted edge shadow contrast)
+    const keyLight = new THREE.DirectionalLight(0xffffff, 1.2)
+    keyLight.position.set(60, 80, 90)
     keyLight.castShadow = true
     keyLight.shadow.bias = -0.0001
     scene.add(keyLight)
 
-    // 5. Fill Light (Soft cool light from front-left)
-    const fillLight = new THREE.DirectionalLight(0xdbeafe, 0.65)
-    fillLight.position.set(-80, 50, 80)
+    // 5. Fill Light (Soft cool fill from left)
+    const fillLight = new THREE.DirectionalLight(0xdbeafe, 0.6)
+    fillLight.position.set(-80, 50, 70)
     scene.add(fillLight)
 
-    // 6. Silhouette Rim Light (Warm backlight from behind)
-    const rimLight = new THREE.DirectionalLight(0xffedd5, 0.9)
-    rimLight.position.set(0, 80, -120)
+    // 6. Silhouette Rim Light (Gives crisp edge separation from background)
+    const rimLight = new THREE.DirectionalLight(0xffedd5, 0.95)
+    rimLight.position.set(0, 90, -120)
     scene.add(rimLight)
 
     // ─── Soft Contact Shadow Plane ──────────────────────
@@ -236,7 +246,7 @@ function ThreeViewerInner({
     const ctx = shadowCanvas.getContext('2d')
     if (ctx) {
       const grad = ctx.createRadialGradient(64, 64, 0, 64, 64, 64)
-      grad.addColorStop(0, 'rgba(0, 0, 0, 0.4)')
+      grad.addColorStop(0, 'rgba(0, 0, 0, 0.45)')
       grad.addColorStop(0.5, 'rgba(0, 0, 0, 0.12)')
       grad.addColorStop(1, 'rgba(0, 0, 0, 0)')
       ctx.fillStyle = grad
@@ -260,15 +270,18 @@ function ThreeViewerInner({
     groupRef.current = group
     scene.add(group)
 
-    // PBR filament material factory with balanced satin-diffuse sheen
+    // High-Definition PBR Filament Material with Sheen & Micro-Contrast
     const makeMat = (): THREE.MeshPhysicalMaterial => {
       const mat = new THREE.MeshPhysicalMaterial({
         color: new THREE.Color(safeColor),
-        roughness: 0.42, // Smooth satin finish that reveals fine sculpt folds & contours
+        roughness: 0.36, // Balanced satin polymer sheen that brings out sculpt detail
         metalness: 0.04,
-        clearcoat: 0.2,
-        clearcoatRoughness: 0.25,
-        reflectivity: 0.5,
+        clearcoat: 0.3, // Micro-clearcoat adds crisp edge specular definition
+        clearcoatRoughness: 0.18,
+        reflectivity: 0.65,
+        sheen: 0.5, // Sheen accentuates creases, folds, hair, and edges
+        sheenColor: new THREE.Color(0xffffff),
+        sheenRoughness: 0.25,
         wireframe,
         side: THREE.DoubleSide,
       })
@@ -279,7 +292,9 @@ function ThreeViewerInner({
     const styleMeshes = (root: THREE.Object3D) => {
       root.traverse(child => {
         if (child instanceof THREE.Mesh) {
-          child.geometry?.computeVertexNormals()
+          if (!child.geometry.attributes.normal) {
+            child.geometry.computeVertexNormals()
+          }
           child.material = makeMat()
           child.castShadow = true
           child.receiveShadow = true
@@ -350,7 +365,7 @@ function ThreeViewerInner({
           if (disposed) return
           const geo = new STLLoader().parse(buf)
           if (!geo?.attributes?.position?.count) throw new Error('Empty STL')
-          geo.computeVertexNormals()
+          if (!geo.attributes.normal) geo.computeVertexNormals()
           const mesh = new THREE.Mesh(geo, makeMat())
           mesh.castShadow = true; mesh.receiveShadow = true
           group.add(mesh)
@@ -450,6 +465,7 @@ function ThreeViewerInner({
       window.removeEventListener('mouseup', onMouseUp)
       dom.removeEventListener('dblclick', onDblClick)
       controls.dispose()
+      envTexture?.dispose()
       scene.clear()
       renderer.dispose()
       matsRef.current.forEach(m => m.dispose())
