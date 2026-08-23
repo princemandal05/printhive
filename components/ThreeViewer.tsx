@@ -9,6 +9,8 @@ import { ThreeMFLoader } from 'three/examples/jsm/loaders/3MFLoader.js'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import { detectModelFormat, type ModelFormat } from '@/utils/format-detector'
 
+export type FilamentFinish = 'silky' | 'matte' | 'glossy' | 'metallic'
+
 interface ThreeViewerProps {
   title?: string
   color?: string
@@ -92,7 +94,7 @@ function ThreeViewerContent({
   color = '#FF6B35',
   wireframeDefault = false,
   autoRotateDefault = false,
-  height = 440,
+  height = 460,
   modelUrl,
   format,
   fileName,
@@ -100,20 +102,39 @@ function ThreeViewerContent({
   dimensions = { x: 50, y: 50, z: 50 },
 }: ThreeViewerProps) {
   const mountRef = useRef<HTMLDivElement>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
 
+  // Loading & Error States
   const [loadingModel, setLoadingModel] = useState(true)
+  const [unsupportedFormat, setUnsupportedFormat] = useState<string | null>(null)
+  const [modelLoadError, setModelLoadError] = useState<string | null>(null)
+
+  // Interactive Viewport Controls
   const [wireframe, setWireframe] = useState(wireframeDefault)
   const [rotating, setRotating] = useState(autoRotateDefault)
   const rotatingRef = useRef(rotating)
   const [showEdges, setShowEdges] = useState(true)
-  const [computedBounds, setComputedBounds] = useState({ x: dimensions.x, y: dimensions.y, z: dimensions.z })
-  const [unsupportedFormat, setUnsupportedFormat] = useState<string | null>(null)
-  const [modelLoadError, setModelLoadError] = useState<string | null>(null)
+  const [showGrid, setShowGrid] = useState(true)
+  const [isFullscreen, setIsFullscreen] = useState(false)
+  const [finish, setFinish] = useState<FilamentFinish>('silky')
+  const [sliceProgress, setSliceProgress] = useState(100)
+  const [isSlicingActive, setIsSlicingActive] = useState(false)
 
+  // Geometry Diagnostics
+  const [computedBounds, setComputedBounds] = useState({ x: dimensions.x, y: dimensions.y, z: dimensions.z })
+  const [stats, setStats] = useState({ triangles: 0, vertices: 0 })
+
+  // Three.js References
+  const rendererRef = useRef<THREE.WebGLRenderer | null>(null)
+  const sceneRef = useRef<THREE.Scene | null>(null)
+  const cameraRef = useRef<THREE.PerspectiveCamera | null>(null)
   const controlsRef = useRef<OrbitControls | null>(null)
   const groupRef = useRef<THREE.Group | null>(null)
   const edgesGroupRef = useRef<THREE.Group | null>(null)
+  const gridHelperRef = useRef<THREE.GridHelper | null>(null)
   const materialsRef = useRef<THREE.MeshPhysicalMaterial[]>([])
+  const clippingPlaneRef = useRef<THREE.Plane | null>(null)
+  const modelHeightRef = useRef<number>(50)
 
   const detectedInfo = detectModelFormat({
     format,
@@ -125,7 +146,7 @@ function ThreeViewerContent({
 
   const validColor = /^#[0-9A-F]{6}$/i.test(color || '') ? color : '#FF6B35'
 
-  // Update rotation ref and controls
+  // Update rotation state and OrbitControls
   useEffect(() => {
     rotatingRef.current = rotating
     if (controlsRef.current) {
@@ -140,14 +161,69 @@ function ThreeViewerContent({
     })
   }, [wireframe])
 
-  // Toggle feature edges
+  // Toggle CAD feature contour lines
   useEffect(() => {
     if (edgesGroupRef.current) {
       edgesGroupRef.current.visible = showEdges && !wireframe
     }
   }, [showEdges, wireframe])
 
-  // Dynamic Filament Color Update without reloading geometry
+  // Toggle 3D printer build plate grid
+  useEffect(() => {
+    if (gridHelperRef.current) {
+      gridHelperRef.current.visible = showGrid
+    }
+  }, [showGrid])
+
+  // Update Filament Finish Shading (Silky, Matte, Glossy, Metallic)
+  useEffect(() => {
+    materialsRef.current.forEach((mat) => {
+      switch (finish) {
+        case 'matte':
+          mat.roughness = 0.75
+          mat.metalness = 0.02
+          mat.clearcoat = 0.0
+          mat.clearcoatRoughness = 0.0
+          break
+        case 'glossy':
+          mat.roughness = 0.12
+          mat.metalness = 0.05
+          mat.clearcoat = 0.85
+          mat.clearcoatRoughness = 0.05
+          break
+        case 'metallic':
+          mat.roughness = 0.32
+          mat.metalness = 0.75
+          mat.clearcoat = 0.2
+          mat.clearcoatRoughness = 0.1
+          break
+        case 'silky':
+        default:
+          mat.roughness = 0.28
+          mat.metalness = 0.08
+          mat.clearcoat = 0.35
+          mat.clearcoatRoughness = 0.15
+          break
+      }
+      mat.needsUpdate = true
+    })
+  }, [finish])
+
+  // Real-time Slicing Layer Height Simulation
+  useEffect(() => {
+    if (!clippingPlaneRef.current || !rendererRef.current) return
+
+    if (isSlicingActive && sliceProgress < 100) {
+      rendererRef.current.clippingPlanes = [clippingPlaneRef.current]
+      const halfH = modelHeightRef.current / 2
+      const cutoff = -halfH + (sliceProgress / 100) * modelHeightRef.current
+      clippingPlaneRef.current.constant = cutoff
+    } else {
+      rendererRef.current.clippingPlanes = []
+    }
+  }, [sliceProgress, isSlicingActive])
+
+  // Dynamic Filament Color Sync
   useEffect(() => {
     if (!groupRef.current) return
     const threeColor = new THREE.Color(validColor)
@@ -157,38 +233,59 @@ function ThreeViewerContent({
     })
   }, [validColor])
 
+  // Escape key exits fullscreen
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isFullscreen) {
+        setIsFullscreen(false)
+      }
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [isFullscreen])
+
+  // Main Three.js Scene Setup
   useEffect(() => {
     if (!mountRef.current) return
 
     const width = mountRef.current.clientWidth || 600
-    const heightPx = typeof height === 'number' ? height : mountRef.current.clientHeight || 440
+    const heightPx = isFullscreen
+      ? window.innerHeight
+      : typeof height === 'number'
+      ? height
+      : mountRef.current.clientHeight || 460
 
     let isDisposed = false
     materialsRef.current = []
 
-    // Setup Three.js Scene, Camera, Renderer
+    // Scene & Deep Slate Radial Gradient
     const scene = new THREE.Scene()
     scene.background = new THREE.Color('#0B0F19')
+    sceneRef.current = scene
 
     const camera = new THREE.PerspectiveCamera(40, width / heightPx, 0.1, 3000)
-    camera.position.set(0, 40, 140)
+    camera.position.set(0, 45, 140)
+    cameraRef.current = camera
 
     const renderer = new THREE.WebGLRenderer({
       antialias: true,
       alpha: true,
+      preserveDrawingBuffer: true, // Allows clean snapshots
       powerPreference: 'high-performance',
     })
     renderer.setSize(width, heightPx)
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
     renderer.toneMapping = THREE.ACESFilmicToneMapping
-    renderer.toneMappingExposure = 1.15
+    renderer.toneMappingExposure = 1.2
     renderer.shadowMap.enabled = true
     renderer.shadowMap.type = THREE.PCFSoftShadowMap
+    renderer.localClippingEnabled = true
+    rendererRef.current = renderer
 
     mountRef.current.innerHTML = ''
     mountRef.current.appendChild(renderer.domElement)
 
-    // OrbitControls for professional CAD inspection
+    // OrbitControls for CAD navigation
     const controls = new OrbitControls(camera, renderer.domElement)
     controls.enableDamping = true
     controls.dampingFactor = 0.06
@@ -198,34 +295,40 @@ function ThreeViewerContent({
     controls.enablePan = true
     controlsRef.current = controls
 
-    // Professional Studio Lighting for 3D Print CAD Definition
-    // 1. Hemisphere light (sky / ground subtle gradient)
-    const hemiLight = new THREE.HemisphereLight(0xffffff, 0x1e293b, 0.85)
+    // Slicing Clipping Plane
+    const clippingPlane = new THREE.Plane(new THREE.Vector3(0, -1, 0), 1000)
+    clippingPlaneRef.current = clippingPlane
+
+    // 3D Printer Build Plate Grid Helper (220mm x 220mm standard bed)
+    const grid = new THREE.GridHelper(220, 22, 0xff6b35, 0x1e293b)
+    grid.position.y = -0.5
+    grid.visible = showGrid
+    gridHelperRef.current = grid
+    scene.add(grid)
+
+    // Studio Multi-Point CAD Lighting
+    const hemiLight = new THREE.HemisphereLight(0xffffff, 0x1e293b, 0.9)
     scene.add(hemiLight)
 
-    // 2. Main Key Light (Top-Right Front)
-    const keyLight = new THREE.DirectionalLight(0xffffff, 1.4)
+    const keyLight = new THREE.DirectionalLight(0xffffff, 1.45)
     keyLight.position.set(120, 180, 140)
     keyLight.castShadow = true
     keyLight.shadow.bias = -0.0001
     scene.add(keyLight)
 
-    // 3. Fill Light (Soft cool ambient)
-    const fillLight = new THREE.DirectionalLight(0xa5b4fc, 0.75)
+    const fillLight = new THREE.DirectionalLight(0xa5b4fc, 0.8)
     fillLight.position.set(-140, 60, 80)
     scene.add(fillLight)
 
-    // 4. Studio Rim / Backlight (Creates crisp edge pop and depth contour)
-    const rimLight = new THREE.DirectionalLight(0xffedd5, 1.1)
+    const rimLight = new THREE.DirectionalLight(0xffedd5, 1.2)
     rimLight.position.set(0, 120, -180)
     scene.add(rimLight)
 
-    // 5. Bottom Bounce Light (Prevents muddy underside)
     const bounceLight = new THREE.DirectionalLight(0x334155, 0.5)
     bounceLight.position.set(0, -120, 0)
     scene.add(bounceLight)
 
-    // Root Mesh Group & Edge Line Group
+    // Mesh Groups
     const group = new THREE.Group()
     groupRef.current = group
     scene.add(group)
@@ -234,7 +337,6 @@ function ThreeViewerContent({
     edgesGroupRef.current = edgesGroup
     group.add(edgesGroup)
 
-    // Create Premium 3D Printing Filament PBR Material
     const createFilamentMaterial = () => {
       const mat = new THREE.MeshPhysicalMaterial({
         color: new THREE.Color(validColor),
@@ -245,12 +347,13 @@ function ThreeViewerContent({
         reflectivity: 0.6,
         wireframe: wireframe,
         side: THREE.DoubleSide,
+        clippingPlanes: isSlicingActive ? [clippingPlane] : [],
+        clipShadows: true,
       })
       materialsRef.current.push(mat)
       return mat
     }
 
-    // Helper: Add Crisp Feature Edge Lines for High-Definition CAD look
     const addCrispEdgesToMesh = (mesh: THREE.Mesh) => {
       if (!mesh.geometry) return
       try {
@@ -267,16 +370,23 @@ function ThreeViewerContent({
         line.scale.copy(mesh.scale)
         edgesGroup.add(line)
       } catch {
-        // Fallback gracefully if geometry indexing fails
+        // Fallback
       }
     }
 
-    // Helper: Apply Filament Material & Compute Smooth Normals
     const applyFilamentStyling = (targetGroup: THREE.Object3D) => {
+      let totalTriangles = 0
+      let totalVertices = 0
+
       targetGroup.traverse((child) => {
         if (child instanceof THREE.Mesh) {
           if (child.geometry) {
             child.geometry.computeVertexNormals()
+            const pos = child.geometry.attributes.position
+            if (pos) {
+              totalVertices += pos.count
+              totalTriangles += child.geometry.index ? child.geometry.index.count / 3 : pos.count / 3
+            }
           }
           child.material = createFilamentMaterial()
           child.castShadow = true
@@ -284,6 +394,10 @@ function ThreeViewerContent({
           addCrispEdgesToMesh(child)
         }
       })
+
+      if (!isDisposed) {
+        setStats({ triangles: Math.round(totalTriangles), vertices: Math.round(totalVertices) })
+      }
     }
 
     const fitObjectToCamera = (object: THREE.Object3D) => {
@@ -293,12 +407,14 @@ function ThreeViewerContent({
       const size = bbox.getSize(new THREE.Vector3())
       const center = bbox.getCenter(new THREE.Vector3())
 
-      // Center model around (0,0,0)
+      // Center model on top of build plate
       object.position.sub(center)
 
       const rawX = size.x
       const rawY = size.y
       const rawZ = size.z
+
+      modelHeightRef.current = rawY || 50
 
       if (!isDisposed) {
         setComputedBounds({ x: Math.round(rawX), y: Math.round(rawY), z: Math.round(rawZ) })
@@ -310,7 +426,7 @@ function ThreeViewerContent({
         let cameraDist = Math.abs(maxDim / 2 / Math.tan(fovRad / 2)) * 1.55
         cameraDist = Math.max(cameraDist, 10)
 
-        camera.position.set(0, maxDim * 0.3, cameraDist)
+        camera.position.set(0, maxDim * 0.35, cameraDist)
         camera.lookAt(0, 0, 0)
         controls.target.set(0, 0, 0)
 
@@ -345,6 +461,14 @@ function ThreeViewerContent({
           }
 
           geometry.computeVertexNormals()
+          const pos = geometry.attributes.position
+          if (pos) {
+            setStats({
+              triangles: Math.round(pos.count / 3),
+              vertices: pos.count,
+            })
+          }
+
           const mesh = new THREE.Mesh(geometry, createFilamentMaterial())
           mesh.castShadow = true
           mesh.receiveShadow = true
@@ -437,8 +561,12 @@ function ThreeViewerContent({
 
     const handleResize = () => {
       if (!mountRef.current) return
-      const w = mountRef.current.clientWidth || 600
-      const h = typeof height === 'number' ? height : mountRef.current.clientHeight || 440
+      const w = isFullscreen ? window.innerWidth : mountRef.current.clientWidth || 600
+      const h = isFullscreen
+        ? window.innerHeight
+        : typeof height === 'number'
+        ? height
+        : mountRef.current.clientHeight || 460
       camera.aspect = w / h
       camera.updateProjectionMatrix()
       renderer.setSize(w, h)
@@ -455,12 +583,43 @@ function ThreeViewerContent({
       renderer.dispose()
       materialsRef.current.forEach((m) => m.dispose())
     }
-  }, [modelUrl, detectedFormat, height])
+  }, [modelUrl, detectedFormat, height, isFullscreen])
 
-  const handleResetView = () => {
-    if (controlsRef.current && groupRef.current) {
-      controlsRef.current.reset()
+  // Camera Angle Switcher (Isometric, Front, Top, Side)
+  const setCameraView = (view: 'iso' | 'front' | 'top' | 'side' | 'reset') => {
+    if (!cameraRef.current || !controlsRef.current) return
+    const maxDim = Math.max(computedBounds.x, computedBounds.y, computedBounds.z) || 50
+    const fovRad = cameraRef.current.fov * (Math.PI / 180)
+    const dist = Math.max(Math.abs(maxDim / 2 / Math.tan(fovRad / 2)) * 1.55, 15)
+
+    switch (view) {
+      case 'front':
+        cameraRef.current.position.set(0, 0, dist)
+        break
+      case 'top':
+        cameraRef.current.position.set(0, dist, 0.001)
+        break
+      case 'side':
+        cameraRef.current.position.set(dist, 0, 0)
+        break
+      case 'iso':
+      case 'reset':
+      default:
+        cameraRef.current.position.set(dist * 0.7, dist * 0.5, dist * 0.7)
+        break
     }
+    controlsRef.current.target.set(0, 0, 0)
+    controlsRef.current.update()
+  }
+
+  // Snapshot PNG Generator
+  const handleDownloadSnapshot = () => {
+    if (!rendererRef.current) return
+    const dataUrl = rendererRef.current.domElement.toDataURL('image/png')
+    const link = document.createElement('a')
+    link.download = `${title.toLowerCase().replace(/\s+/g, '_')}_snapshot.png`
+    link.href = dataUrl
+    link.click()
   }
 
   if (unsupportedFormat || modelLoadError) {
@@ -519,18 +678,23 @@ function ThreeViewerContent({
 
   return (
     <div
+      ref={containerRef}
       style={{
-        position: 'relative',
-        height,
+        position: isFullscreen ? 'fixed' : 'relative',
+        inset: isFullscreen ? 0 : 'auto',
+        zIndex: isFullscreen ? 99999 : 1,
+        width: '100%',
+        height: isFullscreen ? '100vh' : height,
         background: 'radial-gradient(circle at center, #1E293B 0%, #0B0F19 100%)',
-        borderRadius: 20,
+        borderRadius: isFullscreen ? 0 : 20,
         overflow: 'hidden',
-        border: '1px solid rgba(255,255,255,0.08)',
-        boxShadow: '0 20px 40px rgba(0,0,0,0.5)',
+        border: isFullscreen ? 'none' : '1px solid rgba(255,255,255,0.08)',
+        boxShadow: isFullscreen ? 'none' : '0 20px 50px rgba(0,0,0,0.5)',
       }}
     >
       <div ref={mountRef} style={{ width: '100%', height: '100%', cursor: 'grab' }} />
 
+      {/* Loading Overlay */}
       {loadingModel && (
         <div
           style={{
@@ -542,106 +706,223 @@ function ThreeViewerContent({
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
-            zIndex: 10,
+            zIndex: 20,
           }}
         >
-          <div style={{ fontSize: 36, marginBottom: 8, animation: 'spin 2s linear infinite' }}>⏳</div>
-          <div style={{ color: '#F8FAFC', fontWeight: 800, fontSize: 15 }}>
-            Loading {detectedFormat.toUpperCase()} 3D Model…
+          <div style={{ fontSize: 38, marginBottom: 10, animation: 'spin 2s linear infinite' }}>⏳</div>
+          <div style={{ color: '#F8FAFC', fontWeight: 900, fontSize: 16, letterSpacing: '-0.3px' }}>
+            Loading {detectedFormat.toUpperCase()} 3D Studio…
           </div>
-          <div style={{ color: '#94A3B8', fontSize: 12, marginTop: 4 }}>Rendering High-Definition PBR Meshes</div>
+          <div style={{ color: '#94A3B8', fontSize: 13, marginTop: 4 }}>Rendering High-Definition PBR Geometry</div>
         </div>
       )}
 
-      {/* Model Specs Overlay */}
+      {/* TOP-LEFT: Dimensions, Triangles & Format HUD */}
       <div
         style={{
           position: 'absolute',
           top: 14,
           left: 14,
-          zIndex: 5,
-          background: 'rgba(11, 15, 25, 0.8)',
-          backdropFilter: 'blur(10px)',
+          zIndex: 10,
+          background: 'rgba(11, 15, 25, 0.85)',
+          backdropFilter: 'blur(12px)',
           border: '1px solid rgba(255,255,255,0.12)',
-          borderRadius: 12,
-          padding: '8px 14px',
+          borderRadius: 14,
+          padding: '8px 16px',
           display: 'flex',
           alignItems: 'center',
-          gap: 10,
+          gap: 12,
+          boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
         }}
       >
         <span style={{ fontSize: 12, fontWeight: 800, color: '#F8FAFC' }}>
           📐 {computedBounds.x} × {computedBounds.y} × {computedBounds.z} mm
         </span>
-        <span style={{ background: '#8B5CF6', color: '#fff', fontSize: 10, fontWeight: 900, padding: '2px 8px', borderRadius: 6, textTransform: 'uppercase' }}>
+        {stats.triangles > 0 && (
+          <span style={{ fontSize: 11, fontWeight: 700, color: '#94A3B8' }}>
+            🔺 {(stats.triangles / 1000).toFixed(1)}k Tris
+          </span>
+        )}
+        <span
+          style={{
+            background: 'linear-gradient(135deg, #8B5CF6, #7C3AED)',
+            color: '#fff',
+            fontSize: 11,
+            fontWeight: 900,
+            padding: '2px 8px',
+            borderRadius: 6,
+            textTransform: 'uppercase',
+            letterSpacing: 0.5,
+          }}
+        >
           {detectedFormat}
         </span>
       </div>
 
-      {/* Quick Interactive Controls */}
+      {/* TOP-RIGHT: Fullscreen, Snapshot & Camera Angles */}
+      <div
+        style={{
+          position: 'absolute',
+          top: 14,
+          right: 14,
+          zIndex: 10,
+          display: 'flex',
+          gap: 6,
+        }}
+      >
+        <button
+          type="button"
+          onClick={() => setCameraView('iso')}
+          title="Isometric Angle"
+          style={btnStyle}
+        >
+          🧊 Iso
+        </button>
+        <button
+          type="button"
+          onClick={() => setCameraView('top')}
+          title="Top Down View"
+          style={btnStyle}
+        >
+          ⬆️ Top
+        </button>
+        <button
+          type="button"
+          onClick={() => setCameraView('front')}
+          title="Front View"
+          style={btnStyle}
+        >
+          👁️ Front
+        </button>
+        <button
+          type="button"
+          onClick={handleDownloadSnapshot}
+          title="Download High-Res 3D Snapshot PNG"
+          style={btnStyle}
+        >
+          📸 Snapshot
+        </button>
+        <button
+          type="button"
+          onClick={() => setIsFullscreen(!isFullscreen)}
+          title={isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen Mode'}
+          style={{ ...btnStyle, background: isFullscreen ? '#FF6B35' : 'rgba(15, 23, 42, 0.85)', color: '#fff' }}
+        >
+          {isFullscreen ? '✖ Exit' : '⛶ Fullscreen'}
+        </button>
+      </div>
+
+      {/* BOTTOM-LEFT: Slicing Height Layer Slider (Optional Inspection) */}
+      <div
+        style={{
+          position: 'absolute',
+          bottom: 14,
+          left: 14,
+          zIndex: 10,
+          background: 'rgba(11, 15, 25, 0.85)',
+          backdropFilter: 'blur(12px)',
+          border: '1px solid rgba(255,255,255,0.12)',
+          borderRadius: 14,
+          padding: '8px 14px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 10,
+          boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
+        }}
+      >
+        <button
+          type="button"
+          onClick={() => setIsSlicingActive(!isSlicingActive)}
+          style={{
+            background: isSlicingActive ? '#FF6B35' : 'transparent',
+            color: isSlicingActive ? '#fff' : '#94A3B8',
+            border: 'none',
+            fontSize: 12,
+            fontWeight: 800,
+            cursor: 'pointer',
+            padding: '2px 6px',
+            borderRadius: 6,
+          }}
+        >
+          🔪 Slicer {isSlicingActive ? 'On' : 'Off'}
+        </button>
+        {isSlicingActive && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <input
+              type="range"
+              min="0"
+              max="100"
+              value={sliceProgress}
+              onChange={(e) => setSliceProgress(Number(e.target.value))}
+              style={{ width: 80, cursor: 'pointer', accentColor: '#FF6B35' }}
+            />
+            <span style={{ fontSize: 11, color: '#F8FAFC', fontWeight: 800 }}>{sliceProgress}%</span>
+          </div>
+        )}
+      </div>
+
+      {/* BOTTOM-RIGHT: Viewport Controls & Material Finishes */}
       <div
         style={{
           position: 'absolute',
           bottom: 14,
           right: 14,
-          zIndex: 5,
+          zIndex: 10,
           display: 'flex',
-          gap: 8,
+          gap: 6,
           flexWrap: 'wrap',
         }}
       >
         <button
           type="button"
-          onClick={handleResetView}
+          onClick={() => setCameraView('reset')}
           title="Reset Camera View"
-          style={{
-            background: 'rgba(15, 23, 42, 0.8)',
-            color: '#94A3B8',
-            border: '1px solid rgba(255,255,255,0.15)',
-            borderRadius: 10,
-            padding: '6px 12px',
-            fontSize: 12,
-            fontWeight: 800,
-            cursor: 'pointer',
-            backdropFilter: 'blur(8px)',
-          }}
+          style={btnStyle}
         >
-          🎯 Reset
+          🎯 Center
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setShowGrid(!showGrid)}
+          title="Toggle Build Plate Grid"
+          style={{ ...btnStyle, background: showGrid ? 'rgba(255, 107, 53, 0.2)' : btnStyle.background, color: showGrid ? '#FF6B35' : '#94A3B8' }}
+        >
+          ▦ Bed Grid
         </button>
 
         <button
           type="button"
           onClick={() => setShowEdges(!showEdges)}
-          title="Toggle High-Definition CAD Outline Lines"
-          style={{
-            background: showEdges ? '#8B5CF6' : 'rgba(15, 23, 42, 0.8)',
-            color: '#fff',
-            border: '1px solid rgba(255,255,255,0.15)',
-            borderRadius: 10,
-            padding: '6px 12px',
-            fontSize: 12,
-            fontWeight: 800,
-            cursor: 'pointer',
-            backdropFilter: 'blur(8px)',
-          }}
+          title="Toggle CAD Outlines"
+          style={{ ...btnStyle, background: showEdges ? 'rgba(139, 92, 246, 0.25)' : btnStyle.background, color: showEdges ? '#A78BFA' : '#94A3B8' }}
         >
-          {showEdges ? '✨ Edges On' : 'Edges Off'}
+          ✨ CAD Edges
         </button>
+
+        {/* Filament Finish Selector */}
+        <select
+          value={finish}
+          onChange={(e) => setFinish(e.target.value as FilamentFinish)}
+          style={{
+            ...btnStyle,
+            outline: 'none',
+            cursor: 'pointer',
+            padding: '6px 10px',
+            color: '#F8FAFC',
+          }}
+          title="Filament Finish Texture"
+        >
+          <option value="silky" style={{ background: '#0F172A', color: '#fff' }}>✨ Silk PLA</option>
+          <option value="matte" style={{ background: '#0F172A', color: '#fff' }}>🧱 Matte PETG</option>
+          <option value="glossy" style={{ background: '#0F172A', color: '#fff' }}>💎 Glossy Resin</option>
+          <option value="metallic" style={{ background: '#0F172A', color: '#fff' }}>⚙️ Metallic</option>
+        </select>
 
         <button
           type="button"
           onClick={() => setWireframe(!wireframe)}
-          style={{
-            background: wireframe ? '#8B5CF6' : 'rgba(15, 23, 42, 0.8)',
-            color: '#fff',
-            border: '1px solid rgba(255,255,255,0.15)',
-            borderRadius: 10,
-            padding: '6px 12px',
-            fontSize: 12,
-            fontWeight: 800,
-            cursor: 'pointer',
-            backdropFilter: 'blur(8px)',
-          }}
+          style={{ ...btnStyle, background: wireframe ? '#8B5CF6' : btnStyle.background, color: wireframe ? '#fff' : '#94A3B8' }}
         >
           {wireframe ? 'Solid' : 'Wireframe'}
         </button>
@@ -649,21 +930,25 @@ function ThreeViewerContent({
         <button
           type="button"
           onClick={() => setRotating(!rotating)}
-          style={{
-            background: rotating ? '#FF6B35' : 'rgba(15, 23, 42, 0.8)',
-            color: '#fff',
-            border: '1px solid rgba(255,255,255,0.15)',
-            borderRadius: 10,
-            padding: '6px 12px',
-            fontSize: 12,
-            fontWeight: 800,
-            cursor: 'pointer',
-            backdropFilter: 'blur(8px)',
-          }}
+          style={{ ...btnStyle, background: rotating ? '#FF6B35' : btnStyle.background, color: rotating ? '#fff' : '#94A3B8' }}
         >
           {rotating ? '⏸ Pause' : '🔄 Auto Rotate'}
         </button>
       </div>
     </div>
   )
+}
+
+const btnStyle: React.CSSProperties = {
+  background: 'rgba(15, 23, 42, 0.85)',
+  color: '#94A3B8',
+  border: '1px solid rgba(255,255,255,0.12)',
+  borderRadius: 10,
+  padding: '6px 12px',
+  fontSize: 12,
+  fontWeight: 800,
+  cursor: 'pointer',
+  backdropFilter: 'blur(10px)',
+  transition: 'all 0.15s ease',
+  boxShadow: '0 4px 14px rgba(0,0,0,0.2)',
 }
