@@ -49,12 +49,12 @@ class ThreeViewerErrorBoundary extends Component<ErrorBoundaryProps, ErrorBounda
     if (this.state.hasError) {
       return (
         <div style={{
-          height: 440, background: '#0F172A', borderRadius: 20,
+          height: 440, background: '#FFFFFF', borderRadius: 20,
           display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-          color: '#F8FAFC', border: '1px solid rgba(255,255,255,0.06)',
+          color: '#0F172A', border: '1px solid #E2E8F0',
         }}>
           <div style={{ fontSize: 40, marginBottom: 10 }}>🧊</div>
-          <p style={{ fontSize: 14, fontWeight: 700, color: '#94A3B8' }}>Unable to preview this model</p>
+          <p style={{ fontSize: 14, fontWeight: 700, color: '#64748B' }}>Unable to preview this model</p>
         </div>
       )
     }
@@ -148,9 +148,9 @@ function ThreeViewerInner({
     let disposed = false
     matsRef.current = []
 
-    // Scene
+    // Scene with clean white studio background
     const scene = new THREE.Scene()
-    scene.background = new THREE.Color('#0F172A')
+    scene.background = new THREE.Color('#FFFFFF')
 
     // Camera
     const camera = new THREE.PerspectiveCamera(38, w / h, 0.1, 5000)
@@ -166,7 +166,7 @@ function ThreeViewerInner({
     renderer.setSize(w, h)
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
     renderer.toneMapping = THREE.ACESFilmicToneMapping
-    renderer.toneMappingExposure = 1.18
+    renderer.toneMappingExposure = 1.08
     renderer.shadowMap.enabled = true
     renderer.shadowMap.type = THREE.PCFSoftShadowMap
     container.innerHTML = ''
@@ -183,41 +183,41 @@ function ThreeViewerInner({
     controls.minDistance = 2
     controlsRef.current = controls
 
-    // ─── Studio Lighting Setup ──────────────────────────
-    // Ambient / Hemisphere
-    scene.add(new THREE.HemisphereLight(0xffffff, 0x1e293b, 0.75))
+    // ─── Studio Lighting Setup (White Studio Calibrated) ──
+    // Soft Ambient / Hemisphere
+    scene.add(new THREE.HemisphereLight(0xffffff, 0xe2e8f0, 0.85))
 
-    // Key light (warm, upper-right front)
-    const key = new THREE.DirectionalLight(0xffffff, 1.4)
+    // Main Key light (Top-right front)
+    const key = new THREE.DirectionalLight(0xffffff, 1.25)
     key.position.set(100, 160, 120)
     key.castShadow = true
     key.shadow.bias = -0.0001
     scene.add(key)
 
-    // Fill light (soft cool blue from left)
-    const fill = new THREE.DirectionalLight(0xa5b4fc, 0.7)
-    fill.position.set(-120, 50, 80)
+    // Fill light (Soft gentle fill from left)
+    const fill = new THREE.DirectionalLight(0xf1f5f9, 0.7)
+    fill.position.set(-120, 60, 80)
     scene.add(fill)
 
-    // Rim / backlight (warm silhouette highlight)
-    const rim = new THREE.DirectionalLight(0xffedd5, 1.0)
-    rim.position.set(-20, 100, -160)
+    // Rim / backlight
+    const rim = new THREE.DirectionalLight(0xffffff, 0.5)
+    rim.position.set(-20, 120, -160)
     scene.add(rim)
 
-    // Ground bounce
-    const bounce = new THREE.DirectionalLight(0x334155, 0.4)
+    // Subtle Under-bounce
+    const bounce = new THREE.DirectionalLight(0xe2e8f0, 0.3)
     bounce.position.set(0, -100, 40)
     scene.add(bounce)
 
-    // ─── Soft Contact Shadow Plane ──────────────────────
+    // ─── Clean Soft Contact Shadow on White Ground ───────
     const shadowCanvas = document.createElement('canvas')
     shadowCanvas.width = 128
     shadowCanvas.height = 128
     const ctx = shadowCanvas.getContext('2d')
     if (ctx) {
       const grad = ctx.createRadialGradient(64, 64, 0, 64, 64, 64)
-      grad.addColorStop(0, 'rgba(0, 0, 0, 0.45)')
-      grad.addColorStop(0.5, 'rgba(0, 0, 0, 0.15)')
+      grad.addColorStop(0, 'rgba(0, 0, 0, 0.22)')
+      grad.addColorStop(0.4, 'rgba(0, 0, 0, 0.08)')
       grad.addColorStop(1, 'rgba(0, 0, 0, 0)')
       ctx.fillStyle = grad
       ctx.fillRect(0, 0, 128, 128)
@@ -447,13 +447,13 @@ function ThreeViewerInner({
   if (unsupported || error) {
     return (
       <div style={{
-        height, background: '#0F172A', borderRadius: 20,
+        height, background: '#FFFFFF', borderRadius: 20,
         display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-        padding: 32, textAlign: 'center', color: '#F8FAFC', border: '1px solid rgba(255,255,255,0.06)',
+        padding: 32, textAlign: 'center', color: '#0F172A', border: '1px solid #E2E8F0',
       }}>
         <div style={{ fontSize: 40, marginBottom: 10 }}>🧊</div>
         <h3 style={{ fontSize: 16, fontWeight: 800, margin: '0 0 6px' }}>Unable to preview</h3>
-        <p style={{ fontSize: 13, color: '#94A3B8', maxWidth: 340, margin: '0 0 18px' }}>
+        <p style={{ fontSize: 13, color: '#64748B', maxWidth: 340, margin: '0 0 18px' }}>
           {unsupported ? `${unsupported} preview is not supported. Download the file to view.` : error}
         </p>
         {modelUrl && (
@@ -480,11 +480,11 @@ function ThreeViewerInner({
         zIndex: isFullscreen ? 99999 : 1,
         width: '100%',
         height: isFullscreen ? '100vh' : height,
-        background: 'radial-gradient(circle at center, #1E293B 0%, #0F172A 100%)',
+        background: '#FFFFFF',
         borderRadius: isFullscreen ? 0 : 20,
         overflow: 'hidden',
-        border: isFullscreen ? 'none' : '1px solid rgba(255,255,255,0.06)',
-        boxShadow: isFullscreen ? 'none' : '0 8px 32px rgba(0,0,0,0.4)',
+        border: isFullscreen ? 'none' : '1px solid #E2E8F0',
+        boxShadow: isFullscreen ? 'none' : '0 4px 24px rgba(0,0,0,0.06)',
       }}
     >
       <div
@@ -499,22 +499,23 @@ function ThreeViewerInner({
       {/* Loading Overlay */}
       {loading && (
         <div style={{
-          position: 'absolute', inset: 0, background: 'rgba(15,23,42,0.92)', backdropFilter: 'blur(8px)',
+          position: 'absolute', inset: 0, background: 'rgba(255,255,255,0.92)', backdropFilter: 'blur(6px)',
           display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', zIndex: 10,
         }}>
           <div style={{ fontSize: 32, marginBottom: 8, animation: 'spin 1.5s linear infinite' }}>⏳</div>
-          <div style={{ color: '#F8FAFC', fontWeight: 800, fontSize: 14 }}>Loading {fmt.toUpperCase()} Model…</div>
+          <div style={{ color: '#0F172A', fontWeight: 800, fontSize: 14 }}>Loading {fmt.toUpperCase()} Model…</div>
         </div>
       )}
 
       {/* Top-left: Minimal Specs Badge */}
       <div style={{
         position: 'absolute', top: 12, left: 12, zIndex: 5,
-        background: 'rgba(15,23,42,0.75)', backdropFilter: 'blur(10px)',
-        border: '1px solid rgba(255,255,255,0.08)', borderRadius: 10,
+        background: 'rgba(255,255,255,0.9)', backdropFilter: 'blur(10px)',
+        border: '1px solid rgba(0,0,0,0.08)', borderRadius: 10,
         padding: '5px 12px', display: 'flex', alignItems: 'center', gap: 8,
+        boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
       }}>
-        <span style={{ fontSize: 11, fontWeight: 700, color: '#CBD5E1' }}>
+        <span style={{ fontSize: 11, fontWeight: 700, color: '#334155' }}>
           {bounds.x} × {bounds.y} × {bounds.z} mm
         </span>
         <span style={{
@@ -529,10 +530,11 @@ function ThreeViewerInner({
       {showHint && !loading && (
         <div style={{
           position: 'absolute', top: 12, right: 12, zIndex: 4,
-          background: 'rgba(15,23,42,0.6)', backdropFilter: 'blur(8px)',
-          border: '1px solid rgba(255,255,255,0.06)', borderRadius: 8,
-          padding: '4px 10px', color: '#94A3B8', fontSize: 11, fontWeight: 600,
+          background: 'rgba(255,255,255,0.88)', backdropFilter: 'blur(8px)',
+          border: '1px solid rgba(0,0,0,0.06)', borderRadius: 8,
+          padding: '4px 10px', color: '#64748B', fontSize: 11, fontWeight: 600,
           pointerEvents: 'none', transition: 'opacity 0.5s ease',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
         }}>
           🖱️ Drag to rotate • Double-click to center
         </div>
@@ -592,15 +594,16 @@ function ViewerBtn({
       onClick={onClick}
       title={title}
       style={{
-        background: active ? activeColor : 'rgba(15,23,42,0.75)',
-        color: active ? '#fff' : '#94A3B8',
-        border: '1px solid rgba(255,255,255,0.1)',
+        background: active ? activeColor : 'rgba(255,255,255,0.92)',
+        color: active ? '#FFFFFF' : '#334155',
+        border: active ? `1px solid ${activeColor}` : '1px solid rgba(0,0,0,0.1)',
         borderRadius: 8,
         padding: '5px 11px',
         fontSize: 11,
         fontWeight: 800,
         cursor: 'pointer',
         backdropFilter: 'blur(8px)',
+        boxShadow: '0 2px 6px rgba(0,0,0,0.06)',
         transition: 'all 0.18s ease',
       }}
     >
@@ -608,4 +611,3 @@ function ViewerBtn({
     </button>
   )
 }
-
