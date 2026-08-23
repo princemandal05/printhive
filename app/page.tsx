@@ -6,6 +6,21 @@ import dynamic from 'next/dynamic'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 import { createClient } from '@/utils/supabase/client'
+import {
+  ShoppingBag,
+  PenTool,
+  Printer,
+  Sparkles,
+  Box,
+  MapPin,
+  ShieldCheck,
+  Zap,
+  Users,
+  CheckCircle2,
+  ArrowRight,
+  Search,
+  Bot,
+} from 'lucide-react'
 
 const Hero3D = dynamic(() => import('@/components/Hero3D'), {
   ssr: false,
@@ -20,15 +35,16 @@ function IconBadge({ children }: { children: React.ReactNode }) {
   return (
     <div
       style={{
-        width: 44,
-        height: 44,
-        borderRadius: 12,
+        width: 48,
+        height: 48,
+        borderRadius: 14,
         background: 'rgba(255, 107, 53, 0.12)',
         border: '1px solid rgba(255, 107, 53, 0.25)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         flexShrink: 0,
+        boxShadow: '0 4px 14px rgba(255, 107, 53, 0.15)',
       }}
     >
       {children}
@@ -109,76 +125,25 @@ export default function Home() {
   const renderIcon = (type: string) => {
     switch (type) {
       case 'buyer':
-        return (
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FF6B35" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
-            <line x1="3" y1="6" x2="21" y2="6" />
-            <path d="M16 10a4 4 0 0 1-8 0" />
-          </svg>
-        )
+        return <ShoppingBag size={22} color="#FF6B35" />
       case 'designer':
-        return (
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FF6B35" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M12 19l7-7 3 3-7 7-3-3z" />
-            <path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z" />
-            <path d="M2 2l7.586 7.586" />
-            <circle cx="11" cy="11" r="2" />
-          </svg>
-        )
+        return <PenTool size={22} color="#FF6B35" />
       case 'printer':
-        return (
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FF6B35" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M6 9V2h12v7" />
-            <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
-            <path d="M6 14h12v8H6z" />
-          </svg>
-        )
+        return <Printer size={22} color="#FF6B35" />
       case 'ai':
-        return (
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FF6B35" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83" />
-          </svg>
-        )
+        return <Bot size={22} color="#FF6B35" />
       case 'viewport':
-        return (
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FF6B35" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
-            <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
-            <line x1="12" y1="22.08" x2="12" y2="12" />
-          </svg>
-        )
+        return <Box size={22} color="#FF6B35" />
       case 'geo':
-        return (
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FF6B35" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
-            <circle cx="12" cy="10" r="3" />
-          </svg>
-        )
+        return <MapPin size={22} color="#FF6B35" />
       case 'escrow':
-        return (
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FF6B35" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-            <rect x="9" y="10" width="6" height="5" rx="1" />
-          </svg>
-        )
+        return <ShieldCheck size={22} color="#FF6B35" />
       case 'realtime':
-        return (
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FF6B35" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
-          </svg>
-        )
+        return <Zap size={22} color="#FF6B35" />
       case 'community':
-        return (
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FF6B35" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-          </svg>
-        )
+        return <Users size={22} color="#FF6B35" />
       default:
-        return (
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FF6B35" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="12" cy="12" r="10" />
-          </svg>
-        )
+        return <Sparkles size={22} color="#FF6B35" />
     }
   }
 
@@ -208,7 +173,7 @@ export default function Home() {
 
               {/* Gemini AI Natural Language Search Bar */}
               <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 99, padding: '8px 8px 8px 20px', display: 'flex', alignItems: 'center', gap: 12, marginBottom: 40, boxShadow: '0 8px 30px rgba(0,0,0,0.06)' }}>
-                <span style={{ fontSize: 18 }}>✨</span>
+                <Search size={18} color="#FF6B35" />
                 <input
                   type="text"
                   placeholder="Ask Gemini AI: 'Print a durable phone holder in PLA'..."
@@ -219,9 +184,9 @@ export default function Home() {
                 <Link
                   href={aiSearchQuery ? `/browse?q=${encodeURIComponent(aiSearchQuery)}` : '/browse'}
                   className="btn btn-primary"
-                  style={{ background: '#FF6B35', color: '#fff', border: 'none', borderRadius: 99, padding: '12px 24px', fontWeight: 700, fontSize: 13, textDecoration: 'none', whiteSpace: 'nowrap' }}
+                  style={{ background: '#FF6B35', color: '#fff', border: 'none', borderRadius: 99, padding: '12px 24px', fontWeight: 700, fontSize: 13, textDecoration: 'none', whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', gap: 6 }}
                 >
-                  AI Search
+                  <Bot size={15} /> AI Search
                 </Link>
               </div>
 
@@ -245,8 +210,8 @@ export default function Home() {
             {/* 3D WebGL Orbit Viewport */}
             <div style={{ background: 'var(--bg-card)', borderRadius: 28, padding: 16, border: '1px solid var(--border-color)', boxShadow: '0 20px 50px rgba(0,0,0,0.08)', position: 'relative' }}>
               <div style={{ position: 'absolute', top: 24, left: 24, zIndex: 10 }}>
-                <span className="ateion-pill" style={{ background: 'rgba(255, 107, 53, 0.12)', color: '#FF6B35', fontSize: 11 }}>
-                  🧊 Live WebGL Model Viewport
+                <span className="ateion-pill" style={{ background: 'rgba(255, 107, 53, 0.12)', color: '#FF6B35', fontSize: 11, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                  <Box size={13} /> Live WebGL Model Viewport
                 </span>
               </div>
               <Hero3D />
@@ -312,11 +277,7 @@ export default function Home() {
                   gap: 8,
                 }}
               >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
-                  <line x1="3" y1="6" x2="21" y2="6" />
-                  <path d="M16 10a4 4 0 0 1-8 0" />
-                </svg>
+                <ShoppingBag size={16} />
                 <span>Buyer Portal</span>
               </button>
               <button
@@ -337,12 +298,7 @@ export default function Home() {
                   gap: 8,
                 }}
               >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M12 19l7-7 3 3-7 7-3-3z" />
-                  <path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z" />
-                  <path d="M2 2l7.586 7.586" />
-                  <circle cx="11" cy="11" r="2" />
-                </svg>
+                <PenTool size={16} />
                 <span>Creator Studio</span>
               </button>
               <button
@@ -363,11 +319,7 @@ export default function Home() {
                   gap: 8,
                 }}
               >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M6 9V2h12v7" />
-                  <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
-                  <path d="M6 14h12v8H6z" />
-                </svg>
+                <Printer size={16} />
                 <span>Printer Hub</span>
               </button>
             </div>
@@ -385,16 +337,18 @@ export default function Home() {
                     Browse ready-made products, order custom CAD briefs, or upload your own 3D file on our Slicer page. Payments are held safely in Razorpay escrow until delivery.
                   </p>
                   <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-                    <Link href="/browse" className="btn btn-primary" style={{ background: '#FF6B35', color: '#fff', padding: '12px 24px', borderRadius: 99, fontWeight: 700, textDecoration: 'none' }}>
-                      Browse Designs
+                    <Link href="/browse" className="btn btn-primary" style={{ background: '#FF6B35', color: '#fff', padding: '12px 24px', borderRadius: 99, fontWeight: 700, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                      <Box size={16} /> Browse Designs
                     </Link>
-                    <Link href="/print-on-demand" className="btn btn-outline" style={{ borderColor: 'var(--border-color)', color: 'var(--text-main)', padding: '12px 24px', borderRadius: 99, textDecoration: 'none', fontWeight: 600 }}>
-                      Slicer & Upload
+                    <Link href="/print-on-demand" className="btn btn-outline" style={{ borderColor: 'var(--border-color)', color: 'var(--text-main)', padding: '12px 24px', borderRadius: 99, textDecoration: 'none', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                      <Zap size={16} /> Slicer & Upload
                     </Link>
                   </div>
                 </div>
                 <div style={{ background: 'var(--bg-card-hover)', padding: 28, borderRadius: 20, border: '1px solid var(--border-color)' }}>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-main)', marginBottom: 12 }}>✅ Buyer Guarantees:</div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-main)', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <CheckCircle2 size={16} color="#10B981" /> Buyer Guarantees:
+                  </div>
                   <ul style={{ fontSize: 14, color: 'var(--text-sub)', lineHeight: 1.9, paddingLeft: 16, margin: 0 }}>
                     <li>100% Escrow Protected Payments</li>
                     <li>Leaflet GPS Nearby Printer Matching</li>
@@ -414,11 +368,11 @@ export default function Home() {
                     Upload STL/3MF files once. Every time a buyer orders a physical print, you earn a 15% royalty automatically paid out to your wallet upon delivery.
                   </p>
                   <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-                    <Link href="/dashboard/designer/upload" className="btn btn-primary" style={{ background: '#FF6B35', color: '#fff', padding: '12px 24px', borderRadius: 99, fontWeight: 700, textDecoration: 'none' }}>
-                      Upload 3D Model
+                    <Link href="/dashboard/designer/upload" className="btn btn-primary" style={{ background: '#FF6B35', color: '#fff', padding: '12px 24px', borderRadius: 99, fontWeight: 700, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                      <PenTool size={16} /> Upload 3D Model
                     </Link>
-                    <Link href="/dashboard/designer/earnings" className="btn btn-outline" style={{ borderColor: 'var(--border-color)', color: 'var(--text-main)', padding: '12px 24px', borderRadius: 99, textDecoration: 'none', fontWeight: 600 }}>
-                      Royalty Calculator
+                    <Link href="/dashboard/designer" className="btn btn-outline" style={{ borderColor: 'var(--border-color)', color: 'var(--text-main)', padding: '12px 24px', borderRadius: 99, textDecoration: 'none', fontWeight: 600 }}>
+                      Designer Dashboard
                     </Link>
                   </div>
                 </div>
@@ -440,11 +394,11 @@ export default function Home() {
                     List your Bambu Lab, Prusa, or Resin machines. Accept nearby orders matched via Leaflet GPS, print, deliver, and earn 70% per job.
                   </p>
                   <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-                    <Link href="/printers" className="btn btn-primary" style={{ background: '#FF6B35', color: '#fff', padding: '12px 24px', borderRadius: 99, fontWeight: 700, textDecoration: 'none' }}>
-                      View Printer Hubs Map
+                    <Link href="/printers" className="btn btn-primary" style={{ background: '#FF6B35', color: '#fff', padding: '12px 24px', borderRadius: 99, fontWeight: 700, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                      <MapPin size={16} /> View Printer Hubs Map
                     </Link>
-                    <Link href="/dashboard/printer-owner/register" className="btn btn-outline" style={{ borderColor: 'var(--border-color)', color: 'var(--text-main)', padding: '12px 24px', borderRadius: 99, textDecoration: 'none', fontWeight: 600 }}>
-                      Register Machine
+                    <Link href="/dashboard/printer-owner" className="btn btn-outline" style={{ borderColor: 'var(--border-color)', color: 'var(--text-main)', padding: '12px 24px', borderRadius: 99, textDecoration: 'none', fontWeight: 600 }}>
+                      Printer Dashboard
                     </Link>
                   </div>
                 </div>
@@ -517,11 +471,11 @@ export default function Home() {
           <div style={{ display: 'flex', gap: 16, justifyContent: 'center', flexWrap: 'wrap' }}>
             {isLoggedIn ? (
               <>
-                <Link href="/dashboard/buyer" className="btn btn-primary btn-lg" style={{ background: '#FF6B35', color: '#fff', padding: '14px 36px', borderRadius: 99, fontWeight: 800, textDecoration: 'none', boxShadow: '0 4px 16px rgba(255,107,53,0.35)' }}>
-                  🚀 Go to My Dashboard
+                <Link href="/dashboard/buyer" className="btn btn-primary btn-lg" style={{ background: '#FF6B35', color: '#fff', padding: '14px 36px', borderRadius: 99, fontWeight: 800, textDecoration: 'none', boxShadow: '0 4px 16px rgba(255,107,53,0.35)', display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                  <ShoppingBag size={18} /> Go to My Dashboard
                 </Link>
-                <Link href="/shop" className="btn btn-outline btn-lg" style={{ borderColor: 'var(--border-color)', color: 'var(--text-main)', padding: '14px 32px', borderRadius: 99, background: 'var(--bg-card-hover)', textDecoration: 'none', fontWeight: 600 }}>
-                  🛒 Explore 3D Marketplace
+                <Link href="/shop" className="btn btn-outline btn-lg" style={{ borderColor: 'var(--border-color)', color: 'var(--text-main)', padding: '14px 32px', borderRadius: 99, background: 'var(--bg-card-hover)', textDecoration: 'none', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                  <Box size={18} /> Explore 3D Marketplace
                 </Link>
               </>
             ) : (

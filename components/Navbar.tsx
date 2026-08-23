@@ -7,6 +7,28 @@ import { useStore } from '@/lib/cart-context'
 import { createClient } from '@/utils/supabase/client'
 import NotificationBell from '@/components/NotificationBell'
 
+import {
+  ShoppingBag,
+  Store,
+  PenTool,
+  Printer,
+  Shield,
+  User,
+  Package,
+  Headphones,
+  Key,
+  Sun,
+  Moon,
+  LogOut,
+  Sparkles,
+  Layers,
+  Box,
+  PlusCircle,
+  Briefcase,
+  MapPin,
+  Check,
+} from 'lucide-react'
+
 const DASHBOARD_PATH: Record<string, string> = {
   buyer: '/dashboard/buyer',
   seller: '/dashboard/seller',
@@ -16,49 +38,49 @@ const DASHBOARD_PATH: Record<string, string> = {
 }
 
 const ROLE_LABELS: Record<string, string> = {
-  buyer: '🛍️ Buyer Mode',
-  seller: '🏬 Seller Mode',
-  designer: '🎨 Designer Mode',
-  printer_owner: '🖨️ Printer Owner Mode',
-  admin: '🛡️ Admin Mode',
+  buyer: 'Buyer Mode',
+  seller: 'Seller Mode',
+  designer: 'Designer Mode',
+  printer_owner: 'Printer Hub Mode',
+  admin: 'Admin Mode',
 }
 
 const ROLE_NAV_LINKS: Record<string, { href: string; label: string }[]> = {
   public: [
     { href: '/', label: 'Home' },
-    { href: '/shop', label: '🛍️ Shop' },
-    { href: '/browse', label: '🧊 3D Models' },
+    { href: '/shop', label: 'Shop' },
+    { href: '/browse', label: '3D Models' },
   ],
   buyer: [
     { href: '/', label: 'Home' },
-    { href: '/shop', label: '🛍️ Shop' },
-    { href: '/browse', label: '🧊 3D Models' },
+    { href: '/shop', label: 'Shop' },
+    { href: '/browse', label: '3D Models' },
     { href: '/print-on-demand', label: 'Print File' },
-    { href: '/requests/new', label: '✨ Request Custom 3D' },
+    { href: '/requests/new', label: 'Request Custom 3D' },
   ],
   seller: [
     { href: '/', label: 'Home' },
-    { href: '/shop', label: '🛍️ Shop' },
+    { href: '/shop', label: 'Shop' },
     { href: '/dashboard/seller/products/new', label: '+ Add Product' },
   ],
   designer: [
     { href: '/', label: 'Home' },
-    { href: '/shop', label: '🛍️ Shop' },
-    { href: '/browse', label: '🧊 3D Models' },
-    { href: '/requests', label: '💼 Client Briefs & Bids' },
+    { href: '/shop', label: 'Shop' },
+    { href: '/browse', label: '3D Models' },
+    { href: '/requests', label: 'Client Briefs' },
     { href: '/dashboard/designer/upload', label: '+ Upload Model' },
   ],
   printer_owner: [
     { href: '/', label: 'Home' },
-    { href: '/shop', label: '🛍️ Shop' },
-    { href: '/browse', label: '🧊 3D Models' },
-    { href: '/requests', label: '💼 Print Job Briefs' },
+    { href: '/shop', label: 'Shop' },
+    { href: '/browse', label: '3D Models' },
+    { href: '/requests', label: 'Print Briefs' },
     { href: '/printers', label: 'Nearby Hubs' },
   ],
   admin: [
     { href: '/', label: 'Home' },
-    { href: '/shop', label: '🛍️ Shop' },
-    { href: '/browse', label: '🧊 3D Models' },
+    { href: '/shop', label: 'Shop' },
+    { href: '/browse', label: '3D Models' },
     { href: '/printers', label: 'Hubs' },
     { href: '/dashboard/admin', label: 'Admin' },
   ],
@@ -359,28 +381,28 @@ export default function Navbar() {
                         onClick={() => setDropdownOpen(false)}
                         style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 18px', fontSize: 13, fontWeight: 700, color: 'var(--text-main)', textDecoration: 'none', transition: 'background 0.2s' }}
                       >
-                        <span>👤</span> Your Profile
+                        <User size={16} color="#64748B" /> Your Profile
                       </Link>
                       <Link
                         href={dashboardHref || '/dashboard/buyer'}
                         onClick={() => setDropdownOpen(false)}
                         style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 18px', fontSize: 13, fontWeight: 700, color: 'var(--text-main)', textDecoration: 'none', transition: 'background 0.2s' }}
                       >
-                        <span>🚀</span> My Authorized Dashboard
+                        <Sparkles size={16} color="#FF6B35" /> My Authorized Dashboard
                       </Link>
                       <Link
                         href="/orders"
                         onClick={() => setDropdownOpen(false)}
                         style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 18px', fontSize: 13, fontWeight: 700, color: 'var(--text-main)', textDecoration: 'none', transition: 'background 0.2s' }}
                       >
-                        <span>📦</span> My Orders & Escrow
+                        <Package size={16} color="#3B82F6" /> My Orders & Escrow
                       </Link>
                       <Link
                         href="/support-tickets"
                         onClick={() => setDropdownOpen(false)}
                         style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 18px', fontSize: 13, fontWeight: 700, color: 'var(--text-main)', textDecoration: 'none', transition: 'background 0.2s' }}
                       >
-                        <span>🎧</span> My Support Tickets & Live Status
+                        <Headphones size={16} color="#8B5CF6" /> My Support Tickets & Live Status
                       </Link>
                     </div>
 
@@ -410,8 +432,15 @@ export default function Navbar() {
                               justifyContent: 'space-between',
                             }}
                           >
-                            <span>{ROLE_LABELS[rKey]}</span>
-                            {userRole === rKey && <span style={{ fontSize: 12 }}>✓</span>}
+                            <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                              {rKey === 'buyer' && <ShoppingBag size={14} />}
+                              {rKey === 'seller' && <Store size={14} />}
+                              {rKey === 'designer' && <PenTool size={14} />}
+                              {rKey === 'printer_owner' && <Printer size={14} />}
+                              {rKey === 'admin' && <Shield size={14} />}
+                              {ROLE_LABELS[rKey]}
+                            </span>
+                            {userRole === rKey && <Check size={14} color="#ea580c" />}
                           </button>
                         ))}
                       </div>
@@ -425,7 +454,7 @@ export default function Navbar() {
                           onClick={() => setDropdownOpen(false)}
                           style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 18px', fontSize: 13, fontWeight: 700, color: 'var(--text-main)', textDecoration: 'none', transition: 'background 0.2s' }}
                         >
-                          <span>🔑</span> Log In
+                          <Key size={16} color="#64748B" /> Log In
                         </Link>
                       )}
                       <button
@@ -433,7 +462,7 @@ export default function Navbar() {
                         onClick={() => { toggleTheme(); setDropdownOpen(false); }}
                         style={{ width: '100%', textAlign: 'left', background: 'transparent', border: 'none', padding: '10px 18px', fontSize: 13, fontWeight: 700, color: 'var(--text-main)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 10 }}
                       >
-                        <span>{theme === 'dark' ? '☀️' : '🌙'}</span> Appearance: {theme === 'dark' ? 'Dark Mode' : 'Light Mode'}
+                        {theme === 'dark' ? <Sun size={16} color="#F59E0B" /> : <Moon size={16} color="#64748B" />} Appearance: {theme === 'dark' ? 'Dark Mode' : 'Light Mode'}
                       </button>
                     </div>
 
@@ -444,7 +473,7 @@ export default function Navbar() {
                         onClick={handleSignOut}
                         style={{ width: '100%', textAlign: 'left', background: 'transparent', border: 'none', padding: '10px 18px', fontSize: 13, fontWeight: 800, color: '#EF4444', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 10 }}
                       >
-                        <span>🚪</span> Sign out
+                        <LogOut size={16} color="#EF4444" /> Sign out
                       </button>
                     </div>
                   </div>
