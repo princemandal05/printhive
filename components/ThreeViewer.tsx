@@ -83,6 +83,7 @@ function ThreeViewerInner({
   dimensions = { x: 50, y: 50, z: 50 },
 }: ThreeViewerProps) {
   const mountRef = useRef<HTMLDivElement>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
 
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -91,14 +92,25 @@ function ThreeViewerInner({
   const [rotating, setRotating] = useState(autoRotateDefault)
   const rotatingRef = useRef(rotating)
   const [bounds, setBounds] = useState(dimensions)
+  const [isFullscreen, setIsFullscreen] = useState(false)
+  const [showHint, setShowHint] = useState(true)
+  const [isGrabbing, setIsGrabbing] = useState(false)
 
   const controlsRef = useRef<OrbitControls | null>(null)
+  const cameraRef = useRef<THREE.PerspectiveCamera | null>(null)
   const groupRef = useRef<THREE.Group | null>(null)
   const matsRef = useRef<THREE.MeshPhysicalMaterial[]>([])
+  const initialCamPos = useRef<THREE.Vector3>(new THREE.Vector3())
 
   const detected = detectModelFormat({ format, fileName, mimeType, url: modelUrl })
   const fmt: ModelFormat = detected.format
   const safeColor = /^#[0-9A-Fa-f]{6}$/.test(color || '') ? color! : '#FF6B35'
+
+  // Hide gesture hint after 4 seconds or interaction
+  useEffect(() => {
+    const timer = setTimeout(() => setShowHint(false), 4000)
+    return () => clearTimeout(timer)
+  }, [])
 
   // Sync rotation
   useEffect(() => {
@@ -117,13 +129,22 @@ function ThreeViewerInner({
     matsRef.current.forEach(m => { m.color.copy(c); m.needsUpdate = true })
   }, [safeColor])
 
+  // Escape key exits fullscreen
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isFullscreen) setIsFullscreen(false)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [isFullscreen])
+
   // Main Three.js setup
   useEffect(() => {
     if (!mountRef.current) return
 
     const container = mountRef.current
-    const w = container.clientWidth || 600
-    const h = typeof height === 'number' ? height : container.clientHeight || 460
+    const w = isFullscreen ? window.innerWidth : container.clientWidth || 600
+    const h = isFullscreen ? window.innerHeight : typeof height === 'number' ? height : container.clientHeight || 460
     let disposed = false
     matsRef.current = []
 
@@ -134,13 +155,18 @@ function ThreeViewerInner({
     // Camera
     const camera = new THREE.PerspectiveCamera(38, w / h, 0.1, 5000)
     camera.position.set(0, 40, 120)
+    cameraRef.current = camera
 
     // Renderer
-    const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' })
+    const renderer = new THREE.WebGLRenderer({
+      antialias: true,
+      powerPreference: 'high-performance',
+      alpha: true,
+    })
     renderer.setSize(w, h)
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
     renderer.toneMapping = THREE.ACESFilmicToneMapping
-    renderer.toneMappingExposure = 1.15
+    renderer.toneMappingExposure = 1.18
     renderer.shadowMap.enabled = true
     renderer.shadowMap.type = THREE.PCFSoftShadowMap
     container.innerHTML = ''
@@ -149,39 +175,66 @@ function ThreeViewerInner({
     // Smooth orbit controls
     const controls = new OrbitControls(camera, renderer.domElement)
     controls.enableDamping = true
-    controls.dampingFactor = 0.07
+    controls.dampingFactor = 0.06
     controls.autoRotate = rotatingRef.current
-    controls.autoRotateSpeed = 1.0
+    controls.autoRotateSpeed = 1.2
     controls.enableZoom = true
     controls.enablePan = true
     controls.minDistance = 5
-    controls.maxDistance = 800
+    controls.maxDistance = 1200
     controlsRef.current = controls
 
-    // ─── Studio Lighting ────────────────────────────────
-    // Hemisphere (sky + ground bounce)
-    scene.add(new THREE.HemisphereLight(0xffffff, 0x1a1f2e, 0.7))
+    // ─── Studio Lighting Setup ──────────────────────────
+    // Ambient / Hemisphere
+    scene.add(new THREE.HemisphereLight(0xffffff, 0x1e293b, 0.75))
 
-    // Key light — warm white, top-right, cast shadows
-    const key = new THREE.DirectionalLight(0xffffff, 1.3)
+    // Key light (warm, upper-right front)
+    const key = new THREE.DirectionalLight(0xffffff, 1.4)
     key.position.set(100, 160, 120)
     key.castShadow = true
+    key.shadow.bias = -0.0001
     scene.add(key)
 
-    // Fill light — soft cool blue from the left
-    const fill = new THREE.DirectionalLight(0xb4c6fc, 0.65)
+    // Fill light (soft cool blue from left)
+    const fill = new THREE.DirectionalLight(0xa5b4fc, 0.7)
     fill.position.set(-120, 50, 80)
     scene.add(fill)
 
-    // Rim / backlight — warm edge highlight for silhouette definition
-    const rim = new THREE.DirectionalLight(0xffd6a5, 0.95)
+    // Rim / backlight (warm silhouette highlight)
+    const rim = new THREE.DirectionalLight(0xffedd5, 1.0)
     rim.position.set(-20, 100, -160)
     scene.add(rim)
 
-    // Under-bounce
-    const bounce = new THREE.DirectionalLight(0x475569, 0.35)
+    // Ground bounce
+    const bounce = new THREE.DirectionalLight(0x334155, 0.4)
     bounce.position.set(0, -100, 40)
     scene.add(bounce)
+
+    // ─── Soft Contact Shadow Plane ──────────────────────
+    const shadowCanvas = document.createElement('canvas')
+    shadowCanvas.width = 128
+    shadowCanvas.height = 128
+    const ctx = shadowCanvas.getContext('2d')
+    if (ctx) {
+      const grad = ctx.createRadialGradient(64, 64, 0, 64, 64, 64)
+      grad.addColorStop(0, 'rgba(0, 0, 0, 0.45)')
+      grad.addColorStop(0.5, 'rgba(0, 0, 0, 0.15)')
+      grad.addColorStop(1, 'rgba(0, 0, 0, 0)')
+      ctx.fillStyle = grad
+      ctx.fillRect(0, 0, 128, 128)
+    }
+    const shadowTexture = new THREE.CanvasTexture(shadowCanvas)
+    const shadowPlane = new THREE.Mesh(
+      new THREE.PlaneGeometry(120, 120),
+      new THREE.MeshBasicMaterial({
+        map: shadowTexture,
+        transparent: true,
+        depthWrite: false,
+      })
+    )
+    shadowPlane.rotation.x = -Math.PI / 2
+    shadowPlane.position.y = -0.5
+    scene.add(shadowPlane)
 
     // ─── Model group ────────────────────────────────────
     const group = new THREE.Group()
@@ -192,11 +245,11 @@ function ThreeViewerInner({
     const makeMat = (): THREE.MeshPhysicalMaterial => {
       const mat = new THREE.MeshPhysicalMaterial({
         color: new THREE.Color(safeColor),
-        roughness: 0.32,
-        metalness: 0.06,
-        clearcoat: 0.25,
-        clearcoatRoughness: 0.2,
-        reflectivity: 0.5,
+        roughness: 0.3,
+        metalness: 0.08,
+        clearcoat: 0.3,
+        clearcoatRoughness: 0.18,
+        reflectivity: 0.55,
         wireframe,
         side: THREE.DoubleSide,
       })
@@ -204,7 +257,6 @@ function ThreeViewerInner({
       return mat
     }
 
-    // Apply styling helper
     const styleMeshes = (root: THREE.Object3D) => {
       root.traverse(child => {
         if (child instanceof THREE.Mesh) {
@@ -216,7 +268,7 @@ function ThreeViewerInner({
       })
     }
 
-    // Fit model to fill camera nicely
+    // Fit model to fill camera perfectly
     const fitCamera = (obj: THREE.Object3D) => {
       const box = new THREE.Box3().setFromObject(obj)
       if (box.isEmpty()) return
@@ -231,16 +283,19 @@ function ThreeViewerInner({
 
       const maxDim = Math.max(size.x, size.y, size.z)
       if (maxDim > 0) {
+        shadowPlane.scale.set(maxDim / 35, maxDim / 35, 1)
+        shadowPlane.position.y = -size.y / 2 - 0.2
+
         const fov = camera.fov * (Math.PI / 180)
         let dist = (maxDim / 2 / Math.tan(fov / 2)) * 1.35
         dist = Math.max(dist, 10)
 
-        // Position camera at a nice 3/4 angle so the model looks premium
         camera.position.set(dist * 0.6, dist * 0.35, dist * 0.75)
+        initialCamPos.current.copy(camera.position)
         camera.lookAt(0, 0, 0)
         controls.target.set(0, 0, 0)
         camera.near = Math.max(maxDim / 200, 0.05)
-        camera.far = Math.max(maxDim * 50, 2000)
+        camera.far = Math.max(maxDim * 50, 3000)
         camera.updateProjectionMatrix()
         controls.update()
       }
@@ -303,27 +358,68 @@ function ThreeViewerInner({
     }
     load()
 
+    // ─── Interaction Listeners ──────────────────────────
+    const onMouseDown = () => {
+      setIsGrabbing(true)
+      setShowHint(false)
+    }
+    const onMouseUp = () => setIsGrabbing(false)
+
+    // Double-click to auto reset & re-center view
+    const onDblClick = () => {
+      if (controlsRef.current && cameraRef.current) {
+        cameraRef.current.position.copy(initialCamPos.current)
+        controlsRef.current.target.set(0, 0, 0)
+        controlsRef.current.update()
+      }
+    }
+
+    const dom = renderer.domElement
+    dom.addEventListener('mousedown', onMouseDown)
+    window.addEventListener('mouseup', onMouseUp)
+    dom.addEventListener('dblclick', onDblClick)
+
     // Render loop
     let animId: number
-    const tick = () => { animId = requestAnimationFrame(tick); controls.update(); renderer.render(scene, camera) }
+    const tick = () => {
+      animId = requestAnimationFrame(tick)
+      controls.update()
+      renderer.render(scene, camera)
+    }
     tick()
 
     // Resize
     const onResize = () => {
       if (!container) return
-      const nw = container.clientWidth || 600
-      const nh = typeof height === 'number' ? height : container.clientHeight || 460
-      camera.aspect = nw / nh; camera.updateProjectionMatrix(); renderer.setSize(nw, nh)
+      const nw = isFullscreen ? window.innerWidth : container.clientWidth || 600
+      const nh = isFullscreen ? window.innerHeight : typeof height === 'number' ? height : container.clientHeight || 460
+      camera.aspect = nw / nh
+      camera.updateProjectionMatrix()
+      renderer.setSize(nw, nh)
     }
     window.addEventListener('resize', onResize)
 
     return () => {
-      disposed = true; cancelAnimationFrame(animId)
+      disposed = true
+      cancelAnimationFrame(animId)
       window.removeEventListener('resize', onResize)
-      controls.dispose(); scene.clear(); renderer.dispose()
+      dom.removeEventListener('mousedown', onMouseDown)
+      window.removeEventListener('mouseup', onMouseUp)
+      dom.removeEventListener('dblclick', onDblClick)
+      controls.dispose()
+      scene.clear()
+      renderer.dispose()
       matsRef.current.forEach(m => m.dispose())
     }
-  }, [modelUrl, fmt, height])
+  }, [modelUrl, fmt, height, isFullscreen])
+
+  const handleResetView = () => {
+    if (controlsRef.current && cameraRef.current) {
+      cameraRef.current.position.copy(initialCamPos.current)
+      controlsRef.current.target.set(0, 0, 0)
+      controlsRef.current.update()
+    }
+  }
 
   // ─── Error / unsupported fallback ─────────────────────
   if (unsupported || error) {
@@ -354,17 +450,34 @@ function ThreeViewerInner({
 
   // ─── Main Viewer ──────────────────────────────────────
   return (
-    <div style={{
-      position: 'relative', height, background: '#0F172A', borderRadius: 20,
-      overflow: 'hidden', border: '1px solid rgba(255,255,255,0.06)',
-      boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
-    }}>
-      <div ref={mountRef} style={{ width: '100%', height: '100%', cursor: 'grab' }} />
+    <div
+      ref={containerRef}
+      style={{
+        position: isFullscreen ? 'fixed' : 'relative',
+        inset: isFullscreen ? 0 : 'auto',
+        zIndex: isFullscreen ? 99999 : 1,
+        width: '100%',
+        height: isFullscreen ? '100vh' : height,
+        background: 'radial-gradient(circle at center, #1E293B 0%, #0F172A 100%)',
+        borderRadius: isFullscreen ? 0 : 20,
+        overflow: 'hidden',
+        border: isFullscreen ? 'none' : '1px solid rgba(255,255,255,0.06)',
+        boxShadow: isFullscreen ? 'none' : '0 8px 32px rgba(0,0,0,0.4)',
+      }}
+    >
+      <div
+        ref={mountRef}
+        style={{
+          width: '100%',
+          height: '100%',
+          cursor: isGrabbing ? 'grabbing' : 'grab',
+        }}
+      />
 
-      {/* Loading */}
+      {/* Loading Overlay */}
       {loading && (
         <div style={{
-          position: 'absolute', inset: 0, background: 'rgba(15,23,42,0.9)', backdropFilter: 'blur(6px)',
+          position: 'absolute', inset: 0, background: 'rgba(15,23,42,0.92)', backdropFilter: 'blur(8px)',
           display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', zIndex: 10,
         }}>
           <div style={{ fontSize: 32, marginBottom: 8, animation: 'spin 1.5s linear infinite' }}>⏳</div>
@@ -372,12 +485,12 @@ function ThreeViewerInner({
         </div>
       )}
 
-      {/* Top-left: minimal specs badge */}
+      {/* Top-left: Minimal Specs Badge */}
       <div style={{
         position: 'absolute', top: 12, left: 12, zIndex: 5,
-        background: 'rgba(15,23,42,0.7)', backdropFilter: 'blur(10px)',
+        background: 'rgba(15,23,42,0.75)', backdropFilter: 'blur(10px)',
         border: '1px solid rgba(255,255,255,0.08)', borderRadius: 10,
-        padding: '6px 12px', display: 'flex', alignItems: 'center', gap: 8,
+        padding: '5px 12px', display: 'flex', alignItems: 'center', gap: 8,
       }}>
         <span style={{ fontSize: 11, fontWeight: 700, color: '#CBD5E1' }}>
           {bounds.x} × {bounds.y} × {bounds.z} mm
@@ -390,39 +503,85 @@ function ThreeViewerInner({
         </span>
       </div>
 
-      {/* Bottom-right: minimal controls */}
+      {/* Center Subtle Gesture Hint (fades away automatically) */}
+      {showHint && !loading && (
+        <div style={{
+          position: 'absolute', top: 12, right: 12, zIndex: 4,
+          background: 'rgba(15,23,42,0.6)', backdropFilter: 'blur(8px)',
+          border: '1px solid rgba(255,255,255,0.06)', borderRadius: 8,
+          padding: '4px 10px', color: '#94A3B8', fontSize: 11, fontWeight: 600,
+          pointerEvents: 'none', transition: 'opacity 0.5s ease',
+        }}>
+          🖱️ Drag to rotate • Double-click to center
+        </div>
+      )}
+
+      {/* Bottom-right: Clean Minimal Control Pills */}
       <div style={{
         position: 'absolute', bottom: 12, right: 12, zIndex: 5,
         display: 'flex', gap: 6,
       }}>
         <ViewerBtn
+          active={false}
+          onClick={handleResetView}
+          label="🎯 Center"
+          title="Reset camera angle (or double-click)"
+        />
+        <ViewerBtn
           active={wireframe}
           onClick={() => setWireframe(!wireframe)}
           label={wireframe ? '◼ Solid' : '◻ Wireframe'}
+          title="Toggle wireframe mode"
         />
         <ViewerBtn
           active={rotating}
           onClick={() => setRotating(!rotating)}
           label={rotating ? '⏸ Pause' : '🔄 Rotate'}
           activeColor="#FF6B35"
+          title="Toggle auto rotation"
+        />
+        <ViewerBtn
+          active={isFullscreen}
+          onClick={() => setIsFullscreen(!isFullscreen)}
+          label={isFullscreen ? '✖ Exit' : '⛶ Full'}
+          title="Toggle fullscreen view"
         />
       </div>
     </div>
   )
 }
 
-function ViewerBtn({ active, onClick, label, activeColor = '#8B5CF6' }: {
-  active: boolean; onClick: () => void; label: string; activeColor?: string
+function ViewerBtn({
+  active,
+  onClick,
+  label,
+  activeColor = '#8B5CF6',
+  title,
+}: {
+  active: boolean
+  onClick: () => void
+  label: string
+  activeColor?: string
+  title?: string
 }) {
   return (
-    <button type="button" onClick={onClick} style={{
-      background: active ? activeColor : 'rgba(15,23,42,0.7)',
-      color: active ? '#fff' : '#94A3B8',
-      border: '1px solid rgba(255,255,255,0.1)',
-      borderRadius: 8, padding: '5px 12px', fontSize: 11, fontWeight: 800,
-      cursor: 'pointer', backdropFilter: 'blur(8px)',
-      transition: 'all 0.2s ease',
-    }}>
+    <button
+      type="button"
+      onClick={onClick}
+      title={title}
+      style={{
+        background: active ? activeColor : 'rgba(15,23,42,0.75)',
+        color: active ? '#fff' : '#94A3B8',
+        border: '1px solid rgba(255,255,255,0.1)',
+        borderRadius: 8,
+        padding: '5px 11px',
+        fontSize: 11,
+        fontWeight: 800,
+        cursor: 'pointer',
+        backdropFilter: 'blur(8px)',
+        transition: 'all 0.18s ease',
+      }}
+    >
       {label}
     </button>
   )
