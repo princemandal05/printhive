@@ -48,6 +48,11 @@ export default function NewRequestPage() {
       return
     }
 
+    if (!description.trim()) {
+      setFormError('Please enter technical specifications and requirements in the description.')
+      return
+    }
+
     setSubmitting(true)
     setFormError(null)
 
@@ -87,7 +92,7 @@ export default function NewRequestPage() {
       }
 
       const fullDescription = [
-        description.trim() || `Custom 3D model specification for ${purpose.trim()}.`,
+        description.trim(),
         dimensions.trim() ? `\n📐 Dimensions: ${dimensions.trim()}` : '',
         material ? `\n🧪 Preferred Material: ${material}` : '',
         (budgetMin || budgetMax) ? `\n💰 Budget Range: ₹${budgetMin || '0'} – ₹${budgetMax || budgetMin || '0'}` : '',

@@ -49,6 +49,7 @@ export default function RequestDetailPage() {
   const [request, setRequest] = useState<RequestType | null>(null)
   const [bids, setBids] = useState<BidType[]>([])
   const [notFound, setNotFound] = useState(false)
+  const [fetchError, setFetchError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
   const [currentUserRole, setCurrentUserRole] = useState<string>('buyer')
@@ -62,80 +63,92 @@ export default function RequestDetailPage() {
   const [submitted, setSubmitted] = useState(false)
   const [bidError, setBidError] = useState<string | null>(null)
 
-  useEffect(() => {
-    const supabase = createClient()
-    let isMounted = true
+  const loadData = async () => {
+    if (!reqId) return
+    setLoading(true)
+    setFetchError(null)
 
-    async function loadData() {
-      if (!reqId) return
-      setLoading(true)
+    try {
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      let loggedInUserId: string | null = null
 
-      try {
-        const { data: { user } } = await supabase.auth.getUser()
-        if (user && isMounted) {
-          setCurrentUserId(user.id)
-          const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).maybeSingle()
-          if (profile?.role) setCurrentUserRole(profile.role)
-        }
-
-        const { data: reqData, error: reqErr } = await supabase
-          .from('design_requests')
-          .select('*')
-          .eq('id', reqId)
-          .maybeSingle()
-
-        if (reqErr || !reqData) {
-          if (isMounted) {
-            setRequest(null)
-            setNotFound(true)
-            setBids([])
-          }
-          return
-        }
-
-        if (isMounted) {
-          setRequest({
-            id: reqData.id,
-            title: reqData.title || 'Custom 3D Request',
-            budget: Number(reqData.budget || 0),
-            description: reqData.description || 'No detailed specifications provided.',
-            postedAt: reqData.created_at ? new Date(reqData.created_at).toLocaleDateString() : 'Recently',
-            buyerId: reqData.buyer_id || '',
-            status: reqData.status || 'open',
-          })
-          setNotFound(false)
-        }
-
-        const { data: bidRows } = await supabase
-          .from('design_request_bids')
-          .select('*')
-          .eq('request_id', reqId)
-          .order('created_at', { ascending: false })
-
-        if (bidRows && isMounted) {
-          setBids(bidRows.map((b: any) => ({
-            id: b.id,
-            designer: b.designer_name || 'Verified Designer',
-            rating: 5.0,
-            price: Number(b.price || 500),
-            days: Number(b.days || 2),
-            note: b.note || 'Ready to model and deliver with high precision.',
-            designerId: b.designer_id,
-          })))
-        }
-      } catch (err) {
-        console.error('Error fetching design request:', err)
-        if (isMounted) {
-          setRequest(null)
-          setNotFound(true)
-        }
-      } finally {
-        if (isMounted) setLoading(false)
+      if (user) {
+        loggedInUserId = user.id
+        setCurrentUserId(user.id)
+        const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).maybeSingle()
+        if (profile?.role) setCurrentUserRole(profile.role)
       }
-    }
 
+      const { data: reqData, error: reqErr } = await supabase
+        .from('design_requests')
+        .select('*')
+        .eq('id', reqId)
+        .maybeSingle()
+
+      if (reqErr) {
+        setFetchError(reqErr.message || 'Unable to load brief details. Please check your connection and retry.')
+        setRequest(null)
+        setNotFound(false)
+        return
+      }
+
+      if (!reqData) {
+        setRequest(null)
+        setNotFound(true)
+        setBids([])
+        return
+      }
+
+      setRequest({
+        id: reqData.id,
+        title: reqData.title || 'Custom 3D Request',
+        budget: typeof reqData.budget === 'number' ? reqData.budget : Number(reqData.budget || 0),
+        description: reqData.description || 'No detailed specifications provided.',
+        postedAt: reqData.created_at ? new Date(reqData.created_at).toLocaleDateString() : 'Recently',
+        buyerId: reqData.buyer_id || '',
+        status: reqData.status || 'open',
+      })
+      setNotFound(false)
+
+      const { data: bidRows, error: bidsErr } = await supabase
+        .from('design_request_bids')
+        .select('*')
+        .eq('request_id', reqId)
+        .order('created_at', { ascending: false })
+
+      if (bidsErr) {
+        console.warn('Error fetching bids:', bidsErr)
+      }
+
+      if (bidRows) {
+        setBids(bidRows.map((b: any) => ({
+          id: b.id,
+          designer: b.designer_name || 'Verified Designer',
+          rating: 5.0,
+          price: Number(b.price || 500),
+          days: Number(b.days || 2),
+          note: b.note || 'Ready to model and deliver with high precision.',
+          designerId: b.designer_id,
+        })))
+
+        if (loggedInUserId && bidRows.some((b: any) => b.designer_id === loggedInUserId)) {
+          setSubmitted(true)
+        }
+      }
+    } catch (err: unknown) {
+      console.error('Error fetching design request:', err)
+      const msg = err instanceof Error ? err.message : 'Transient network failure loading brief. Please retry.'
+      setFetchError(msg)
+      setRequest(null)
+      setNotFound(false)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
     loadData()
-    return () => { isMounted = false }
   }, [reqId])
 
   const handleBidSubmit = async (e: React.FormEvent) => {
@@ -229,6 +242,19 @@ export default function RequestDetailPage() {
         {loading ? (
           <div style={{ textAlign: 'center', padding: '80px 20px', color: '#64748B', fontSize: 14 }}>
             Loading brief details...
+          </div>
+        ) : fetchError ? (
+          <div style={{ textAlign: 'center', padding: '60px 24px', background: '#FFFFFF', borderRadius: 12, border: '1px solid #FECACA' }}>
+            <AlertCircle size={36} color="#DC2626" style={{ margin: '0 auto 12px' }} />
+            <div style={{ fontSize: 18, fontWeight: 800, color: '#0F172A', marginBottom: 4 }}>Error Loading Brief</div>
+            <div style={{ fontSize: 13, color: '#64748B', marginBottom: 20 }}>{fetchError}</div>
+            <button
+              type="button"
+              onClick={loadData}
+              style={{ background: '#FF6B35', color: '#fff', padding: '8px 16px', borderRadius: 6, fontWeight: 700, fontSize: 13, border: 'none', cursor: 'pointer' }}
+            >
+              Retry Loading Brief
+            </button>
           </div>
         ) : notFound || !request ? (
           <div style={{ textAlign: 'center', padding: '60px 24px', background: '#FFFFFF', borderRadius: 12, border: '1px solid #E2E8F0' }}>
@@ -378,7 +404,13 @@ export default function RequestDetailPage() {
                         </div>
                         <div style={{ display: 'flex', justifyContent: 'space-between', color: '#64748B', marginBottom: 4 }}>
                           <span>Target Budget:</span>
-                          <strong style={{ color: '#0F172A' }}>₹{request.budget || 'Flexible'}</strong>
+                          <strong style={{ color: '#0F172A' }}>
+                            {typeof request.budget === 'number' && !isNaN(request.budget) && request.budget > 0
+                              ? `₹${request.budget}`
+                              : request.budget === 0
+                              ? '₹0'
+                              : 'Flexible'}
+                          </strong>
                         </div>
                         <div style={{ display: 'flex', justifyContent: 'space-between', color: '#64748B' }}>
                           <span>Escrow Protection:</span>

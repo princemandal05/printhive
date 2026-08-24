@@ -405,9 +405,9 @@ export default function BuyerDashboardClient({ user, myRequests, myOrders }: Buy
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4, flexWrap: 'wrap' }}>
                       <span
                         style={{
-                          background: '#ECFDF5',
-                          color: '#059669',
-                          border: '1px solid #A7F3D0',
+                          background: b.status === 'open' ? '#ECFDF5' : b.status === 'awarded' || b.status === 'in_progress' ? '#EFF6FF' : b.status === 'completed' ? '#FAF5FF' : b.status === 'cancelled' || b.status === 'closed' ? '#FEF2F2' : '#F1F5F9',
+                          color: b.status === 'open' ? '#059669' : b.status === 'awarded' || b.status === 'in_progress' ? '#2563EB' : b.status === 'completed' ? '#7C3AED' : b.status === 'cancelled' || b.status === 'closed' ? '#DC2626' : '#475569',
+                          border: `1px solid ${b.status === 'open' ? '#A7F3D0' : b.status === 'awarded' || b.status === 'in_progress' ? '#BFDBFE' : b.status === 'completed' ? '#E9D5FF' : b.status === 'cancelled' || b.status === 'closed' ? '#FECACA' : '#CBD5E1'}`,
                           padding: '1px 6px',
                           borderRadius: 4,
                           fontSize: 10,

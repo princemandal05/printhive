@@ -146,9 +146,9 @@ def create_specific_report():
     achievements_list = [
         ("1. Multi-Role 3-Sided Decentralized Architecture",
          "Architected and deployed a unified multi-tenant ecosystem supporting four distinct user roles: Buyers, 3D Designers (Creators), "
-         "3D Printer Hub Owners, and Platform Administrators. Designed strict client-side LocalStorage partitioning and server-side PostgreSQL "
-         "Row Level Security (RLS) policies, guaranteeing that shopping carts, wishlists, and product management remain completely isolated "
-         "between user sessions and role workspaces without cross-account data leakage."),
+         "3D Printer Hub Owners, and Platform Administrators. Isolation between accounts, role-workspaces, and inventory is enforced strictly "
+         "via server-side PostgreSQL Row Level Security (RLS) policies and authentication checks, utilizing client-side LocalStorage exclusively "
+         "for active UI preferences and transient cart state."),
         
         ("2. Interactive In-Browser 3D Viewport & Automated Slicer Engine",
          "Engineered a high-performance WebGL 3D rendering pipeline utilizing Three.js and React Three Fiber (@react-three/fiber). "

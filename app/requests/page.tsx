@@ -183,9 +183,9 @@ export default function RequestsListPage() {
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4, flexWrap: 'wrap' }}>
                     <span
                       style={{
-                        background: '#ECFDF5',
-                        color: '#059669',
-                        border: '1px solid #A7F3D0',
+                        background: r.status === 'open' ? '#ECFDF5' : r.status === 'awarded' || r.status === 'in_progress' ? '#EFF6FF' : r.status === 'completed' ? '#FAF5FF' : r.status === 'cancelled' || r.status === 'closed' ? '#FEF2F2' : '#F1F5F9',
+                        color: r.status === 'open' ? '#059669' : r.status === 'awarded' || r.status === 'in_progress' ? '#2563EB' : r.status === 'completed' ? '#7C3AED' : r.status === 'cancelled' || r.status === 'closed' ? '#DC2626' : '#475569',
+                        border: `1px solid ${r.status === 'open' ? '#A7F3D0' : r.status === 'awarded' || r.status === 'in_progress' ? '#BFDBFE' : r.status === 'completed' ? '#E9D5FF' : r.status === 'cancelled' || r.status === 'closed' ? '#FECACA' : '#CBD5E1'}`,
                         padding: '1px 6px',
                         borderRadius: 4,
                         fontSize: 10,
