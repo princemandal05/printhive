@@ -35,8 +35,8 @@ export default function CheckoutPage() {
   const [placing, setPlacing] = useState(false)
   const [showModal, setShowModal] = useState(false)
 
-  const subtotal = cartSubtotal || 450
-  const shipping = subtotal > 1500 ? 0 : 99
+  const subtotal = cartSubtotal
+  const shipping = subtotal === 0 || subtotal > 1500 ? 0 : 99
   const tax = Math.round(subtotal * 0.18)
   const total = subtotal + shipping + tax
 
@@ -74,6 +74,10 @@ export default function CheckoutPage() {
   }
 
   const handleOpenPaymentModal = () => {
+    if (!cart || cart.length === 0) {
+      alert('Your cart is empty. Please add items before checking out.')
+      return
+    }
     if (!paymentCategory) {
       alert('Please select a payment method first.')
       return
@@ -102,6 +106,12 @@ export default function CheckoutPage() {
   }
 
   const handleConfirmPayment = async () => {
+    if (!cart || cart.length === 0) {
+      alert('Your cart is empty. Please add items before checking out.')
+      setPlacing(false)
+      return
+    }
+
     const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
     
@@ -130,7 +140,10 @@ export default function CheckoutPage() {
       })
 
       if (insertErr) {
-        console.warn('Orders insert warning:', insertErr.message)
+        console.error('Failed to create order record:', insertErr.message)
+        alert(`Order creation failed: ${insertErr.message}`)
+        setPlacing(false)
+        return
       }
 
       // If Cash on Delivery, finalize directly
@@ -190,6 +203,7 @@ export default function CheckoutPage() {
               const errData = await verifyRes.json().catch(() => ({}))
               console.error('Payment verification failed:', errData)
               alert(`Payment verification failed: ${errData.error || 'Please contact support.'}`)
+              setPlacing(false)
               return
             }
 
@@ -198,8 +212,8 @@ export default function CheckoutPage() {
             router.push(`/orders/${orderId}`)
           } catch (verifyErr) {
             console.error('Verification error:', verifyErr)
-            clearCart()
-            router.push(`/orders/${orderId}`)
+            alert('A network error occurred while verifying your payment. Your order remains pending verification.')
+            setPlacing(false)
           }
         },
         prefill: {
@@ -211,17 +225,33 @@ export default function CheckoutPage() {
           color: '#FF6B35',
         },
         modal: {
-          ondismiss: function () {
+          ondismiss: async function () {
             setPlacing(false)
+            try {
+              await supabase.from('orders').update({
+                status: 'cancelled',
+                payment_status: 'failed',
+              }).eq('id', orderId).eq('status', 'PENDING_PAYMENT')
+            } catch (err) {
+              console.warn('Failed to update abandoned order:', err)
+            }
           },
         },
       }
 
       const rzp = new (window as any).Razorpay(options)
-      rzp.on('payment.failed', function (response: any) {
+      rzp.on('payment.failed', async function (response: any) {
         console.error('Razorpay payment failed:', response.error)
         alert(`Payment failed: ${response.error?.description || response.error?.reason || 'Transaction declined'}`)
         setPlacing(false)
+        try {
+          await supabase.from('orders').update({
+            status: 'cancelled',
+            payment_status: 'failed',
+          }).eq('id', orderId).eq('status', 'PENDING_PAYMENT')
+        } catch (err) {
+          console.warn('Failed to update failed order:', err)
+        }
       })
       rzp.open()
     } catch (orderErr: unknown) {
