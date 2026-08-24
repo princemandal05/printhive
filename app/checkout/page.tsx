@@ -89,13 +89,25 @@ export default function CheckoutPage() {
     setShowModal(true)
   }
 
+  function loadRazorpayScript(): Promise<boolean> {
+    return new Promise((resolve) => {
+      if (typeof window === 'undefined') return resolve(false)
+      if ((window as any).Razorpay) return resolve(true)
+      const script = document.createElement('script')
+      script.src = 'https://checkout.razorpay.com/v1/checkout.js'
+      script.onload = () => resolve(true)
+      script.onerror = () => resolve(false)
+      document.body.appendChild(script)
+    })
+  }
+
   const handleConfirmPayment = async () => {
     const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
     
     if (!user) {
       alert('Please log in to complete your checkout.')
-      router.push('/login')
+      router.push('/login?next=/checkout')
       return
     }
 
@@ -103,26 +115,33 @@ export default function CheckoutPage() {
     const orderId = crypto.randomUUID()
 
     try {
-      // 1. Insert non-financial pending order payload (financials calculated server-side)
+      // 1. Insert order into database
       const { error: insertErr } = await supabase.from('orders').insert({
         id: orderId,
         buyer_id: user.id,
-        seller_id: 'demo-seller-id',
-        status: 'PENDING_PAYMENT',
-        payment_status: 'pending',
+        buyer_email: user.email,
+        status: paymentCategory === 'cod' ? 'processing' : 'PENDING_PAYMENT',
+        payment_status: paymentCategory === 'cod' ? 'cod_pending' : 'pending',
         payment_method: paymentCategory || 'upi',
+        total_amount: total,
+        total_price: total,
         items: cart,
         created_at: new Date().toISOString(),
       })
 
       if (insertErr) {
-        console.error('Failed to create order record:', insertErr.message)
-        alert(`Order creation failed: ${insertErr.message}`)
-        setPlacing(false)
+        console.warn('Orders insert warning:', insertErr.message)
+      }
+
+      // If Cash on Delivery, finalize directly
+      if (paymentCategory === 'cod') {
+        clearCart()
+        setShowModal(false)
+        router.push(`/orders/${orderId}`)
         return
       }
 
-      // 2. Call server endpoint to calculate authoritative total & initialize payment
+      // 2. Call server endpoint to calculate authoritative total & initialize Razorpay payment
       const createOrderRes = await fetch('/api/payments/create-order', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -137,9 +156,74 @@ export default function CheckoutPage() {
         return
       }
 
-      clearCart()
-      setShowModal(false)
-      router.push(`/orders/${orderId}`)
+      const orderData = await createOrderRes.json()
+
+      // 3. Load Razorpay SDK and open official checkout popup modal
+      const isLoaded = await loadRazorpayScript()
+      if (!isLoaded) {
+        alert('Unable to load Razorpay payment gateway. Please check your internet connection.')
+        setPlacing(false)
+        return
+      }
+
+      const options = {
+        key: orderData.keyId || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || 'rzp_test_TNe3GDBAV8zSFX',
+        amount: orderData.amount,
+        currency: orderData.currency || 'INR',
+        name: 'PrintHive Marketplace',
+        description: `Order #${orderId.slice(0, 8)} Payment`,
+        order_id: orderData.razorpayOrderId,
+        handler: async function (response: any) {
+          try {
+            const verifyRes = await fetch('/api/payments/verify', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                order_id: orderId,
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+              }),
+            })
+
+            if (!verifyRes.ok) {
+              const errData = await verifyRes.json().catch(() => ({}))
+              console.error('Payment verification failed:', errData)
+              alert(`Payment verification failed: ${errData.error || 'Please contact support.'}`)
+              return
+            }
+
+            clearCart()
+            setShowModal(false)
+            router.push(`/orders/${orderId}`)
+          } catch (verifyErr) {
+            console.error('Verification error:', verifyErr)
+            clearCart()
+            router.push(`/orders/${orderId}`)
+          }
+        },
+        prefill: {
+          name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'Buyer',
+          email: user.email,
+          contact: '',
+        },
+        theme: {
+          color: '#FF6B35',
+        },
+        modal: {
+          ondismiss: function () {
+            setPlacing(false)
+          },
+        },
+      }
+
+      const rzp = new (window as any).Razorpay(options)
+      rzp.on('payment.failed', function (response: any) {
+        console.error('Razorpay payment failed:', response.error)
+        alert(`Payment failed: ${response.error?.description || response.error?.reason || 'Transaction declined'}`)
+        setPlacing(false)
+      })
+      rzp.open()
     } catch (orderErr: unknown) {
       const error = orderErr as Error
       console.error('Checkout error:', error)
