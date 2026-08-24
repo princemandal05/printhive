@@ -19,6 +19,7 @@ import {
   Lock,
   Layers,
   HelpCircle,
+  FileText,
 } from 'lucide-react'
 
 interface CustomBrief {
@@ -53,7 +54,6 @@ interface BuyerDashboardClientProps {
 }
 
 export default function BuyerDashboardClient({ user, myRequests, myOrders }: BuyerDashboardClientProps) {
-  const [activeTab, setActiveTab] = useState<'briefs' | 'orders' | 'tools' | 'escrow'>('briefs')
   const [searchQuery, setSearchQuery] = useState('')
 
   const filteredBriefs = myRequests.filter((b) =>
@@ -62,760 +62,420 @@ export default function BuyerDashboardClient({ user, myRequests, myOrders }: Buy
   )
 
   const userName = user.name || user.email?.split('@')[0] || 'Maker'
-  const userInitial = userName.charAt(0).toUpperCase()
+
+  const s: Record<string, React.CSSProperties> = {
+    container: { maxWidth: 1240, margin: '0 auto', padding: '32px 20px', minHeight: '85vh' },
+    headerRow: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 28, flexWrap: 'wrap', gap: 16 },
+    title: { fontSize: 28, fontWeight: 900, color: '#0F172A', margin: 0, letterSpacing: '-0.5px' },
+    sub: { fontSize: 14, color: '#64748B', marginTop: 4 },
+    primaryBtn: {
+      background: 'linear-gradient(135deg, #FF6B35 0%, #F97316 100%)',
+      color: '#FFFFFF',
+      padding: '12px 22px',
+      borderRadius: 14,
+      fontWeight: 800,
+      fontSize: 14,
+      textDecoration: 'none',
+      boxShadow: '0 4px 16px rgba(255,107,53,0.3)',
+      display: 'inline-flex',
+      alignItems: 'center',
+      gap: 8,
+      border: 'none',
+      cursor: 'pointer',
+      transition: 'all 0.2s ease',
+    },
+    outlineBtn: {
+      background: '#FFFFFF',
+      color: '#0F172A',
+      border: '1px solid #CBD5E1',
+      padding: '12px 20px',
+      borderRadius: 14,
+      fontWeight: 700,
+      fontSize: 14,
+      textDecoration: 'none',
+      display: 'inline-flex',
+      alignItems: 'center',
+      gap: 8,
+      transition: 'all 0.2s ease',
+    },
+    metricGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 16, marginBottom: 32 },
+    card: { background: '#FFFFFF', borderRadius: 20, border: '1px solid #E2E8F0', padding: 24, boxShadow: '0 4px 20px rgba(0,0,0,0.03)' },
+    metricVal: { fontSize: 26, fontWeight: 900, color: '#0F172A', marginTop: 6, letterSpacing: '-0.5px' },
+    metricLabel: { fontSize: 11, color: '#64748B', fontWeight: 800, textTransform: 'uppercase', letterSpacing: 0.5 },
+  }
 
   return (
-    <div style={{ maxWidth: 1280, margin: '0 auto', padding: '36px 20px', minHeight: '85vh' }}>
-      {/* 🌟 HERO PROFILE & WELCOME BANNER */}
-      <div
-        style={{
-          background: 'linear-gradient(135deg, #0F172A 0%, #1E293B 100%)',
-          borderRadius: 24,
-          padding: '32px 36px',
-          color: '#FFFFFF',
-          marginBottom: 32,
-          boxShadow: '0 12px 36px rgba(15,23,42,0.18)',
-          position: 'relative',
-          overflow: 'hidden',
-        }}
-      >
-        {/* Ambient subtle glow background */}
-        <div
-          style={{
-            position: 'absolute',
-            top: -60,
-            right: -60,
-            width: 260,
-            height: 260,
-            borderRadius: '50%',
-            background: 'radial-gradient(circle, rgba(255,107,53,0.3) 0%, rgba(255,107,53,0) 70%)',
-            pointerEvents: 'none',
-          }}
-        />
+    <div style={s.container}>
+      {/* 🌟 CLEAN LUXURY HEADER */}
+      <div style={s.headerRow}>
+        <div>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'rgba(255,107,53,0.1)', color: '#EA580C', border: '1px solid rgba(255,107,53,0.25)', padding: '4px 12px', borderRadius: 99, fontSize: 12, fontWeight: 800, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8 }}>
+            <Sparkles size={13} /> Buyer Dashboard
+          </div>
+          <h1 style={s.title}>Welcome back, {userName}!</h1>
+          <div style={s.sub}>Manage your custom 3D design briefs, track manufacturing orders, and explore 3D models.</div>
+        </div>
 
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 24, position: 'relative', zIndex: 1 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
-            <div
-              style={{
-                width: 64,
-                height: 64,
-                borderRadius: '50%',
-                background: 'linear-gradient(135deg, #FF6B35 0%, #F97316 100%)',
-                color: '#FFFFFF',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: 26,
-                fontWeight: 900,
-                boxShadow: '0 6px 20px rgba(255,107,53,0.4)',
-                border: '3px solid rgba(255,255,255,0.2)',
-              }}
-            >
-              {userInitial}
+        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+          <Link href="/requests/new" style={s.primaryBtn}>
+            <PlusCircle size={16} /> Request Custom 3D Part
+          </Link>
+          <Link href="/print-on-demand" style={s.outlineBtn}>
+            <Zap size={16} color="#FF6B35" /> Instant 3D Slicer
+          </Link>
+        </div>
+      </div>
+
+      {/* 📊 METRICS ROW */}
+      <div style={s.metricGrid}>
+        <div style={s.card}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={s.metricLabel}>Custom 3D Briefs</div>
+            <div style={{ width: 38, height: 38, borderRadius: 10, background: '#FFF7ED', color: '#EA580C', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Sparkles size={18} />
             </div>
+          </div>
+          <div style={s.metricVal}>{myRequests.length} Active</div>
+          <div style={{ fontSize: 12, color: '#EA580C', marginTop: 8, fontWeight: 700 }}>
+            {myRequests.length > 0 ? 'Accepting Designer Bids' : 'No active briefs'}
+          </div>
+        </div>
 
-            <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
-                <h1 style={{ fontSize: 26, fontWeight: 900, margin: 0, letterSpacing: '-0.5px' }}>
-                  Welcome back, {userName}!
-                </h1>
-                <span
-                  style={{
-                    background: 'rgba(16,185,129,0.2)',
-                    color: '#34D399',
-                    border: '1px solid rgba(52,211,153,0.4)',
-                    padding: '3px 10px',
-                    borderRadius: 99,
-                    fontSize: 11,
-                    fontWeight: 800,
-                    textTransform: 'uppercase',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: 4,
-                  }}
-                >
-                  <CheckCircle2 size={12} /> Verified Buyer
-                </span>
-              </div>
-              <p style={{ color: '#94A3B8', fontSize: 14, margin: 0 }}>
-                Manage custom 3D modeling briefs, track physical manufacturing orders, and explore CAD models.
-              </p>
+        <div style={s.card}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={s.metricLabel}>Physical Orders</div>
+            <div style={{ width: 38, height: 38, borderRadius: 10, background: '#EFF6FF', color: '#2563EB', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Package size={18} />
+            </div>
+          </div>
+          <div style={s.metricVal}>{myOrders.length} Orders</div>
+          <div style={{ fontSize: 12, color: '#2563EB', marginTop: 8, fontWeight: 700 }}>
+            Live Slicing & Delivery Tracking
+          </div>
+        </div>
+
+        <div style={s.card}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={s.metricLabel}>Escrow Protection</div>
+            <div style={{ width: 38, height: 38, borderRadius: 10, background: '#ECFDF5', color: '#059669', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <ShieldCheck size={18} />
+            </div>
+          </div>
+          <div style={s.metricVal}>100% Safe</div>
+          <div style={{ fontSize: 12, color: '#059669', marginTop: 8, fontWeight: 700 }}>
+            Razorpay Escrow Vault
+          </div>
+        </div>
+
+        <div style={s.card}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={s.metricLabel}>Nearby Printer Hubs</div>
+            <div style={{ width: 38, height: 38, borderRadius: 10, background: '#FAF5FF', color: '#7C3AED', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Printer size={18} />
+            </div>
+          </div>
+          <div style={s.metricVal}>On-Demand</div>
+          <div style={{ fontSize: 12, color: '#7C3AED', marginTop: 8, fontWeight: 700 }}>
+            GPS Matched Micro-Farms
+          </div>
+        </div>
+      </div>
+
+      {/* 🌟 SECTION 1: CUSTOM 3D BRIEFS & REQUESTS */}
+      <div style={{ ...s.card, marginBottom: 32 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, flexWrap: 'wrap', gap: 14 }}>
+          <div>
+            <div style={{ fontSize: 18, fontWeight: 900, color: '#0F172A', display: 'flex', alignItems: 'center', gap: 8 }}>
+              <Sparkles size={18} color="#FF6B35" /> My Custom 3D Briefs & Requests ({myRequests.length})
+            </div>
+            <div style={{ fontSize: 13, color: '#64748B', marginTop: 2 }}>
+              Custom design briefs and manufacturing requests you have posted for verified creators to bid on
             </div>
           </div>
 
-          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
+            {myRequests.length > 0 && (
+              <div style={{ background: '#F8FAFC', border: '1px solid #CBD5E1', borderRadius: 12, padding: '6px 14px', display: 'flex', alignItems: 'center', gap: 8 }}>
+                <Search size={15} color="#64748B" />
+                <input
+                  type="text"
+                  placeholder="Filter briefs..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  style={{ border: 'none', outline: 'none', fontSize: 13, color: '#0F172A', background: 'transparent', width: 140 }}
+                />
+              </div>
+            )}
+
             <Link
               href="/requests/new"
               style={{
-                background: 'linear-gradient(135deg, #FF6B35 0%, #F97316 100%)',
+                background: '#FF6B35',
                 color: '#fff',
-                padding: '12px 22px',
-                borderRadius: 14,
-                fontWeight: 900,
-                fontSize: 14,
-                textDecoration: 'none',
-                boxShadow: '0 6px 20px rgba(255,107,53,0.35)',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 8,
-              }}
-            >
-              <Sparkles size={16} /> Request Custom 3D Part
-            </Link>
-            <Link
-              href="/print-on-demand"
-              style={{
-                background: 'rgba(255,255,255,0.1)',
-                color: '#fff',
-                border: '1px solid rgba(255,255,255,0.2)',
-                backdropFilter: 'blur(10px)',
-                padding: '12px 20px',
-                borderRadius: 14,
+                padding: '8px 16px',
+                borderRadius: 10,
                 fontWeight: 800,
-                fontSize: 14,
+                fontSize: 13,
                 textDecoration: 'none',
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: 6,
               }}
             >
-              <Zap size={16} /> Instant 3D Slicer
+              <PlusCircle size={14} /> Post Brief
             </Link>
           </div>
         </div>
-      </div>
 
-      {/* 📊 SUMMARY METRICS ROW */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 18, marginBottom: 32 }}>
-        <button
-          type="button"
-          role="tab"
-          aria-selected={activeTab === 'briefs'}
-          aria-pressed={activeTab === 'briefs'}
-          onClick={() => setActiveTab('briefs')}
-          style={{
-            background: activeTab === 'briefs' ? '#FFF7ED' : '#FFFFFF',
-            border: activeTab === 'briefs' ? '2px solid #FF6B35' : '1px solid #E2E8F0',
-            borderRadius: 20,
-            padding: 22,
-            cursor: 'pointer',
-            boxShadow: '0 4px 20px rgba(0,0,0,0.03)',
-            transition: 'all 0.2s',
-            textAlign: 'left',
-            width: '100%',
-            display: 'block',
-          }}
-        >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontSize: 11, fontWeight: 800, color: '#64748B', textTransform: 'uppercase', letterSpacing: 0.5 }}>Custom 3D Briefs</span>
-            <div style={{ width: 36, height: 36, borderRadius: 10, background: '#FFF7ED', color: '#EA580C', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Sparkles size={18} />
+        {filteredBriefs.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '48px 24px', background: '#F8FAFC', borderRadius: 16, border: '2px dashed #CBD5E1' }}>
+            <div style={{ width: 50, height: 50, borderRadius: '50%', background: '#FFF7ED', color: '#FF6B35', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px' }}>
+              <Sparkles size={24} />
             </div>
-          </div>
-          <div style={{ fontSize: 28, fontWeight: 900, color: '#0F172A', marginTop: 6, letterSpacing: '-0.5px' }}>
-            {myRequests.length} Active
-          </div>
-          <div style={{ fontSize: 12, color: '#FF6B35', marginTop: 6, fontWeight: 700 }}>
-            {myRequests.length > 0 ? 'Accepting Designer Bids' : 'Post your first brief'}
-          </div>
-        </button>
-
-        <button
-          type="button"
-          role="tab"
-          aria-selected={activeTab === 'orders'}
-          aria-pressed={activeTab === 'orders'}
-          onClick={() => setActiveTab('orders')}
-          style={{
-            background: activeTab === 'orders' ? '#EFF6FF' : '#FFFFFF',
-            border: activeTab === 'orders' ? '2px solid #3B82F6' : '1px solid #E2E8F0',
-            borderRadius: 20,
-            padding: 22,
-            cursor: 'pointer',
-            boxShadow: '0 4px 20px rgba(0,0,0,0.03)',
-            transition: 'all 0.2s',
-            textAlign: 'left',
-            width: '100%',
-            display: 'block',
-          }}
-        >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontSize: 11, fontWeight: 800, color: '#64748B', textTransform: 'uppercase', letterSpacing: 0.5 }}>Physical Orders</span>
-            <div style={{ width: 36, height: 36, borderRadius: 10, background: '#EFF6FF', color: '#2563EB', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Package size={18} />
+            <div style={{ fontSize: 16, fontWeight: 900, color: '#0F172A', marginBottom: 4 }}>
+              {myRequests.length === 0 ? 'No Custom 3D Briefs Posted Yet' : 'No Briefs Matching Filter'}
             </div>
-          </div>
-          <div style={{ fontSize: 28, fontWeight: 900, color: '#0F172A', marginTop: 6, letterSpacing: '-0.5px' }}>
-            {myOrders.length} Orders
-          </div>
-          <div style={{ fontSize: 12, color: '#2563EB', marginTop: 6, fontWeight: 700 }}>
-            Live Slicing & Delivery Tracking
-          </div>
-        </button>
-
-        <button
-          type="button"
-          role="tab"
-          aria-selected={activeTab === 'escrow'}
-          aria-pressed={activeTab === 'escrow'}
-          onClick={() => setActiveTab('escrow')}
-          style={{
-            background: activeTab === 'escrow' ? '#ECFDF5' : '#FFFFFF',
-            border: activeTab === 'escrow' ? '2px solid #10B981' : '1px solid #E2E8F0',
-            borderRadius: 20,
-            padding: 22,
-            cursor: 'pointer',
-            boxShadow: '0 4px 20px rgba(0,0,0,0.03)',
-            transition: 'all 0.2s',
-            textAlign: 'left',
-            width: '100%',
-            display: 'block',
-          }}
-        >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontSize: 11, fontWeight: 800, color: '#64748B', textTransform: 'uppercase', letterSpacing: 0.5 }}>Escrow Protection</span>
-            <div style={{ width: 36, height: 36, borderRadius: 10, background: '#ECFDF5', color: '#059669', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <ShieldCheck size={18} />
+            <div style={{ fontSize: 13, color: '#64748B', maxWidth: 440, margin: '0 auto 18px', lineHeight: 1.5 }}>
+              Need a custom CAD replacement part, cosplay model, or prototype? Post a brief to get proposals from 3D designers and print hubs across India.
             </div>
+            <Link href="/requests/new" style={s.primaryBtn}>
+              <PlusCircle size={16} /> Post Your First Custom 3D Brief
+            </Link>
           </div>
-          <div style={{ fontSize: 28, fontWeight: 900, color: '#0F172A', marginTop: 6, letterSpacing: '-0.5px' }}>
-            100% Safe
-          </div>
-          <div style={{ fontSize: 12, color: '#059669', marginTop: 6, fontWeight: 700 }}>
-            Funds Released Upon Approval
-          </div>
-        </button>
-
-        <button
-          type="button"
-          role="tab"
-          aria-selected={activeTab === 'tools'}
-          aria-pressed={activeTab === 'tools'}
-          onClick={() => setActiveTab('tools')}
-          style={{
-            background: activeTab === 'tools' ? '#FAF5FF' : '#FFFFFF',
-            border: activeTab === 'tools' ? '2px solid #8B5CF6' : '1px solid #E2E8F0',
-            borderRadius: 20,
-            padding: 22,
-            cursor: 'pointer',
-            boxShadow: '0 4px 20px rgba(0,0,0,0.03)',
-            transition: 'all 0.2s',
-            textAlign: 'left',
-            width: '100%',
-            display: 'block',
-          }}
-        >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontSize: 11, fontWeight: 800, color: '#64748B', textTransform: 'uppercase', letterSpacing: 0.5 }}>3D Tools Hub</span>
-            <div style={{ width: 36, height: 36, borderRadius: 10, background: '#FAF5FF', color: '#7C3AED', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Printer size={18} />
-            </div>
-          </div>
-          <div style={{ fontSize: 28, fontWeight: 900, color: '#0F172A', marginTop: 6, letterSpacing: '-0.5px' }}>
-            On-Demand
-          </div>
-          <div style={{ fontSize: 12, color: '#7C3AED', marginTop: 6, fontWeight: 700 }}>
-            STL Slicer & GPS Hub Matching
-          </div>
-        </button>
-      </div>
-
-      {/* 🧭 NAVIGATION TABS */}
-      <div style={{ display: 'flex', gap: 10, borderBottom: '2px solid #E2E8F0', paddingBottom: 12, marginBottom: 28, flexWrap: 'wrap' }}>
-        <button
-          onClick={() => setActiveTab('briefs')}
-          style={{
-            background: activeTab === 'briefs' ? '#0F172A' : 'transparent',
-            color: activeTab === 'briefs' ? '#FFFFFF' : '#64748B',
-            border: 'none',
-            padding: '10px 18px',
-            borderRadius: 12,
-            fontWeight: 800,
-            fontSize: 14,
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 8,
-            transition: 'all 0.2s',
-          }}
-        >
-          <Sparkles size={16} /> My Custom Briefs ({myRequests.length})
-        </button>
-
-        <button
-          onClick={() => setActiveTab('orders')}
-          style={{
-            background: activeTab === 'orders' ? '#0F172A' : 'transparent',
-            color: activeTab === 'orders' ? '#FFFFFF' : '#64748B',
-            border: 'none',
-            padding: '10px 18px',
-            borderRadius: 12,
-            fontWeight: 800,
-            fontSize: 14,
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 8,
-            transition: 'all 0.2s',
-          }}
-        >
-          <Package size={16} /> Orders & Tracking ({myOrders.length})
-        </button>
-
-        <button
-          onClick={() => setActiveTab('tools')}
-          style={{
-            background: activeTab === 'tools' ? '#0F172A' : 'transparent',
-            color: activeTab === 'tools' ? '#FFFFFF' : '#64748B',
-            border: 'none',
-            padding: '10px 18px',
-            borderRadius: 12,
-            fontWeight: 800,
-            fontSize: 14,
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 8,
-            transition: 'all 0.2s',
-          }}
-        >
-          <Printer size={16} /> 3D Slicing & Print Tools
-        </button>
-
-        <button
-          onClick={() => setActiveTab('escrow')}
-          style={{
-            background: activeTab === 'escrow' ? '#0F172A' : 'transparent',
-            color: activeTab === 'escrow' ? '#FFFFFF' : '#64748B',
-            border: 'none',
-            padding: '10px 18px',
-            borderRadius: 12,
-            fontWeight: 800,
-            fontSize: 14,
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 8,
-            transition: 'all 0.2s',
-          }}
-        >
-          <ShieldCheck size={16} /> Escrow & Security Policy
-        </button>
-      </div>
-
-      {/* 🌟 TAB CONTENT: CUSTOM 3D BRIEFS */}
-      {activeTab === 'briefs' && (
-        <div>
-          {/* Header & Search */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, flexWrap: 'wrap', gap: 14 }}>
-            <div>
-              <h2 style={{ fontSize: 22, fontWeight: 900, color: '#0F172A', margin: 0 }}>
-                Custom Design & Manufacturing Briefs
-              </h2>
-              <p style={{ color: '#64748B', fontSize: 13, margin: '4px 0 0' }}>
-                Track proposals submitted by verified 3D creators and manage your open projects.
-              </p>
-            </div>
-
-            <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
-              <div style={{ background: '#FFFFFF', border: '1px solid #CBD5E1', borderRadius: 12, padding: '8px 14px', display: 'flex', alignItems: 'center', gap: 8 }}>
-                <Search size={16} color="#64748B" />
-                <input
-                  type="text"
-                  placeholder="Search your briefs..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  style={{ border: 'none', outline: 'none', fontSize: 13, color: '#0F172A', background: 'transparent', width: 180 }}
-                />
-              </div>
-
-              <Link
-                href="/requests/new"
+        ) : (
+          <div style={{ display: 'grid', gap: 14 }}>
+            {filteredBriefs.map((b) => (
+              <div
+                key={b.id}
                 style={{
-                  background: 'linear-gradient(135deg, #FF6B35 0%, #F97316 100%)',
-                  color: '#fff',
-                  padding: '10px 18px',
-                  borderRadius: 12,
-                  fontWeight: 800,
-                  fontSize: 13,
-                  textDecoration: 'none',
-                  display: 'inline-flex',
+                  background: '#F8FAFC',
+                  borderRadius: 16,
+                  border: '1px solid #E2E8F0',
+                  padding: 20,
+                  display: 'flex',
+                  justifyContent: 'space-between',
                   alignItems: 'center',
-                  gap: 6,
-                  boxShadow: '0 4px 14px rgba(255,107,53,0.25)',
+                  flexWrap: 'wrap',
+                  gap: 16,
+                  transition: 'all 0.2s ease',
                 }}
               >
-                <PlusCircle size={15} /> New Brief
-              </Link>
-            </div>
-          </div>
-
-          {filteredBriefs.length === 0 ? (
-            <div style={{ background: '#FFFFFF', borderRadius: 24, border: '2px dashed #CBD5E1', padding: '60px 24px', textAlign: 'center', boxShadow: '0 4px 20px rgba(0,0,0,0.02)' }}>
-              <div style={{ width: 56, height: 56, borderRadius: '50%', background: '#FFF7ED', color: '#FF6B35', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
-                <Sparkles size={28} />
-              </div>
-              <h3 style={{ fontSize: 20, fontWeight: 900, color: '#0F172A', margin: '0 0 6px' }}>
-                {myRequests.length === 0 ? 'No Custom 3D Briefs Posted Yet' : 'No Briefs Matching Your Search'}
-              </h3>
-              <p style={{ color: '#64748B', fontSize: 14, maxWidth: 480, margin: '0 auto 24px', lineHeight: 1.5 }}>
-                Have a broken part, cosplay helmet, or engineering concept? Post a custom brief and verified 3D designers and print hubs across India will send competitive bids!
-              </p>
-              <Link
-                href="/requests/new"
-                style={{
-                  background: 'linear-gradient(135deg, #FF6B35 0%, #F97316 100%)',
-                  color: '#fff',
-                  padding: '14px 28px',
-                  borderRadius: 14,
-                  fontWeight: 900,
-                  fontSize: 14,
-                  textDecoration: 'none',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 8,
-                  boxShadow: '0 6px 20px rgba(255,107,53,0.35)',
-                }}
-              >
-                <Sparkles size={16} /> Post Your First Custom 3D Brief
-              </Link>
-            </div>
-          ) : (
-            <div style={{ display: 'grid', gap: 18 }}>
-              {filteredBriefs.map((b) => (
-                <div
-                  key={b.id}
-                  style={{
-                    background: '#FFFFFF',
-                    borderRadius: 20,
-                    border: '1px solid #E2E8F0',
-                    padding: 26,
-                    boxShadow: '0 6px 24px rgba(0,0,0,0.03)',
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    flexWrap: 'wrap',
-                    gap: 20,
-                  }}
-                >
-                  <div style={{ flex: 1, minWidth: 280 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10, flexWrap: 'wrap' }}>
-                      <span
-                        style={{
-                          background: '#ECFDF5',
-                          color: '#059669',
-                          border: '1px solid #A7F3D0',
-                          padding: '4px 12px',
-                          borderRadius: 99,
-                          fontSize: 12,
-                          fontWeight: 800,
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: 4,
-                        }}
-                      >
-                        <Zap size={12} /> {b.status === 'open' ? 'Open for Bids' : b.status}
-                      </span>
-                      <span style={{ fontSize: 13, color: '#64748B', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-                        <Clock size={13} /> {b.created_at ? new Date(b.created_at).toLocaleDateString() : 'Recently'}
-                      </span>
-                      {b.budget > 0 && (
-                        <span style={{ fontSize: 13, fontWeight: 900, color: '#FF6B35', background: '#FFF7ED', border: '1px solid #FFEDD5', padding: '3px 10px', borderRadius: 8 }}>
-                          Budget: ₹{b.budget}
-                        </span>
-                      )}
-                    </div>
-
-                    <h3 style={{ fontSize: 20, fontWeight: 900, color: '#0F172A', margin: '0 0 8px', letterSpacing: '-0.3px' }}>
-                      {b.title || 'Custom 3D Model Brief'}
-                    </h3>
-
-                    <p style={{ fontSize: 14, color: '#475569', lineHeight: 1.5, margin: 0, whiteSpace: 'pre-line', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-                      {b.description}
-                    </p>
-                  </div>
-
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10, alignItems: 'flex-end' }}>
-                    <Link
-                      href={`/requests/${b.id}`}
+                <div style={{ flex: 1, minWidth: 260 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8, flexWrap: 'wrap' }}>
+                    <span
                       style={{
-                        background: '#0F172A',
-                        color: '#FFFFFF',
-                        padding: '12px 22px',
-                        borderRadius: 12,
+                        background: '#ECFDF5',
+                        color: '#059669',
+                        border: '1px solid #A7F3D0',
+                        padding: '3px 10px',
+                        borderRadius: 99,
+                        fontSize: 11,
                         fontWeight: 800,
-                        fontSize: 14,
-                        textDecoration: 'none',
                         display: 'inline-flex',
                         alignItems: 'center',
-                        gap: 8,
-                        boxShadow: '0 4px 14px rgba(15,23,42,0.2)',
+                        gap: 4,
                       }}
                     >
-                      View Brief & Proposals <ArrowRight size={16} />
-                    </Link>
+                      <Zap size={11} /> {b.status === 'open' ? 'Open for Bids' : b.status}
+                    </span>
+                    <span style={{ fontSize: 12, color: '#64748B', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                      <Clock size={12} /> {b.created_at ? new Date(b.created_at).toLocaleDateString() : 'Recently'}
+                    </span>
+                    {b.budget > 0 && (
+                      <span style={{ fontSize: 12, fontWeight: 900, color: '#EA580C', background: '#FFF7ED', border: '1px solid #FFEDD5', padding: '2px 8px', borderRadius: 6 }}>
+                        Target Budget: ₹{b.budget}
+                      </span>
+                    )}
                   </div>
+
+                  <h3 style={{ fontSize: 18, fontWeight: 900, color: '#0F172A', margin: '0 0 6px' }}>
+                    {b.title || 'Custom 3D Request'}
+                  </h3>
+
+                  <p style={{ fontSize: 13, color: '#64748B', lineHeight: 1.4, margin: 0, whiteSpace: 'pre-line', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                    {b.description}
+                  </p>
                 </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
 
-      {/* 📦 TAB CONTENT: ORDERS & TRACKING */}
-      {activeTab === 'orders' && (
-        <div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-            <div>
-              <h2 style={{ fontSize: 22, fontWeight: 900, color: '#0F172A', margin: 0 }}>
-                Orders & Real-Time Tracking
-              </h2>
-              <p style={{ color: '#64748B', fontSize: 13, margin: '4px 0 0' }}>
-                Follow your prints through CAD slicing, 3D printing, QA inspection, and courier delivery.
-              </p>
-            </div>
-            <Link href="/shop" style={{ color: '#FF6B35', fontWeight: 800, fontSize: 14, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-              Browse Shop <ArrowRight size={14} />
-            </Link>
-          </div>
-
-          {myOrders.length === 0 ? (
-            <div style={{ background: '#FFFFFF', borderRadius: 24, border: '2px dashed #CBD5E1', padding: '60px 24px', textAlign: 'center' }}>
-              <div style={{ width: 56, height: 56, borderRadius: '50%', background: '#EFF6FF', color: '#2563EB', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
-                <Package size={28} />
-              </div>
-              <h3 style={{ fontSize: 20, fontWeight: 900, color: '#0F172A', margin: '0 0 6px' }}>
-                No Active Orders
-              </h3>
-              <p style={{ color: '#64748B', fontSize: 14, maxWidth: 440, margin: '0 auto 24px' }}>
-                You have not placed any orders yet. Discover functional 3D printed gadgets or print your own 3D file on demand!
-              </p>
-              <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
                 <Link
-                  href="/shop"
-                  style={{
-                    background: '#FF6B35',
-                    color: '#fff',
-                    padding: '12px 24px',
-                    borderRadius: 12,
-                    fontWeight: 800,
-                    textDecoration: 'none',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: 6,
-                  }}
-                >
-                  <ShoppingBag size={16} /> Explore Ready-Made Shop
-                </Link>
-                <Link
-                  href="/print-on-demand"
+                  href={`/requests/${b.id}`}
                   style={{
                     background: '#0F172A',
-                    color: '#fff',
-                    padding: '12px 24px',
+                    color: '#FFFFFF',
+                    padding: '10px 18px',
                     borderRadius: 12,
                     fontWeight: 800,
+                    fontSize: 13,
                     textDecoration: 'none',
                     display: 'inline-flex',
                     alignItems: 'center',
                     gap: 6,
+                    whiteSpace: 'nowrap',
+                    boxShadow: '0 2px 10px rgba(15,23,42,0.15)',
                   }}
                 >
-                  <Printer size={16} /> Print an STL File
+                  View Brief & Proposals <ArrowRight size={14} />
                 </Link>
               </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* 🌟 SECTION 2: ACTIVE ORDERS & TRACKING */}
+      <div style={{ ...s.card, marginBottom: 32 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+          <div>
+            <div style={{ fontSize: 18, fontWeight: 900, color: '#0F172A', display: 'flex', alignItems: 'center', gap: 8 }}>
+              <Package size={18} color="#2563EB" /> Orders & Real-Time Tracking ({myOrders.length})
             </div>
-          ) : (
-            <div style={{ display: 'grid', gap: 16 }}>
-              {myOrders.map((order) => (
-                <div key={order.id} style={{ background: '#FFFFFF', borderRadius: 20, border: '1px solid #E2E8F0', padding: 24, boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-                    <div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
-                        <div style={{ fontSize: 16, fontWeight: 900, color: '#0F172A' }}>Order #{order.id.slice(0, 8)}</div>
-                        <span
-                          style={{
-                            background: order.status === 'delivered' ? '#ECFDF5' : order.status === 'cancelled' ? '#FEF2F2' : '#EFF6FF',
-                            color: order.status === 'delivered' ? '#059669' : order.status === 'cancelled' ? '#DC2626' : '#2563EB',
-                            border: `1px solid ${order.status === 'delivered' ? '#A7F3D0' : order.status === 'cancelled' ? '#FECACA' : '#BFDBFE'}`,
-                            padding: '2px 8px',
-                            borderRadius: 99,
-                            fontSize: 11,
-                            fontWeight: 800,
-                            textTransform: 'capitalize',
-                          }}
-                        >
-                          {order.status || 'Processing'}
-                        </span>
-                      </div>
-                      <div style={{ fontSize: 12, color: '#64748B' }}>Placed on {new Date(order.created_at).toLocaleDateString()}</div>
-                    </div>
-                    <div style={{ fontSize: 18, fontWeight: 900, color: '#FF6B35' }}>
-                      ₹{order.total_amount}
-                    </div>
+            <div style={{ fontSize: 13, color: '#64748B', marginTop: 2 }}>
+              Track physical 3D print orders from slicing to doorstep delivery
+            </div>
+          </div>
+          <Link href="/shop" style={{ color: '#FF6B35', fontWeight: 800, fontSize: 13, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+            <ShoppingBag size={14} /> Browse Shop →
+          </Link>
+        </div>
+
+        {myOrders.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '40px 24px', background: '#F8FAFC', borderRadius: 16, border: '2px dashed #CBD5E1' }}>
+            <div style={{ width: 50, height: 50, borderRadius: '50%', background: '#EFF6FF', color: '#2563EB', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px' }}>
+              <Package size={24} />
+            </div>
+            <div style={{ fontSize: 16, fontWeight: 900, color: '#0F172A', marginBottom: 4 }}>No Orders Found</div>
+            <div style={{ fontSize: 13, color: '#64748B', marginBottom: 16 }}>
+              Your physical purchases and on-demand print orders will track here in real time.
+            </div>
+            <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
+              <Link href="/shop" style={{ ...s.primaryBtn, padding: '10px 18px', fontSize: 13 }}>
+                <ShoppingBag size={15} /> Explore Shop Marketplace
+              </Link>
+              <Link href="/print-on-demand" style={{ ...s.outlineBtn, padding: '10px 18px', fontSize: 13 }}>
+                <Printer size={15} /> Print a 3D File
+              </Link>
+            </div>
+          </div>
+        ) : (
+          <div style={{ display: 'grid', gap: 12 }}>
+            {myOrders.map((order) => (
+              <div
+                key={order.id}
+                style={{
+                  background: '#F8FAFC',
+                  borderRadius: 14,
+                  border: '1px solid #E2E8F0',
+                  padding: 18,
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  flexWrap: 'wrap',
+                  gap: 12,
+                }}
+              >
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
+                    <div style={{ fontSize: 15, fontWeight: 900, color: '#0F172A' }}>Order #{order.id.slice(0, 8)}</div>
+                    <span
+                      style={{
+                        background: order.status === 'delivered' ? '#ECFDF5' : order.status === 'cancelled' ? '#FEF2F2' : '#EFF6FF',
+                        color: order.status === 'delivered' ? '#059669' : order.status === 'cancelled' ? '#DC2626' : '#2563EB',
+                        border: `1px solid ${order.status === 'delivered' ? '#A7F3D0' : order.status === 'cancelled' ? '#FECACA' : '#BFDBFE'}`,
+                        padding: '2px 8px',
+                        borderRadius: 99,
+                        fontSize: 11,
+                        fontWeight: 800,
+                        textTransform: 'capitalize',
+                      }}
+                    >
+                      {order.status || 'Processing'}
+                    </span>
+                  </div>
+                  <div style={{ fontSize: 12, color: '#64748B' }}>Placed on {new Date(order.created_at).toLocaleDateString()}</div>
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                  <div style={{ fontSize: 17, fontWeight: 900, color: '#FF6B35' }}>
+                    ₹{order.total_amount}
                   </div>
                   <Link href={`/orders/${order.id}`} style={{ color: '#2563EB', fontWeight: 800, fontSize: 13, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-                    Track Manufacturing Pipeline <ArrowRight size={14} />
+                    Track Order <ArrowRight size={14} />
                   </Link>
                 </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* 🖨️ TAB CONTENT: 3D SLICING & PRINT TOOLS */}
-      {activeTab === 'tools' && (
-        <div>
-          <div style={{ marginBottom: 24 }}>
-            <h2 style={{ fontSize: 22, fontWeight: 900, color: '#0F172A', margin: 0 }}>
-              On-Demand 3D Tools & Hub Matcher
-            </h2>
-            <p style={{ color: '#64748B', fontSize: 13, margin: '4px 0 0' }}>
-              Instant automated slicing algorithms, material calculations, and nearby verified printer matching.
-            </p>
+              </div>
+            ))}
           </div>
+        )}
+      </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 20 }}>
-            <div style={{ background: '#FFFFFF', borderRadius: 20, border: '1px solid #E2E8F0', padding: 28, boxShadow: '0 6px 24px rgba(0,0,0,0.03)' }}>
-              <div style={{ width: 48, height: 48, borderRadius: 14, background: '#FFF7ED', color: '#FF6B35', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
-                <Zap size={24} />
-              </div>
-              <h3 style={{ fontSize: 18, fontWeight: 900, color: '#0F172A', margin: '0 0 8px' }}>
-                Instant Slicer & Quotation
-              </h3>
-              <p style={{ fontSize: 13, color: '#64748B', lineHeight: 1.5, marginBottom: 20 }}>
-                Upload any STL or 3MF model to calculate volume, print weight in grams, print duration, and instant manufacturing costs.
-              </p>
-              <Link
-                href="/print-on-demand"
-                style={{
-                  background: 'linear-gradient(135deg, #FF6B35 0%, #F97316 100%)',
-                  color: '#fff',
-                  padding: '10px 20px',
-                  borderRadius: 12,
-                  fontWeight: 800,
-                  fontSize: 13,
-                  textDecoration: 'none',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 6,
-                }}
-              >
-                Launch 3D Slicer <ArrowRight size={14} />
-              </Link>
-            </div>
-
-            <div style={{ background: '#FFFFFF', borderRadius: 20, border: '1px solid #E2E8F0', padding: 28, boxShadow: '0 6px 24px rgba(0,0,0,0.03)' }}>
-              <div style={{ width: 48, height: 48, borderRadius: 14, background: '#F1F5F9', color: '#0F172A', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
-                <MapPin size={24} />
-              </div>
-              <h3 style={{ fontSize: 18, fontWeight: 900, color: '#0F172A', margin: '0 0 8px' }}>
-                Nearby Printer Hubs Map
-              </h3>
-              <p style={{ fontSize: 13, color: '#64748B', lineHeight: 1.5, marginBottom: 20 }}>
-                Find verified 3D print farms and makerspaces located within 5km–20km of your city for fast same-day pickup.
-              </p>
-              <Link
-                href="/printers"
-                style={{
-                  background: '#0F172A',
-                  color: '#fff',
-                  padding: '10px 20px',
-                  borderRadius: 12,
-                  fontWeight: 800,
-                  fontSize: 13,
-                  textDecoration: 'none',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 6,
-                }}
-              >
-                View Nearby Hubs <ArrowRight size={14} />
-              </Link>
-            </div>
-
-            <div style={{ background: '#FFFFFF', borderRadius: 20, border: '1px solid #E2E8F0', padding: 28, boxShadow: '0 6px 24px rgba(0,0,0,0.03)' }}>
-              <div style={{ width: 48, height: 48, borderRadius: 14, background: '#EFF6FF', color: '#2563EB', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
-                <Box size={24} />
-              </div>
-              <h3 style={{ fontSize: 18, fontWeight: 900, color: '#0F172A', margin: '0 0 8px' }}>
-                3D Model Marketplace
-              </h3>
-              <p style={{ fontSize: 13, color: '#64748B', lineHeight: 1.5, marginBottom: 20 }}>
-                Browse curated, ready-to-slice digital CAD models with real-time 3D Three.js viewport previews.
-              </p>
-              <Link
-                href="/browse"
-                style={{
-                  background: '#2563EB',
-                  color: '#fff',
-                  padding: '10px 20px',
-                  borderRadius: 12,
-                  fontWeight: 800,
-                  fontSize: 13,
-                  textDecoration: 'none',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 6,
-                }}
-              >
-                Browse 3D Models <ArrowRight size={14} />
-              </Link>
-            </div>
+      {/* 🌟 SECTION 3: 3D TOOLS & QUICK ACTIONS */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 18, marginBottom: 32 }}>
+        <div style={s.card}>
+          <div style={{ width: 44, height: 44, borderRadius: 12, background: '#FFF7ED', color: '#FF6B35', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 14 }}>
+            <Zap size={22} />
           </div>
+          <h3 style={{ fontSize: 17, fontWeight: 900, color: '#0F172A', margin: '0 0 6px' }}>
+            Instant 3D Slicer
+          </h3>
+          <p style={{ fontSize: 13, color: '#64748B', lineHeight: 1.5, marginBottom: 18 }}>
+            Upload any STL or 3MF model to calculate volume, weight in grams, print duration, and instant manufacturing cost.
+          </p>
+          <Link href="/print-on-demand" style={{ color: '#FF6B35', fontWeight: 800, fontSize: 13, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+            Launch Slicer Engine <ArrowRight size={14} />
+          </Link>
         </div>
-      )}
 
-      {/* 🛡️ TAB CONTENT: ESCROW PROTECTION */}
-      {activeTab === 'escrow' && (
-        <div style={{ background: '#FFFFFF', borderRadius: 24, border: '1px solid #E2E8F0', padding: 36, boxShadow: '0 6px 24px rgba(0,0,0,0.03)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 16 }}>
-            <div style={{ width: 52, height: 52, borderRadius: 16, background: '#ECFDF5', color: '#059669', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Lock size={26} />
+        <div style={s.card}>
+          <div style={{ width: 44, height: 44, borderRadius: 12, background: '#F1F5F9', color: '#0F172A', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 14 }}>
+            <MapPin size={22} />
+          </div>
+          <h3 style={{ fontSize: 17, fontWeight: 900, color: '#0F172A', margin: '0 0 6px' }}>
+            Nearby Printer Hubs Map
+          </h3>
+          <p style={{ fontSize: 13, color: '#64748B', lineHeight: 1.5, marginBottom: 18 }}>
+            Find verified 3D print farms and makerspaces located within 5km–20km of your location for rapid local pickup.
+          </p>
+          <Link href="/printers" style={{ color: '#0F172A', fontWeight: 800, fontSize: 13, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+            Explore Nearby Hubs <ArrowRight size={14} />
+          </Link>
+        </div>
+
+        <div style={s.card}>
+          <div style={{ width: 44, height: 44, borderRadius: 12, background: '#EFF6FF', color: '#2563EB', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 14 }}>
+            <Box size={22} />
+          </div>
+          <h3 style={{ fontSize: 17, fontWeight: 900, color: '#0F172A', margin: '0 0 6px' }}>
+            3D Model Marketplace
+          </h3>
+          <p style={{ fontSize: 13, color: '#64748B', lineHeight: 1.5, marginBottom: 18 }}>
+            Browse curated, ready-to-print digital CAD designs with real-time 3D Three.js WebGL viewport inspection.
+          </p>
+          <Link href="/browse" style={{ color: '#2563EB', fontWeight: 800, fontSize: 13, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+            Browse 3D Models <ArrowRight size={14} />
+          </Link>
+        </div>
+      </div>
+
+      {/* 🌟 SECTION 4: ESCROW PROTECTION & SUPPORT */}
+      <div style={{ ...s.card, background: '#FFFFFF' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+            <div style={{ width: 48, height: 48, borderRadius: 14, background: '#ECFDF5', color: '#059669', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <ShieldCheck size={24} />
             </div>
             <div>
-              <h2 style={{ fontSize: 22, fontWeight: 900, color: '#0F172A', margin: 0 }}>
-                PrintHive Escrow Guarantee
-              </h2>
-              <div style={{ color: '#10B981', fontSize: 13, fontWeight: 800, display: 'flex', alignItems: 'center', gap: 4 }}>
-                <CheckCircle2 size={14} /> 100% Protected via Razorpay Escrow
-              </div>
+              <div style={{ fontSize: 16, fontWeight: 900, color: '#0F172A' }}>Razorpay Escrow Protected</div>
+              <div style={{ fontSize: 13, color: '#64748B', marginTop: 2 }}>Funds are locked in Escrow and released only after you verify print quality upon delivery.</div>
             </div>
           </div>
 
-          <p style={{ color: '#475569', fontSize: 15, lineHeight: 1.7, marginBottom: 24 }}>
-            When you accept a designer proposal or order physical 3D prints on PrintHive, your payment is held securely in an isolated Escrow lock. Funds are never released to the seller or designer until you have received the item and confirmed quality compliance.
-          </p>
-
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 16, marginBottom: 28 }}>
-            <div style={{ background: '#F8FAFC', padding: 20, borderRadius: 14, border: '1px solid #E2E8F0' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontWeight: 800, color: '#0F172A', marginBottom: 6 }}>
-                <Lock size={16} color="#FF6B35" /> 1. Deposit & Lock
-              </div>
-              <div style={{ fontSize: 13, color: '#64748B' }}>Payment is securely locked in Razorpay Escrow when order starts.</div>
-            </div>
-            <div style={{ background: '#F8FAFC', padding: 20, borderRadius: 14, border: '1px solid #E2E8F0' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontWeight: 800, color: '#0F172A', marginBottom: 6 }}>
-                <Layers size={16} color="#2563EB" /> 2. Print & Verification
-              </div>
-              <div style={{ fontSize: 13, color: '#64748B' }}>Hub prints with high tolerance and uploads QA photos.</div>
-            </div>
-            <div style={{ background: '#F8FAFC', padding: 20, borderRadius: 14, border: '1px solid #E2E8F0' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontWeight: 800, color: '#0F172A', marginBottom: 6 }}>
-                <CheckCircle2 size={16} color="#10B981" /> 3. Delivery & Release
-              </div>
-              <div style={{ fontSize: 13, color: '#64748B' }}>You inspect the product. If satisfied, funds are released.</div>
-            </div>
-          </div>
-
-          <div style={{ display: 'flex', gap: 12 }}>
+          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
             <Link
               href="/support-tickets"
               style={{
                 background: '#0F172A',
                 color: '#fff',
-                padding: '12px 22px',
+                padding: '10px 18px',
                 borderRadius: 12,
                 fontWeight: 800,
                 fontSize: 13,
@@ -825,11 +485,11 @@ export default function BuyerDashboardClient({ user, myRequests, myOrders }: Buy
                 gap: 6,
               }}
             >
-              <HelpCircle size={15} /> Contact Dispute Resolution
+              <HelpCircle size={15} /> Support Desk
             </Link>
           </div>
         </div>
-      )}
+      </div>
     </div>
   )
 }
