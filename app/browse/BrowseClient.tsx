@@ -15,6 +15,7 @@ import {
   Eye,
   Layers,
   Sparkles,
+  Plus,
 } from 'lucide-react'
 
 export interface DesignRow {
@@ -32,6 +33,75 @@ export interface DesignRow {
 }
 
 const FALLBACK_CATEGORIES = ['Toys & Games', 'Home & Office', 'Home & Decor', 'Personalized', 'Repair Parts']
+
+const SAMPLE_DESIGNS: DesignRow[] = [
+  {
+    id: 'sample-design-1',
+    title: 'Low Poly Voronoi Skull Sculpture STL',
+    price: 199,
+    category: 'Home & Decor',
+    rating: 5.0,
+    rating_count: 24,
+    thumbnail_url: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=800&q=80',
+    file_url: '',
+    designer: { full_name: 'Studio Polygon' },
+  },
+  {
+    id: 'sample-design-2',
+    title: 'Snap-Fit Cable Routing Clips (Pack of 6)',
+    price: 0,
+    category: 'Home & Office',
+    rating: 4.9,
+    rating_count: 87,
+    thumbnail_url: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=800&q=80',
+    file_url: '',
+    designer: { full_name: 'OpenFix CAD' },
+  },
+  {
+    id: 'sample-design-3',
+    title: 'Articulated Flexi Octopus with Suction Cups',
+    price: 149,
+    category: 'Toys & Games',
+    rating: 4.8,
+    rating_count: 42,
+    thumbnail_url: 'https://images.unsplash.com/photo-1578749556568-bc2c40e68b61?auto=format&fit=crop&w=800&q=80',
+    file_url: '',
+    designer: { full_name: 'FlexiLab 3D' },
+  },
+  {
+    id: 'sample-design-4',
+    title: 'Customizable Dual Joy-Con Grip Controller Stand',
+    price: 249,
+    category: 'Home & Office',
+    rating: 4.9,
+    rating_count: 31,
+    thumbnail_url: 'https://images.unsplash.com/photo-1581092335397-9583fe92d232?auto=format&fit=crop&w=800&q=80',
+    file_url: '',
+    designer: { full_name: 'ModGrip Labs' },
+  },
+  {
+    id: 'sample-design-5',
+    title: 'Universal GoPro / Action Cam Quick-Release Mount',
+    price: 99,
+    category: 'Repair Parts',
+    rating: 4.7,
+    rating_count: 18,
+    thumbnail_url: 'https://images.unsplash.com/photo-1532767153582-b1a0e5145009?auto=format&fit=crop&w=800&q=80',
+    file_url: '',
+    designer: { full_name: 'RigWorks Precision' },
+  },
+  {
+    id: 'sample-design-6',
+    title: 'Spiral Geometric Vase (Vase Mode Optimized)',
+    price: 0,
+    category: 'Home & Decor',
+    rating: 5.0,
+    rating_count: 65,
+    thumbnail_url: 'https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?auto=format&fit=crop&w=800&q=80',
+    file_url: '',
+    designer: { full_name: 'Aesthetic Geometry' },
+  },
+]
 
 function Quick3DModal({ design, onClose }: { design: DesignRow; onClose: () => void }) {
   const modelUrl = design.file_url || (design as any).preview_url
@@ -121,7 +191,7 @@ function Quick3DModal({ design, onClose }: { design: DesignRow; onClose: () => v
 }
 
 export default function BrowseClient({ designs = [] }: { designs: DesignRow[] }) {
-  const [modelList, setModelList] = useState<DesignRow[]>(designs)
+  const [modelList, setModelList] = useState<DesignRow[]>(designs.length > 0 ? designs : SAMPLE_DESIGNS)
   const [search, setSearch] = useState('')
   const [category, setCategory] = useState('All')
   const [sort, setSort] = useState('popular')
@@ -171,7 +241,14 @@ export default function BrowseClient({ designs = [] }: { designs: DesignRow[] })
             }
           })
 
-          setModelList(parsed)
+          const combined = [...parsed]
+          for (const sample of SAMPLE_DESIGNS) {
+            if (!combined.some((d) => d.title.toLowerCase() === sample.title.toLowerCase())) {
+              combined.push(sample)
+            }
+          }
+
+          setModelList(combined)
         }
       } catch (err) {
         console.warn('Live designs fetch warning:', err)
@@ -223,27 +300,49 @@ export default function BrowseClient({ designs = [] }: { designs: DesignRow[] })
     <main style={{ minHeight: '100vh', background: '#FAF8F5', color: '#0F172A', fontFamily: 'inherit' }}>
       <Navbar />
 
-      <div style={{ maxWidth: 1160, margin: '0 auto', padding: '32px 20px 60px' }}>
+      <div style={{ maxWidth: 1200, margin: '0 auto', padding: '32px 20px 60px' }}>
         {/* HEADER */}
-        <div style={{ marginBottom: 24 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-            <h1 style={{ fontSize: 24, fontWeight: 800, color: '#0F172A', margin: 0, letterSpacing: '-0.3px' }}>
-              3D CAD Model Repository
-            </h1>
-            <span style={{ background: '#F1F5F9', color: '#475569', fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 6, border: '1px solid #E2E8F0' }}>
-              STL & 3MF
-            </span>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 16, marginBottom: 24 }}>
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+              <h1 style={{ fontSize: 26, fontWeight: 800, color: '#0F172A', margin: 0, letterSpacing: '-0.4px' }}>
+                3D CAD Model Repository
+              </h1>
+              <span style={{ background: '#F1F5F9', color: '#475569', fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 6, border: '1px solid #E2E8F0' }}>
+                STL & 3MF
+              </span>
+            </div>
+            <p style={{ color: '#64748B', fontSize: 14, margin: 0, maxWidth: 680 }}>
+              Inspect geometry in real-time WebGL, estimate slicing costs, or order on-demand prints from verified local hubs.
+            </p>
           </div>
-          <p style={{ color: '#64748B', fontSize: 13, margin: 0, maxWidth: 680 }}>
-            Inspect geometry in real-time WebGL, estimate slicing costs, or order on-demand prints from verified local hubs.
-          </p>
+
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            <Link
+              href="/dashboard/designer/upload"
+              style={{
+                background: '#FF6B35',
+                color: '#FFFFFF',
+                padding: '8px 16px',
+                borderRadius: 8,
+                fontSize: 13,
+                fontWeight: 700,
+                textDecoration: 'none',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+              }}
+            >
+              <Plus size={15} /> Upload 3D Model
+            </Link>
+          </div>
         </div>
 
         {/* SEARCH & FILTER BAR */}
-        <div style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: 10, padding: 14, marginBottom: 20, boxShadow: '0 1px 3px rgba(0,0,0,0.02)' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 200px', gap: 12, marginBottom: 12 }}>
-            <div style={{ background: '#F8FAFC', border: '1px solid #CBD5E1', borderRadius: 6, padding: '6px 12px', display: 'flex', alignItems: 'center', gap: 8 }}>
-              <Search size={15} color="#94A3B8" />
+        <div style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: 12, padding: 16, marginBottom: 24, boxShadow: '0 1px 3px rgba(0,0,0,0.02)' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 220px', gap: 12, marginBottom: 12 }}>
+            <div style={{ background: '#F8FAFC', border: '1px solid #CBD5E1', borderRadius: 8, padding: '8px 12px', display: 'flex', alignItems: 'center', gap: 8 }}>
+              <Search size={16} color="#94A3B8" />
               <input
                 type="text"
                 placeholder="Search models, creators, or keywords..."
@@ -256,7 +355,7 @@ export default function BrowseClient({ designs = [] }: { designs: DesignRow[] })
             <select
               value={sort}
               onChange={(e) => setSort(e.target.value)}
-              style={{ background: '#F8FAFC', border: '1px solid #CBD5E1', borderRadius: 6, padding: '6px 10px', color: '#0F172A', fontSize: 13, outline: 'none', fontWeight: 600, cursor: 'pointer' }}
+              style={{ background: '#F8FAFC', border: '1px solid #CBD5E1', borderRadius: 8, padding: '8px 12px', color: '#0F172A', fontSize: 13, outline: 'none', fontWeight: 600, cursor: 'pointer' }}
             >
               <option value="popular">Most Popular</option>
               <option value="rating">Highest Rated</option>
@@ -278,9 +377,9 @@ export default function BrowseClient({ designs = [] }: { designs: DesignRow[] })
                     color: active ? '#FFFFFF' : '#475569',
                     border: '1px solid ' + (active ? '#0F172A' : '#E2E8F0'),
                     borderRadius: 6,
-                    padding: '4px 10px',
+                    padding: '5px 12px',
                     fontSize: 12,
-                    fontWeight: 600,
+                    fontWeight: active ? 700 : 500,
                     cursor: 'pointer',
                     transition: 'all 0.15s ease',
                   }}
@@ -293,112 +392,110 @@ export default function BrowseClient({ designs = [] }: { designs: DesignRow[] })
         </div>
 
         {/* 3D MODEL GRID */}
-        {filteredDesigns.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '50px 20px', background: '#FFFFFF', borderRadius: 10, border: '1px dashed #CBD5E1' }}>
-            <Box size={32} color="#94A3B8" style={{ margin: '0 auto 10px' }} />
-            <h3 style={{ fontSize: 15, fontWeight: 700, color: '#0F172A', marginBottom: 2 }}>No 3D Models Found</h3>
-            <p style={{ color: '#64748B', fontSize: 12 }}>Try adjusting your search query or selected category filter.</p>
-          </div>
-        ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 16 }}>
-            {filteredDesigns.map((design) => (
-              <div
-                key={design.id}
-                style={{
-                  background: '#FFFFFF',
-                  borderRadius: 10,
-                  border: '1px solid #E2E8F0',
-                  overflow: 'hidden',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  transition: 'border-color 0.15s, box-shadow 0.15s',
-                }}
-              >
-                {/* 3D PREVIEW THUMBNAIL */}
-                <div style={{ height: 150, width: '100%', position: 'relative', background: '#0F172A', overflow: 'hidden' }}>
-                  <img
-                    src={design.thumbnail_url || 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=600&q=80'}
-                    alt={design.title}
-                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                  />
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(270px, 1fr))', gap: 20 }}>
+          {filteredDesigns.map((design) => (
+            <div
+              key={design.id}
+              style={{
+                background: '#FFFFFF',
+                borderRadius: 12,
+                border: '1px solid #E2E8F0',
+                overflow: 'hidden',
+                display: 'flex',
+                flexDirection: 'column',
+                transition: 'border-color 0.15s, box-shadow 0.15s',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.02)',
+              }}
+            >
+              {/* 3D PREVIEW THUMBNAIL */}
+              <div style={{ height: 200, width: '100%', position: 'relative', background: '#0F172A', overflow: 'hidden' }}>
+                <img
+                  src={design.thumbnail_url || 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=600&q=80'}
+                  alt={design.title}
+                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                />
 
-                  {/* Category Pill */}
-                  <div style={{ position: 'absolute', top: 8, left: 8, background: 'rgba(15, 23, 42, 0.8)', color: '#fff', fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 4, backdropFilter: 'blur(4px)' }}>
-                    {design.category || 'Toys & Games'}
+                {/* Category Pill */}
+                <div style={{ position: 'absolute', top: 10, left: 10, background: 'rgba(15, 23, 42, 0.85)', color: '#fff', fontSize: 10, fontWeight: 700, padding: '3px 8px', borderRadius: 4, backdropFilter: 'blur(4px)' }}>
+                  {design.category || 'Toys & Games'}
+                </div>
+
+                {/* Quick 3D View Button */}
+                <button
+                  type="button"
+                  onClick={() => setPreviewDesign(design)}
+                  style={{
+                    position: 'absolute',
+                    bottom: 10,
+                    right: 10,
+                    background: 'rgba(15, 23, 42, 0.85)',
+                    backdropFilter: 'blur(6px)',
+                    color: '#fff',
+                    border: '1px solid rgba(255, 255, 255, 0.2)',
+                    borderRadius: 6,
+                    padding: '5px 10px',
+                    fontSize: 11,
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 4,
+                  }}
+                >
+                  <Eye size={13} /> 3D View
+                </button>
+              </div>
+
+              {/* CARD BODY */}
+              <div style={{ padding: 16, flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                <div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                    <span style={{ fontSize: 11, color: '#64748B', fontWeight: 600 }}>By {design.designer?.full_name || 'PrintHive Creator'}</span>
+                    <span style={{ fontSize: 11, fontWeight: 700, color: '#D97706', display: 'flex', alignItems: 'center', gap: 3 }}>
+                      <Star size={11} fill="#D97706" color="#D97706" /> {design.rating}
+                    </span>
                   </div>
 
-                  {/* Quick 3D View Button */}
-                  <button
-                    type="button"
-                    onClick={() => setPreviewDesign(design)}
+                  <Link
+                    href={`/designs/${design.id}`}
+                    style={{ textDecoration: 'none', color: 'inherit' }}
+                  >
+                    <h3 style={{ fontSize: 15, fontWeight: 700, color: '#0F172A', margin: '0 0 10px', lineHeight: 1.35, height: 40, overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
+                      {design.title}
+                    </h3>
+                  </Link>
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 8, paddingTop: 12, borderTop: '1px solid #F1F5F9' }}>
+                  <div>
+                    <div style={{ fontSize: 10, color: '#64748B', fontWeight: 600, textTransform: 'uppercase' }}>Royalty</div>
+                    <div style={{ fontSize: 18, fontWeight: 900, color: design.price === 0 ? '#059669' : '#EA580C' }}>
+                      {design.price === 0 ? 'Free' : `₹${design.price}`}
+                    </div>
+                  </div>
+
+                  <Link
+                    href={`/designs/${design.id}`}
                     style={{
-                      position: 'absolute',
-                      bottom: 8,
-                      right: 8,
-                      background: 'rgba(15, 23, 42, 0.85)',
-                      backdropFilter: 'blur(6px)',
-                      color: '#fff',
-                      border: '1px solid rgba(255, 255, 255, 0.2)',
-                      borderRadius: 4,
-                      padding: '4px 8px',
-                      fontSize: 11,
-                      fontWeight: 600,
-                      cursor: 'pointer',
+                      background: '#0F172A',
+                      color: '#FFFFFF',
+                      borderRadius: 6,
+                      padding: '7px 14px',
+                      fontSize: 12,
+                      fontWeight: 700,
+                      textDecoration: 'none',
                       display: 'inline-flex',
                       alignItems: 'center',
                       gap: 4,
                     }}
                   >
-                    <Eye size={12} /> 3D View
-                  </button>
-                </div>
-
-                {/* CARD BODY */}
-                <div style={{ padding: 14, flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-                  <div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-                      <span style={{ fontSize: 11, color: '#64748B' }}>By {design.designer?.full_name || 'PrintHive Creator'}</span>
-                      <span style={{ fontSize: 11, fontWeight: 700, color: '#D97706', display: 'flex', alignItems: 'center', gap: 2 }}>
-                        <Star size={11} fill="#D97706" color="#D97706" /> {design.rating}
-                      </span>
-                    </div>
-
-                    <h3 style={{ fontSize: 14, fontWeight: 700, color: '#0F172A', margin: '0 0 8px', lineHeight: 1.3, height: 36, overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
-                      {design.title}
-                    </h3>
-                  </div>
-
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 8, paddingTop: 8, borderTop: '1px solid #F1F5F9' }}>
-                    <div>
-                      <div style={{ fontSize: 10, color: '#64748B', fontWeight: 600, textTransform: 'uppercase' }}>Royalty</div>
-                      <div style={{ fontSize: 15, fontWeight: 800, color: design.price === 0 ? '#059669' : '#EA580C' }}>
-                        {design.price === 0 ? 'Free' : `₹${design.price}`}
-                      </div>
-                    </div>
-
-                    <Link
-                      href={`/designs/${design.id}`}
-                      style={{
-                        background: '#0F172A',
-                        color: '#FFFFFF',
-                        borderRadius: 6,
-                        padding: '5px 12px',
-                        fontSize: 12,
-                        fontWeight: 700,
-                        textDecoration: 'none',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: 3,
-                      }}
-                    >
-                      Configure <ArrowRight size={12} />
-                    </Link>
-                  </div>
+                    Configure <ArrowRight size={13} />
+                  </Link>
                 </div>
               </div>
-            ))}
-          </div>
-        )}
+            </div>
+          ))}
+        </div>
       </div>
 
       {previewDesign && <Quick3DModal design={previewDesign} onClose={() => setPreviewDesign(null)} />}

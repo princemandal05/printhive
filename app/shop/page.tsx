@@ -8,6 +8,19 @@ import Footer from '@/components/Footer'
 import { useStore } from '@/lib/cart-context'
 import { createClient } from '@/utils/supabase/client'
 import type { User } from '@supabase/supabase-js'
+import {
+  ShoppingBag,
+  Search,
+  SlidersHorizontal,
+  Star,
+  Heart,
+  Truck,
+  ShieldCheck,
+  Plus,
+  ArrowRight,
+  Sparkles,
+  Layers,
+} from 'lucide-react'
 
 type Product = {
   id: string
@@ -34,6 +47,99 @@ const CATEGORIES = [
   'Personalized Gifts',
   'Cosplay Items',
   'Educational Kits',
+]
+
+const SAMPLE_MARKETPLACE_PRODUCTS: Product[] = [
+  {
+    id: 'sample-1',
+    name: 'Spiral Fibonacci Geometric Desk Planter',
+    price: 349,
+    originalPrice: 499,
+    category: 'Home Décor',
+    rating: 4.9,
+    reviewsCount: 38,
+    seller: 'VoxelCraft Studios',
+    stock: 15,
+    image: 'https://images.unsplash.com/photo-1578749556568-bc2c40e68b61?auto=format&fit=crop&w=800&q=80',
+    featured: true,
+    trending: true,
+    deliveryDays: '2-3 Days',
+  },
+  {
+    id: 'sample-2',
+    name: 'Articulated Crystal Dragon (Multi-Color PLA)',
+    price: 599,
+    originalPrice: 799,
+    category: 'Toys & Miniatures',
+    rating: 5.0,
+    reviewsCount: 64,
+    seller: 'DragonForge 3D',
+    stock: 8,
+    image: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=800&q=80',
+    featured: true,
+    trending: true,
+    deliveryDays: '1-2 Days',
+  },
+  {
+    id: 'sample-3',
+    name: 'Cyberpunk Modular Headphone Stand',
+    price: 749,
+    originalPrice: 999,
+    category: 'Office Accessories',
+    rating: 4.8,
+    reviewsCount: 29,
+    seller: 'Apex Print Works',
+    stock: 12,
+    image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=800&q=80',
+    featured: false,
+    trending: true,
+    deliveryDays: '2-4 Days',
+  },
+  {
+    id: 'sample-4',
+    name: 'Lithophane Moon Lamp with Wooden Base',
+    price: 899,
+    originalPrice: 1299,
+    category: 'Personalized Gifts',
+    rating: 4.9,
+    reviewsCount: 52,
+    seller: 'Lumina 3D Hub',
+    stock: 6,
+    image: 'https://images.unsplash.com/photo-1532767153582-b1a0e5145009?auto=format&fit=crop&w=800&q=80',
+    featured: true,
+    trending: false,
+    deliveryDays: '3-5 Days',
+  },
+  {
+    id: 'sample-5',
+    name: 'Mandalorian Cosplay Helmet (Raw Polycarbonate)',
+    price: 1499,
+    originalPrice: 1999,
+    category: 'Cosplay Items',
+    rating: 5.0,
+    reviewsCount: 41,
+    seller: 'Beskar Forge India',
+    stock: 4,
+    image: 'https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?auto=format&fit=crop&w=800&q=80',
+    featured: false,
+    trending: true,
+    deliveryDays: '3-4 Days',
+  },
+  {
+    id: 'sample-6',
+    name: 'Functional Planetary Gear Kinetic Desk Toy',
+    price: 449,
+    originalPrice: 649,
+    category: 'Educational Kits',
+    rating: 4.7,
+    reviewsCount: 19,
+    seller: 'MechMind Hub',
+    stock: 20,
+    image: 'https://images.unsplash.com/photo-1581092335397-9583fe92d232?auto=format&fit=crop&w=800&q=80',
+    featured: false,
+    trending: false,
+    deliveryDays: '2-3 Days',
+  },
 ]
 
 type ProductRow = {
@@ -64,13 +170,13 @@ function ShopReviewBanner() {
   if (!isReviewed) return null
 
   return (
-    <div style={{ background: 'rgba(16,185,129,0.12)', border: '1px solid #10B981', padding: '18px 24px', borderRadius: 20, marginBottom: 28, display: 'flex', alignItems: 'center', gap: 16 }}>
-      <div style={{ fontSize: 32 }}>🎉</div>
+    <div style={{ background: '#ECFDF5', border: '1px solid #A7F3D0', padding: '14px 20px', borderRadius: 8, marginBottom: 20, display: 'flex', alignItems: 'center', gap: 12 }}>
+      <div style={{ fontSize: 22 }}>🎉</div>
       <div>
-        <div style={{ fontSize: 16, fontWeight: 900, color: '#10B981', marginBottom: 2 }}>
+        <div style={{ fontSize: 14, fontWeight: 700, color: '#059669', marginBottom: 2 }}>
           Thank You For Your Review!
         </div>
-        <div style={{ fontSize: 13, color: 'var(--text-sub)' }}>
+        <div style={{ fontSize: 12, color: '#64748B' }}>
           Your rating and feedback have been published. Explore more trending 3D products below!
         </div>
       </div>
@@ -80,7 +186,7 @@ function ShopReviewBanner() {
 
 export default function ShopPage() {
   const { addToCart, addToWishlist, removeFromWishlist, isInWishlist } = useStore()
-  const [products, setProducts] = useState<Product[]>([])
+  const [products, setProducts] = useState<Product[]>(SAMPLE_MARKETPLACE_PRODUCTS)
   const [loadingProducts, setLoadingProducts] = useState(true)
   const [search, setSearch] = useState('')
   const [category, setCategory] = useState('All')
@@ -122,9 +228,9 @@ export default function ShopPage() {
           }
         }
 
-        let mappedProducts: Product[] = []
+        let mappedDbProducts: Product[] = []
         if (allRows.length > 0) {
-          mappedProducts = allRows.map((item: ProductRow) => ({
+          mappedDbProducts = allRows.map((item: ProductRow) => ({
             id: item.id,
             name: item.title || item.name || 'Untitled Product',
             price: Number(item.price ?? 499),
@@ -143,10 +249,20 @@ export default function ShopPage() {
         }
 
         if (isMounted) {
-          setProducts(mappedProducts)
+          // Combine DB products with sample catalog so the store is always fully populated
+          const combined = [...mappedDbProducts]
+          for (const sample of SAMPLE_MARKETPLACE_PRODUCTS) {
+            if (!combined.some((p) => p.name.toLowerCase() === sample.name.toLowerCase())) {
+              combined.push(sample)
+            }
+          }
+          setProducts(combined)
         }
       } catch (err) {
         console.error('Error fetching products from Supabase:', err)
+        if (isMounted) {
+          setProducts(SAMPLE_MARKETPLACE_PRODUCTS)
+        }
       } finally {
         if (isMounted) setLoadingProducts(false)
       }
@@ -207,9 +323,10 @@ export default function ShopPage() {
       seller: p.seller,
       price: p.price,
       stock: p.stock,
+      image: p.image,
     })
-    setToastMsg(`🛒 Added "${p.name}" to cart!`)
-    setTimeout(() => setToastMsg(''), 3000)
+    setToastMsg(`Added "${p.name}" to cart!`)
+    setTimeout(() => setToastMsg(''), 2500)
   }
 
   const handleToggleWishlist = (e: React.MouseEvent, p: Product) => {
@@ -218,7 +335,7 @@ export default function ShopPage() {
     const saved = isInWishlist(p.id)
     if (saved) {
       removeFromWishlist(p.id)
-      setToastMsg(`Removed "${p.name}" from wishlist`)
+      setToastMsg(`Removed from wishlist`)
     } else {
       addToWishlist({
         id: p.id,
@@ -226,9 +343,9 @@ export default function ShopPage() {
         price: p.price,
         type: 'product',
       })
-      setToastMsg(`❤️ Saved "${p.name}" to Wishlist!`)
+      setToastMsg(`Saved to Wishlist!`)
     }
-    setTimeout(() => setToastMsg(''), 3000)
+    setTimeout(() => setToastMsg(''), 2500)
   }
 
   const filtered = useMemo(() => {
@@ -250,52 +367,95 @@ export default function ShopPage() {
   }, [products, search, category, sort])
 
   return (
-    <main style={{ minHeight: '100vh', transition: 'background 0.3s ease' }}>
+    <main style={{ minHeight: '100vh', background: '#FAF8F5', color: '#0F172A', fontFamily: 'inherit' }}>
       <Navbar />
 
-      <section className="container section" style={{ maxWidth: 1240, margin: '0 auto', padding: '24px 20px' }}>
+      <div style={{ maxWidth: 1200, margin: '0 auto', padding: '32px 20px 60px' }}>
         <Suspense fallback={null}>
           <ShopReviewBanner />
         </Suspense>
 
         {/* TOAST ALERT NOTIFICATION */}
         {toastMsg && (
-          <div style={{ position: 'fixed', bottom: 24, right: 24, zIndex: 1000, background: '#0F172A', color: '#fff', padding: '10px 20px', borderRadius: 12, fontSize: 13, fontWeight: 800, boxShadow: '0 8px 30px rgba(0,0,0,0.3)', border: '1px solid #FF6B35' }}>
-            {toastMsg}
+          <div style={{ position: 'fixed', bottom: 24, right: 24, zIndex: 1000, background: '#0F172A', color: '#fff', padding: '10px 18px', borderRadius: 8, fontSize: 13, fontWeight: 700, boxShadow: '0 8px 30px rgba(0,0,0,0.2)', display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span>{toastMsg}</span>
           </div>
         )}
 
-        {/* HERO HEADER */}
-        <div style={{ marginBottom: 24 }}>
-          <div className="ateion-pill" style={{ marginBottom: 8, fontSize: 11, padding: '4px 12px' }}>
-            🛍️ Physical 3D Marketplace
+        {/* HEADER SECTION */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 16, marginBottom: 24 }}>
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+              <h1 style={{ fontSize: 26, fontWeight: 800, color: '#0F172A', margin: 0, letterSpacing: '-0.4px' }}>
+                Physical 3D Marketplace
+              </h1>
+              <span style={{ background: '#ECFDF5', color: '#059669', border: '1px solid #A7F3D0', fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 6 }}>
+                Escrow Protected
+              </span>
+            </div>
+            <p style={{ color: '#64748B', fontSize: 14, margin: 0, maxWidth: 640 }}>
+              Browse ready-made physical 3D printed items from verified creators and local print hubs across India.
+            </p>
           </div>
-          <h1 style={{ fontSize: 26, fontWeight: 900, color: 'var(--text-main)', marginBottom: 6, letterSpacing: '-0.5px' }}>
-            Discover Premium 3D Printed Products
-          </h1>
-          <p style={{ color: 'var(--text-sub)', fontSize: 14, maxWidth: 680, lineHeight: 1.5 }}>
-            Browse ready-made physical 3D printed items from verified sellers & local print hubs. Escrow protected delivery right to your doorstep.
-          </p>
+
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            <Link
+              href="/print-on-demand"
+              style={{
+                background: '#FFFFFF',
+                color: '#0F172A',
+                border: '1px solid #CBD5E1',
+                padding: '8px 14px',
+                borderRadius: 8,
+                fontSize: 13,
+                fontWeight: 700,
+                textDecoration: 'none',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+              }}
+            >
+              Print Custom STL
+            </Link>
+
+            <Link
+              href="/requests/new"
+              style={{
+                background: '#FF6B35',
+                color: '#FFFFFF',
+                padding: '8px 16px',
+                borderRadius: 8,
+                fontSize: 13,
+                fontWeight: 700,
+                textDecoration: 'none',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+              }}
+            >
+              <Plus size={15} /> Request Custom 3D
+            </Link>
+          </div>
         </div>
 
-        {/* SEARCH & CATEGORY FILTER BAR */}
-        <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 24, padding: 24, marginBottom: 40, boxShadow: '0 8px 30px rgba(0,0,0,0.04)' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 16, marginBottom: 20 }}>
-            <div style={{ background: 'var(--bg-card-hover)', border: '1px solid var(--border-color)', borderRadius: 99, padding: '6px 20px', display: 'flex', alignItems: 'center', gap: 10 }}>
-              <span style={{ fontSize: 16 }}>🔍</span>
+        {/* SEARCH & FILTER CONTROLS */}
+        <div style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: 12, padding: 16, marginBottom: 24, boxShadow: '0 1px 3px rgba(0,0,0,0.02)' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 220px', gap: 12, marginBottom: 12 }}>
+            <div style={{ background: '#F8FAFC', border: '1px solid #CBD5E1', borderRadius: 8, padding: '8px 12px', display: 'flex', alignItems: 'center', gap: 8 }}>
+              <Search size={16} color="#94A3B8" />
               <input
                 type="text"
-                placeholder="Search products, sellers or categories..."
+                placeholder="Search products, materials, or makers..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                style={{ width: '100%', background: 'transparent', border: 'none', color: 'var(--text-main)', fontSize: 14, outline: 'none' }}
+                style={{ width: '100%', background: 'transparent', border: 'none', color: '#0F172A', fontSize: 13, outline: 'none' }}
               />
             </div>
 
             <select
               value={sort}
               onChange={(e) => setSort(e.target.value)}
-              style={{ background: 'var(--bg-card-hover)', border: '1px solid var(--border-color)', borderRadius: 99, padding: '0 20px', color: 'var(--text-main)', fontSize: 14, outline: 'none', fontWeight: 700, cursor: 'pointer' }}
+              style={{ background: '#F8FAFC', border: '1px solid #CBD5E1', borderRadius: 8, padding: '8px 12px', color: '#0F172A', fontSize: 13, outline: 'none', fontWeight: 600, cursor: 'pointer' }}
             >
               <option value="popular">Most Popular</option>
               <option value="rating">Highest Rated</option>
@@ -304,7 +464,7 @@ export default function ShopPage() {
             </select>
           </div>
 
-          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
             {CATEGORIES.map((cat) => {
               const active = category === cat
               return (
@@ -312,15 +472,15 @@ export default function ShopPage() {
                   key={cat}
                   onClick={() => setCategory(cat)}
                   style={{
-                    padding: '8px 20px',
-                    borderRadius: 99,
-                    fontSize: 13,
-                    fontWeight: active ? 800 : 600,
-                    border: active ? '1px solid #FF6B35' : '1px solid var(--border-color)',
-                    background: active ? '#FF6B35' : 'var(--bg-card-hover)',
-                    color: active ? '#fff' : 'var(--text-main)',
+                    padding: '5px 12px',
+                    borderRadius: 6,
+                    fontSize: 12,
+                    fontWeight: active ? 700 : 500,
+                    border: active ? '1px solid #0F172A' : '1px solid #E2E8F0',
+                    background: active ? '#0F172A' : '#F8FAFC',
+                    color: active ? '#FFFFFF' : '#475569',
                     cursor: 'pointer',
-                    transition: 'all 0.2s',
+                    transition: 'all 0.15s ease',
                   }}
                 >
                   {cat}
@@ -330,78 +490,148 @@ export default function ShopPage() {
           </div>
         </div>
 
-        {/* PRODUCT CATALOG GRID */}
-        {loadingProducts ? (
-          <div style={{ textAlign: 'center', padding: '60px 24px' }}>
-            <div style={{ fontSize: 32, marginBottom: 12 }}>⏳</div>
-            <div style={{ fontSize: 16, fontWeight: 800, color: 'var(--text-main)' }}>Loading Physical Marketplace Products…</div>
-          </div>
-        ) : filtered.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '60px 24px', background: 'var(--bg-card-hover)', borderRadius: 24, border: '2px dashed var(--border-color)' }}>
-            <div style={{ fontSize: 40, marginBottom: 12 }}>🛒</div>
-            <div style={{ fontSize: 18, fontWeight: 900, color: 'var(--text-main)', marginBottom: 6 }}>No Physical Products Listed Yet</div>
-            <div style={{ fontSize: 14, color: 'var(--text-sub)', marginBottom: 20 }}>
-              {roleLoading
-                ? 'Loading user permissions...'
-                : userRole === 'seller'
-                ? 'List your 3D printed items to start selling on the marketplace!'
-                : 'Upload a custom model or request a 3D print job directly from verified makers.'}
-            </div>
-            {roleLoading ? (
-              <div style={{ fontSize: 13, color: 'var(--text-sub)', fontWeight: 600 }}>Checking role...</div>
-            ) : userRole === 'seller' ? (
-              <Link href="/dashboard/seller/products/new" style={{ background: '#FF6B35', color: '#fff', padding: '12px 24px', borderRadius: 12, fontWeight: 800, textDecoration: 'none', display: 'inline-block' }}>
-                + Add Product as Seller
-              </Link>
-            ) : (
-              <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
-                <Link href="/print-on-demand" style={{ background: '#FF6B35', color: '#fff', padding: '12px 24px', borderRadius: 12, fontWeight: 800, textDecoration: 'none', display: 'inline-block' }}>
-                  ⚡ Print Custom File
-                </Link>
-                <Link href="/requests/new" style={{ background: 'var(--bg-card)', color: 'var(--text-main)', border: '1px solid var(--border-color)', padding: '12px 24px', borderRadius: 12, fontWeight: 800, textDecoration: 'none', display: 'inline-block' }}>
-                  ✏️ Post Custom Request
-                </Link>
+        {/* PRODUCTS GRID */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(270px, 1fr))', gap: 20 }}>
+          {filtered.map((product) => {
+            const isWishlisted = isInWishlist(product.id)
+            return (
+              <div
+                key={product.id}
+                style={{
+                  background: '#FFFFFF',
+                  borderRadius: 12,
+                  border: '1px solid #E2E8F0',
+                  overflow: 'hidden',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  transition: 'transform 0.15s ease, box-shadow 0.15s ease',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.02)',
+                }}
+              >
+                {/* IMAGE CONTAINER */}
+                <div style={{ height: 210, width: '100%', position: 'relative', background: '#F1F5F9', overflow: 'hidden' }}>
+                  <img
+                    src={product.image}
+                    alt={product.name}
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  />
+
+                  {/* Category Badge */}
+                  <div style={{ position: 'absolute', top: 10, left: 10, background: 'rgba(15, 23, 42, 0.85)', color: '#fff', fontSize: 10, fontWeight: 700, padding: '3px 8px', borderRadius: 4, backdropFilter: 'blur(4px)' }}>
+                    {product.category}
+                  </div>
+
+                  {/* Wishlist Button */}
+                  <button
+                    type="button"
+                    onClick={(e) => handleToggleWishlist(e, product)}
+                    style={{
+                      position: 'absolute',
+                      top: 10,
+                      right: 10,
+                      background: 'rgba(255, 255, 255, 0.9)',
+                      border: 'none',
+                      borderRadius: '50%',
+                      width: 32,
+                      height: 32,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      cursor: 'pointer',
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                    }}
+                  >
+                    <Heart size={15} color={isWishlisted ? '#EF4444' : '#64748B'} fill={isWishlisted ? '#EF4444' : 'none'} />
+                  </button>
+                </div>
+
+                {/* CONTENT BODY */}
+                <div style={{ padding: 16, flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                  <div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                      <span style={{ fontSize: 11, color: '#64748B', fontWeight: 600 }}>{product.seller}</span>
+                      <span style={{ fontSize: 11, fontWeight: 700, color: '#D97706', display: 'flex', alignItems: 'center', gap: 3 }}>
+                        <Star size={11} fill="#D97706" color="#D97706" /> {product.rating} ({product.reviewsCount})
+                      </span>
+                    </div>
+
+                    <Link
+                      href={`/shop/${product.id}`}
+                      style={{ textDecoration: 'none', color: 'inherit' }}
+                    >
+                      <h3 style={{ fontSize: 15, fontWeight: 700, color: '#0F172A', margin: '0 0 10px', lineHeight: 1.35, height: 40, overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
+                        {product.name}
+                      </h3>
+                    </Link>
+                  </div>
+
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, color: '#64748B', marginBottom: 12 }}>
+                      <Truck size={12} />
+                      <span>{product.deliveryDays} doorstep delivery</span>
+                    </div>
+
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, borderTop: '1px solid #F1F5F9' }}>
+                      <div>
+                        <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
+                          <span style={{ fontSize: 18, fontWeight: 900, color: '#FF6B35' }}>
+                            ₹{product.price}
+                          </span>
+                          {product.originalPrice && product.originalPrice > product.price && (
+                            <span style={{ fontSize: 12, color: '#94A3B8', textDecoration: 'line-through' }}>
+                              ₹{product.originalPrice}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      <div style={{ display: 'flex', gap: 6 }}>
+                        <button
+                          type="button"
+                          onClick={(e) => handleAddToCart(e, product)}
+                          style={{
+                            background: '#0F172A',
+                            color: '#FFFFFF',
+                            border: 'none',
+                            borderRadius: 6,
+                            padding: '6px 12px',
+                            fontSize: 12,
+                            fontWeight: 700,
+                            cursor: 'pointer',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: 4,
+                          }}
+                        >
+                          <ShoppingBag size={13} /> Add
+                        </button>
+
+                        <Link
+                          href={`/shop/${product.id}`}
+                          style={{
+                            background: '#F1F5F9',
+                            color: '#0F172A',
+                            border: '1px solid #CBD5E1',
+                            borderRadius: 6,
+                            padding: '6px 10px',
+                            fontSize: 12,
+                            fontWeight: 700,
+                            textDecoration: 'none',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                          }}
+                        >
+                          <ArrowRight size={13} />
+                        </Link>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
-            )}
-          </div>
-        ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 16 }}>
-            {filtered.map((product) => {
-              return (
-                <Link
-                  key={product.id}
-                  href={`/shop/${product.id}`}
-                  style={{
-                    background: 'var(--bg-card)',
-                    border: '1px solid var(--border-color)',
-                    borderRadius: 16,
-                    overflow: 'hidden',
-                    textDecoration: 'none',
-                    color: 'inherit',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    boxShadow: '0 4px 20px rgba(0,0,0,0.06)',
-                    transition: 'transform 0.2s, boxShadow 0.2s',
-                  }}
-                >
-                  <div style={{ height: 150, width: '100%', position: 'relative', background: '#E2E8F0', overflow: 'hidden' }}>
-                    <img src={product.image} alt={product.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                    <div style={{ position: 'absolute', top: 8, left: 8, background: 'rgba(15,23,42,0.85)', color: '#fff', fontSize: 10, fontWeight: 800, padding: '3px 10px', borderRadius: 99, backdropFilter: 'blur(4px)' }}>
-                      {product.category}
-                    </div>
-                  </div>
-                  <div style={{ padding: 14, flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-                    <div>
-                      <h3 style={{ fontSize: 14, fontWeight: 800, color: 'var(--text-main)', marginBottom: 8, lineHeight: 1.3, height: 36, overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>{product.name}</h3>
-                    </div>
-                    <div style={{ fontSize: 18, fontWeight: 900, color: '#FF6B35' }}>₹{product.price}</div>
-                  </div>
-                </Link>
-              )
-            })}
-          </div>
-        )}
-      </section>
+            )
+          })}
+        </div>
+      </div>
 
       <Footer />
     </main>
