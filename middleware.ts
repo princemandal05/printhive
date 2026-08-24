@@ -11,6 +11,9 @@ const PUBLIC_ROUTES = [
   '/designers',
   '/community',
   '/print-on-demand',
+  '/requests',
+  '/cart',
+  '/wishlist',
   '/login',
   '/signup',
   '/otp-verification',
@@ -31,8 +34,15 @@ const GUEST_ALLOWED_PORTALS = [
   '/dashboard/seller',
   '/dashboard/designer/upload',
   '/dashboard/seller/products/new',
+  '/requests',
   '/requests/new',
   '/print-on-demand',
+  '/checkout',
+  '/orders',
+  '/profile',
+  '/support-tickets',
+  '/cart',
+  '/wishlist',
 ]
 
 export async function middleware(request: NextRequest) {
@@ -61,10 +71,11 @@ export async function middleware(request: NextRequest) {
     return response
   }
 
-  // Restrict public access strictly to public detail view pages (/shop/[id], /designs/[id])
+  // Restrict public access strictly to public detail view pages (/shop/[id], /designs/[id], /designs/[id]/order, /requests/[id])
   const shopDetailMatch = /^\/shop\/[^\/]+$/.test(pathname)
-  const designsDetailMatch = /^\/designs\/[^\/]+$/.test(pathname)
-  const isPublicDetail = shopDetailMatch || designsDetailMatch
+  const designsDetailMatch = /^\/designs\/[^\/]+(\/order)?$/.test(pathname)
+  const requestsDetailMatch = /^\/requests\/[^\/]+$/.test(pathname)
+  const isPublicDetail = shopDetailMatch || designsDetailMatch || requestsDetailMatch
 
   const isPublicRoute = PUBLIC_ROUTES.includes(pathname) || isPublicDetail
 
