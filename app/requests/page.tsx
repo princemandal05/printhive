@@ -5,6 +5,17 @@ import Link from 'next/link'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 import { createClient } from '@/utils/supabase/client'
+import {
+  FileText,
+  Search,
+  Plus,
+  Clock,
+  ArrowRight,
+  ShieldCheck,
+  Send,
+  Sliders,
+  CheckCircle2,
+} from 'lucide-react'
 
 export default function RequestsListPage() {
   const [requests, setRequests] = useState<any[]>([])
@@ -57,24 +68,26 @@ export default function RequestsListPage() {
   const isFreelancerOrHub = userRole === 'designer' || userRole === 'printer_owner' || userRole === 'admin'
 
   return (
-    <main style={{ minHeight: '100vh' }}>
+    <main style={{ minHeight: '100vh', background: '#FAF8F5', color: '#0F172A', fontFamily: 'inherit' }}>
       <Navbar />
 
-      <section className="container section" style={{ maxWidth: 1240, margin: '0 auto', padding: '40px 20px' }}>
-        {/* HERO HEADER */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 20, marginBottom: 36 }}>
+      <div style={{ maxWidth: 1140, margin: '0 auto', padding: '32px 20px 60px' }}>
+        {/* HEADER */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16, marginBottom: 24 }}>
           <div>
-            <div className="ateion-pill" style={{ marginBottom: 12 }}>
-              {isFreelancerOrHub ? '💼 Freelance Bidding Engine' : '✨ Custom Design & Print Briefs'}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+              <h1 style={{ fontSize: 24, fontWeight: 800, color: '#0F172A', margin: 0, letterSpacing: '-0.3px' }}>
+                {isFreelancerOrHub ? 'Client Briefs & Print Job Board' : 'Custom 3D Manufacturing Briefs'}
+              </h1>
+              <span style={{ background: '#F1F5F9', color: '#475569', fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 6, border: '1px solid #E2E8F0' }}>
+                Live Grid
+              </span>
             </div>
-            <h1 style={{ fontSize: 36, fontWeight: 900, color: 'var(--text-main)', marginBottom: 8, letterSpacing: '-0.5px' }}>
-              {isFreelancerOrHub ? 'Client Briefs & Print Job Board' : 'Custom Design & Manufacturing Briefs'}
-            </h1>
-            <p style={{ color: 'var(--text-sub)', fontSize: 16, maxWidth: 720, lineHeight: 1.6 }}>
+            <div style={{ fontSize: 13, color: '#64748B' }}>
               {isFreelancerOrHub
-                ? 'Browse custom 3D modeling and manufacturing briefs posted by buyers. Submit competitive bids to win paid print jobs.'
-                : 'Need a custom 3D model designed or manufactured from scratch? Post a brief to get competitive quotes from top designers and 3D print hubs.'}
-            </p>
+                ? 'Review custom CAD design briefs and on-demand print requests. Submit competitive bids to win jobs.'
+                : 'Post requirements for custom CAD modeling or localized 3D manufacturing to receive competitive bids.'}
+            </div>
           </div>
 
           {!isFreelancerOrHub && (
@@ -82,113 +95,145 @@ export default function RequestsListPage() {
               href="/requests/new"
               style={{
                 background: '#FF6B35',
-                color: '#fff',
-                padding: '14px 28px',
-                borderRadius: 99,
-                fontSize: 14,
-                fontWeight: 800,
+                color: '#FFFFFF',
+                padding: '8px 16px',
+                borderRadius: 8,
+                fontWeight: 700,
+                fontSize: 13,
                 textDecoration: 'none',
-                boxShadow: '0 6px 20px rgba(255,107,53,0.3)',
                 display: 'inline-flex',
                 alignItems: 'center',
-                gap: 8,
+                gap: 6,
+                boxShadow: '0 1px 3px rgba(255,107,53,0.25)',
               }}
             >
-              + Post New Custom Brief
+              <Plus size={15} /> Post New Brief
             </Link>
           )}
         </div>
 
         {/* SEARCH BAR */}
-        <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 24, padding: 24, marginBottom: 40, boxShadow: '0 8px 30px rgba(0,0,0,0.04)' }}>
-          <div style={{ background: 'var(--bg-card-hover)', border: '1px solid var(--border-color)', borderRadius: 99, padding: '6px 20px', display: 'flex', alignItems: 'center', gap: 10 }}>
-            <span style={{ fontSize: 16 }}>🔍</span>
-            <input
-              type="text"
-              placeholder="Search by brief title, material requirement, or buyer..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              style={{ width: '100%', background: 'transparent', border: 'none', color: 'var(--text-main)', fontSize: 14, outline: 'none' }}
-            />
-          </div>
+        <div style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: 10, padding: '8px 12px', display: 'flex', alignItems: 'center', gap: 8, marginBottom: 20 }}>
+          <Search size={15} color="#94A3B8" />
+          <input
+            type="text"
+            placeholder="Search by brief title, polymer material, or specifications..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            style={{ width: '100%', border: 'none', outline: 'none', fontSize: 13, color: '#0F172A', background: 'transparent' }}
+          />
         </div>
 
-        {/* REQUESTS LIST GRID */}
+        {/* REQUESTS LIST */}
         {loading ? (
-          <div style={{ textAlign: 'center', padding: '60px 24px', color: 'var(--text-sub)' }}>
+          <div style={{ textAlign: 'center', padding: '60px 20px', color: '#64748B', fontSize: 13 }}>
             Loading active briefs...
           </div>
         ) : filtered.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '60px 24px', background: 'var(--bg-card)', borderRadius: 24, border: '2px dashed var(--border-color)' }}>
-            <div style={{ fontSize: 40, marginBottom: 12 }}>✏️</div>
-            <div style={{ fontSize: 18, fontWeight: 900, color: 'var(--text-main)', marginBottom: 6 }}>No Custom Design Briefs Active</div>
-            <div style={{ fontSize: 14, color: 'var(--text-sub)', marginBottom: 20 }}>
+          <div style={{ textAlign: 'center', padding: '50px 20px', background: '#FFFFFF', borderRadius: 10, border: '1px dashed #CBD5E1' }}>
+            <FileText size={32} color="#94A3B8" style={{ margin: '0 auto 10px' }} />
+            <div style={{ fontSize: 15, fontWeight: 700, color: '#0F172A', marginBottom: 2 }}>No Active Briefs Found</div>
+            <div style={{ fontSize: 12, color: '#64748B', maxWidth: 360, margin: '0 auto 16px' }}>
               {isFreelancerOrHub
-                ? 'As soon as buyers submit custom 3D modeling or print requests, they will appear here for you to bid on.'
-                : 'Post your custom 3D printing brief to receive competitive quotes and proposals from verified creators!'}
+                ? 'When buyers submit custom 3D modeling or manufacturing requests, they will appear here.'
+                : 'Post your requirements to receive bids from 3D designers and print hubs.'}
             </div>
             {!isFreelancerOrHub && (
-              <Link href="/requests/new" style={{ background: '#FF6B35', color: '#fff', padding: '12px 24px', borderRadius: 12, fontWeight: 800, textDecoration: 'none', display: 'inline-block' }}>
-                + Post Custom Brief
+              <Link
+                href="/requests/new"
+                style={{
+                  background: '#0F172A',
+                  color: '#FFFFFF',
+                  padding: '8px 16px',
+                  borderRadius: 6,
+                  fontWeight: 700,
+                  fontSize: 12,
+                  textDecoration: 'none',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 6,
+                }}
+              >
+                <Plus size={14} /> Create a Brief
               </Link>
             )}
           </div>
         ) : (
-          <div style={{ display: 'grid', gap: 20 }}>
+          <div style={{ display: 'grid', gap: 12 }}>
             {filtered.map((r) => (
               <Link
                 key={r.id}
                 href={`/requests/${r.id}`}
                 style={{
-                  background: 'var(--bg-card)',
-                  border: '1px solid var(--border-color)',
-                  borderRadius: 20,
-                  padding: 24,
+                  background: '#FFFFFF',
+                  border: '1px solid #E2E8F0',
+                  borderRadius: 10,
+                  padding: '16px 20px',
                   textDecoration: 'none',
                   color: 'inherit',
                   display: 'flex',
-                  flexDirection: 'column',
-                  gap: 16,
-                  transition: 'all 0.2s',
-                  boxShadow: '0 6px 24px rgba(0,0,0,0.03)',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  flexWrap: 'wrap',
+                  gap: 14,
+                  transition: 'border-color 0.15s, box-shadow 0.15s',
                 }}
               >
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                    <span style={{ background: '#ECFDF5', color: '#10B981', border: '1px solid #A7F3D0', borderRadius: 99, padding: '4px 12px', fontSize: 11, fontWeight: 800 }}>
-                      ⚡ Open for Bids
+                <div style={{ flex: 1, minWidth: 280 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4, flexWrap: 'wrap' }}>
+                    <span
+                      style={{
+                        background: '#ECFDF5',
+                        color: '#059669',
+                        border: '1px solid #A7F3D0',
+                        padding: '1px 6px',
+                        borderRadius: 4,
+                        fontSize: 10,
+                        fontWeight: 700,
+                        textTransform: 'uppercase',
+                      }}
+                    >
+                      {r.status === 'open' ? 'Open for Bids' : r.status}
                     </span>
-                    <span style={{ fontSize: 13, color: 'var(--text-sub)', fontWeight: 600 }}>Posted • {r.postedAt}</span>
+                    <span style={{ fontSize: 11, color: '#64748B', display: 'inline-flex', alignItems: 'center', gap: 3 }}>
+                      <Clock size={11} /> Posted {r.postedAt}
+                    </span>
+                    <span style={{ fontSize: 11, fontWeight: 700, color: '#EA580C', background: '#FFF7ED', border: '1px solid #FFEDD5', padding: '1px 6px', borderRadius: 4 }}>
+                      Budget: {r.budget}
+                    </span>
                   </div>
 
-                  <div style={{ fontSize: 22, fontWeight: 900, color: '#FF6B35' }}>
-                    {r.budget}
-                  </div>
-                </div>
-
-                <div>
-                  <h3 style={{ fontSize: 20, fontWeight: 900, color: 'var(--text-main)', marginBottom: 8, letterSpacing: '-0.3px' }}>
+                  <div style={{ fontSize: 16, fontWeight: 700, color: '#0F172A', margin: '4px 0' }}>
                     {r.purpose}
-                  </h3>
+                  </div>
 
-                  <p style={{ fontSize: 14, color: 'var(--text-sub)', lineHeight: 1.5, margin: 0, whiteSpace: 'pre-line', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                  <div style={{ fontSize: 12, color: '#64748B', lineHeight: 1.4, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
                     {r.description}
-                  </p>
+                  </div>
                 </div>
 
-                <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <div style={{ fontSize: 13, fontWeight: 800, color: '#8B5CF6' }}>
-                    💬 {r.bidCount === 0 ? 'No bids submitted — Be first to bid!' : `${r.bidCount} Designer Bids Received`}
-                  </div>
-                  <div style={{ background: '#0F172A', color: '#fff', padding: '8px 20px', borderRadius: 99, fontSize: 13, fontWeight: 800 }}>
-                    {isFreelancerOrHub ? 'Submit Bid →' : 'View Brief Details'}
-                  </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <span
+                    style={{
+                      background: '#0F172A',
+                      color: '#FFFFFF',
+                      padding: '8px 14px',
+                      borderRadius: 6,
+                      fontSize: 12,
+                      fontWeight: 700,
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 4,
+                    }}
+                  >
+                    {isFreelancerOrHub ? 'Submit Bid' : 'View Proposals'} <ArrowRight size={13} />
+                  </span>
                 </div>
               </Link>
             ))}
           </div>
         )}
-      </section>
+      </div>
 
       <Footer />
     </main>

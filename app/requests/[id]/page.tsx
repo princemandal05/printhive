@@ -6,6 +6,20 @@ import Link from 'next/link'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 import { createClient } from '@/utils/supabase/client'
+import {
+  FileText,
+  Clock,
+  User,
+  Star,
+  CheckCircle2,
+  AlertCircle,
+  ArrowRight,
+  ShieldCheck,
+  Plus,
+  Send,
+  HelpCircle,
+  Zap,
+} from 'lucide-react'
 
 export type RequestType = {
   id: string
@@ -82,39 +96,39 @@ export default function RequestDetailPage() {
         if (isMounted) {
           setRequest({
             id: reqData.id,
-            title: reqData.title || reqData.purpose || 'Custom 3D Request',
+            title: reqData.title || 'Custom 3D Request',
             budget: Number(reqData.budget || 0),
             description: reqData.description || 'No detailed specifications provided.',
             postedAt: reqData.created_at ? new Date(reqData.created_at).toLocaleDateString() : 'Recently',
-            buyerId: reqData.buyer_id,
+            buyerId: reqData.buyer_id || '',
             status: reqData.status || 'open',
           })
+          setNotFound(false)
         }
 
-        const { data: bidsData } = await supabase
+        const { data: bidRows } = await supabase
           .from('design_request_bids')
           .select('*')
           .eq('request_id', reqId)
+          .order('created_at', { ascending: false })
 
-        if (bidsData && isMounted) {
-          const mappedBids: BidType[] = bidsData.map((b: any) => ({
+        if (bidRows && isMounted) {
+          setBids(bidRows.map((b: any) => ({
             id: b.id,
             designer: b.designer_name || 'Verified Designer',
-            rating: b.rating ?? 4.9,
-            price: Number(b.price || b.amount || 400),
-            days: Number(b.days || b.turnaround_days || 2),
-            note: b.note || b.proposal || '',
+            rating: 5.0,
+            price: Number(b.price || 500),
+            days: Number(b.days || 2),
+            note: b.note || 'Ready to model and deliver with high precision.',
             designerId: b.designer_id,
-          }))
-          setBids(mappedBids)
-
-          if (user && mappedBids.some(b => b.designerId === user.id)) {
-            setSubmitted(true)
-          }
+          })))
         }
       } catch (err) {
-        console.error('Error fetching request detail from Supabase:', err)
-        if (isMounted) setBids([])
+        console.error('Error fetching design request:', err)
+        if (isMounted) {
+          setRequest(null)
+          setNotFound(true)
+        }
       } finally {
         if (isMounted) setLoading(false)
       }
@@ -124,29 +138,30 @@ export default function RequestDetailPage() {
     return () => { isMounted = false }
   }, [reqId])
 
-  const handleSubmitBid = async () => {
-    setSubmitting(true)
+  const handleBidSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
     setBidError(null)
 
     const priceNum = Number(bidPrice)
     const daysNum = Number(bidDays)
 
-    if (!Number.isFinite(priceNum) || priceNum <= 0) {
-      setBidError('Please enter a valid bid price greater than ₹0.')
-      setSubmitting(false)
+    if (!priceNum || priceNum <= 0) {
+      setBidError('Please enter a valid bid amount.')
       return
     }
 
-    if (!Number.isFinite(daysNum) || daysNum < 1) {
-      setBidError('Turnaround time must be at least 1 day.')
-      setSubmitting(false)
+    if (!daysNum || daysNum <= 0) {
+      setBidError('Please enter turnaround time in days.')
       return
     }
 
-    const supabase = createClient()
+    setSubmitting(true)
+
     try {
-      const { data: { user }, error: authErr } = await supabase.auth.getUser()
-      if (authErr || !user) {
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+
+      if (!user) {
         setBidError('Authentication required. Please log in as a designer to submit a bid.')
         setSubmitting(false)
         return
@@ -197,355 +212,392 @@ export default function RequestDetailPage() {
     width: '100%',
     background: '#F8FAFC',
     border: '1px solid #CBD5E1',
-    borderRadius: 10,
-    padding: '10px 14px',
-    fontSize: 14,
+    borderRadius: 8,
+    padding: '8px 12px',
+    fontSize: 13,
     color: '#0F172A',
     outline: 'none',
     boxSizing: 'border-box',
-    fontWeight: 600,
+    fontWeight: 500,
   }
 
   return (
-    <main style={{ minHeight: '100vh', background: '#FAF8F5', color: '#0F172A' }}>
+    <main style={{ minHeight: '100vh', background: '#FAF8F5', color: '#0F172A', fontFamily: 'inherit' }}>
       <Navbar />
 
-      <section style={{ maxWidth: 1180, margin: '0 auto', padding: '40px 20px' }}>
+      <div style={{ maxWidth: 1140, margin: '0 auto', padding: '32px 20px 60px' }}>
         {loading ? (
-          <div style={{ textAlign: 'center', padding: '80px 20px', color: '#64748B', fontSize: 16 }}>
-            Loading brief specifications...
+          <div style={{ textAlign: 'center', padding: '80px 20px', color: '#64748B', fontSize: 14 }}>
+            Loading brief details...
           </div>
         ) : notFound || !request ? (
-          <div style={{ textAlign: 'center', padding: '60px 24px', background: '#FFFFFF', borderRadius: 24, border: '1px solid #E2E8F0', boxShadow: '0 8px 30px rgba(0,0,0,0.04)' }}>
-            <div style={{ fontSize: 44, marginBottom: 12 }}>❓</div>
-            <div style={{ fontSize: 22, fontWeight: 900, color: '#0F172A', marginBottom: 8 }}>Custom Brief Not Found</div>
-            <div style={{ fontSize: 14, color: '#64748B', marginBottom: 24 }}>The requested brief does not exist or may have been removed.</div>
-            <Link href="/" style={{ background: '#FF6B35', color: '#fff', padding: '12px 24px', borderRadius: 12, fontWeight: 800, textDecoration: 'none', display: 'inline-block' }}>
-              ← Return Home
+          <div style={{ textAlign: 'center', padding: '60px 24px', background: '#FFFFFF', borderRadius: 12, border: '1px solid #E2E8F0' }}>
+            <AlertCircle size={36} color="#94A3B8" style={{ margin: '0 auto 12px' }} />
+            <div style={{ fontSize: 18, fontWeight: 800, color: '#0F172A', marginBottom: 4 }}>Custom Brief Not Found</div>
+            <div style={{ fontSize: 13, color: '#64748B', marginBottom: 20 }}>The requested brief does not exist or may have been removed.</div>
+            <Link href="/requests" style={{ background: '#0F172A', color: '#fff', padding: '8px 16px', borderRadius: 6, fontWeight: 700, fontSize: 13, textDecoration: 'none', display: 'inline-block' }}>
+              &larr; Return to Briefs Board
             </Link>
           </div>
         ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 0.8fr', gap: 32, alignItems: 'start' }}>
-            {/* LEFT COLUMN: BRIEF SPECIFICATIONS & PROPOSALS */}
-            <div>
-              <div style={{ background: '#FFFFFF', borderRadius: 20, border: '1px solid #E2E8F0', padding: 32, boxShadow: '0 8px 30px rgba(0,0,0,0.04)', marginBottom: 24 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14, flexWrap: 'wrap', gap: 10 }}>
-                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'rgba(255,107,53,0.12)', color: '#FF6B35', padding: '4px 12px', borderRadius: 99, fontSize: 12, fontWeight: 800, textTransform: 'uppercase', letterSpacing: 0.5 }}>
-                    ⚡ {request.status === 'open' ? 'Open for Bids' : request.status}
-                  </div>
-                  <span style={{ fontSize: 13, color: '#64748B', fontWeight: 600 }}>Posted on {request.postedAt}</span>
-                </div>
-
-                <h1 style={{ fontSize: 30, fontWeight: 900, color: '#0F172A', margin: '0 0 16px', letterSpacing: '-0.5px' }}>
-                  {request.title}
-                </h1>
-
-                {request.budget > 0 && (
-                  <div style={{ display: 'inline-block', background: '#ECFDF5', border: '1px solid #A7F3D0', padding: '6px 14px', borderRadius: 10, color: '#065F46', fontWeight: 900, fontSize: 16, marginBottom: 20 }}>
-                    💰 Budget: ₹{request.budget}
-                  </div>
-                )}
-
-                <div style={{ fontSize: 13, fontWeight: 800, color: '#334155', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8 }}>
-                  Brief Requirements & Sizing
-                </div>
-
-                <div style={{ fontSize: 15, color: '#334155', lineHeight: 1.7, whiteSpace: 'pre-line', background: '#F8FAFC', padding: 20, borderRadius: 14, border: '1px solid #E2E8F0' }}>
-                  {request.description}
-                </div>
-              </div>
-
-              {/* RECEIVED BIDS SECTION */}
-              <div style={{ background: '#FFFFFF', borderRadius: 20, border: '1px solid #E2E8F0', padding: 32, boxShadow: '0 8px 30px rgba(0,0,0,0.04)' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-                  <h3 style={{ fontSize: 18, fontWeight: 900, color: '#0F172A', margin: 0 }}>
-                    Proposals & Bids ({bids.length})
-                  </h3>
-                  {isOwner && (
-                    <span style={{ fontSize: 12, color: '#10B981', fontWeight: 800, background: '#ECFDF5', padding: '4px 10px', borderRadius: 99 }}>
-                      Buyer Review Mode
-                    </span>
-                  )}
-                </div>
-
-                {bids.length === 0 ? (
-                  <div style={{ textAlign: 'center', padding: '36px 16px', color: '#64748B', background: '#F8FAFC', borderRadius: 14, border: '1px dashed #CBD5E1' }}>
-                    <div style={{ fontSize: 28, marginBottom: 6 }}>⏳</div>
-                    <div style={{ fontWeight: 800, color: '#0F172A', fontSize: 14, marginBottom: 4 }}>No Bids Submitted Yet</div>
-                    <div style={{ fontSize: 13 }}>
-                      {isOwner
-                        ? 'Your brief is active! Top 3D creators will submit proposals with turnaround estimates shortly.'
-                        : 'Be the first creator to submit a proposal for this job!'}
-                    </div>
-                  </div>
-                ) : (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-                    {bids.map((b) => (
-                      <div
-                        key={b.id}
-                        style={{
-                          background: '#F8FAFC',
-                          border: '1px solid #E2E8F0',
-                          borderRadius: 14,
-                          padding: 18,
-                        }}
-                      >
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                            <div style={{ width: 32, height: 32, borderRadius: '50%', background: '#FF6B35', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: 14 }}>
-                              {b.designer.charAt(0)}
-                            </div>
-                            <div>
-                              <div style={{ fontWeight: 800, color: '#0F172A', fontSize: 14 }}>{b.designer}</div>
-                              <span style={{ fontSize: 12, color: '#F59E0B', fontWeight: 700 }}>★ {b.rating}</span>
-                            </div>
-                          </div>
-
-                          <div style={{ textAlign: 'right' }}>
-                            <div style={{ fontSize: 18, fontWeight: 900, color: '#FF6B35' }}>₹{b.price}</div>
-                            <div style={{ fontSize: 11, color: '#64748B', fontWeight: 700 }}>⏱️ {b.days} day turnaround</div>
-                          </div>
-                        </div>
-
-                        {b.note && (
-                          <div style={{ fontSize: 13, color: '#475569', marginTop: 8, padding: '8px 12px', background: '#FFFFFF', borderRadius: 8, border: '1px solid #E2E8F0' }}>
-                            &ldquo;{b.note}&rdquo;
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
+          <div>
+            {/* BREADCRUMB */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#64748B', fontWeight: 600, marginBottom: 16 }}>
+              <Link href="/requests" style={{ color: '#64748B', textDecoration: 'none' }}>Client Briefs</Link>
+              <span>/</span>
+              <span style={{ color: '#0F172A' }}>Brief #{request.id.slice(0, 8)}</span>
             </div>
 
-            {/* RIGHT SIDEBAR: ROLE-AWARE ACTIONS */}
-            <div style={{ position: 'sticky', top: 90 }}>
-              <div style={{ background: '#FFFFFF', borderRadius: 20, border: '1px solid #E2E8F0', padding: 28, boxShadow: '0 8px 30px rgba(0,0,0,0.04)' }}>
-                {/* 1. CREATOR / BUYER VIEW: STATUS DASHBOARD (NO BID FORM) */}
-                {isOwner ? (
-                  <div>
-                    <div style={{ fontSize: 13, fontWeight: 900, color: '#FF6B35', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8 }}>
-                      ✨ Your Custom Brief
-                    </div>
-                    <h3 style={{ fontSize: 20, fontWeight: 900, color: '#0F172A', margin: '0 0 10px' }}>
-                      Status: Open & Accepting Bids
-                    </h3>
-                    <p style={{ fontSize: 14, color: '#64748B', lineHeight: 1.5, marginBottom: 20 }}>
-                      You posted this brief. Verified 3D designers and print hubs across India are reviewing your specifications.
-                    </p>
-
-                    <div style={{ background: '#F8FAFC', padding: 16, borderRadius: 14, border: '1px solid #E2E8F0', marginBottom: 20 }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: '#64748B', marginBottom: 6 }}>
-                        <span>Proposals Received:</span>
-                        <strong style={{ color: '#0F172A' }}>{bids.length}</strong>
-                      </div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: '#64748B', marginBottom: 6 }}>
-                        <span>Target Budget:</span>
-                        <strong style={{ color: '#0F172A' }}>₹{request.budget || 'Flexible'}</strong>
-                      </div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: '#64748B' }}>
-                        <span>Status:</span>
-                        <strong style={{ color: '#10B981' }}>Active</strong>
-                      </div>
-                    </div>
-
-                    <Link
-                      href="/requests/new"
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 360px', gap: 24, alignItems: 'start' }}>
+              {/* LEFT COLUMN: BRIEF DETAILS & PROPOSALS */}
+              <div style={{ display: 'grid', gap: 20 }}>
+                {/* 1. BRIEF DETAILS CARD */}
+                <div style={{ background: '#FFFFFF', borderRadius: 12, border: '1px solid #E2E8F0', padding: 24, boxShadow: '0 1px 3px rgba(0,0,0,0.02)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, flexWrap: 'wrap', gap: 8 }}>
+                    <span
                       style={{
-                        display: 'block',
-                        textAlign: 'center',
-                        background: 'linear-gradient(135deg, #FF6B35 0%, #F97316 100%)',
-                        color: '#fff',
-                        padding: '12px 20px',
-                        borderRadius: 12,
-                        fontWeight: 800,
-                        fontSize: 14,
-                        textDecoration: 'none',
-                        boxShadow: '0 6px 20px rgba(255,107,53,0.3)',
-                        marginBottom: 10,
-                      }}
-                    >
-                      + Post Another Brief
-                    </Link>
-
-                    <Link
-                      href="/dashboard/buyer"
-                      style={{
-                        display: 'block',
-                        textAlign: 'center',
-                        color: '#64748B',
-                        fontSize: 13,
+                        background: '#ECFDF5',
+                        color: '#059669',
+                        border: '1px solid #A7F3D0',
+                        padding: '2px 8px',
+                        borderRadius: 4,
+                        fontSize: 11,
                         fontWeight: 700,
-                        textDecoration: 'none',
-                        padding: '8px',
+                        textTransform: 'uppercase',
                       }}
                     >
-                      ← Back to Buyer Dashboard
-                    </Link>
+                      {request.status === 'open' ? 'Open for Bids' : request.status}
+                    </span>
+                    <span style={{ fontSize: 12, color: '#64748B', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                      <Clock size={12} /> Posted on {request.postedAt}
+                    </span>
                   </div>
-                ) : isFreelancer ? (
-                  /* 2. FREELANCER (DESIGNER / HUB) VIEW: BIDDING FORM */
-                  <div>
-                    {!showBidForm && !submitted && (
-                      <>
-                        <div style={{ fontSize: 13, fontWeight: 900, color: '#8B5CF6', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8 }}>
-                          💼 Freelance Opportunity
-                        </div>
-                        <h3 style={{ fontSize: 20, fontWeight: 900, color: '#0F172A', margin: '0 0 10px' }}>
-                          Submit a Proposal
-                        </h3>
-                        <p style={{ fontSize: 14, color: '#64748B', lineHeight: 1.5, marginBottom: 20 }}>
-                          Submit your price and turnaround time. When the buyer accepts your proposal, funds are held securely in Escrow.
-                        </p>
-                        <button
-                          type="button"
-                          onClick={() => setShowBidForm(true)}
+
+                  <h1 style={{ fontSize: 22, fontWeight: 800, color: '#0F172A', margin: '0 0 12px', letterSpacing: '-0.3px' }}>
+                    {request.title}
+                  </h1>
+
+                  {request.budget > 0 && (
+                    <div style={{ display: 'inline-block', background: '#FFF7ED', border: '1px solid #FFEDD5', padding: '4px 10px', borderRadius: 6, color: '#EA580C', fontWeight: 800, fontSize: 13, marginBottom: 18 }}>
+                      Target Budget: ₹{request.budget}
+                    </div>
+                  )}
+
+                  <div style={{ fontSize: 12, fontWeight: 700, color: '#64748B', textTransform: 'uppercase', marginBottom: 6 }}>
+                    Technical Requirements & Notes
+                  </div>
+
+                  <div style={{ fontSize: 13, color: '#334155', lineHeight: 1.6, whiteSpace: 'pre-line', background: '#F8FAFC', padding: 16, borderRadius: 8, border: '1px solid #E2E8F0' }}>
+                    {request.description}
+                  </div>
+                </div>
+
+                {/* 2. PROPOSALS SECTION */}
+                <div style={{ background: '#FFFFFF', borderRadius: 12, border: '1px solid #E2E8F0', padding: 24, boxShadow: '0 1px 3px rgba(0,0,0,0.02)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                    <div style={{ fontSize: 15, fontWeight: 800, color: '#0F172A' }}>
+                      Proposals & Creator Bids ({bids.length})
+                    </div>
+                    {isOwner && (
+                      <span style={{ fontSize: 11, color: '#059669', fontWeight: 700, background: '#ECFDF5', border: '1px solid #A7F3D0', padding: '2px 8px', borderRadius: 4 }}>
+                        Buyer Review Desk
+                      </span>
+                    )}
+                  </div>
+
+                  {bids.length === 0 ? (
+                    <div style={{ textAlign: 'center', padding: '32px 16px', color: '#64748B', background: '#F8FAFC', borderRadius: 8, border: '1px dashed #CBD5E1' }}>
+                      <FileText size={28} color="#94A3B8" style={{ margin: '0 auto 8px' }} />
+                      <div style={{ fontWeight: 700, color: '#0F172A', fontSize: 13, marginBottom: 2 }}>No Bids Submitted Yet</div>
+                      <div style={{ fontSize: 12 }}>
+                        {isOwner
+                          ? 'Your brief is live on the network. Verified designers will submit quotes shortly.'
+                          : 'Be the first designer to submit a proposal for this job!'}
+                      </div>
+                    </div>
+                  ) : (
+                    <div style={{ display: 'grid', gap: 10 }}>
+                      {bids.map((b) => (
+                        <div
+                          key={b.id}
                           style={{
-                            width: '100%',
-                            background: 'linear-gradient(135deg, #FF6B35 0%, #F97316 100%)',
-                            color: '#fff',
-                            border: 'none',
-                            padding: '14px 24px',
-                            borderRadius: 14,
-                            fontSize: 15,
-                            fontWeight: 900,
-                            cursor: 'pointer',
-                            boxShadow: '0 6px 20px rgba(255,107,53,0.3)',
+                            background: '#F8FAFC',
+                            border: '1px solid #E2E8F0',
+                            borderRadius: 8,
+                            padding: '12px 16px',
                           }}
                         >
-                          Submit a Bid →
-                        </button>
-                      </>
-                    )}
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                              <div style={{ width: 28, height: 28, borderRadius: '50%', background: '#0F172A', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 12 }}>
+                                {b.designer.charAt(0)}
+                              </div>
+                              <div>
+                                <div style={{ fontWeight: 700, color: '#0F172A', fontSize: 13 }}>{b.designer}</div>
+                                <div style={{ fontSize: 11, color: '#F59E0B', fontWeight: 600 }}>★ {b.rating}</div>
+                              </div>
+                            </div>
 
-                    {showBidForm && !submitted && (
-                      <div>
-                        <div style={{ fontSize: 16, fontWeight: 900, color: '#0F172A', marginBottom: 14 }}>
-                          Your Proposal Details
-                        </div>
-
-                        {bidError && (
-                          <div style={{ background: '#FEF2F2', border: '1px solid #FECACA', color: '#991B1B', padding: '10px 14px', borderRadius: 10, fontSize: 13, fontWeight: 700, marginBottom: 14 }}>
-                            ⚠️ {bidError}
+                            <div style={{ textAlign: 'right' }}>
+                              <div style={{ fontSize: 15, fontWeight: 800, color: '#FF6B35' }}>₹{b.price}</div>
+                              <div style={{ fontSize: 11, color: '#64748B' }}>{b.days} day turnaround</div>
+                            </div>
                           </div>
-                        )}
 
-                        <div style={{ marginBottom: 14 }}>
-                          <label style={{ display: 'block', fontSize: 12, fontWeight: 800, color: '#334155', marginBottom: 4, textTransform: 'uppercase' }}>
-                            Your Price (₹) *
-                          </label>
-                          <input
-                            type="number"
-                            min="1"
-                            style={inputStyle}
-                            placeholder="e.g. 500"
-                            value={bidPrice}
-                            onChange={(e) => setBidPrice(e.target.value)}
-                          />
+                          {b.note && (
+                            <div style={{ fontSize: 12, color: '#475569', marginTop: 6, padding: '6px 10px', background: '#FFFFFF', borderRadius: 6, border: '1px solid #E2E8F0', lineHeight: 1.4 }}>
+                              &ldquo;{b.note}&rdquo;
+                            </div>
+                          )}
                         </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
 
-                        <div style={{ marginBottom: 14 }}>
-                          <label style={{ display: 'block', fontSize: 12, fontWeight: 800, color: '#334155', marginBottom: 4, textTransform: 'uppercase' }}>
-                            Turnaround (Days) *
-                          </label>
-                          <input
-                            type="number"
-                            min="1"
-                            style={inputStyle}
-                            placeholder="e.g. 2"
-                            value={bidDays}
-                            onChange={(e) => setBidDays(e.target.value)}
-                          />
+              {/* RIGHT SIDEBAR: ACTIONS */}
+              <div style={{ position: 'sticky', top: 90 }}>
+                <div style={{ background: '#FFFFFF', borderRadius: 12, border: '1px solid #E2E8F0', padding: 22, boxShadow: '0 1px 3px rgba(0,0,0,0.02)' }}>
+                  {isOwner ? (
+                    <div>
+                      <div style={{ fontSize: 11, fontWeight: 700, color: '#EA580C', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4 }}>
+                        Your Brief Overview
+                      </div>
+                      <h3 style={{ fontSize: 16, fontWeight: 800, color: '#0F172A', margin: '0 0 6px' }}>
+                        Active on Network
+                      </h3>
+                      <p style={{ fontSize: 12, color: '#64748B', lineHeight: 1.4, marginBottom: 16 }}>
+                        You posted this brief. Review proposals from designers below and award the project.
+                      </p>
+
+                      <div style={{ background: '#F8FAFC', padding: 12, borderRadius: 8, border: '1px solid #E2E8F0', marginBottom: 16, fontSize: 12 }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', color: '#64748B', marginBottom: 4 }}>
+                          <span>Proposals Received:</span>
+                          <strong style={{ color: '#0F172A' }}>{bids.length}</strong>
                         </div>
-
-                        <div style={{ marginBottom: 18 }}>
-                          <label style={{ display: 'block', fontSize: 12, fontWeight: 800, color: '#334155', marginBottom: 4, textTransform: 'uppercase' }}>
-                            Proposal Note
-                          </label>
-                          <textarea
-                            style={{ ...inputStyle, minHeight: 80, resize: 'vertical' }}
-                            placeholder="Describe how you will model the file, materials, tolerances..."
-                            value={bidNote}
-                            onChange={(e) => setBidNote(e.target.value)}
-                          />
+                        <div style={{ display: 'flex', justifyContent: 'space-between', color: '#64748B', marginBottom: 4 }}>
+                          <span>Target Budget:</span>
+                          <strong style={{ color: '#0F172A' }}>₹{request.budget || 'Flexible'}</strong>
                         </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', color: '#64748B' }}>
+                          <span>Escrow Protection:</span>
+                          <strong style={{ color: '#059669' }}>Active</strong>
+                        </div>
+                      </div>
 
-                        <div style={{ display: 'flex', gap: 10 }}>
+                      <Link
+                        href="/requests/new"
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: 6,
+                          background: '#FF6B35',
+                          color: '#fff',
+                          padding: '10px 16px',
+                          borderRadius: 8,
+                          fontWeight: 700,
+                          fontSize: 13,
+                          textDecoration: 'none',
+                          marginBottom: 8,
+                        }}
+                      >
+                        <Plus size={15} /> Post Another Brief
+                      </Link>
+
+                      <Link
+                        href="/dashboard/buyer"
+                        style={{
+                          display: 'block',
+                          textAlign: 'center',
+                          color: '#64748B',
+                          fontSize: 12,
+                          fontWeight: 600,
+                          textDecoration: 'none',
+                          padding: '6px',
+                        }}
+                      >
+                        &larr; Back to Buyer Dashboard
+                      </Link>
+                    </div>
+                  ) : isFreelancer ? (
+                    <div>
+                      {!showBidForm && !submitted && (
+                        <>
+                          <div style={{ fontSize: 11, fontWeight: 700, color: '#7C3AED', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4 }}>
+                            Freelance Opportunity
+                          </div>
+                          <h3 style={{ fontSize: 16, fontWeight: 800, color: '#0F172A', margin: '0 0 6px' }}>
+                            Submit a Proposal
+                          </h3>
+                          <p style={{ fontSize: 12, color: '#64748B', lineHeight: 1.4, marginBottom: 16 }}>
+                            Submit your turnaround time and pricing. Funds are secured via Razorpay Escrow upon acceptance.
+                          </p>
                           <button
                             type="button"
-                            onClick={() => setShowBidForm(false)}
-                            style={{ flex: 1, background: '#F1F5F9', color: '#475569', border: 'none', padding: '12px', borderRadius: 10, fontWeight: 800, fontSize: 13, cursor: 'pointer' }}
-                          >
-                            Cancel
-                          </button>
-                          <button
-                            type="button"
-                            onClick={handleSubmitBid}
-                            disabled={submitting || !bidPrice || !bidDays}
+                            onClick={() => setShowBidForm(true)}
                             style={{
-                              flex: 2,
-                              background: submitting || !bidPrice || !bidDays ? '#94A3B8' : '#FF6B35',
+                              width: '100%',
+                              background: '#FF6B35',
                               color: '#fff',
                               border: 'none',
-                              padding: '12px',
-                              borderRadius: 10,
-                              fontWeight: 900,
+                              padding: '10px 16px',
+                              borderRadius: 8,
                               fontSize: 13,
-                              cursor: submitting || !bidPrice || !bidDays ? 'not-allowed' : 'pointer',
+                              fontWeight: 700,
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              gap: 6,
                             }}
                           >
-                            {submitting ? 'Submitting…' : 'Submit Proposal'}
+                            <Send size={14} /> Submit a Proposal
                           </button>
-                        </div>
-                      </div>
-                    )}
+                        </>
+                      )}
 
-                    {submitted && (
-                      <div style={{ textAlign: 'center', padding: '16px 0' }}>
-                        <div style={{ fontSize: 36, marginBottom: 8 }}>✅</div>
-                        <div style={{ fontSize: 16, fontWeight: 900, color: '#0F172A', marginBottom: 4 }}>Proposal Submitted!</div>
-                        <p style={{ fontSize: 13, color: '#64748B', lineHeight: 1.4, margin: 0 }}>
-                          The buyer has been notified of your bid. You will receive an alert once the brief is awarded.
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  /* 3. NON-CREATOR BUYER OR GUEST VIEW */
-                  <div>
-                    <div style={{ fontSize: 13, fontWeight: 900, color: '#FF6B35', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8 }}>
-                      ✨ Custom Brief
+                      {showBidForm && !submitted && (
+                        <form onSubmit={handleBidSubmit}>
+                          <div style={{ fontSize: 14, fontWeight: 800, color: '#0F172A', marginBottom: 12 }}>
+                            Proposal Details
+                          </div>
+
+                          {bidError && (
+                            <div style={{ background: '#FEF2F2', border: '1px solid #FECACA', color: '#991B1B', padding: '8px 12px', borderRadius: 6, fontSize: 12, fontWeight: 600, marginBottom: 12 }}>
+                              {bidError}
+                            </div>
+                          )}
+
+                          <div style={{ marginBottom: 12 }}>
+                            <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: '#334155', marginBottom: 4, textTransform: 'uppercase' }}>
+                              Your Bid Price (₹ INR) *
+                            </label>
+                            <input
+                              type="number"
+                              min="1"
+                              style={inputStyle}
+                              placeholder="e.g. 600"
+                              value={bidPrice}
+                              onChange={(e) => setBidPrice(e.target.value)}
+                            />
+                          </div>
+
+                          <div style={{ marginBottom: 12 }}>
+                            <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: '#334155', marginBottom: 4, textTransform: 'uppercase' }}>
+                              Turnaround (Days) *
+                            </label>
+                            <input
+                              type="number"
+                              min="1"
+                              style={inputStyle}
+                              placeholder="e.g. 2"
+                              value={bidDays}
+                              onChange={(e) => setBidDays(e.target.value)}
+                            />
+                          </div>
+
+                          <div style={{ marginBottom: 14 }}>
+                            <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: '#334155', marginBottom: 4, textTransform: 'uppercase' }}>
+                              Proposal Note
+                            </label>
+                            <textarea
+                              style={{ ...inputStyle, minHeight: 60, resize: 'vertical' }}
+                              placeholder="Describe your design tools, print resolution, or approach..."
+                              value={bidNote}
+                              onChange={(e) => setBidNote(e.target.value)}
+                            />
+                          </div>
+
+                          <div style={{ display: 'flex', gap: 8 }}>
+                            <button
+                              type="submit"
+                              disabled={submitting}
+                              style={{
+                                flex: 1,
+                                background: '#FF6B35',
+                                color: '#fff',
+                                border: 'none',
+                                padding: '10px',
+                                borderRadius: 8,
+                                fontSize: 13,
+                                fontWeight: 700,
+                                cursor: submitting ? 'not-allowed' : 'pointer',
+                              }}
+                            >
+                              {submitting ? 'Submitting…' : 'Submit Bid'}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setShowBidForm(false)}
+                              style={{
+                                background: '#F1F5F9',
+                                color: '#475569',
+                                border: '1px solid #CBD5E1',
+                                padding: '10px 14px',
+                                borderRadius: 8,
+                                fontSize: 13,
+                                fontWeight: 600,
+                                cursor: 'pointer',
+                              }}
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        </form>
+                      )}
+
+                      {submitted && (
+                        <div style={{ textAlign: 'center', padding: '16px 8px' }}>
+                          <CheckCircle2 size={32} color="#059669" style={{ margin: '0 auto 8px' }} />
+                          <div style={{ fontSize: 14, fontWeight: 800, color: '#0F172A', marginBottom: 2 }}>Proposal Submitted!</div>
+                          <div style={{ fontSize: 12, color: '#64748B' }}>The buyer will be notified of your quotation.</div>
+                        </div>
+                      )}
                     </div>
-                    <h3 style={{ fontSize: 18, fontWeight: 900, color: '#0F172A', margin: '0 0 10px' }}>
-                      Looking for custom 3D design?
-                    </h3>
-                    <p style={{ fontSize: 13, color: '#64748B', lineHeight: 1.5, marginBottom: 18 }}>
-                      Post your own custom requirements to get direct quotes from top designers and 3D print hubs across India.
-                    </p>
-                    <Link
-                      href="/requests/new"
-                      style={{
-                        display: 'block',
-                        textAlign: 'center',
-                        background: '#FF6B35',
-                        color: '#fff',
-                        padding: '12px 20px',
-                        borderRadius: 12,
-                        fontWeight: 800,
-                        fontSize: 14,
-                        textDecoration: 'none',
-                      }}
-                    >
-                      Post Your Own Brief →
-                    </Link>
+                  ) : (
+                    <div>
+                      <div style={{ fontSize: 11, fontWeight: 700, color: '#64748B', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4 }}>
+                        Designer & Hub Access
+                      </div>
+                      <h3 style={{ fontSize: 15, fontWeight: 800, color: '#0F172A', margin: '0 0 6px' }}>
+                        Want to bid on this brief?
+                      </h3>
+                      <p style={{ fontSize: 12, color: '#64748B', lineHeight: 1.4, marginBottom: 14 }}>
+                        Log in as a registered Designer or 3D Printer Hub to submit custom modeling and manufacturing proposals.
+                      </p>
+                      <Link
+                        href="/login"
+                        style={{
+                          display: 'block',
+                          textAlign: 'center',
+                          background: '#0F172A',
+                          color: '#fff',
+                          padding: '10px 16px',
+                          borderRadius: 8,
+                          fontWeight: 700,
+                          fontSize: 13,
+                          textDecoration: 'none',
+                        }}
+                      >
+                        Log In to Bid
+                      </Link>
+                    </div>
+                  )}
+
+                  <div style={{ marginTop: 16, background: '#F8FAFC', padding: 10, borderRadius: 6, border: '1px solid #E2E8F0', display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <ShieldCheck size={16} color="#059669" />
+                    <span style={{ fontSize: 11, color: '#64748B', lineHeight: 1.3 }}>
+                      Escrow protected. Payouts released upon verified delivery.
+                    </span>
                   </div>
-                )}
+                </div>
               </div>
             </div>
           </div>
         )}
-      </section>
+      </div>
 
       <Footer />
     </main>

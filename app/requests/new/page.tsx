@@ -5,6 +5,19 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
+import {
+  FileText,
+  UploadCloud,
+  Trash2,
+  Plus,
+  AlertCircle,
+  CheckCircle2,
+  ArrowRight,
+  ShieldCheck,
+  HelpCircle,
+  Layers,
+  Sparkles,
+} from 'lucide-react'
 
 export default function NewRequestPage() {
   const router = useRouter()
@@ -31,7 +44,7 @@ export default function NewRequestPage() {
 
   const handleSubmit = async () => {
     if (!purpose.trim()) {
-      setFormError('Please enter what you want designed or manufactured.')
+      setFormError('Please enter what you need designed or manufactured.')
       return
     }
 
@@ -112,53 +125,53 @@ export default function NewRequestPage() {
     width: '100%',
     background: '#F8FAFC',
     border: '1px solid #CBD5E1',
-    borderRadius: 12,
-    padding: '12px 16px',
-    fontSize: 14,
+    borderRadius: 8,
+    padding: '10px 12px',
+    fontSize: 13,
     color: '#0F172A',
     outline: 'none',
     boxSizing: 'border-box',
-    fontWeight: 600,
+    fontWeight: 500,
   }
 
   const labelStyle: React.CSSProperties = {
     display: 'block',
-    fontSize: 13,
-    fontWeight: 800,
+    fontSize: 12,
+    fontWeight: 700,
     color: '#334155',
     marginBottom: 6,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
   }
 
   return (
-    <main style={{ minHeight: '100vh', background: '#FAF8F5', color: '#0F172A' }}>
+    <main style={{ minHeight: '100vh', background: '#FAF8F5', color: '#0F172A', fontFamily: 'inherit' }}>
       <Navbar />
 
-      <section style={{ maxWidth: 760, margin: '0 auto', padding: '40px 20px' }}>
+      <div style={{ maxWidth: 780, margin: '0 auto', padding: '32px 20px 60px' }}>
         {/* HEADER SECTION */}
-        <div style={{ marginBottom: 28 }}>
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'rgba(255,107,53,0.12)', color: '#FF6B35', border: '1px solid rgba(255,107,53,0.3)', padding: '6px 16px', borderRadius: 99, fontSize: 12, fontWeight: 800, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 12 }}>
-            ✨ Custom 3D Design & Print Brief
+        <div style={{ marginBottom: 24 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#64748B', fontWeight: 600, marginBottom: 6 }}>
+            <Link href="/dashboard/buyer" style={{ color: '#64748B', textDecoration: 'none' }}>Dashboard</Link>
+            <span>/</span>
+            <span style={{ color: '#0F172A' }}>New Custom Brief</span>
           </div>
-          <h1 style={{ fontSize: 32, fontWeight: 900, color: '#0F172A', margin: '0 0 8px', letterSpacing: '-0.5px' }}>
-            Request a Custom 3D Part
+          <h1 style={{ fontSize: 24, fontWeight: 800, color: '#0F172A', margin: 0, letterSpacing: '-0.3px' }}>
+            Post a Custom 3D Design Brief
           </h1>
-          <p style={{ color: '#64748B', fontSize: 15, lineHeight: 1.5, margin: 0 }}>
-            Describe what you need designed or manufactured. Top freelance 3D designers and verified print hubs will review your brief and submit competitive quotes.
+          <p style={{ color: '#64748B', fontSize: 13, lineHeight: 1.5, margin: '4px 0 0' }}>
+            Submit technical requirements for CAD modeling or on-demand printing. Verified designers and print farms across India will review and bid.
           </p>
         </div>
 
         {/* ERROR NOTIFICATION BANNER */}
         {formError && (
-          <div style={{ background: '#FEF2F2', border: '1px solid #FECACA', color: '#991B1B', padding: '14px 20px', borderRadius: 14, fontSize: 14, fontWeight: 700, marginBottom: 24, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+          <div style={{ background: '#FEF2F2', border: '1px solid #FECACA', color: '#991B1B', padding: '12px 16px', borderRadius: 8, fontSize: 13, fontWeight: 600, marginBottom: 20, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span>⚠️</span>
+              <AlertCircle size={16} />
               <span>{formError}</span>
             </div>
             <button
               onClick={() => setFormError(null)}
-              style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontSize: 16, color: 'inherit', fontWeight: 900 }}
+              style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontSize: 14, color: 'inherit', fontWeight: 700 }}
             >
               ✕
             </button>
@@ -166,36 +179,36 @@ export default function NewRequestPage() {
         )}
 
         {/* MAIN FORM CARD */}
-        <div style={{ background: '#FFFFFF', borderRadius: 20, border: '1px solid #E2E8F0', padding: 32, boxShadow: '0 8px 30px rgba(0,0,0,0.04)', marginBottom: 24 }}>
+        <div style={{ background: '#FFFFFF', borderRadius: 12, border: '1px solid #E2E8F0', padding: 24, boxShadow: '0 1px 3px rgba(0,0,0,0.02)' }}>
           {/* PURPOSE */}
-          <div style={{ marginBottom: 20 }}>
+          <div style={{ marginBottom: 18 }}>
             <label style={labelStyle}>
-              What do you need designed or printed? *
+              Project Title or Part Name *
             </label>
             <input
               style={inputStyle}
-              placeholder="e.g. Replacement knob for washing machine, Custom Drone Battery Mount"
+              placeholder="e.g., Replacement Gears for Coffee Grinder, Custom GoPro Gimbal Mount"
               value={purpose}
               onChange={(e) => setPurpose(e.target.value)}
             />
           </div>
 
           {/* DIMENSIONS & MATERIAL */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 20 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 18 }}>
             <div>
               <label style={labelStyle}>
-                Approximate Dimensions
+                Approximate Dimensions (Optional)
               </label>
               <input
                 style={inputStyle}
-                placeholder="e.g. 15cm x 5cm x 2cm"
+                placeholder="e.g., 120mm x 45mm x 25mm"
                 value={dimensions}
                 onChange={(e) => setDimensions(e.target.value)}
               />
             </div>
             <div>
               <label style={labelStyle}>
-                Preferred Material
+                Preferred Polymer / Material
               </label>
               <select
                 style={inputStyle}
@@ -204,25 +217,25 @@ export default function NewRequestPage() {
               >
                 <option value="">No preference (Designer decides)</option>
                 <option>PLA (Standard Prototyping)</option>
-                <option>PETG (Durable & Weatherproof)</option>
-                <option>ABS (High Heat / Tough)</option>
+                <option>PETG (Durable & Chemical Resistant)</option>
+                <option>ABS (High Heat / Toughness)</option>
                 <option>TPU (Flexible Rubber-like)</option>
-                <option>Resin (Ultra High Detail)</option>
+                <option>Resin (Ultra High Detail / Smooth)</option>
               </select>
             </div>
           </div>
 
           {/* BUDGET RANGE */}
-          <div style={{ marginBottom: 20 }}>
+          <div style={{ marginBottom: 18 }}>
             <label style={labelStyle}>
-              Target Budget Range (₹)
+              Target Budget Range (₹ INR)
             </label>
-            <div style={{ display: 'flex', gap: 14 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
               <input
                 type="number"
                 min="0"
                 style={inputStyle}
-                placeholder="Min Budget (₹ e.g. 300)"
+                placeholder="Min Budget (e.g. ₹400)"
                 value={budgetMin}
                 onChange={(e) => setBudgetMin(e.target.value)}
               />
@@ -230,7 +243,7 @@ export default function NewRequestPage() {
                 type="number"
                 min="0"
                 style={inputStyle}
-                placeholder="Max Budget (₹ e.g. 800)"
+                placeholder="Max Budget (e.g. ₹1200)"
                 value={budgetMax}
                 onChange={(e) => setBudgetMax(e.target.value)}
               />
@@ -238,27 +251,27 @@ export default function NewRequestPage() {
           </div>
 
           {/* DESCRIPTION */}
-          <div style={{ marginBottom: 20 }}>
+          <div style={{ marginBottom: 18 }}>
             <label style={labelStyle}>
-              Detailed Description & Requirements *
+              Technical Specifications & Functional Requirements *
             </label>
             <textarea
-              style={{ ...inputStyle, minHeight: 110, resize: 'vertical' }}
-              placeholder="Describe your requirements in detail — shape, texture, function, mounting holes, or special constraints..."
+              style={{ ...inputStyle, minHeight: 110, resize: 'vertical', lineHeight: 1.5 }}
+              placeholder="Describe what this model does, mounting hole diameters, structural load, tolerances, or mating parts..."
               value={description}
               onChange={(e) => setDescription(e.target.value)}
             />
           </div>
 
           {/* REFERENCE ATTACHMENTS */}
-          <div style={{ marginBottom: 20 }}>
+          <div style={{ marginBottom: 18 }}>
             <label style={labelStyle}>
-              Reference Specifications & Files
+              Reference Attachments (Sketches, Photos, or Specs)
             </label>
             <input
               type="file"
               multiple
-              accept="image/*,.pdf,.doc,.docx,.txt"
+              accept="image/*,.pdf,.doc,.docx,.txt,.stl"
               onChange={handleFileChange}
               style={{ display: 'none' }}
               id="file-upload-input"
@@ -270,33 +283,33 @@ export default function NewRequestPage() {
                 flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: 'center',
-                gap: 6,
-                padding: '24px 20px',
+                gap: 4,
+                padding: '20px 16px',
                 background: '#F8FAFC',
-                border: '2px dashed #CBD5E1',
-                borderRadius: 14,
+                border: '1px dashed #CBD5E1',
+                borderRadius: 8,
                 cursor: 'pointer',
                 textAlign: 'center',
-                transition: 'all 0.2s',
+                transition: 'all 0.15s',
               }}
             >
-              <div style={{ fontSize: 28 }}>📁</div>
-              <div style={{ fontSize: 14, fontWeight: 800, color: '#0F172A' }}>
-                Click to attach reference photos, sketches, or Word/PDF specs
+              <UploadCloud size={24} color="#64748B" />
+              <div style={{ fontSize: 13, fontWeight: 700, color: '#0F172A', marginTop: 4 }}>
+                Click to attach reference photos, CAD files, or PDF/Word specs
               </div>
-              <div style={{ fontSize: 12, color: '#64748B' }}>
-                Supports PNG, JPG, PDF, DOCX, and TXT files (Up to 15MB each)
+              <div style={{ fontSize: 11, color: '#94A3B8' }}>
+                Supports PNG, JPG, PDF, DOCX, TXT, and STL files (Up to 15MB each)
               </div>
             </label>
           </div>
 
           {/* ATTACHED FILES LIST */}
           {attachedFiles.length > 0 && (
-            <div style={{ marginBottom: 24 }}>
-              <div style={{ fontSize: 12, fontWeight: 800, color: '#64748B', textTransform: 'uppercase', marginBottom: 8 }}>
+            <div style={{ marginBottom: 20 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: '#64748B', textTransform: 'uppercase', marginBottom: 6 }}>
                 Attached files ({attachedFiles.length}):
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <div style={{ display: 'grid', gap: 6 }}>
                 {attachedFiles.map((file, idx) => (
                   <div
                     key={idx}
@@ -305,23 +318,23 @@ export default function NewRequestPage() {
                       alignItems: 'center',
                       justifyContent: 'space-between',
                       background: '#F1F5F9',
-                      padding: '10px 16px',
-                      borderRadius: 10,
+                      padding: '8px 12px',
+                      borderRadius: 6,
                       border: '1px solid #E2E8F0',
-                      fontSize: 13,
+                      fontSize: 12,
                     }}
                   >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                      <span>📄</span>
-                      <span style={{ fontWeight: 800, color: '#0F172A' }}>{file.name}</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <FileText size={14} color="#64748B" />
+                      <span style={{ fontWeight: 700, color: '#0F172A' }}>{file.name}</span>
                       <span style={{ fontSize: 11, color: '#64748B' }}>({(file.size / 1024 / 1024).toFixed(2)} MB)</span>
                     </div>
                     <button
                       type="button"
                       onClick={() => removeFile(idx)}
-                      style={{ background: 'transparent', border: 'none', color: '#EF4444', fontSize: 16, cursor: 'pointer', fontWeight: 900 }}
+                      style={{ background: 'transparent', border: 'none', color: '#EF4444', cursor: 'pointer', padding: 2 }}
                     >
-                      ✕
+                      <Trash2 size={13} />
                     </button>
                   </div>
                 ))}
@@ -335,24 +348,27 @@ export default function NewRequestPage() {
             disabled={submitting || !purpose.trim()}
             style={{
               width: '100%',
-              background: submitting || !purpose.trim()
-                ? '#94A3B8'
-                : 'linear-gradient(135deg, #FF6B35 0%, #F97316 100%)',
-              color: '#fff',
+              background: submitting || !purpose.trim() ? '#CBD5E1' : '#FF6B35',
+              color: '#FFFFFF',
               border: 'none',
-              padding: '16px 32px',
-              borderRadius: 16,
-              fontSize: 16,
-              fontWeight: 900,
+              padding: '12px 20px',
+              borderRadius: 8,
+              fontSize: 14,
+              fontWeight: 800,
               cursor: submitting || !purpose.trim() ? 'not-allowed' : 'pointer',
-              boxShadow: '0 8px 24px rgba(255,107,53,0.35)',
-              transition: 'all 0.2s ease',
+              boxShadow: submitting || !purpose.trim() ? 'none' : '0 2px 10px rgba(255,107,53,0.3)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 8,
+              transition: 'all 0.15s ease',
             }}
           >
-            {submitting ? 'Submitting Your Custom Brief…' : '🚀 Post Custom Design Brief'}
+            {submitting ? 'Submitting Your Custom Brief…' : 'Publish Custom Brief to Network'}
+            <ArrowRight size={16} />
           </button>
         </div>
-      </section>
+      </div>
 
       <Footer />
     </main>
