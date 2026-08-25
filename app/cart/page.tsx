@@ -1,16 +1,49 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 import { useStore } from '@/lib/cart-context'
+import { createClient } from '@/utils/supabase/client'
 
 export default function CartPage() {
   const router = useRouter()
   const { cart, updateCartQuantity, removeFromCart, addToWishlist, cartSubtotal } = useStore()
   const [coupon, setCoupon] = useState('')
+  const [liveImages, setLiveImages] = useState<Record<string, string>>({})
+  const supabase = createClient()
+
+  useEffect(() => {
+    if (!cart || cart.length === 0) return
+    async function syncRealImages() {
+      try {
+        const ids = cart.map(i => i.id).filter(Boolean)
+        if (ids.length === 0) return
+
+        const { data: dbProducts } = await supabase.from('products').select('id, image_url, title, name').in('id', ids)
+        const { data: dbDesigns } = await supabase.from('designs').select('id, thumbnail_url, preview_url, title').in('id', ids)
+
+        const map: Record<string, string> = {}
+        dbProducts?.forEach((p) => {
+          if (p.image_url) {
+            map[p.id] = p.image_url
+          }
+        })
+        dbDesigns?.forEach((d) => {
+          const img = d.thumbnail_url || d.preview_url
+          if (img) {
+            map[d.id] = img
+          }
+        })
+        setLiveImages(map)
+      } catch (err) {
+        console.warn('Cart image sync:', err)
+      }
+    }
+    syncRealImages()
+  }, [cart])
 
   const subtotal = cartSubtotal
   const isAllDigital = cart.length > 0 && cart.every(i => i.name.toLowerCase().includes('digital') || i.name.toLowerCase().includes('stl') || i.name.toLowerCase().includes('3d model') || i.name.toLowerCase().includes('model'))
@@ -135,11 +168,11 @@ export default function CartPage() {
                       }}
                     >
                       <img
-                        src={item.image || 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=600&q=80'}
+                        src={liveImages[item.id] || item.image || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=600&q=80'}
                         alt={item.name}
                         style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                         onError={(e) => {
-                          (e.currentTarget as HTMLImageElement).src = 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=600&q=80'
+                          (e.currentTarget as HTMLImageElement).src = 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=600&q=80'
                         }}
                       />
                     </div>

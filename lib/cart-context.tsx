@@ -63,10 +63,13 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       const parsedCart = savedCart ? JSON.parse(savedCart) : []
       const parsedWishlist = savedWishlist ? JSON.parse(savedWishlist) : []
 
-      const normalizedCart = (Array.isArray(parsedCart) ? parsedCart : []).map((item: CartItem) => ({
-        ...item,
-        image: item.image || 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=600&q=80',
-      }))
+      const normalizedCart = (Array.isArray(parsedCart) ? parsedCart : []).map((item: CartItem) => {
+        // If image was stale unsplash placeholder, clear it so fresh DB query overrides it
+        if (item.image && item.image.includes('photo-1581092160607-ee22621dd758')) {
+          delete item.image
+        }
+        return item
+      })
 
       setCart(normalizedCart)
       setWishlist(Array.isArray(parsedWishlist) ? parsedWishlist : [])
