@@ -119,25 +119,22 @@ export default function Navbar() {
         const { data: userProfile } = await supabase.from('profiles').select('*').eq('id', currentUser.id).maybeSingle()
         if (userProfile) setProfile(userProfile)
         
-        role = (userProfile?.role as string) || 'buyer'
+        role = (userProfile?.role as string) || (currentUser.user_metadata?.role as string) || 'buyer'
+        if (role && DASHBOARD_PATH[role]) {
+          setUserRole(role)
+          setDashboardHref(DASHBOARD_PATH[role])
+        } else {
+          setUserRole('buyer')
+          setDashboardHref('/dashboard/buyer')
+        }
       } else {
         setUser(null)
         setProfile(null)
-        if (typeof document !== 'undefined') {
-          const guestMatch = document.cookie.match(/printhive_guest_role=([^;]+)/)
-          role = guestMatch ? guestMatch[1] : null
-        }
-      }
-
-      if (!active) return
-
-      if (role && DASHBOARD_PATH[role]) {
-        setUserRole(role)
-        setDashboardHref(DASHBOARD_PATH[role])
-      } else {
         setUserRole(null)
         setDashboardHref(null)
       }
+
+      if (!active) return
       setRoleLoading(false)
     }
 
@@ -302,7 +299,7 @@ export default function Navbar() {
           <NotificationBell />
 
           {/* Logged In Controls: Dashboard Button + Round Avatar Circle Dropdown */}
-          {(user || userRole) ? (
+          {user ? (
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               {/* Dashboard Button */}
               {dashboardHref && (

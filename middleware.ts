@@ -124,14 +124,6 @@ export async function middleware(request: NextRequest) {
     return response
   }
 
-  // Check guest demo mode: guest role bypass is strictly restricted to GUEST_ALLOWED_PORTALS
-  const guestRole = request.cookies.get('printhive_guest_role')?.value
-  const isGuestAllowedRoute = GUEST_ALLOWED_PORTALS.some((route) => pathname.startsWith(route))
-
-  if (guestRole && isGuestAllowedRoute && !pathname.startsWith('/dashboard/admin')) {
-    return response
-  }
-
   // Redirect unauthenticated / invalid / expired users attempting to access protected routes to /login
   const loginUrl = new URL('/login', request.url)
   loginUrl.searchParams.set('next', pathname)

@@ -96,32 +96,6 @@ export async function requireRole(expectedRole: Role) {
     }
   }
 
-  // Guest demo mode — strictly enforce non-admin role matching
-  if (guestDemoRole) {
-    const activeGuestRole = guestDemoRole as Role
-    if (activeGuestRole !== expectedRole && expectedRole !== 'buyer') {
-      redirect(DASHBOARD_PATH[activeGuestRole] || '/dashboard/buyer')
-    }
-
-    const guestUser = {
-      id: `guest-${activeGuestRole}`,
-      email: `guest_${activeGuestRole}@printhive.demo`,
-    }
-    const guestProfile = {
-      id: guestUser.id,
-      email: guestUser.email,
-      role: activeGuestRole,
-      full_name: `Guest ${activeGuestRole.replace('_', ' ').toUpperCase()}`,
-    }
-
-    return {
-      supabase: null as any,
-      user: guestUser as any,
-      profile: guestProfile,
-      isGuest: true as const,
-    }
-  }
-
   // Unauthenticated users attempting to access protected routes redirect to login
   redirect('/login')
 }
