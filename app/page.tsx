@@ -1,502 +1,513 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import Link from 'next/link'
 import dynamic from 'next/dynamic'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
-import { createClient } from '@/utils/supabase/client'
 import {
-  ShoppingBag,
-  PenTool,
-  Printer,
-  Sparkles,
-  Box,
-  MapPin,
-  ShieldCheck,
-  Zap,
-  Users,
-  CheckCircle2,
   ArrowRight,
-  Search,
-  Bot,
+  Star,
+  Sparkles,
+  Shield,
+  Leaf,
+  Gift,
+  Lock,
+  Palette,
+  Briefcase,
+  Layers,
+  CheckCircle2,
+  Box,
+  Plus,
+  Send,
 } from 'lucide-react'
 
 const Hero3D = dynamic(() => import('@/components/Hero3D'), {
   ssr: false,
   loading: () => (
-    <div style={{ height: 420, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-sub)', fontSize: 13, fontWeight: 700 }}>
-      ⚡ Initializing 3D Canvas Engine...
+    <div style={{ height: 420, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94A3B8', fontSize: 13, fontWeight: 700 }}>
+      ⚡ Initializing 3D Interactive Viewport...
     </div>
   ),
 })
 
-function IconBadge({ children }: { children: React.ReactNode }) {
-  return (
-    <div
-      style={{
-        width: 48,
-        height: 48,
-        borderRadius: 14,
-        background: 'rgba(255, 107, 53, 0.12)',
-        border: '1px solid rgba(255, 107, 53, 0.25)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        flexShrink: 0,
-        boxShadow: '0 4px 14px rgba(255, 107, 53, 0.15)',
-      }}
-    >
-      {children}
-    </div>
-  )
-}
-
-const PROBLEMS = [
+const WORLDS = [
   {
-    type: 'buyer',
-    title: 'Buyers',
-    text: "Can't access custom 3D printed products without owning a ₹15,000–₹80,000 printer or learning CAD. Existing commercial services are expensive and unverified.",
+    num: '01',
+    title: "Creator's Studio",
+    subtitle: 'Paint-your-own hampers · Easy, Medium, Hard',
+    tag: 'Paint Kits',
+    color: '#7C3AED',
+    bgTint: 'linear-gradient(135deg, #F3ECFD 0%, #E9D5FF 100%)',
+    img: 'https://images.unsplash.com/photo-1513364776144-60967b0f800f?auto=format&fit=crop&w=600&q=80',
+    href: '/shop',
   },
   {
-    type: 'designer',
-    title: 'Designers',
-    text: 'Publish high-quality models on open platforms for free, with no automatic monetization, copyright protection, or marketplace connecting designs to buyers.',
+    num: '02',
+    title: 'Safe Paws',
+    subtitle: 'Custom dog & cat tags with QR contact debossing',
+    tag: 'Pet Collection',
+    color: '#D97706',
+    bgTint: 'linear-gradient(135deg, #FDF1E1 0%, #FED7AA 100%)',
+    img: 'https://images.unsplash.com/photo-1583511655857-d19b40a7a54e?auto=format&fit=crop&w=600&q=80',
+    href: '/shop?category=Toys%20%26%20Games',
   },
   {
-    type: 'printer',
-    title: 'Printer Owners',
-    text: 'Own 3D printers that sit idle 18–20 hours a day, with no organized local system to find print jobs, manage orders, or earn consistent income.',
+    num: '03',
+    title: "Creator's Shelf",
+    subtitle: 'Best sellers, functional designs & digital STL models',
+    tag: '3D Library',
+    color: '#16A34A',
+    bgTint: 'linear-gradient(135deg, #E7F7EC 0%, #BBF7D0 100%)',
+    img: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=600&q=80',
+    href: '/browse',
   },
 ]
 
-const STEPS = [
+const CUSTOM_CREATIONS = [
   {
-    step: '01',
-    title: 'Designers Upload',
-    text: 'Creators upload STL/3MF files with render photos and pricing, earning automated royalties on every print.',
+    id: 'mini-me',
+    title: 'Mini Me',
+    subtitle: 'Your own custom 3D action figure',
+    tag: 'Coloured / Raw PLA',
+    tagColor: '#7C3AED',
+    bgGradient: 'linear-gradient(135deg, #F3ECFF, #E5D5FF)',
+    href: '/requests/new',
   },
   {
-    step: '02',
-    title: 'Buyers Discover & Order',
-    text: 'Customers browse visual feeds, inspect models in 3D WebGL, and place custom orders with escrow protection.',
+    id: 'moments-in-3d',
+    title: 'Moments in 3D',
+    subtitle: 'Your photo memory in a 3D relief frame',
+    tag: 'Lithophane Frame',
+    tagColor: '#EA580C',
+    bgGradient: 'linear-gradient(135deg, #FEE8D6, #FDD6B0)',
+    href: '/requests/new',
   },
   {
-    step: '03',
-    title: 'Nearby Printers Deliver',
-    text: 'Leaflet GPS matches orders to nearby verified printer owners for fast precision slicing and doorstep delivery.',
+    id: 'pocket-portrait',
+    title: 'Pocket Portrait',
+    subtitle: 'Your face or pet as a durable keychain',
+    tag: 'Photo Keepsake',
+    tagColor: '#16A34A',
+    bgGradient: 'linear-gradient(135deg, #E9F9EE, #C9F0D6)',
+    href: '/requests/new',
   },
   {
-    step: '04',
-    title: 'Automated Payouts',
-    text: 'Upon delivery confirmation, Razorpay escrow releases payments: 70% Printer, 15% Designer, 15% Platform.',
+    id: 'your-ride',
+    title: 'Your Ride, Keyring-Sized',
+    subtitle: 'Your car or bike as a precision 3D model',
+    tag: 'Automotive Mini',
+    tagColor: '#0D9488',
+    bgGradient: 'linear-gradient(135deg, #E5F6F4, #C4ECE8)',
+    href: '/requests/new',
   },
 ]
 
-const FEATURES = [
-  { type: 'ai', title: 'Gemini AI Intelligence', text: 'Natural language search, automated description generator, and instant material slicer cost calculator.' },
-  { type: 'viewport', title: 'In-Browser 3D Viewport', text: 'Real-time Three.js WebGL viewer lets buyers inspect model geometry, wireframes, and slice readiness.' },
-  { type: 'geo', title: 'Nearby Geolocation Matching', text: 'Leaflet.js + OpenStreetMap engine connects orders to closest active printer hubs without high shipping fees.' },
-  { type: 'escrow', title: 'Razorpay Escrow Protection', text: 'Escrow holds buyer funds securely until physical delivery is verified by the customer.' },
-  { type: 'realtime', title: 'Supabase Realtime Tracking', text: 'Live websocket status pushing from slicing, printing, quality check, to courier dispatch.' },
-  { type: 'community', title: 'Verified Print Community', text: 'Authentic buyer photos and star ratings build verified seller reputations.' },
+const HOW_IT_WORKS = [
+  {
+    step: '1',
+    title: 'Pick your model',
+    text: 'Choose a figure, gift or functional design and select difficulty — Easy, Medium or Hard.',
+  },
+  {
+    step: '2',
+    title: 'Get your hamper',
+    text: 'Your precision 3D model, acrylic paints, detail brushes, and gift box arrive at your doorstep.',
+  },
+  {
+    step: '3',
+    title: 'Paint it your way',
+    text: 'Bring your piece to life with your favorite color palette and personal creative style.',
+  },
+  {
+    step: '4',
+    title: 'Show it off',
+    text: 'Display your one-of-a-kind hand-painted creation or gift it to someone special.',
+  },
 ]
 
-export default function Home() {
-  const supabase = createClient()
-  const [aiSearchQuery, setAiSearchQuery] = useState('')
-  const [activeRoleTab, setActiveRoleTab] = useState<'buyer' | 'designer' | 'printer'>('buyer')
-  const [isLoggedIn, setIsLoggedIn] = useState(false)
-
-  useEffect(() => {
-    async function checkAuth() {
-      try {
-        const { data: { user } } = await supabase.auth.getUser()
-        if (user) {
-          setIsLoggedIn(true)
-        }
-      } catch (e) {
-        // guest mode
-      }
-    }
-    checkAuth()
-  }, [])
-
-  const renderIcon = (type: string) => {
-    switch (type) {
-      case 'buyer':
-        return <ShoppingBag size={22} color="#FF6B35" />
-      case 'designer':
-        return <PenTool size={22} color="#FF6B35" />
-      case 'printer':
-        return <Printer size={22} color="#FF6B35" />
-      case 'ai':
-        return <Bot size={22} color="#FF6B35" />
-      case 'viewport':
-        return <Box size={22} color="#FF6B35" />
-      case 'geo':
-        return <MapPin size={22} color="#FF6B35" />
-      case 'escrow':
-        return <ShieldCheck size={22} color="#FF6B35" />
-      case 'realtime':
-        return <Zap size={22} color="#FF6B35" />
-      case 'community':
-        return <Users size={22} color="#FF6B35" />
-      default:
-        return <Sparkles size={22} color="#FF6B35" />
-    }
-  }
+export default function HomePage() {
+  const [activeTab, setActiveTab] = useState<'studio' | 'pets' | 'b2b' | 'library'>('studio')
 
   return (
-    <main style={{ minHeight: '100vh', transition: 'background 0.3s ease' }}>
+    <main style={{ minHeight: '100vh', background: '#FAF6F1', color: '#1A1A2E', fontFamily: 'inherit' }}>
       <Navbar />
 
-      {/* HERO SECTION */}
-      <section className="grid-pattern-bg" style={{ padding: '70px 0 60px', position: 'relative', overflow: 'hidden' }}>
-        <div className="container">
-          <div className="hero-grid" style={{ alignItems: 'center' }}>
-            <div>
-              <div className="ateion-pill" style={{ marginBottom: 24 }}>
-                ⚡ AI-Powered Hybrid 3D Commerce Platform
-              </div>
-              
-              <h1 style={{ fontSize: '3.25rem', fontWeight: 900, lineHeight: 1.12, marginBottom: 20, color: 'var(--text-main)', letterSpacing: '-0.02em' }}>
-                Where Ideas Become{' '}
-                <span style={{ color: '#FF6B35', background: 'linear-gradient(135deg, #FF6B35, #EA580C)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-                  Physical Products
-                </span>
-              </h1>
+      {/* 1. HERO SECTION WITH PRESERVED 3D ORB (printhive.org style) */}
+      <section style={{ position: 'relative', overflow: 'hidden', padding: '40px 24px 60px' }}>
+        {/* Soft Ambient Glow Elements */}
+        <div style={{ position: 'absolute', top: 20, left: '-10%', width: 450, height: 450, borderRadius: '50%', background: 'rgba(251, 146, 60, 0.12)', filter: 'blur(90px)', pointerEvents: 'none' }} />
+        <div style={{ position: 'absolute', top: 100, right: '-5%', width: 400, height: 400, borderRadius: '50%', background: 'rgba(254, 215, 170, 0.25)', filter: 'blur(80px)', pointerEvents: 'none' }} />
 
-              <p style={{ fontSize: 17, color: 'var(--text-sub)', lineHeight: 1.7, marginBottom: 36, maxWidth: 540 }}>
-                PrintHive bridges designers, local 3D printer owners, and buyers — order custom 3D prints, sell STL files, or monetize your idle 3D printers with escrow security.
-              </p>
-
-              {/* Gemini AI Natural Language Search Bar */}
-              <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 99, padding: '8px 8px 8px 20px', display: 'flex', alignItems: 'center', gap: 12, marginBottom: 40, boxShadow: '0 8px 30px rgba(0,0,0,0.06)' }}>
-                <Search size={18} color="#FF6B35" />
-                <input
-                  type="text"
-                  placeholder="Ask Gemini AI: 'Print a durable phone holder in PLA'..."
-                  value={aiSearchQuery}
-                  onChange={(e) => setAiSearchQuery(e.target.value)}
-                  style={{ flex: 1, background: 'transparent', border: 'none', color: 'var(--text-main)', fontSize: 14, outline: 'none' }}
-                />
-                <Link
-                  href={aiSearchQuery ? `/browse?q=${encodeURIComponent(aiSearchQuery)}` : '/browse'}
-                  className="btn btn-primary"
-                  style={{ background: '#FF6B35', color: '#fff', border: 'none', borderRadius: 99, padding: '12px 24px', fontWeight: 700, fontSize: 13, textDecoration: 'none', whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', gap: 6 }}
-                >
-                  <Bot size={15} /> AI Search
-                </Link>
-              </div>
-
-              {/* Quick Feature Stats */}
-              <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
-                <div style={{ background: 'var(--bg-card)', padding: '14px 20px', borderRadius: 16, border: '1px solid var(--border-color)', flex: 1, minWidth: 120 }}>
-                  <div style={{ fontSize: 22, fontWeight: 900, color: '#FF6B35' }}>3-Sided</div>
-                  <div style={{ fontSize: 12, color: 'var(--text-sub)', fontWeight: 600 }}>Marketplace</div>
-                </div>
-                <div style={{ background: 'var(--bg-card)', padding: '14px 20px', borderRadius: 16, border: '1px solid var(--border-color)', flex: 1, minWidth: 120 }}>
-                  <div style={{ fontSize: 22, fontWeight: 900, color: '#10B981' }}>70/15/15</div>
-                  <div style={{ fontSize: 12, color: 'var(--text-sub)', fontWeight: 600 }}>Fair Payout Split</div>
-                </div>
-                <div style={{ background: 'var(--bg-card)', padding: '14px 20px', borderRadius: 16, border: '1px solid var(--border-color)', flex: 1, minWidth: 120 }}>
-                  <div style={{ fontSize: 22, fontWeight: 900, color: '#2563eb' }}>Escrow</div>
-                  <div style={{ fontSize: 12, color: 'var(--text-sub)', fontWeight: 600 }}>Razorpay Guarded</div>
-                </div>
-              </div>
+        <div
+          style={{
+            maxWidth: 1360,
+            margin: '0 auto',
+            display: 'grid',
+            gridTemplateColumns: '1.1fr 1fr',
+            gap: 48,
+            alignItems: 'center',
+          }}
+          className="hero-grid"
+        >
+          {/* HERO TEXT COLUMN */}
+          <div>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 11.5, fontWeight: 800, color: '#EA580C', background: 'rgba(234, 88, 12, 0.1)', padding: '6px 14px', borderRadius: 9999, textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 18 }}>
+              <span>✦</span> Made to Order · Delivered Pan-India
             </div>
 
-            {/* 3D WebGL Orbit Viewport */}
-            <div style={{ background: 'var(--bg-card)', borderRadius: 28, padding: 16, border: '1px solid var(--border-color)', boxShadow: '0 20px 50px rgba(0,0,0,0.08)', position: 'relative' }}>
-              <div style={{ position: 'absolute', top: 24, left: 24, zIndex: 10 }}>
-                <span className="ateion-pill" style={{ background: 'rgba(255, 107, 53, 0.12)', color: '#FF6B35', fontSize: 11, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-                  <Box size={13} /> Live WebGL Model Viewport
-                </span>
-              </div>
-              <Hero3D />
-            </div>
-          </div>
-        </div>
-      </section>
+            <h1
+              style={{
+                fontFamily: 'var(--font-fraunces), Fraunces, Georgia, serif',
+                fontSize: 'clamp(36px, 4.8vw, 62px)',
+                fontWeight: 900,
+                color: '#1A1A2E',
+                lineHeight: 1.05,
+                margin: '0 0 20px',
+                letterSpacing: '-1px',
+              }}
+            >
+              Bring your<br />ideas to <span style={{ color: '#F97316' }}>life.</span>
+            </h1>
 
-      {/* PROBLEM STATEMENT */}
-      <section className="container section" style={{ padding: '80px 0' }}>
-        <div style={{ textAlign: 'center', marginBottom: 48 }}>
-          <div className="ateion-pill" style={{ color: '#FF6B35', background: 'rgba(255,107,53,0.1)', borderColor: 'rgba(255,107,53,0.3)', marginBottom: 12 }}>The Problem</div>
-          <h2 style={{ fontSize: 32, fontWeight: 800, marginBottom: 12, color: 'var(--text-main)' }}>
-            Three Gaps. One Ecosystem.
-          </h2>
-          <p style={{ color: 'var(--text-sub)', maxWidth: 640, margin: '0 auto', fontSize: 15 }}>
-            No existing service solves all three sides of 3D printing together — PrintHive bridges buyers, designers, and printer owners in one place.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-3 gap-6">
-          {PROBLEMS.map((p) => (
-            <div key={p.title} style={{ background: 'var(--bg-card)', padding: 32, borderRadius: 24, border: '1px solid var(--border-color)', boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
-              <div style={{ marginBottom: 20 }}>
-                <IconBadge>{renderIcon(p.type)}</IconBadge>
-              </div>
-              <div style={{ fontSize: 20, fontWeight: 700, color: 'var(--text-main)', marginBottom: 8 }}>{p.title}</div>
-              <div style={{ fontSize: 14, color: 'var(--text-sub)', lineHeight: 1.7 }}>{p.text}</div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* 3-SIDED ROLE WORKSPACE SWITCHER */}
-      <section style={{ padding: '40px 0 80px' }}>
-        <div className="container">
-          <div style={{ textAlign: 'center', marginBottom: 36 }}>
-            <div className="ateion-pill" style={{ marginBottom: 12 }}>🤝 Built For Everyone</div>
-            <h2 style={{ fontSize: 32, fontWeight: 800, color: 'var(--text-main)', marginBottom: 8 }}>
-              Choose Your Role in the PrintHive Network
-            </h2>
-            <p style={{ color: 'var(--text-sub)', fontSize: 15 }}>
-              PrintHive powers buyers, designers, and printer owners under one fair 70/15/15 ecosystem.
+            <p style={{ fontSize: 'clamp(15px, 1.2vw, 18px)', lineHeight: 1.6, color: '#64748B', maxWidth: 520, margin: '0 0 32px' }}>
+              We 3D-print and you paint. Pick a hamper, choose your colors, and create something that&apos;s truly yours — or upload your own 3D CAD files for on-demand local printing.
             </p>
 
-            {/* Role Tab Buttons */}
-            <div style={{ display: 'inline-flex', gap: 8, background: 'var(--bg-card)', padding: 6, borderRadius: 99, border: '1px solid var(--border-color)', marginTop: 20 }}>
-              <button
-                type="button"
-                onClick={() => setActiveRoleTab('buyer')}
+            {/* ACTION BUTTONS */}
+            <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', alignItems: 'center', marginBottom: 32 }}>
+              <a
+                href="#explore-section"
                 style={{
-                  padding: '10px 24px',
-                  borderRadius: 99,
-                  border: 'none',
-                  background: activeRoleTab === 'buyer' ? '#FF6B35' : 'transparent',
-                  color: activeRoleTab === 'buyer' ? '#fff' : 'var(--text-main)',
-                  fontWeight: 700,
-                  fontSize: 14,
-                  cursor: 'pointer',
-                  transition: 'all 0.2s',
+                  background: '#F97316',
+                  color: '#FFFFFF',
+                  padding: '14px 28px',
+                  borderRadius: 9999,
+                  fontSize: 15,
+                  fontWeight: 800,
+                  textDecoration: 'none',
                   display: 'inline-flex',
                   alignItems: 'center',
                   gap: 8,
+                  boxShadow: '0 4px 16px rgba(249,115,22,0.4)',
+                  transition: 'transform 0.15s ease',
                 }}
               >
-                <ShoppingBag size={16} />
-                <span>Buyer Portal</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveRoleTab('designer')}
+                Explore Printhive <ArrowRight size={16} />
+              </a>
+
+              <a
+                href="#how-it-works"
                 style={{
-                  padding: '10px 24px',
-                  borderRadius: 99,
-                  border: 'none',
-                  background: activeRoleTab === 'designer' ? '#FF6B35' : 'transparent',
-                  color: activeRoleTab === 'designer' ? '#fff' : 'var(--text-main)',
+                  background: '#FFFFFF',
+                  color: '#1A1A2E',
+                  border: '1px solid #E2E8F0',
+                  padding: '14px 26px',
+                  borderRadius: 9999,
+                  fontSize: 15,
                   fontWeight: 700,
-                  fontSize: 14,
-                  cursor: 'pointer',
-                  transition: 'all 0.2s',
+                  textDecoration: 'none',
                   display: 'inline-flex',
                   alignItems: 'center',
-                  gap: 8,
+                  boxShadow: '0 2px 10px rgba(0,0,0,0.04)',
                 }}
               >
-                <PenTool size={16} />
-                <span>Creator Studio</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveRoleTab('printer')}
-                style={{
-                  padding: '10px 24px',
-                  borderRadius: 99,
-                  border: 'none',
-                  background: activeRoleTab === 'printer' ? '#FF6B35' : 'transparent',
-                  color: activeRoleTab === 'printer' ? '#fff' : 'var(--text-main)',
-                  fontWeight: 700,
-                  fontSize: 14,
-                  cursor: 'pointer',
-                  transition: 'all 0.2s',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 8,
-                }}
-              >
-                <Printer size={16} />
-                <span>Printer Hub</span>
-              </button>
+                How It Works
+              </a>
+            </div>
+
+            {/* 4.9 RATING BADGE */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <div style={{ display: 'flex', gap: 2 }}>
+                {[...Array(5)].map((_, i) => (
+                  <Star key={i} size={16} fill="#F59E0B" color="#F59E0B" />
+                ))}
+              </div>
+              <span style={{ fontSize: 14, fontWeight: 800, color: '#1A1A2E' }}>4.9</span>
+              <span style={{ fontSize: 13, color: '#64748B' }}>· Loved by 10,000+ creators across India</span>
             </div>
           </div>
 
-          {/* Active Role Details Box */}
-          <div style={{ background: 'var(--bg-card)', borderRadius: 28, border: '1px solid var(--border-color)', padding: 40, boxShadow: '0 8px 30px rgba(0,0,0,0.04)' }}>
-            {activeRoleTab === 'buyer' && (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 32, alignItems: 'center' }}>
-                <div>
-                  <h3 style={{ fontSize: 24, fontWeight: 800, color: 'var(--text-main)', marginBottom: 12 }}>
-                    Get Anything 3D Printed Without Owning a Printer
-                  </h3>
-                  <p style={{ color: 'var(--text-sub)', fontSize: 14, lineHeight: 1.7, marginBottom: 24 }}>
-                    Browse ready-made products, order custom CAD briefs, or upload your own 3D file on our Slicer page. Payments are held safely in Razorpay escrow until delivery.
-                  </p>
-                  <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-                    <Link href="/browse" className="btn btn-primary" style={{ background: '#FF6B35', color: '#fff', padding: '12px 24px', borderRadius: 99, fontWeight: 700, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-                      <Box size={16} /> Browse Designs
-                    </Link>
-                    <Link href="/print-on-demand" className="btn btn-outline" style={{ borderColor: 'var(--border-color)', color: 'var(--text-main)', padding: '12px 24px', borderRadius: 99, textDecoration: 'none', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-                      <Zap size={16} /> Slicer & Upload
-                    </Link>
-                  </div>
+          {/* 3D ORB CARD (PRESERVED ORB) */}
+          <div style={{ position: 'relative' }}>
+            <div
+              style={{
+                background: 'linear-gradient(135deg, rgba(254, 232, 214, 0.7) 0%, rgba(253, 246, 238, 0.9) 100%)',
+                borderRadius: 36,
+                border: '1px solid rgba(249, 115, 22, 0.2)',
+                padding: 16,
+                boxShadow: '0 20px 50px rgba(249, 115, 22, 0.12)',
+                position: 'relative',
+                overflow: 'hidden',
+              }}
+            >
+              {/* Top Card Badge */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px 0' }}>
+                <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 11, fontWeight: 800, color: '#EA580C', background: '#FFFFFF', padding: '4px 12px', borderRadius: 9999, boxShadow: '0 2px 6px rgba(0,0,0,0.06)' }}>
+                  <Sparkles size={13} color="#F97316" /> Interactive 3D Orbit
                 </div>
-                <div style={{ background: 'var(--bg-card-hover)', padding: 28, borderRadius: 20, border: '1px solid var(--border-color)' }}>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-main)', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <CheckCircle2 size={16} color="#10B981" /> Buyer Guarantees:
-                  </div>
-                  <ul style={{ fontSize: 14, color: 'var(--text-sub)', lineHeight: 1.9, paddingLeft: 16, margin: 0 }}>
-                    <li>100% Escrow Protected Payments</li>
-                    <li>Leaflet GPS Nearby Printer Matching</li>
-                    <li>3D WebGL Inspection Before Purchase</li>
-                  </ul>
-                </div>
+                <span style={{ fontSize: 11, fontWeight: 700, color: '#94A3B8' }}>Drag to rotate</span>
               </div>
-            )}
 
-            {activeRoleTab === 'designer' && (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 32, alignItems: 'center' }}>
-                <div>
-                  <h3 style={{ fontSize: 24, fontWeight: 800, color: 'var(--text-main)', marginBottom: 12 }}>
-                    Monetize Your 3D Models & Earn Automatic Royalties
-                  </h3>
-                  <p style={{ color: 'var(--text-sub)', fontSize: 14, lineHeight: 1.7, marginBottom: 24 }}>
-                    Upload STL/3MF files once. Every time a buyer orders a physical print, you earn a 15% royalty automatically paid out to your wallet upon delivery.
-                  </p>
-                  <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-                    <Link href="/dashboard/designer/upload" className="btn btn-primary" style={{ background: '#FF6B35', color: '#fff', padding: '12px 24px', borderRadius: 99, fontWeight: 700, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-                      <PenTool size={16} /> Upload 3D Model
-                    </Link>
-                    <Link href="/dashboard/designer" className="btn btn-outline" style={{ borderColor: 'var(--border-color)', color: 'var(--text-main)', padding: '12px 24px', borderRadius: 99, textDecoration: 'none', fontWeight: 600 }}>
-                      Designer Dashboard
-                    </Link>
-                  </div>
-                </div>
-                <div style={{ background: 'var(--bg-card-hover)', padding: 28, borderRadius: 20, border: '1px solid var(--border-color)' }}>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-main)', marginBottom: 8 }}>💰 Creator Payout Share:</div>
-                  <div style={{ fontSize: 24, fontWeight: 900, color: '#FF6B35', marginBottom: 6 }}>15% Royalty on Every Order</div>
-                  <div style={{ fontSize: 13, color: 'var(--text-sub)' }}>Earn passive income from your designs without handling shipping or hardware.</div>
-                </div>
+              {/* THREE.JS ORB VIEWPORT */}
+              <div style={{ height: 380, width: '100%' }}>
+                <Hero3D />
               </div>
-            )}
-
-            {activeRoleTab === 'printer' && (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 32, alignItems: 'center' }}>
-                <div>
-                  <h3 style={{ fontSize: 24, fontWeight: 800, color: 'var(--text-main)', marginBottom: 12 }}>
-                    Turn Idle Printer Hours Into High-Margin Income
-                  </h3>
-                  <p style={{ color: 'var(--text-sub)', fontSize: 14, lineHeight: 1.7, marginBottom: 24 }}>
-                    List your Bambu Lab, Prusa, or Resin machines. Accept nearby orders matched via Leaflet GPS, print, deliver, and earn 70% per job.
-                  </p>
-                  <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-                    <Link href="/printers" className="btn btn-primary" style={{ background: '#FF6B35', color: '#fff', padding: '12px 24px', borderRadius: 99, fontWeight: 700, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-                      <MapPin size={16} /> View Printer Hubs Map
-                    </Link>
-                    <Link href="/dashboard/printer-owner" className="btn btn-outline" style={{ borderColor: 'var(--border-color)', color: 'var(--text-main)', padding: '12px 24px', borderRadius: 99, textDecoration: 'none', fontWeight: 600 }}>
-                      Printer Dashboard
-                    </Link>
-                  </div>
-                </div>
-                <div style={{ background: 'var(--bg-card-hover)', padding: 28, borderRadius: 20, border: '1px solid var(--border-color)' }}>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-main)', marginBottom: 8 }}>🖨️ Printer Payout Share:</div>
-                  <div style={{ fontSize: 24, fontWeight: 900, color: '#FF6B35', marginBottom: 6 }}>70% Direct Payout</div>
-                  <div style={{ fontSize: 13, color: 'var(--text-sub)' }}>Consistent local print job queue sent right to your printer dashboard.</div>
-                </div>
-              </div>
-            )}
+            </div>
           </div>
         </div>
       </section>
 
-      {/* HOW IT WORKS */}
-      <section id="how-it-works" className="container section" style={{ padding: '60px 0' }}>
-        <div style={{ textAlign: 'center', marginBottom: 48 }}>
-          <div className="ateion-pill" style={{ marginBottom: 12 }}>Seamless Workflow</div>
-          <h2 style={{ fontSize: 32, fontWeight: 800, color: 'var(--text-main)' }}>
-            From Idea to Doorstep, in Four Steps
+      {/* 2. CHOOSE YOUR WORLD SECTION (printhive.org style) */}
+      <section id="explore-section" style={{ maxWidth: 1360, margin: '0 auto', padding: '60px 24px' }}>
+        <div style={{ textAlign: 'center', maxWidth: 640, margin: '0 auto 40px' }}>
+          <span style={{ fontSize: 11.5, fontWeight: 800, color: '#EA580C', textTransform: 'uppercase', letterSpacing: 1 }}>
+            What would you like to create
+          </span>
+          <h2 style={{ fontFamily: 'var(--font-fraunces), Fraunces, Georgia, serif', fontSize: 36, fontWeight: 800, color: '#1A1A2E', margin: '6px 0 10px', letterSpacing: '-0.5px' }}>
+            Choose your world
           </h2>
-        </div>
-
-        <div className="grid grid-cols-4 gap-6">
-          {STEPS.map((s) => (
-            <div key={s.step} style={{ background: 'var(--bg-card)', padding: 28, borderRadius: 24, border: '1px solid var(--border-color)', boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
-              <div className="step-card-num">
-                {s.step}
-              </div>
-              <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--text-main)', marginBottom: 8 }}>{s.title}</div>
-              <div style={{ fontSize: 13, color: 'var(--text-sub)', lineHeight: 1.6 }}>{s.text}</div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* CORE FEATURES GRID */}
-      <section className="container section" style={{ padding: '60px 0' }}>
-        <div style={{ textAlign: 'center', marginBottom: 48 }}>
-          <div className="ateion-pill" style={{ marginBottom: 12 }}>What&apos;s Inside</div>
-          <h2 style={{ fontSize: 32, fontWeight: 800, color: 'var(--text-main)' }}>
-            Engineered For Speed, Security & Fair Pay
-          </h2>
-        </div>
-
-        <div className="grid grid-cols-3 gap-6">
-          {FEATURES.map((f) => (
-            <div key={f.title} style={{ background: 'var(--bg-card)', padding: 30, borderRadius: 24, border: '1px solid var(--border-color)', boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
-              <div style={{ marginBottom: 16 }}>
-                <IconBadge>{renderIcon(f.type)}</IconBadge>
-              </div>
-              <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-main)', marginBottom: 8 }}>{f.title}</div>
-              <div style={{ fontSize: 14, color: 'var(--text-sub)', lineHeight: 1.6 }}>{f.text}</div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* FINAL CTA BAND */}
-      <section className="container section-sm" style={{ paddingBottom: 80 }}>
-        <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', padding: '54px 36px', textAlign: 'center', borderRadius: 28, boxShadow: '0 10px 40px rgba(0,0,0,0.05)' }}>
-          <h2 style={{ fontSize: 34, fontWeight: 900, marginBottom: 12, color: 'var(--text-main)' }}>
-            {isLoggedIn ? 'Welcome Back to PrintHive' : 'Ready to Print Something Real?'}
-          </h2>
-          <p style={{ color: 'var(--text-sub)', marginBottom: 32, fontSize: 16 }}>
-            {isLoggedIn
-              ? 'Explore active 3D designs, upload custom models, or manage your orders and earnings.'
-              : 'Join PrintHive today — no printer, no CAD software, no hassle.'}
+          <p style={{ fontSize: 15, color: '#64748B', margin: 0 }}>
+            Four ways to bring your ideas to life — paint kits, custom keepsakes, 3D libraries, and corporate gifts.
           </p>
-          <div style={{ display: 'flex', gap: 16, justifyContent: 'center', flexWrap: 'wrap' }}>
-            {isLoggedIn ? (
-              <>
-                <Link href="/dashboard/buyer" className="btn btn-primary btn-lg" style={{ background: '#FF6B35', color: '#fff', padding: '14px 36px', borderRadius: 99, fontWeight: 800, textDecoration: 'none', boxShadow: '0 4px 16px rgba(255,107,53,0.35)', display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-                  <ShoppingBag size={18} /> Go to My Dashboard
-                </Link>
-                <Link href="/shop" className="btn btn-outline btn-lg" style={{ borderColor: 'var(--border-color)', color: 'var(--text-main)', padding: '14px 32px', borderRadius: 99, background: 'var(--bg-card-hover)', textDecoration: 'none', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-                  <Box size={18} /> Explore 3D Marketplace
-                </Link>
-              </>
-            ) : (
-              <>
-                <Link href="/signup" className="btn btn-primary btn-lg" style={{ background: '#FF6B35', color: '#fff', padding: '14px 36px', borderRadius: 99, fontWeight: 800, textDecoration: 'none', boxShadow: '0 4px 16px rgba(255,107,53,0.35)' }}>
-                  Create Free Account
-                </Link>
-                <Link
-                  href="/login"
-                  className="btn btn-outline btn-lg"
-                  style={{ borderColor: 'var(--border-color)', color: 'var(--text-main)', padding: '14px 32px', borderRadius: 99, background: 'var(--bg-card-hover)', textDecoration: 'none', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 8 }}
-                >
-                  Log In to Account &rarr;
-                </Link>
-              </>
-            )}
+        </div>
+
+        {/* 3 WORLD BANDS */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 24, marginBottom: 32 }}>
+          {WORLDS.map((w) => (
+            <Link
+              key={w.num}
+              href={w.href}
+              style={{
+                background: '#FFFFFF',
+                borderRadius: 28,
+                border: '1px solid #F0ECE6',
+                overflow: 'hidden',
+                textDecoration: 'none',
+                color: 'inherit',
+                display: 'flex',
+                flexDirection: 'column',
+                boxShadow: '0 4px 20px rgba(0,0,0,0.03)',
+                transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+              }}
+            >
+              <div style={{ height: 200, width: '100%', position: 'relative', overflow: 'hidden' }}>
+                <img src={w.img} alt={w.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                <div style={{ position: 'absolute', top: 14, left: 14, background: 'rgba(255,255,255,0.92)', color: w.color, padding: '4px 12px', borderRadius: 9999, fontSize: 11, fontWeight: 800, backdropFilter: 'blur(6px)' }}>
+                  {w.num} — {w.tag}
+                </div>
+              </div>
+
+              <div style={{ padding: 24, flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                <div>
+                  <h3 style={{ fontFamily: 'var(--font-fraunces), Fraunces, Georgia, serif', fontSize: 20, fontWeight: 800, color: '#1A1A2E', margin: '0 0 6px' }}>
+                    {w.title}
+                  </h3>
+                  <p style={{ fontSize: 13.5, color: '#64748B', lineHeight: 1.5, margin: 0 }}>
+                    {w.subtitle}
+                  </p>
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13.5, fontWeight: 800, color: w.color, marginTop: 18 }}>
+                  Enter this world <ArrowRight size={15} />
+                </div>
+              </div>
+            </Link>
+          ))}
+        </div>
+
+        {/* CORPORATE / HIVE FOR BUSINESS BANNER */}
+        <div
+          style={{
+            background: 'linear-gradient(135deg, #1E3A8A 0%, #2563EB 100%)',
+            borderRadius: 28,
+            padding: '36px 40px',
+            color: '#FFFFFF',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: 24,
+            boxShadow: '0 10px 30px rgba(30, 58, 138, 0.25)',
+          }}
+        >
+          <div style={{ maxWidth: 560 }}>
+            <span style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: 1.2, opacity: 0.85 }}>
+              Hive for Business
+            </span>
+            <h3 style={{ fontFamily: 'var(--font-fraunces), Fraunces, Georgia, serif', fontSize: 28, fontWeight: 800, margin: '6px 0 10px', lineHeight: 1.2 }}>
+              Custom corporate gifts that leave a lasting impression.
+            </h3>
+            <p style={{ fontSize: 14, opacity: 0.9, margin: 0 }}>
+              Bespoke trophies, company milestones, personalized desk nameplates, and executive hampers tailored for your team.
+            </p>
           </div>
+
+          <Link
+            href="/requests/new"
+            style={{
+              background: '#FFFFFF',
+              color: '#1E3A8A',
+              padding: '13px 26px',
+              borderRadius: 14,
+              fontSize: 14,
+              fontWeight: 800,
+              textDecoration: 'none',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 8,
+              boxShadow: '0 4px 14px rgba(0,0,0,0.15)',
+            }}
+          >
+            Explore Corporate <ArrowRight size={16} />
+          </Link>
+        </div>
+      </section>
+
+      {/* 3. MADE JUST FOR YOU (CUSTOM ON-DEMAND GRID) */}
+      <section style={{ maxWidth: 1360, margin: '0 auto', padding: '40px 24px 60px' }}>
+        <div style={{ textAlign: 'center', maxWidth: 640, margin: '0 auto 36px' }}>
+          <span style={{ fontSize: 11.5, fontWeight: 800, color: '#EA580C', textTransform: 'uppercase', letterSpacing: 1 }}>
+            Made on Demand
+          </span>
+          <h2 style={{ fontFamily: 'var(--font-fraunces), Fraunces, Georgia, serif', fontSize: 34, fontWeight: 800, color: '#1A1A2E', margin: '6px 0 8px', letterSpacing: '-0.5px' }}>
+            Made just for you
+          </h2>
+          <p style={{ fontSize: 14.5, color: '#64748B', margin: 0 }}>
+            Personalised pieces — send us your photo or idea and our verified print network crafts it.
+          </p>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 20 }}>
+          {CUSTOM_CREATIONS.map((c) => (
+            <Link
+              key={c.id}
+              href={c.href}
+              style={{
+                background: '#FFFFFF',
+                borderRadius: 24,
+                border: '1px solid #F0ECE6',
+                overflow: 'hidden',
+                textDecoration: 'none',
+                color: 'inherit',
+                display: 'flex',
+                flexDirection: 'column',
+                boxShadow: '0 4px 20px rgba(0,0,0,0.03)',
+                transition: 'transform 0.2s ease',
+              }}
+            >
+              <div
+                style={{
+                  height: 180,
+                  width: '100%',
+                  background: c.bgGradient,
+                  position: 'relative',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: 42,
+                  opacity: 0.85,
+                }}
+              >
+                ✦
+                <span
+                  style={{
+                    position: 'absolute',
+                    top: 12,
+                    right: 12,
+                    background: '#FFFFFF',
+                    color: c.tagColor,
+                    fontSize: 10,
+                    fontWeight: 800,
+                    padding: '3px 10px',
+                    borderRadius: 9999,
+                    boxShadow: '0 2px 6px rgba(0,0,0,0.06)',
+                  }}
+                >
+                  {c.tag}
+                </span>
+              </div>
+
+              <div style={{ padding: 20 }}>
+                <h3 style={{ fontFamily: 'var(--font-fraunces), Fraunces, Georgia, serif', fontSize: 17, fontWeight: 700, color: '#1A1A2E', margin: '0 0 4px' }}>
+                  {c.title}
+                </h3>
+                <p style={{ fontSize: 12.5, color: '#64748B', margin: '0 0 14px' }}>
+                  {c.subtitle}
+                </p>
+                <span style={{ fontSize: 12, fontWeight: 800, color: c.tagColor, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                  Enquire to order <ArrowRight size={13} />
+                </span>
+              </div>
+            </Link>
+          ))}
+        </div>
+      </section>
+
+      {/* 4. HOW IT WORKS SECTION */}
+      <section id="how-it-works" style={{ maxWidth: 1360, margin: '0 auto', padding: '40px 24px 60px' }}>
+        <div style={{ textAlign: 'center', maxWidth: 640, margin: '0 auto 40px' }}>
+          <span style={{ fontSize: 11.5, fontWeight: 800, color: '#EA580C', textTransform: 'uppercase', letterSpacing: 1 }}>
+            Simple & Fun
+          </span>
+          <h2 style={{ fontFamily: 'var(--font-fraunces), Fraunces, Georgia, serif', fontSize: 34, fontWeight: 800, color: '#1A1A2E', margin: '6px 0 8px', letterSpacing: '-0.5px' }}>
+            How it works
+          </h2>
+          <p style={{ fontSize: 14.5, color: '#64748B', margin: 0 }}>
+            From your chosen model to your completed hand-painted masterpiece.
+          </p>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 24 }}>
+          {HOW_IT_WORKS.map((h) => (
+            <div
+              key={h.step}
+              style={{
+                background: '#FFFFFF',
+                borderRadius: 24,
+                border: '1px solid #F0ECE6',
+                padding: 28,
+                boxShadow: '0 4px 20px rgba(0,0,0,0.03)',
+              }}
+            >
+              <div
+                style={{
+                  width: 44,
+                  height: 44,
+                  borderRadius: 14,
+                  background: '#7C3AED',
+                  color: '#FFFFFF',
+                  fontSize: 18,
+                  fontWeight: 900,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  marginBottom: 18,
+                  boxShadow: '0 4px 12px rgba(124, 58, 237, 0.3)',
+                }}
+              >
+                {h.step}
+              </div>
+              <h3 style={{ fontFamily: 'var(--font-fraunces), Fraunces, Georgia, serif', fontSize: 18, fontWeight: 800, color: '#1A1A2E', margin: '0 0 8px' }}>
+                {h.title}
+              </h3>
+              <p style={{ fontSize: 13.5, color: '#64748B', lineHeight: 1.55, margin: 0 }}>
+                {h.text}
+              </p>
+            </div>
+          ))}
         </div>
       </section>
 
       <Footer />
+
+      <style jsx global>{`
+        @media (max-width: 960px) {
+          .hero-grid {
+            grid-template-columns: 1fr !important;
+          }
+        }
+      `}</style>
     </main>
   )
 }
