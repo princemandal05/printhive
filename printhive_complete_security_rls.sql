@@ -48,6 +48,12 @@ FOR UPDATE
 USING (auth.uid() = id)
 WITH CHECK (auth.uid() = id);
 
+DROP POLICY IF EXISTS "profiles_insert_self" ON public.profiles;
+DROP POLICY IF EXISTS "Users can insert own profile" ON public.profiles;
+CREATE POLICY "profiles_insert_self" ON public.profiles
+FOR INSERT
+WITH CHECK (auth.uid() = id);
+
 -- Database Trigger to Block Role Privilege Escalation via Client API
 CREATE OR REPLACE FUNCTION public.prevent_profile_role_escalation()
 RETURNS TRIGGER AS $$
@@ -309,3 +315,13 @@ DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
+
+-- =========================================================
+-- 9. Revoke Direct API Execution on SECURITY DEFINER Trigger Functions
+-- =========================================================
+REVOKE EXECUTE ON FUNCTION public.handle_new_user() FROM PUBLIC, anon, authenticated;
+REVOKE EXECUTE ON FUNCTION public.prevent_order_financial_tampering() FROM PUBLIC, anon, authenticated;
+REVOKE EXECUTE ON FUNCTION public.prevent_profile_role_escalation() FROM PUBLIC, anon, authenticated;
+REVOKE EXECUTE ON FUNCTION public.is_admin() FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.is_admin() TO authenticated;
+
