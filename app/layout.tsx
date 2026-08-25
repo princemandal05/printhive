@@ -1,25 +1,26 @@
 import type { Metadata } from 'next'
-import { Fraunces, Plus_Jakarta_Sans } from 'next/font/google'
+import { Space_Grotesk, Source_Sans_3 } from 'next/font/google'
+import Script from 'next/script'
 import './globals.css'
 import './landing.css'
 import { StoreProvider } from '@/lib/cart-context'
 
-const fraunces = Fraunces({
+const spaceGrotesk = Space_Grotesk({
   subsets: ['latin'],
-  weight: ['400', '500', '600', '700', '800'],
-  variable: '--font-fraunces',
+  weight: ['500', '600', '700'],
+  variable: '--font-display',
   display: 'swap',
 })
 
-const plusJakartaSans = Plus_Jakarta_Sans({
+const sourceSans3 = Source_Sans_3({
   subsets: ['latin'],
-  weight: ['400', '500', '600', '700', '800'],
-  variable: '--font-jakarta',
+  weight: ['300', '400', '600', '700', '800'],
+  variable: '--font-body',
   display: 'swap',
 })
 
 export const metadata: Metadata = {
-  title: 'PrintHive — Capability-Based 3D Commerce & Additive Manufacturing Platform',
+  title: 'PrintHive — Capability-Based 3D Commerce Platform',
   description:
     'PrintHive connects 3D model designers, printer owners, and buyers on a capability-based 3D printing marketplace.',
 }
@@ -28,8 +29,21 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" suppressHydrationWarning className={`${fraunces.variable} ${plusJakartaSans.variable}`}>
-      <body className="bg-cream text-ink min-h-screen overflow-x-hidden antialiased" style={{ fontFamily: 'var(--font-jakarta), -apple-system, sans-serif' }}>
+    <html lang="en" suppressHydrationWarning className={`${spaceGrotesk.variable} ${sourceSans3.variable}`}>
+      <body style={{ fontFamily: 'var(--font-body), sans-serif' }}>
+        <Script
+          id="printhive-theme-init"
+          strategy="beforeInteractive"
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function () {
+                var t = localStorage.getItem("printhive-theme") || localStorage.getItem("ateion-theme");
+                if (!t) t = "dark";
+                document.documentElement.setAttribute("data-theme", t);
+              })();
+            `,
+          }}
+        />
         <StoreProvider>{children}</StoreProvider>
       </body>
     </html>
