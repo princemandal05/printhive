@@ -62,13 +62,18 @@ export default function RegisterPrinterForm() {
     setStatusMsg('⚡ Registering 3D Printer Machine on Leaflet OpenStreetMap Hub...')
 
     try {
-      const { data: { user } } = await supabase.auth.getUser()
-      const ownerId = user?.id || 'demo-owner-id'
+      const { data: { user }, error: authErr } = await supabase.auth.getUser()
+      if (authErr || !user) {
+        setStatusMsg('❌ Authentication required: Please log in to register your printer machine.')
+        setSubmitting(false)
+        router.push('/login?next=/dashboard/printer-owner/register')
+        return
+      }
 
       const displayName = printerName.trim() || model.trim() || '3D Printer Unit'
 
       const { error: insertErr } = await supabase.from('printers').insert({
-        owner_id: ownerId,
+        owner_id: user.id,
         printer_model: model || displayName,
         technology,
         build_volume: buildVolume,

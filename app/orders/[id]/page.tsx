@@ -20,7 +20,7 @@ function OrderTrackingContent() {
   const searchParams = useSearchParams()
   const supabase = createClient()
 
-  const orderId = (params?.id as string) || 'demo-order-id'
+  const orderId = (params?.id as string) || ''
   const isJustReviewed = searchParams?.get('reviewed') === 'true'
 
   const [currentStatus, setCurrentStatus] = useState<OrderStatus | null>(null)

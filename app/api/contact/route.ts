@@ -1,26 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/utils/supabase/server'
 
-export let SYSTEM_COMPLAINTS: Array<{
-  id: string
-  name: string
-  email: string
-  subject: string
-  message: string
-  status: 'open' | 'resolved'
-  created_at: string
-}> = [
-  {
-    id: 'ticket-1700000001',
-    name: 'Rohan Sharma',
-    email: 'rohan@example.com',
-    subject: 'Order #ORD-8821 Filament Color Clarification',
-    message: 'I requested Red PLA for my 3D phone holder, just wanted to verify if matte red is available.',
-    status: 'open',
-    created_at: new Date(Date.now() - 3600000 * 5).toISOString(),
-  },
-]
-
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url)
@@ -37,7 +17,6 @@ export async function GET(request: Request) {
       isAdmin = profile?.role === 'admin'
     }
 
-    // Try fetching from Supabase database
     try {
       let query = supabase.from('complaints').select('*').order('created_at', { ascending: false })
       
@@ -52,30 +31,13 @@ export async function GET(request: Request) {
         dbComplaints = data
       }
     } catch (e) {
-      console.warn('Supabase complaints query fallback:', e)
+      console.warn('Supabase complaints query:', e)
     }
 
-    // Merge DB complaints with in-memory complaints store
-    const allComplaints = [...dbComplaints]
-    for (const sysComp of SYSTEM_COMPLAINTS) {
-      if (!allComplaints.some((c) => c.id === sysComp.id)) {
-        allComplaints.push(sysComp)
-      }
-    }
-
-    // Filter results if specified
-    let filtered = allComplaints
-    if (!isAdmin && targetEmail) {
-      filtered = allComplaints.filter((c) => c.email.toLowerCase() === targetEmail.toLowerCase())
-    } else if (!isAdmin && user?.email) {
-      const uEmail = user.email.toLowerCase()
-      filtered = allComplaints.filter((c) => c.email.toLowerCase() === uEmail)
-    }
-
-    return NextResponse.json({ success: true, complaints: filtered })
+    return NextResponse.json({ success: true, complaints: dbComplaints })
   } catch (err: unknown) {
     const error = err as Error
-    return NextResponse.json({ success: true, complaints: SYSTEM_COMPLAINTS })
+    return NextResponse.json({ success: false, error: error.message, complaints: [] }, { status: 500 })
   }
 }
 
@@ -137,22 +99,20 @@ export async function POST(request: Request) {
       created_at: new Date().toISOString(),
     }
 
-    // Try inserting into Supabase
-    try {
-      await supabase.from('complaints').insert({
-        id: newTicket.id,
-        name: newTicket.name,
-        email: newTicket.email,
-        subject: newTicket.subject,
-        message: newTicket.message,
-        status: 'open',
-      })
-    } catch (dbErr) {
-      console.warn('Supabase complaints DB insert fallback:', dbErr)
-    }
+    // Insert directly into Supabase complaints table
+    const { error: dbErr } = await supabase.from('complaints').insert({
+      id: newTicket.id,
+      name: newTicket.name,
+      email: newTicket.email,
+      subject: newTicket.subject,
+      message: newTicket.message,
+      status: 'open',
+    })
 
-    // Always push to in-memory store as fallback
-    SYSTEM_COMPLAINTS.unshift(newTicket)
+    if (dbErr) {
+      console.error('Supabase complaints DB insert error:', dbErr)
+      return NextResponse.json({ success: false, error: dbErr.message }, { status: 500 })
+    }
 
     return NextResponse.json({
       success: true,
@@ -171,7 +131,6 @@ export async function POST(request: Request) {
 export async function PATCH(request: Request) {
   try {
     const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
 
     let body: unknown
     try {
@@ -201,19 +160,14 @@ export async function PATCH(request: Request) {
     }
 
     // Perform database update
-    try {
-      await supabase
-        .from('complaints')
-        .update({ status: targetStatus })
-        .eq('id', id)
-    } catch (e) {
-      console.warn('Supabase complaints update fallback:', e)
-    }
+    const { error: updateErr } = await supabase
+      .from('complaints')
+      .update({ status: targetStatus })
+      .eq('id', id)
 
-    // Mutate in-memory complaints store
-    SYSTEM_COMPLAINTS = SYSTEM_COMPLAINTS.map((c) =>
-      c.id === id ? { ...c, status: targetStatus } : c
-    )
+    if (updateErr) {
+      return NextResponse.json({ success: false, error: updateErr.message }, { status: 500 })
+    }
 
     return NextResponse.json({ success: true, message: 'Ticket status updated.' })
   } catch (err: unknown) {

@@ -8,7 +8,7 @@ import Footer from '@/components/Footer'
 export default function LeaveReviewPage() {
   const params = useParams()
   const router = useRouter()
-  const orderId = (params?.id as string) || 'demo-order-id'
+  const orderId = (params?.id as string) || ''
 
   const [rating, setRating] = useState(5)
   const [hoverRating, setHoverRating] = useState(0)

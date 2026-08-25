@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
+import { useStore } from '@/lib/cart-context'
 
 const MATERIALS = ['PLA', 'PETG', 'ABS', 'TPU (Flexible)', 'Resin']
 const COLORS = ['White', 'Black', 'Red', 'Blue', 'Green', 'Grey', 'Custom (specify in notes)']
@@ -20,6 +21,7 @@ interface PrinterHub {
 
 export default function PrintOnDemandUploadPage() {
   const router = useRouter()
+  const { addToCart } = useStore()
 
   const [printers, setPrinters] = useState<PrinterHub[]>([])
   const [fileName, setFileName] = useState('')
@@ -38,15 +40,15 @@ export default function PrintOnDemandUploadPage() {
 
   // Populate printers dynamically when delivery address becomes available
   useEffect(() => {
-    if (address.trim()) {
+    if (address.trim().length > 3) {
       setPrinters([
-        { id: 'p1', name: 'Rohan’s PrintLab', distance: '1.2 km', rating: 4.9, basePrice: 350 },
-        { id: 'p2', name: 'Andheri 3D Studio', distance: '2.8 km', rating: 4.7, basePrice: 320 },
-        { id: 'p3', name: 'Bandra MakerSpace', distance: '4.1 km', rating: 4.8, basePrice: 380 },
+        { id: 'hub-1', name: 'PrintHive Precision Hub (Koramangala)', distance: '1.2 km', rating: 4.9, basePrice: 350 },
+        { id: 'hub-2', name: 'RapidLayer 3D Lab (Indiranagar)', distance: '2.8 km', rating: 4.8, basePrice: 300 },
+        { id: 'hub-3', name: 'AeroPrint Additive (Whitefield)', distance: '4.1 km', rating: 4.9, basePrice: 420 },
       ])
-    } else {
-      setPrinters([])
-      setSelectedPrinter(null)
+      if (!selectedPrinter && !isBroadcast) {
+        setSelectedPrinter('hub-1')
+      }
     }
   }, [address])
 
@@ -64,16 +66,18 @@ export default function PrintOnDemandUploadPage() {
 
   const canSubmit = !!fileName && !!address.trim() && quantity > 0 && (!!selectedPrinter || isBroadcast)
 
-  const handlePlaceOrder = async () => {
-    // Replace with:
-    // 1. Upload the STL/3MF/OBJ file to Cloudinary
-    // 2. Insert a row into `orders` (design_id null, custom_file_url set,
-    //    material, color, scale, infill, layer_height, surface_finish,
-    //    printer_id, quantity, subtotal, platform_fee, total)
-    // 3. Open Razorpay test-mode checkout, holding `total` in escrow
+  const handlePlaceOrder = () => {
+    if (!canSubmit) return
     setPlacing(true)
-    await new Promise((res) => setTimeout(res, 900))
-    router.push('/orders/demo-order-id')
+    addToCart({
+      id: `pod-${Date.now()}`,
+      name: `Custom Print Job: ${fileName} (${material}, ${color})`,
+      price: unitPrice,
+      seller: activePrinter?.name || 'PrintHive Verified Hub',
+      stock: 10,
+      image: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=600&q=80',
+    }, quantity)
+    router.push('/checkout')
   }
 
   return (

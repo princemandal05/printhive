@@ -34,75 +34,6 @@ export interface DesignRow {
 
 const FALLBACK_CATEGORIES = ['Toys & Games', 'Home & Office', 'Home & Decor', 'Personalized', 'Repair Parts']
 
-const SAMPLE_DESIGNS: DesignRow[] = [
-  {
-    id: 'sample-design-1',
-    title: 'Low Poly Voronoi Skull Sculpture STL',
-    price: 199,
-    category: 'Home & Decor',
-    rating: 5.0,
-    rating_count: 24,
-    thumbnail_url: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=800&q=80',
-    file_url: '',
-    designer: { full_name: 'Studio Polygon' },
-  },
-  {
-    id: 'sample-design-2',
-    title: 'Snap-Fit Cable Routing Clips (Pack of 6)',
-    price: 0,
-    category: 'Home & Office',
-    rating: 4.9,
-    rating_count: 87,
-    thumbnail_url: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=800&q=80',
-    file_url: '',
-    designer: { full_name: 'OpenFix CAD' },
-  },
-  {
-    id: 'sample-design-3',
-    title: 'Articulated Flexi Octopus with Suction Cups',
-    price: 149,
-    category: 'Toys & Games',
-    rating: 4.8,
-    rating_count: 42,
-    thumbnail_url: 'https://images.unsplash.com/photo-1578749556568-bc2c40e68b61?auto=format&fit=crop&w=800&q=80',
-    file_url: '',
-    designer: { full_name: 'FlexiLab 3D' },
-  },
-  {
-    id: 'sample-design-4',
-    title: 'Customizable Dual Joy-Con Grip Controller Stand',
-    price: 249,
-    category: 'Home & Office',
-    rating: 4.9,
-    rating_count: 31,
-    thumbnail_url: 'https://images.unsplash.com/photo-1581092335397-9583fe92d232?auto=format&fit=crop&w=800&q=80',
-    file_url: '',
-    designer: { full_name: 'ModGrip Labs' },
-  },
-  {
-    id: 'sample-design-5',
-    title: 'Universal GoPro / Action Cam Quick-Release Mount',
-    price: 99,
-    category: 'Repair Parts',
-    rating: 4.7,
-    rating_count: 18,
-    thumbnail_url: 'https://images.unsplash.com/photo-1532767153582-b1a0e5145009?auto=format&fit=crop&w=800&q=80',
-    file_url: '',
-    designer: { full_name: 'RigWorks Precision' },
-  },
-  {
-    id: 'sample-design-6',
-    title: 'Spiral Geometric Vase (Vase Mode Optimized)',
-    price: 0,
-    category: 'Home & Decor',
-    rating: 5.0,
-    rating_count: 65,
-    thumbnail_url: 'https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?auto=format&fit=crop&w=800&q=80',
-    file_url: '',
-    designer: { full_name: 'Aesthetic Geometry' },
-  },
-]
-
 function Quick3DModal({ design, onClose }: { design: DesignRow; onClose: () => void }) {
   const modelUrl = design.file_url || (design as any).preview_url
 
@@ -191,7 +122,7 @@ function Quick3DModal({ design, onClose }: { design: DesignRow; onClose: () => v
 }
 
 export default function BrowseClient({ designs = [] }: { designs: DesignRow[] }) {
-  const [modelList, setModelList] = useState<DesignRow[]>(designs.length > 0 ? designs : SAMPLE_DESIGNS)
+  const [modelList, setModelList] = useState<DesignRow[]>(designs)
   const [search, setSearch] = useState('')
   const [category, setCategory] = useState('All')
   const [sort, setSort] = useState('popular')
@@ -209,7 +140,7 @@ export default function BrowseClient({ designs = [] }: { designs: DesignRow[] })
           .select('id, title, description, file_url, thumbnail_url, price, tags, is_public, designer_id, created_at')
           .order('created_at', { ascending: false })
 
-        if (!error && data && data.length > 0 && isMounted) {
+        if (!error && data && isMounted) {
           const designerIds = Array.from(new Set(data.map((d: any) => d.designer_id).filter(Boolean)))
           const profileMap: Record<string, string> = {}
 
@@ -235,20 +166,13 @@ export default function BrowseClient({ designs = [] }: { designs: DesignRow[] })
               category: tags[0] || 'Toys & Games',
               rating: 5,
               rating_count: 1,
-              thumbnail_url: d.thumbnail_url || 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=600&q=80',
+              thumbnail_url: d.thumbnail_url || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=600&q=80',
               file_url: d.file_url || '',
               designer: { full_name: profileMap[d.designer_id] || 'PrintHive Creator' },
             }
           })
 
-          const combined = [...parsed]
-          for (const sample of SAMPLE_DESIGNS) {
-            if (!combined.some((d) => d.title.toLowerCase() === sample.title.toLowerCase())) {
-              combined.push(sample)
-            }
-          }
-
-          setModelList(combined)
+          setModelList(parsed)
         }
       } catch (err) {
         console.warn('Live designs fetch warning:', err)

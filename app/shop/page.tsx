@@ -49,99 +49,6 @@ const CATEGORIES = [
   'Educational Kits',
 ]
 
-const SAMPLE_MARKETPLACE_PRODUCTS: Product[] = [
-  {
-    id: 'sample-1',
-    name: 'Spiral Fibonacci Geometric Desk Planter',
-    price: 349,
-    originalPrice: 499,
-    category: 'Home Décor',
-    rating: 4.9,
-    reviewsCount: 38,
-    seller: 'VoxelCraft Studios',
-    stock: 15,
-    image: 'https://images.unsplash.com/photo-1578749556568-bc2c40e68b61?auto=format&fit=crop&w=800&q=80',
-    featured: true,
-    trending: true,
-    deliveryDays: '2-3 Days',
-  },
-  {
-    id: 'sample-2',
-    name: 'Articulated Crystal Dragon (Multi-Color PLA)',
-    price: 599,
-    originalPrice: 799,
-    category: 'Toys & Miniatures',
-    rating: 5.0,
-    reviewsCount: 64,
-    seller: 'DragonForge 3D',
-    stock: 8,
-    image: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=800&q=80',
-    featured: true,
-    trending: true,
-    deliveryDays: '1-2 Days',
-  },
-  {
-    id: 'sample-3',
-    name: 'Cyberpunk Modular Headphone Stand',
-    price: 749,
-    originalPrice: 999,
-    category: 'Office Accessories',
-    rating: 4.8,
-    reviewsCount: 29,
-    seller: 'Apex Print Works',
-    stock: 12,
-    image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=800&q=80',
-    featured: false,
-    trending: true,
-    deliveryDays: '2-4 Days',
-  },
-  {
-    id: 'sample-4',
-    name: 'Lithophane Moon Lamp with Wooden Base',
-    price: 899,
-    originalPrice: 1299,
-    category: 'Personalized Gifts',
-    rating: 4.9,
-    reviewsCount: 52,
-    seller: 'Lumina 3D Hub',
-    stock: 6,
-    image: 'https://images.unsplash.com/photo-1532767153582-b1a0e5145009?auto=format&fit=crop&w=800&q=80',
-    featured: true,
-    trending: false,
-    deliveryDays: '3-5 Days',
-  },
-  {
-    id: 'sample-5',
-    name: 'Mandalorian Cosplay Helmet (Raw Polycarbonate)',
-    price: 1499,
-    originalPrice: 1999,
-    category: 'Cosplay Items',
-    rating: 5.0,
-    reviewsCount: 41,
-    seller: 'Beskar Forge India',
-    stock: 4,
-    image: 'https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?auto=format&fit=crop&w=800&q=80',
-    featured: false,
-    trending: true,
-    deliveryDays: '3-4 Days',
-  },
-  {
-    id: 'sample-6',
-    name: 'Functional Planetary Gear Kinetic Desk Toy',
-    price: 449,
-    originalPrice: 649,
-    category: 'Educational Kits',
-    rating: 4.7,
-    reviewsCount: 19,
-    seller: 'MechMind Hub',
-    stock: 20,
-    image: 'https://images.unsplash.com/photo-1581092335397-9583fe92d232?auto=format&fit=crop&w=800&q=80',
-    featured: false,
-    trending: false,
-    deliveryDays: '2-3 Days',
-  },
-]
-
 type ProductRow = {
   id: string
   title?: string
@@ -186,7 +93,7 @@ function ShopReviewBanner() {
 
 export default function ShopPage() {
   const { addToCart, addToWishlist, removeFromWishlist, isInWishlist } = useStore()
-  const [products, setProducts] = useState<Product[]>(SAMPLE_MARKETPLACE_PRODUCTS)
+  const [products, setProducts] = useState<Product[]>([])
   const [loadingProducts, setLoadingProducts] = useState(true)
   const [search, setSearch] = useState('')
   const [category, setCategory] = useState('All')
@@ -240,7 +147,7 @@ export default function ShopPage() {
             reviewsCount: Number(item.reviews_count ?? 12),
             seller: item.seller_name || item.seller || 'PrintHive Verified',
             stock: Number(item.stock ?? 10),
-            image: item.image_url || item.image || 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=600&q=80',
+            image: item.image_url || item.image || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=600&q=80',
             featured: Boolean(item.featured),
             trending: Boolean(item.trending),
             newest: Boolean(item.newest),
@@ -249,19 +156,12 @@ export default function ShopPage() {
         }
 
         if (isMounted) {
-          // Combine DB products with sample catalog so the store is always fully populated
-          const combined = [...mappedDbProducts]
-          for (const sample of SAMPLE_MARKETPLACE_PRODUCTS) {
-            if (!combined.some((p) => p.name.toLowerCase() === sample.name.toLowerCase())) {
-              combined.push(sample)
-            }
-          }
-          setProducts(combined)
+          setProducts(mappedDbProducts)
         }
       } catch (err) {
         console.error('Error fetching products from Supabase:', err)
         if (isMounted) {
-          setProducts(SAMPLE_MARKETPLACE_PRODUCTS)
+          setProducts([])
         }
       } finally {
         if (isMounted) setLoadingProducts(false)
