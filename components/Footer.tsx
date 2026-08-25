@@ -4,220 +4,216 @@ import Link from 'next/link'
 
 export default function Footer() {
   return (
-    <footer style={{ background: '#050811', borderTop: '1px solid rgba(255, 107, 53, 0.15)', color: '#94a3b8', padding: '64px 20px 36px', position: 'relative', overflow: 'hidden' }}>
-      {/* Ambient Top Glow Line */}
-      <div
-        style={{
-          position: 'absolute',
-          top: 0,
-          left: '15%',
-          right: '15%',
-          height: 1,
-          background: 'linear-gradient(90deg, transparent 0%, #FF6B35 50%, transparent 100%)',
-          opacity: 0.8,
-        }}
-      />
-
+    <footer style={{ background: '#090d16', borderTop: '1px solid #1e293b', color: '#94a3b8', padding: '64px 24px 32px', fontFamily: 'inherit' }}>
       <div style={{ maxWidth: 1200, margin: '0 auto' }}>
-        {/* TOP TRUST & ECOSYSTEM BANNER */}
-        <div
-          style={{
-            background: 'linear-gradient(135deg, rgba(15, 23, 42, 0.9) 0%, rgba(30, 41, 59, 0.6) 100%)',
-            border: '1px solid rgba(255, 255, 255, 0.08)',
-            borderRadius: 20,
-            padding: '24px 28px',
-            marginBottom: 48,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            flexWrap: 'wrap',
-            gap: 20,
-            boxShadow: '0 10px 30px rgba(0, 0, 0, 0.3)',
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-            <div
-              style={{
-                width: 44,
-                height: 44,
-                borderRadius: 12,
-                background: 'rgba(255,107,53,0.15)',
-                border: '1px solid rgba(255,107,53,0.3)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: 20,
-              }}
-            >
-              🛡️
-            </div>
-            <div>
-              <div style={{ fontSize: 15, fontWeight: 900, color: '#fff', letterSpacing: '-0.2px' }}>
-                PrintHive Escrow Protected Network
-              </div>
-              <div style={{ fontSize: 13, color: '#94a3b8', marginTop: 2 }}>
-                100% of payments held in Razorpay Escrow until successful delivery & inspection.
-              </div>
-            </div>
-          </div>
-
-          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, background: 'rgba(16,185,129,0.12)', color: '#10B981', border: '1px solid rgba(16,185,129,0.3)', padding: '6px 14px', borderRadius: 99, fontWeight: 800 }}>
-              <span style={{ fontSize: 8 }}>🟢</span> 70% Printer Hub Share
-            </div>
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, background: 'rgba(139,92,246,0.12)', color: '#A78BFA', border: '1px solid rgba(139,92,246,0.3)', padding: '6px 14px', borderRadius: 99, fontWeight: 800 }}>
-              <span style={{ fontSize: 8 }}>🎨</span> 15% Designer Royalty
-            </div>
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, background: 'rgba(255,107,53,0.12)', color: '#FF8A50', border: '1px solid rgba(255,107,53,0.3)', padding: '6px 14px', borderRadius: 99, fontWeight: 800 }}>
-              <span style={{ fontSize: 8 }}>⚡</span> 15% Platform Maintenance
-            </div>
-          </div>
-        </div>
-
-        {/* MAIN FOOTER 4-COLUMN GRID */}
+        {/* MAIN 5-COLUMN ENTERPRISE GRID */}
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-            gap: 40,
-            marginBottom: 48,
+            gridTemplateColumns: '1.8fr 1fr 1fr 1fr 1fr',
+            gap: 48,
+            marginBottom: 56,
           }}
+          className="footer-grid"
         >
           {/* BRAND COLUMN */}
-          <div>
-            <div style={{ fontSize: 24, fontWeight: 900, color: '#fff', marginBottom: 12, letterSpacing: '-0.5px' }}>
-              Print<span style={{ color: '#FF6B35' }}>Hive</span>
-            </div>
-            <p style={{ fontSize: 13, lineHeight: 1.6, color: '#94a3b8', marginBottom: 20 }}>
-              Where Ideas Become Physical Reality. AI-Powered Hybrid 3D Commerce & Distributed Additive Manufacturing Network.
+          <div style={{ maxWidth: 300 }}>
+            <Link href="/" style={{ textDecoration: 'none', display: 'inline-block', marginBottom: 16 }}>
+              <span style={{ fontSize: 22, fontWeight: 900, color: '#ffffff', letterSpacing: '-0.5px' }}>
+                Print<span style={{ color: '#FF6B35' }}>Hive</span>
+              </span>
+            </Link>
+            <p style={{ fontSize: 13.5, lineHeight: 1.65, color: '#64748b', marginBottom: 20 }}>
+              The distributed additive manufacturing network connecting creators, verified 3D print hubs, and global buyers.
             </p>
 
-            {/* SOCIAL / COMMUNITY CHANNELS */}
-            <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-              <a
-                href="https://discord.com"
-                target="_blank"
-                rel="noreferrer"
-                aria-label="Discord Community"
-                style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#cbd5e1', textDecoration: 'none', transition: 'all 0.2s' }}
-              >
-                💬
-              </a>
-              <a
-                href="https://github.com/princemandal05/printhive"
-                target="_blank"
-                rel="noreferrer"
-                aria-label="GitHub Repository"
-                style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#cbd5e1', textDecoration: 'none', transition: 'all 0.2s' }}
-              >
-                🐙
-              </a>
-              <a
-                href="https://youtube.com"
-                target="_blank"
-                rel="noreferrer"
-                aria-label="YouTube Tutorials"
-                style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#cbd5e1', textDecoration: 'none', transition: 'all 0.2s' }}
-              >
-                📺
-              </a>
+            {/* PLATFORM STATUS */}
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '6px 12px', background: 'rgba(15, 23, 42, 0.8)', border: '1px solid #1e293b', borderRadius: 8, fontSize: 12, color: '#cbd5e1' }}>
+              <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#10b981', display: 'inline-block', boxShadow: '0 0 8px #10b981' }} />
+              <span>All Systems Operational</span>
             </div>
           </div>
 
-          {/* MARKETPLACE & 3D CATALOG */}
+          {/* COLUMN 1: MARKETPLACE */}
           <div>
-            <div style={{ fontSize: 13, fontWeight: 900, color: '#fff', marginBottom: 16, textTransform: 'uppercase', letterSpacing: 0.8 }}>
-              Marketplace & Catalog
+            <div style={{ fontSize: 12, fontWeight: 700, color: '#ffffff', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 16 }}>
+              Marketplace
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, fontSize: 13 }}>
-              <Link href="/shop" style={{ color: '#cbd5e1', textDecoration: 'none', transition: 'color 0.2s' }}>
-                🏪 Ready-Made 3D Shop
-              </Link>
-              <Link href="/browse" style={{ color: '#cbd5e1', textDecoration: 'none', transition: 'color 0.2s' }}>
-                🎨 Digital 3D Models (STL/3MF)
-              </Link>
-              <Link href="/print-on-demand" style={{ color: '#cbd5e1', textDecoration: 'none', transition: 'color 0.2s' }}>
-                ⚡ Custom Print-on-Demand
-              </Link>
-              <Link href="/requests" style={{ color: '#cbd5e1', textDecoration: 'none', transition: 'color 0.2s' }}>
-                📋 Custom CAD Design Briefs
-              </Link>
-              <Link href="/cart" style={{ color: '#cbd5e1', textDecoration: 'none', transition: 'color 0.2s' }}>
-                🛒 Shopping Cart & Checkout
-              </Link>
-            </div>
+            <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 12, fontSize: 13.5 }}>
+              <li>
+                <Link href="/shop" style={{ color: '#94a3b8', textDecoration: 'none', transition: 'color 0.15s' }}>
+                  Ready-Made Products
+                </Link>
+              </li>
+              <li>
+                <Link href="/browse" style={{ color: '#94a3b8', textDecoration: 'none', transition: 'color 0.15s' }}>
+                  Digital 3D Models
+                </Link>
+              </li>
+              <li>
+                <Link href="/print-on-demand" style={{ color: '#94a3b8', textDecoration: 'none', transition: 'color 0.15s' }}>
+                  Print-on-Demand
+                </Link>
+              </li>
+              <li>
+                <Link href="/requests" style={{ color: '#94a3b8', textDecoration: 'none', transition: 'color 0.15s' }}>
+                  Custom Design Briefs
+                </Link>
+              </li>
+              <li>
+                <Link href="/cart" style={{ color: '#94a3b8', textDecoration: 'none', transition: 'color 0.15s' }}>
+                  Shopping Cart
+                </Link>
+              </li>
+            </ul>
           </div>
 
-          {/* CREATOR & MANUFACTURER PORTALS */}
+          {/* COLUMN 2: CREATORS & HUBS */}
           <div>
-            <div style={{ fontSize: 13, fontWeight: 900, color: '#FF6B35', marginBottom: 16, textTransform: 'uppercase', letterSpacing: 0.8 }}>
-              Creator & Maker Portals
+            <div style={{ fontSize: 12, fontWeight: 700, color: '#ffffff', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 16 }}>
+              Ecosystem
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, fontSize: 13 }}>
-              <Link href="/dashboard/seller" style={{ color: '#cbd5e1', textDecoration: 'none', transition: 'color 0.2s' }}>
-                🏬 Seller Central Dashboard
-              </Link>
-              <Link href="/dashboard/designer" style={{ color: '#cbd5e1', textDecoration: 'none', transition: 'color 0.2s' }}>
-                ✨ 3D Designer Studio
-              </Link>
-              <Link href="/dashboard/printer-owner" style={{ color: '#cbd5e1', textDecoration: 'none', transition: 'color 0.2s' }}>
-                🖨️ Printer Hub Operations
-              </Link>
-              <Link href="/printers" style={{ color: '#cbd5e1', textDecoration: 'none', transition: 'color 0.2s' }}>
-                📍 Local Printer Hubs Map
-              </Link>
-              <Link href="/dashboard/buyer" style={{ color: '#cbd5e1', textDecoration: 'none', transition: 'color 0.2s' }}>
-                📦 Buyer Orders & Tracking
-              </Link>
-            </div>
+            <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 12, fontSize: 13.5 }}>
+              <li>
+                <Link href="/dashboard/seller" style={{ color: '#94a3b8', textDecoration: 'none', transition: 'color 0.15s' }}>
+                  Seller Central
+                </Link>
+              </li>
+              <li>
+                <Link href="/dashboard/designer" style={{ color: '#94a3b8', textDecoration: 'none', transition: 'color 0.15s' }}>
+                  Designer Studio
+                </Link>
+              </li>
+              <li>
+                <Link href="/dashboard/printer-owner" style={{ color: '#94a3b8', textDecoration: 'none', transition: 'color 0.15s' }}>
+                  Printer Hub Portal
+                </Link>
+              </li>
+              <li>
+                <Link href="/printers" style={{ color: '#94a3b8', textDecoration: 'none', transition: 'color 0.15s' }}>
+                  Verified Hubs Map
+                </Link>
+              </li>
+              <li>
+                <Link href="/dashboard/printer-owner/register" style={{ color: '#94a3b8', textDecoration: 'none', transition: 'color 0.15s' }}>
+                  Register 3D Machine
+                </Link>
+              </li>
+            </ul>
           </div>
 
-          {/* SUPPORT & TRUST */}
+          {/* COLUMN 3: PLATFORM & TRUST */}
           <div>
-            <div style={{ fontSize: 13, fontWeight: 900, color: '#fff', marginBottom: 16, textTransform: 'uppercase', letterSpacing: 0.8 }}>
-              Support & Security
+            <div style={{ fontSize: 12, fontWeight: 700, color: '#ffffff', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 16 }}>
+              Trust & Security
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, fontSize: 13 }}>
-              <Link href="/support-tickets" style={{ color: '#cbd5e1', textDecoration: 'none', transition: 'color 0.2s' }}>
-                🎫 Customer Support Desk
-              </Link>
-              <Link href="/faq" style={{ color: '#cbd5e1', textDecoration: 'none', transition: 'color 0.2s' }}>
-                ❓ FAQ & Escrow Guide
-              </Link>
-              <Link href="/profile" style={{ color: '#cbd5e1', textDecoration: 'none', transition: 'color 0.2s' }}>
-                👤 Account Profile & Settings
-              </Link>
-              <Link href="/login" style={{ color: '#cbd5e1', textDecoration: 'none', transition: 'color 0.2s' }}>
-                🔐 Sign In / Create Account
-              </Link>
+            <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 12, fontSize: 13.5 }}>
+              <li>
+                <Link href="/faq" style={{ color: '#94a3b8', textDecoration: 'none', transition: 'color 0.15s' }}>
+                  Escrow Protection
+                </Link>
+              </li>
+              <li>
+                <Link href="/faq" style={{ color: '#94a3b8', textDecoration: 'none', transition: 'color 0.15s' }}>
+                  70/15/15 Payout Split
+                </Link>
+              </li>
+              <li>
+                <Link href="/support-tickets" style={{ color: '#94a3b8', textDecoration: 'none', transition: 'color 0.15s' }}>
+                  Help & Support Desk
+                </Link>
+              </li>
+              <li>
+                <Link href="/faq" style={{ color: '#94a3b8', textDecoration: 'none', transition: 'color 0.15s' }}>
+                  Knowledge Base & FAQ
+                </Link>
+              </li>
+            </ul>
+          </div>
+
+          {/* COLUMN 4: COMPANY & LEGAL */}
+          <div>
+            <div style={{ fontSize: 12, fontWeight: 700, color: '#ffffff', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 16 }}>
+              Account & Legal
             </div>
+            <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 12, fontSize: 13.5 }}>
+              <li>
+                <Link href="/profile" style={{ color: '#94a3b8', textDecoration: 'none', transition: 'color 0.15s' }}>
+                  Account Settings
+                </Link>
+              </li>
+              <li>
+                <Link href="/dashboard/buyer" style={{ color: '#94a3b8', textDecoration: 'none', transition: 'color 0.15s' }}>
+                  Order History
+                </Link>
+              </li>
+              <li>
+                <Link href="/faq" style={{ color: '#94a3b8', textDecoration: 'none', transition: 'color 0.15s' }}>
+                  Terms of Service
+                </Link>
+              </li>
+              <li>
+                <Link href="/faq" style={{ color: '#94a3b8', textDecoration: 'none', transition: 'color 0.15s' }}>
+                  Privacy Policy
+                </Link>
+              </li>
+            </ul>
           </div>
         </div>
 
-        {/* BOTTOM COPYRIGHT & TRUST BADGES BAR */}
+        {/* BOTTOM METADATA & COPYRIGHT BAR */}
         <div
           style={{
-            borderTop: '1px solid rgba(255, 255, 255, 0.08)',
-            paddingTop: 24,
+            borderTop: '1px solid #1e293b',
+            paddingTop: 28,
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
             flexWrap: 'wrap',
             gap: 16,
-            fontSize: 12,
+            fontSize: 12.5,
             color: '#64748b',
           }}
         >
           <div>
-            © 2026 PrintHive Inc. All rights reserved. Secured by Razorpay Escrow Protection.
+            © {new Date().getFullYear()} PrintHive Inc. All rights reserved. Payments secured by Razorpay Escrow.
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
-            <span style={{ color: '#475569', fontSize: 11 }}>⚡ Three.js WebGL</span>
-            <span style={{ color: '#475569', fontSize: 11 }}>📍 OpenStreetMap</span>
-            <span style={{ color: '#475569', fontSize: 11 }}>☁️ Cloudinary CDN</span>
-            <Link href="/faq" style={{ color: '#94a3b8', textDecoration: 'none' }}>Privacy Policy</Link>
-            <Link href="/faq" style={{ color: '#94a3b8', textDecoration: 'none' }}>Terms & Conditions</Link>
+          {/* REFINED SVG SOCIAL ICONS */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 18 }}>
+            <a
+              href="https://github.com/princemandal05/printhive"
+              target="_blank"
+              rel="noreferrer"
+              aria-label="GitHub"
+              style={{ color: '#64748b', display: 'flex', alignItems: 'center', textDecoration: 'none', transition: 'color 0.15s' }}
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z" />
+              </svg>
+            </a>
+            <a
+              href="https://discord.com"
+              target="_blank"
+              rel="noreferrer"
+              aria-label="Discord"
+              style={{ color: '#64748b', display: 'flex', alignItems: 'center', textDecoration: 'none', transition: 'color 0.15s' }}
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M20.317 4.37a19.791 19.791 0 00-4.885-1.515.074.074 0 00-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 00-5.487 0 12.64 12.64 0 00-.617-1.25.077.077 0 00-.079-.037A19.736 19.736 0 003.677 4.37a.07.07 0 00-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 00.031.057 19.9 19.9 0 005.993 3.03.078.078 0 00.084-.028c.462-.63.874-1.295 1.226-1.994.021-.041.001-.09-.041-.106a13.107 13.107 0 01-1.872-.892.077.077 0 01-.008-.128 10.2 10.2 0 00.372-.292.074.074 0 01.077-.01c3.929 1.793 8.18 1.793 12.061 0a.074.074 0 01.078.01c.12.098.246.198.373.292a.077.077 0 01-.006.127 12.299 12.299 0 01-1.873.893.077.077 0 00-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 00.084.028 19.839 19.839 0 006.002-3.03.077.077 0 00.032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 00-.031-.028zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z" />
+              </svg>
+            </a>
+            <a
+              href="https://x.com"
+              target="_blank"
+              rel="noreferrer"
+              aria-label="X"
+              style={{ color: '#64748b', display: 'flex', alignItems: 'center', textDecoration: 'none', transition: 'color 0.15s' }}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+              </svg>
+            </a>
           </div>
         </div>
       </div>
