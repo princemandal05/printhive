@@ -1,8 +1,50 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { createClient } from '@/utils/supabase/client'
 
 export default function Footer() {
+  const [role, setRole] = useState<string | null>(null)
+  const [isLoaded, setIsLoaded] = useState(false)
+
+  useEffect(() => {
+    const supabase = createClient()
+    let isMounted = true
+
+    async function fetchUserRole() {
+      try {
+        const { data: { user } } = await supabase.auth.getUser()
+        if (user && isMounted) {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('role')
+            .eq('id', user.id)
+            .maybeSingle()
+
+          if (profile?.role) {
+            setRole(profile.role)
+          }
+        }
+      } catch (err) {
+        console.warn('Footer role resolution:', err)
+      } finally {
+        if (isMounted) setIsLoaded(true)
+      }
+    }
+
+    fetchUserRole()
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
+      fetchUserRole()
+    })
+
+    return () => {
+      isMounted = false
+      subscription.unsubscribe()
+    }
+  }, [])
+
   return (
     <footer style={{ background: '#090d16', borderTop: '1px solid #1e293b', color: '#94a3b8', padding: '64px 24px 32px', fontFamily: 'inherit' }}>
       <div style={{ maxWidth: 1200, margin: '0 auto' }}>
@@ -68,38 +110,152 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* COLUMN 2: CREATORS & HUBS */}
+          {/* COLUMN 2: STRICTLY ROLE-TAILORED PORTAL */}
           <div>
-            <div style={{ fontSize: 12, fontWeight: 700, color: '#ffffff', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 16 }}>
-              Ecosystem
-            </div>
-            <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 12, fontSize: 13.5 }}>
-              <li>
-                <Link href="/dashboard/seller" style={{ color: '#94a3b8', textDecoration: 'none', transition: 'color 0.15s' }}>
-                  Seller Central
-                </Link>
-              </li>
-              <li>
-                <Link href="/dashboard/designer" style={{ color: '#94a3b8', textDecoration: 'none', transition: 'color 0.15s' }}>
-                  Designer Studio
-                </Link>
-              </li>
-              <li>
-                <Link href="/dashboard/printer-owner" style={{ color: '#94a3b8', textDecoration: 'none', transition: 'color 0.15s' }}>
+            {role === 'seller' && (
+              <>
+                <div style={{ fontSize: 12, fontWeight: 700, color: '#FF6B35', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 16 }}>
+                  Seller Portal
+                </div>
+                <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 12, fontSize: 13.5 }}>
+                  <li>
+                    <Link href="/dashboard/seller" style={{ color: '#94a3b8', textDecoration: 'none', transition: 'color 0.15s' }}>
+                      Seller Dashboard
+                    </Link>
+                  </li>
+                  <li>
+                    <Link href="/dashboard/seller/products/new" style={{ color: '#94a3b8', textDecoration: 'none', transition: 'color 0.15s' }}>
+                      Add New Product
+                    </Link>
+                  </li>
+                  <li>
+                    <Link href="/shop" style={{ color: '#94a3b8', textDecoration: 'none', transition: 'color 0.15s' }}>
+                      My Store Catalog
+                    </Link>
+                  </li>
+                  <li>
+                    <Link href="/dashboard/seller" style={{ color: '#94a3b8', textDecoration: 'none', transition: 'color 0.15s' }}>
+                      Sales & 70% Payouts
+                    </Link>
+                  </li>
+                </ul>
+              </>
+            )}
+
+            {role === 'printer_owner' && (
+              <>
+                <div style={{ fontSize: 12, fontWeight: 700, color: '#FF6B35', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 16 }}>
                   Printer Hub Portal
-                </Link>
-              </li>
-              <li>
-                <Link href="/printers" style={{ color: '#94a3b8', textDecoration: 'none', transition: 'color 0.15s' }}>
-                  Verified Hubs Map
-                </Link>
-              </li>
-              <li>
-                <Link href="/dashboard/printer-owner/register" style={{ color: '#94a3b8', textDecoration: 'none', transition: 'color 0.15s' }}>
-                  Register 3D Machine
-                </Link>
-              </li>
-            </ul>
+                </div>
+                <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 12, fontSize: 13.5 }}>
+                  <li>
+                    <Link href="/dashboard/printer-owner" style={{ color: '#94a3b8', textDecoration: 'none', transition: 'color 0.15s' }}>
+                      Printer Hub Dashboard
+                    </Link>
+                  </li>
+                  <li>
+                    <Link href="/dashboard/printer-owner/register" style={{ color: '#94a3b8', textDecoration: 'none', transition: 'color 0.15s' }}>
+                      Register 3D Machine
+                    </Link>
+                  </li>
+                  <li>
+                    <Link href="/printers" style={{ color: '#94a3b8', textDecoration: 'none', transition: 'color 0.15s' }}>
+                      Verified Hubs Map
+                    </Link>
+                  </li>
+                  <li>
+                    <Link href="/orders" style={{ color: '#94a3b8', textDecoration: 'none', transition: 'color 0.15s' }}>
+                      Active Print Job Queue
+                    </Link>
+                  </li>
+                </ul>
+              </>
+            )}
+
+            {role === 'designer' && (
+              <>
+                <div style={{ fontSize: 12, fontWeight: 700, color: '#FF6B35', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 16 }}>
+                  Designer Studio
+                </div>
+                <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 12, fontSize: 13.5 }}>
+                  <li>
+                    <Link href="/dashboard/designer" style={{ color: '#94a3b8', textDecoration: 'none', transition: 'color 0.15s' }}>
+                      Designer Dashboard
+                    </Link>
+                  </li>
+                  <li>
+                    <Link href="/dashboard/designer/upload" style={{ color: '#94a3b8', textDecoration: 'none', transition: 'color 0.15s' }}>
+                      Upload 3D CAD Model
+                    </Link>
+                  </li>
+                  <li>
+                    <Link href="/dashboard/designer/earnings" style={{ color: '#94a3b8', textDecoration: 'none', transition: 'color 0.15s' }}>
+                      15% Royalty Wallet
+                    </Link>
+                  </li>
+                  <li>
+                    <Link href="/requests" style={{ color: '#94a3b8', textDecoration: 'none', transition: 'color 0.15s' }}>
+                      Open CAD Briefs
+                    </Link>
+                  </li>
+                </ul>
+              </>
+            )}
+
+            {role === 'admin' && (
+              <>
+                <div style={{ fontSize: 12, fontWeight: 700, color: '#FF6B35', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 16 }}>
+                  Admin Center
+                </div>
+                <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 12, fontSize: 13.5 }}>
+                  <li>
+                    <Link href="/dashboard/admin" style={{ color: '#94a3b8', textDecoration: 'none', transition: 'color 0.15s' }}>
+                      Admin Operations
+                    </Link>
+                  </li>
+                  <li>
+                    <Link href="/support-tickets" style={{ color: '#94a3b8', textDecoration: 'none', transition: 'color 0.15s' }}>
+                      Support Queue
+                    </Link>
+                  </li>
+                  <li>
+                    <Link href="/dashboard/admin" style={{ color: '#94a3b8', textDecoration: 'none', transition: 'color 0.15s' }}>
+                      Dispute Resolution
+                    </Link>
+                  </li>
+                </ul>
+              </>
+            )}
+
+            {(role === 'buyer' || !role) && (
+              <>
+                <div style={{ fontSize: 12, fontWeight: 700, color: '#ffffff', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 16 }}>
+                  Buyer Portal
+                </div>
+                <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 12, fontSize: 13.5 }}>
+                  <li>
+                    <Link href="/dashboard/buyer" style={{ color: '#94a3b8', textDecoration: 'none', transition: 'color 0.15s' }}>
+                      Buyer Dashboard
+                    </Link>
+                  </li>
+                  <li>
+                    <Link href="/orders" style={{ color: '#94a3b8', textDecoration: 'none', transition: 'color 0.15s' }}>
+                      Track Print Orders
+                    </Link>
+                  </li>
+                  <li>
+                    <Link href="/requests/new" style={{ color: '#94a3b8', textDecoration: 'none', transition: 'color 0.15s' }}>
+                      Post Custom CAD Brief
+                    </Link>
+                  </li>
+                  <li>
+                    <Link href="/wishlist" style={{ color: '#94a3b8', textDecoration: 'none', transition: 'color 0.15s' }}>
+                      Saved Wishlist
+                    </Link>
+                  </li>
+                </ul>
+              </>
+            )}
           </div>
 
           {/* COLUMN 3: PLATFORM & TRUST */}
