@@ -1,26 +1,25 @@
 import type { Metadata } from 'next'
-import { Space_Grotesk, Source_Sans_3 } from 'next/font/google'
-import Script from 'next/script'
+import { Fraunces, Plus_Jakarta_Sans } from 'next/font/google'
 import './globals.css'
 import './landing.css'
 import { StoreProvider } from '@/lib/cart-context'
 
-const spaceGrotesk = Space_Grotesk({
+const fraunces = Fraunces({
   subsets: ['latin'],
-  weight: ['500', '600', '700'],
-  variable: '--font-display',
+  weight: ['400', '500', '600', '700', '800'],
+  variable: '--font-fraunces',
   display: 'swap',
 })
 
-const sourceSans3 = Source_Sans_3({
+const plusJakartaSans = Plus_Jakarta_Sans({
   subsets: ['latin'],
-  weight: ['300', '400', '600', '700', '800'],
-  variable: '--font-body',
+  weight: ['400', '500', '600', '700', '800'],
+  variable: '--font-jakarta',
   display: 'swap',
 })
 
 export const metadata: Metadata = {
-  title: 'PrintHive — Capability-Based 3D Commerce Platform',
+  title: 'PrintHive — Capability-Based 3D Commerce & Additive Manufacturing Platform',
   description:
     'PrintHive connects 3D model designers, printer owners, and buyers on a capability-based 3D printing marketplace.',
 }
@@ -29,21 +28,8 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" suppressHydrationWarning className={`${spaceGrotesk.variable} ${sourceSans3.variable}`}>
-      <body style={{ fontFamily: 'var(--font-body), sans-serif' }}>
-        <Script
-          id="printhive-theme-init"
-          strategy="beforeInteractive"
-          dangerouslySetInnerHTML={{
-            __html: `
-              (function () {
-                var t = localStorage.getItem("printhive-theme") || localStorage.getItem("ateion-theme");
-                if (!t) t = "dark";
-                document.documentElement.setAttribute("data-theme", t);
-              })();
-            `,
-          }}
-        />
+    <html lang="en" suppressHydrationWarning className={`${fraunces.variable} ${plusJakartaSans.variable}`}>
+      <body className="bg-cream text-ink min-h-screen overflow-x-hidden antialiased" style={{ fontFamily: 'var(--font-jakarta), -apple-system, sans-serif' }}>
         <StoreProvider>{children}</StoreProvider>
       </body>
     </html>

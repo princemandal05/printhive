@@ -267,95 +267,95 @@ export default function ShopPage() {
   }, [products, search, category, sort])
 
   return (
-    <main style={{ minHeight: '100vh', background: '#FAF8F5', color: '#0F172A', fontFamily: 'inherit' }}>
+    <main style={{ minHeight: '100vh', background: '#FAF6F1', color: '#1A1A2E', fontFamily: 'inherit' }}>
       <Navbar />
 
-      <div style={{ maxWidth: 1200, margin: '0 auto', padding: '32px 20px 60px' }}>
+      <div style={{ maxWidth: 1360, margin: '0 auto', padding: '32px 24px 80px' }}>
         <Suspense fallback={null}>
           <ShopReviewBanner />
         </Suspense>
 
         {/* TOAST ALERT NOTIFICATION */}
         {toastMsg && (
-          <div style={{ position: 'fixed', bottom: 24, right: 24, zIndex: 1000, background: '#0F172A', color: '#fff', padding: '10px 18px', borderRadius: 8, fontSize: 13, fontWeight: 700, boxShadow: '0 8px 30px rgba(0,0,0,0.2)', display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div style={{ position: 'fixed', bottom: 24, right: 24, zIndex: 1000, background: '#1A1A2E', color: '#fff', padding: '12px 22px', borderRadius: 9999, fontSize: 13.5, fontWeight: 700, boxShadow: '0 8px 30px rgba(0,0,0,0.2)', display: 'flex', alignItems: 'center', gap: 8 }}>
             <span>{toastMsg}</span>
           </div>
         )}
 
-        {/* HEADER SECTION */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 16, marginBottom: 24 }}>
+        {/* HEADER SECTION (printhive.org style) */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 16, marginBottom: 32 }}>
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-              <h1 style={{ fontSize: 26, fontWeight: 800, color: '#0F172A', margin: 0, letterSpacing: '-0.4px' }}>
-                Physical 3D Marketplace
-              </h1>
-              <span style={{ background: '#ECFDF5', color: '#059669', border: '1px solid #A7F3D0', fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 6 }}>
-                Escrow Protected
-              </span>
-            </div>
-            <p style={{ color: '#64748B', fontSize: 14, margin: 0, maxWidth: 640 }}>
-              Browse ready-made physical 3D printed items from verified creators and local print hubs across India.
+            <span style={{ fontSize: 11, fontWeight: 800, color: '#F97316', textTransform: 'uppercase', letterSpacing: 0.8 }}>
+              Creator&apos;s Studio & Marketplace
+            </span>
+            <h1 style={{ fontFamily: 'var(--font-fraunces), Fraunces, Georgia, serif', fontSize: 32, fontWeight: 800, color: '#1A1A2E', margin: '4px 0 8px', letterSpacing: '-0.5px' }}>
+              Handcrafted 3D Creations & Hampers
+            </h1>
+            <p style={{ color: '#64748B', fontSize: 14.5, margin: 0, maxWidth: 640 }}>
+              Paint-your-own 3D printed hampers, physical designer models, and bespoke creations crafted by verified makers across India.
             </p>
           </div>
 
-          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
             <Link
               href="/print-on-demand"
               style={{
                 background: '#FFFFFF',
-                color: '#0F172A',
-                border: '1px solid #CBD5E1',
-                padding: '8px 14px',
-                borderRadius: 8,
-                fontSize: 13,
+                color: '#1A1A2E',
+                border: '1px solid #E2E8F0',
+                padding: '10px 18px',
+                borderRadius: 9999,
+                fontSize: 13.5,
                 fontWeight: 700,
                 textDecoration: 'none',
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: 6,
+                boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
               }}
             >
-              Print Custom STL
+              Custom Slicer
             </Link>
 
             <Link
               href="/requests/new"
               style={{
-                background: '#FF6B35',
+                background: '#F97316',
                 color: '#FFFFFF',
-                padding: '8px 16px',
-                borderRadius: 8,
-                fontSize: 13,
+                padding: '10px 20px',
+                borderRadius: 9999,
+                fontSize: 13.5,
                 fontWeight: 700,
                 textDecoration: 'none',
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: 6,
+                boxShadow: '0 4px 14px rgba(249,115,22,0.3)',
               }}
             >
-              <Plus size={15} /> Request Custom 3D
+              <Plus size={16} /> Request Custom 3D
             </Link>
           </div>
         </div>
 
         {/* SEARCH & FILTER CONTROLS */}
-        <div style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: 12, padding: 16, marginBottom: 24, boxShadow: '0 1px 3px rgba(0,0,0,0.02)' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 220px', gap: 12, marginBottom: 12 }}>
-            <div style={{ background: '#F8FAFC', border: '1px solid #CBD5E1', borderRadius: 8, padding: '8px 12px', display: 'flex', alignItems: 'center', gap: 8 }}>
+        <div style={{ background: '#FFFFFF', border: '1px solid #F0ECE6', borderRadius: 24, padding: 20, marginBottom: 36, boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 220px', gap: 14, marginBottom: 16 }}>
+            <div style={{ background: '#FAF6F1', border: '1px solid #E2E8F0', borderRadius: 9999, padding: '10px 18px', display: 'flex', alignItems: 'center', gap: 10 }}>
               <Search size={16} color="#94A3B8" />
               <input
                 type="text"
-                placeholder="Search products, materials, or makers..."
+                placeholder="Search creations, paint kits, or makers..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                style={{ width: '100%', background: 'transparent', border: 'none', color: '#0F172A', fontSize: 13, outline: 'none' }}
+                style={{ width: '100%', background: 'transparent', border: 'none', color: '#1A1A2E', fontSize: 13.5, outline: 'none' }}
               />
             </div>
 
             <select
               value={sort}
               onChange={(e) => setSort(e.target.value)}
-              style={{ background: '#F8FAFC', border: '1px solid #CBD5E1', borderRadius: 8, padding: '8px 12px', color: '#0F172A', fontSize: 13, outline: 'none', fontWeight: 600, cursor: 'pointer' }}
+              style={{ background: '#FAF6F1', border: '1px solid #E2E8F0', borderRadius: 9999, padding: '10px 18px', color: '#1A1A2E', fontSize: 13.5, outline: 'none', fontWeight: 600, cursor: 'pointer' }}
             >
               <option value="popular">Most Popular</option>
               <option value="rating">Highest Rated</option>
@@ -364,7 +364,7 @@ export default function ShopPage() {
             </select>
           </div>
 
-          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
             {CATEGORIES.map((cat) => {
               const active = category === cat
               return (
@@ -372,13 +372,13 @@ export default function ShopPage() {
                   key={cat}
                   onClick={() => setCategory(cat)}
                   style={{
-                    padding: '5px 12px',
-                    borderRadius: 6,
-                    fontSize: 12,
-                    fontWeight: active ? 700 : 500,
-                    border: active ? '1px solid #0F172A' : '1px solid #E2E8F0',
-                    background: active ? '#0F172A' : '#F8FAFC',
-                    color: active ? '#FFFFFF' : '#475569',
+                    padding: '8px 18px',
+                    borderRadius: 9999,
+                    fontSize: 12.5,
+                    fontWeight: active ? 800 : 600,
+                    border: active ? '1px solid #F97316' : '1px solid #E2E8F0',
+                    background: active ? '#F97316' : '#FAF6F1',
+                    color: active ? '#FFFFFF' : '#64748B',
                     cursor: 'pointer',
                     transition: 'all 0.15s ease',
                   }}
@@ -390,8 +390,8 @@ export default function ShopPage() {
           </div>
         </div>
 
-        {/* PRODUCTS GRID */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(270px, 1fr))', gap: 20 }}>
+        {/* PRODUCTS GRID (printhive.org rounded-3xl cards) */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 24 }}>
           {filtered.map((product) => {
             const isWishlisted = isInWishlist(product.id)
             return (
@@ -399,26 +399,28 @@ export default function ShopPage() {
                 key={product.id}
                 style={{
                   background: '#FFFFFF',
-                  borderRadius: 12,
-                  border: '1px solid #E2E8F0',
+                  borderRadius: 24,
+                  border: '1px solid #F0ECE6',
                   overflow: 'hidden',
                   display: 'flex',
                   flexDirection: 'column',
-                  transition: 'transform 0.15s ease, box-shadow 0.15s ease',
-                  boxShadow: '0 1px 3px rgba(0,0,0,0.02)',
+                  transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+                  boxShadow: '0 4px 20px rgba(0,0,0,0.03)',
                 }}
               >
                 {/* IMAGE CONTAINER */}
-                <div style={{ height: 210, width: '100%', position: 'relative', background: '#F1F5F9', overflow: 'hidden' }}>
+                <div style={{ height: 230, width: '100%', position: 'relative', background: '#F8FAFC', overflow: 'hidden' }}>
                   <img
                     src={product.image}
                     alt={product.name}
                     style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                   />
 
-                  {/* Category Badge */}
-                  <div style={{ position: 'absolute', top: 10, left: 10, background: 'rgba(15, 23, 42, 0.85)', color: '#fff', fontSize: 10, fontWeight: 700, padding: '3px 8px', borderRadius: 4, backdropFilter: 'blur(4px)' }}>
-                    {product.category}
+                  {/* Category & Difficulty Badge */}
+                  <div style={{ position: 'absolute', top: 12, left: 12, display: 'flex', gap: 6 }}>
+                    <div style={{ background: 'rgba(255, 255, 255, 0.92)', color: '#7C3AED', fontSize: 10.5, fontWeight: 800, padding: '4px 10px', borderRadius: 9999, backdropFilter: 'blur(6px)', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
+                      {product.category}
+                    </div>
                   </div>
 
                   {/* Wishlist Button */}
@@ -427,13 +429,13 @@ export default function ShopPage() {
                     onClick={(e) => handleToggleWishlist(e, product)}
                     style={{
                       position: 'absolute',
-                      top: 10,
-                      right: 10,
-                      background: 'rgba(255, 255, 255, 0.9)',
+                      top: 12,
+                      right: 12,
+                      background: 'rgba(255, 255, 255, 0.92)',
                       border: 'none',
                       borderRadius: '50%',
-                      width: 32,
-                      height: 32,
+                      width: 34,
+                      height: 34,
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
@@ -441,17 +443,17 @@ export default function ShopPage() {
                       boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
                     }}
                   >
-                    <Heart size={15} color={isWishlisted ? '#EF4444' : '#64748B'} fill={isWishlisted ? '#EF4444' : 'none'} />
+                    <Heart size={16} color={isWishlisted ? '#EF4444' : '#64748B'} fill={isWishlisted ? '#EF4444' : 'none'} />
                   </button>
                 </div>
 
                 {/* CONTENT BODY */}
-                <div style={{ padding: 16, flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                <div style={{ padding: 20, flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                   <div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-                      <span style={{ fontSize: 11, color: '#64748B', fontWeight: 600 }}>{product.seller}</span>
-                      <span style={{ fontSize: 11, fontWeight: 700, color: '#D97706', display: 'flex', alignItems: 'center', gap: 3 }}>
-                        <Star size={11} fill="#D97706" color="#D97706" /> {product.rating} ({product.reviewsCount})
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                      <span style={{ fontSize: 12, color: '#94A3B8', fontWeight: 600 }}>By {product.seller}</span>
+                      <span style={{ fontSize: 12, fontWeight: 800, color: '#D97706', display: 'flex', alignItems: 'center', gap: 3 }}>
+                        <Star size={12} fill="#D97706" color="#D97706" /> {product.rating} ({product.reviewsCount})
                       </span>
                     </div>
 
@@ -459,22 +461,22 @@ export default function ShopPage() {
                       href={`/shop/${product.id}`}
                       style={{ textDecoration: 'none', color: 'inherit' }}
                     >
-                      <h3 style={{ fontSize: 15, fontWeight: 700, color: '#0F172A', margin: '0 0 10px', lineHeight: 1.35, height: 40, overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
+                      <h3 style={{ fontFamily: 'var(--font-fraunces), Fraunces, Georgia, serif', fontSize: 17, fontWeight: 700, color: '#1A1A2E', margin: '0 0 10px', lineHeight: 1.3, height: 44, overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
                         {product.name}
                       </h3>
                     </Link>
                   </div>
 
                   <div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, color: '#64748B', marginBottom: 12 }}>
-                      <Truck size={12} />
-                      <span>{product.deliveryDays} doorstep delivery</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#64748B', marginBottom: 16 }}>
+                      <Truck size={13} color="#16A34A" />
+                      <span>{product.deliveryDays} Delivery · Escrow Guard</span>
                     </div>
 
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, borderTop: '1px solid #F1F5F9' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 14, borderTop: '1px solid #F0ECE6' }}>
                       <div>
                         <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
-                          <span style={{ fontSize: 18, fontWeight: 900, color: '#FF6B35' }}>
+                          <span style={{ fontSize: 20, fontWeight: 900, color: '#F97316' }}>
                             ₹{product.price}
                           </span>
                           {product.originalPrice && product.originalPrice > product.price && (
@@ -490,39 +492,22 @@ export default function ShopPage() {
                           type="button"
                           onClick={(e) => handleAddToCart(e, product)}
                           style={{
-                            background: '#0F172A',
+                            background: '#F97316',
                             color: '#FFFFFF',
                             border: 'none',
-                            borderRadius: 6,
-                            padding: '6px 12px',
-                            fontSize: 12,
-                            fontWeight: 700,
+                            borderRadius: 9999,
+                            padding: '8px 16px',
+                            fontSize: 13,
+                            fontWeight: 800,
                             cursor: 'pointer',
                             display: 'inline-flex',
                             alignItems: 'center',
-                            gap: 4,
+                            gap: 5,
+                            boxShadow: '0 2px 10px rgba(249,115,22,0.3)',
                           }}
                         >
-                          <ShoppingBag size={13} /> Add
+                          <ShoppingBag size={14} /> Add
                         </button>
-
-                        <Link
-                          href={`/shop/${product.id}`}
-                          style={{
-                            background: '#F1F5F9',
-                            color: '#0F172A',
-                            border: '1px solid #CBD5E1',
-                            borderRadius: 6,
-                            padding: '6px 10px',
-                            fontSize: 12,
-                            fontWeight: 700,
-                            textDecoration: 'none',
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                          }}
-                        >
-                          <ArrowRight size={13} />
-                        </Link>
                       </div>
                     </div>
                   </div>
@@ -531,6 +516,23 @@ export default function ShopPage() {
             )
           })}
         </div>
+
+        {filtered.length === 0 && !loadingProducts && (
+          <div style={{ textAlign: 'center', padding: '64px 20px', background: '#FFFFFF', borderRadius: 24, border: '1px solid #F0ECE6', margin: '40px 0' }}>
+            <div style={{ fontSize: 40, marginBottom: 12 }}>🎨</div>
+            <h3 style={{ fontFamily: 'var(--font-fraunces), Fraunces, Georgia, serif', fontSize: 20, fontWeight: 700, color: '#1A1A2E', margin: '0 0 6px' }}>No creations found</h3>
+            <p style={{ fontSize: 14, color: '#64748B', maxWidth: 360, margin: '0 auto 20px' }}>
+              Try searching with another keyword or explore our full category list.
+            </p>
+            <button
+              type="button"
+              onClick={() => { setSearch(''); setCategory('All') }}
+              style={{ background: '#F97316', color: '#fff', border: 'none', padding: '10px 22px', borderRadius: 9999, fontSize: 13.5, fontWeight: 700, cursor: 'pointer' }}
+            >
+              Reset Filters
+            </button>
+          </div>
+        )}
       </div>
 
       <Footer />

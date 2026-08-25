@@ -7,11 +7,14 @@ import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 import { useStore } from '@/lib/cart-context'
 import { createClient } from '@/utils/supabase/client'
+import { Trash2, Heart, ArrowRight, ShieldCheck, ShoppingBag, Truck, Lock } from 'lucide-react'
 
 export default function CartPage() {
   const router = useRouter()
   const { cart, updateCartQuantity, removeFromCart, addToWishlist, cartSubtotal } = useStore()
   const [coupon, setCoupon] = useState('')
+  const [appliedCoupon, setAppliedCoupon] = useState<string | null>(null)
+  const [couponDiscount, setCouponDiscount] = useState(0)
   const [liveImages, setLiveImages] = useState<Record<string, string>>({})
   const supabase = createClient()
 
@@ -45,426 +48,250 @@ export default function CartPage() {
     syncRealImages()
   }, [cart])
 
+  const handleApplyCoupon = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (coupon.trim().toUpperCase() === 'HIVE10' || coupon.trim().toUpperCase() === 'CREATOR10') {
+      setAppliedCoupon(coupon.trim().toUpperCase())
+      setCouponDiscount(Math.round(cartSubtotal * 0.10))
+    } else {
+      alert('Invalid coupon code. Try code "HIVE10" for 10% off your creation!')
+    }
+  }
+
   const subtotal = cartSubtotal
   const isAllDigital = cart.length > 0 && cart.every(i => i.name.toLowerCase().includes('digital') || i.name.toLowerCase().includes('stl') || i.name.toLowerCase().includes('3d model') || i.name.toLowerCase().includes('model'))
   const shipping = isAllDigital || subtotal === 0 || subtotal > 1500 ? 0 : 99
-  const tax = Math.round(subtotal * 0.18)
-  const total = subtotal + shipping + tax
+  const tax = Math.round((subtotal - couponDiscount) * 0.18)
+  const total = Math.max(0, subtotal - couponDiscount + shipping + tax)
 
   return (
-    <main>
+    <main style={{ minHeight: '100vh', background: '#FAF6F1', color: '#1A1A2E', fontFamily: 'inherit' }}>
       <Navbar />
 
-      <section className="container section-sm">
-
-        <div className="section-eyebrow">
-          Shopping Cart
+      <div style={{ maxWidth: 1280, margin: '0 auto', padding: '36px 24px 80px' }}>
+        {/* HEADER */}
+        <div style={{ marginBottom: 32 }}>
+          <span style={{ fontSize: 11, fontWeight: 800, color: '#F97316', textTransform: 'uppercase', letterSpacing: 0.8 }}>
+            Review Your Bag
+          </span>
+          <h1 style={{ fontFamily: 'var(--font-fraunces), Fraunces, Georgia, serif', fontSize: 32, fontWeight: 800, color: '#1A1A2E', margin: '4px 0 6px', letterSpacing: '-0.5px' }}>
+            Shopping Cart ({cart.length} items)
+          </h1>
+          <p style={{ color: '#64748B', fontSize: 14.5, margin: 0 }}>
+            Every creation is inspected by our print engineers before dispatch. Secured with Razorpay Escrow.
+          </p>
         </div>
 
-        <h1
-          className="section-heading"
-          style={{
-            marginBottom: '16px',
-          }}
-        >
-          Your Cart
-        </h1>
-
-        <p
-          className="section-subheading"
-          style={{
-            marginBottom: '48px',
-          }}
-        >
-          Review your selected products before
-          proceeding to checkout.
-        </p>
-
         {cart.length === 0 ? (
-          <div
-            className="empty-state"
-            style={{
-              padding: '80px 20px',
-            }}
-          >
-            <svg
-              width="80"
-              height="80"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="var(--color-slate-400)"
-              strokeWidth="1.5"
-            >
-              <circle cx="9" cy="21" r="1" />
-              <circle cx="20" cy="21" r="1" />
-              <path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 001.97-1.75L23 6H6" />
-            </svg>
-
-            <h2
-              style={{
-                marginTop: '24px',
-              }}
-            >
-              Your Cart is Empty
+          <div style={{ textAlign: 'center', padding: '80px 20px', background: '#FFFFFF', borderRadius: 28, border: '1px solid #F0ECE6', boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
+            <div style={{ fontSize: 48, marginBottom: 12 }}>🛍️</div>
+            <h2 style={{ fontFamily: 'var(--font-fraunces), Fraunces, Georgia, serif', fontSize: 24, fontWeight: 800, color: '#1A1A2E', margin: '0 0 8px' }}>
+              Your Bag is Empty
             </h2>
-
-            <p className="text-muted">
-              Browse our marketplace and discover
-              amazing 3D printed products.
+            <p style={{ color: '#64748B', fontSize: 14.5, maxWidth: 380, margin: '0 auto 24px' }}>
+              Explore our paint-your-own hampers, 3D printed gifts, and digital STL collections to find your next creation.
             </p>
-
             <Link
               href="/shop"
-              className="btn btn-primary"
               style={{
-                marginTop: '30px',
+                background: '#F97316',
+                color: '#FFFFFF',
+                padding: '12px 28px',
+                borderRadius: 9999,
+                fontSize: 14,
+                fontWeight: 800,
+                textDecoration: 'none',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 8,
+                boxShadow: '0 4px 14px rgba(249,115,22,0.35)',
               }}
             >
-              Start Shopping
+              Explore Creations <ArrowRight size={16} />
             </Link>
           </div>
         ) : (
-
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: '2fr 1fr',
-              gap: '40px',
-              alignItems: 'start',
-            }}
-          >
-            {/* Cart Items */}
-
-            <div>
-
+          <div style={{ display: 'grid', gridTemplateColumns: '1.6fr 1fr', gap: 36, alignItems: 'start' }} className="cart-grid">
+            {/* ITEMS LIST */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
               {cart.map((item) => (
-
                 <div
                   key={item.id}
-                  className="glass-card"
                   style={{
-                    padding: '24px',
-                    marginBottom: '24px',
+                    background: '#FFFFFF',
+                    borderRadius: 24,
+                    border: '1px solid #F0ECE6',
+                    padding: 20,
+                    boxShadow: '0 4px 20px rgba(0,0,0,0.03)',
+                    display: 'flex',
+                    gap: 20,
+                    alignItems: 'center',
+                    flexWrap: 'wrap',
                   }}
                 >
                   <div
                     style={{
-                      display: 'grid',
-                      gridTemplateColumns:
-                        '150px 1fr',
-                      gap: '24px',
+                      width: 110,
+                      height: 110,
+                      borderRadius: 18,
+                      overflow: 'hidden',
+                      background: '#F8FAFC',
+                      flexShrink: 0,
                     }}
                   >
-                    <div
-                      style={{
-                        height: '150px',
-                        borderRadius: '16px',
-                        overflow: 'hidden',
-                        background:
-                          'linear-gradient(135deg,var(--color-slate-100),var(--color-border-light))',
-                        display: 'flex',
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                      }}
+                    <img
+                      src={liveImages[item.id] || item.image || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=600&q=80'}
+                      alt={item.name}
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    />
+                  </div>
+
+                  <div style={{ flex: 1, minWidth: 200 }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: '#F97316', textTransform: 'uppercase' }}>
+                      By {item.seller || 'Verified Maker'}
+                    </div>
+                    <h3 style={{ fontFamily: 'var(--font-fraunces), Fraunces, Georgia, serif', fontSize: 17, fontWeight: 700, color: '#1A1A2E', margin: '2px 0 8px' }}>
+                      {item.name}
+                    </h3>
+                    <div style={{ fontSize: 18, fontWeight: 900, color: '#1A1A2E' }}>
+                      ₹{item.price * item.quantity}
+                      <span style={{ fontSize: 12, color: '#94A3B8', fontWeight: 500, marginLeft: 6 }}>
+                        (₹{item.price} each)
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* QUANTITY CONTROLS */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', background: '#FAF6F1', borderRadius: 9999, border: '1px solid #E2E8F0', padding: 3 }}>
+                      <button
+                        type="button"
+                        onClick={() => updateCartQuantity(item.id, item.quantity - 1)}
+                        style={{ width: 28, height: 28, borderRadius: '50%', background: '#FFFFFF', border: 'none', cursor: 'pointer', fontWeight: 800, fontSize: 14, color: '#1A1A2E' }}
+                      >
+                        -
+                      </button>
+                      <span style={{ padding: '0 12px', fontSize: 13, fontWeight: 800, color: '#1A1A2E' }}>
+                        {item.quantity}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => updateCartQuantity(item.id, item.quantity + 1)}
+                        style={{ width: 28, height: 28, borderRadius: '50%', background: '#FFFFFF', border: 'none', cursor: 'pointer', fontWeight: 800, fontSize: 14, color: '#1A1A2E' }}
+                      >
+                        +
+                      </button>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => removeFromCart(item.id)}
+                      style={{ background: '#FEE2E2', color: '#EF4444', border: 'none', borderRadius: '50%', width: 34, height: 34, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+                      title="Remove item"
                     >
-                      <img
-                        src={liveImages[item.id] || item.image || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=600&q=80'}
-                        alt={item.name}
-                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                        onError={(e) => {
-                          (e.currentTarget as HTMLImageElement).src = 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=600&q=80'
-                        }}
-                      />
-                    </div>
-
-                    <div>
-
-                      <h3
-                        style={{
-                          marginBottom: '10px',
-                        }}
-                      >
-                        {item.name}
-                      </h3>
-
-                      <p className="text-muted">
-                        Seller:
-                        <strong>
-                          {' '}
-                          {item.seller}
-                        </strong>
-                      </p>
-
-                      <div
-                        style={{
-                          fontSize: '1.5rem',
-                          fontWeight: 700,
-                          color:
-                            'var(--color-primary)',
-                          marginTop: '18px',
-                          marginBottom: '20px',
-                        }}
-                      >
-                        ₹{item.price}
-                      </div>
-
-                      <div
-                        style={{
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          alignItems: 'center',
-                          flexWrap: 'wrap',
-                          gap: '20px',
-                        }}
-                      >
-                        <div
-                          style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            border: '1px solid var(--color-border)',
-                            borderRadius: '12px',
-                            overflow: 'hidden',
-                          }}
-                        >
-                          <button
-                            className="btn"
-                            onClick={() =>
-                              updateCartQuantity(
-                                item.id,
-                                item.quantity - 1
-                              )
-                            }
-                          >
-                            −
-                          </button>
-
-                          <div
-                            style={{
-                              width: '55px',
-                              textAlign: 'center',
-                              fontWeight: 600,
-                            }}
-                          >
-                            {item.quantity}
-                          </div>
-
-                          <button
-                            className="btn"
-                            onClick={() =>
-                              updateCartQuantity(
-                                item.id,
-                                item.quantity + 1
-                              )
-                            }
-                          >
-                            +
-                          </button>
-                        </div>
-
-                        <div
-                          style={{
-                            display: 'flex',
-                            gap: '12px',
-                            flexWrap: 'wrap',
-                          }}
-                        >
-                          <button
-                            className="btn btn-secondary"
-                            onClick={() => {
-                              addToWishlist({ id: item.id, name: item.name, price: item.price, type: 'product' })
-                              removeFromCart(item.id)
-                            }}
-                          >
-                            ♡ Move to Wishlist
-                          </button>
-
-                          <button
-                            className="btn btn-secondary"
-                            onClick={() =>
-                              removeFromCart(item.id)
-                            }
-                          >
-                            Remove
-                          </button>
-                        </div>
-                      </div>
-                    </div>
+                      <Trash2 size={16} />
+                    </button>
                   </div>
                 </div>
               ))}
             </div>
 
-            {/* Order Summary */}
-
-            <div
-              className="glass-card"
-              style={{
-                padding: '30px',
-                position: 'sticky',
-                top: '110px',
-              }}
-            >
-              <h2
-                style={{
-                  marginBottom: '24px',
-                }}
-              >
+            {/* ORDER SUMMARY */}
+            <div style={{ background: '#FFFFFF', borderRadius: 28, border: '1px solid #F0ECE6', padding: 28, boxShadow: '0 4px 20px rgba(0,0,0,0.03)', position: 'sticky', top: 90 }}>
+              <h2 style={{ fontFamily: 'var(--font-fraunces), Fraunces, Georgia, serif', fontSize: 20, fontWeight: 800, color: '#1A1A2E', margin: '0 0 20px' }}>
                 Order Summary
               </h2>
 
-              <div
-                style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '16px',
-                }}
-              >
-                <div
-                  style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                  }}
-                >
-                  <span>Subtotal</span>
-                  <strong>₹{subtotal}</strong>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12, fontSize: 14, borderBottom: '1px solid #F0ECE6', paddingBottom: 20, marginBottom: 20 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', color: '#64748B' }}>
+                  <span>Bag Subtotal</span>
+                  <span style={{ fontWeight: 700, color: '#1A1A2E' }}>₹{subtotal}</span>
                 </div>
 
-                <div
-                  style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                  }}
-                >
-                  <span>Shipping</span>
+                {appliedCoupon && (
+                  <div style={{ display: 'flex', justifyContent: 'space-between', color: '#16A34A' }}>
+                    <span>Coupon ({appliedCoupon})</span>
+                    <span style={{ fontWeight: 700 }}>-₹{couponDiscount}</span>
+                  </div>
+                )}
 
-                  <strong>
-                    {shipping === 0
-                      ? 'FREE'
-                      : `₹${shipping}`}
-                  </strong>
-                </div>
-
-                <div
-                  style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                  }}
-                >
-                  <span>GST (18%)</span>
-                  <strong>₹{tax}</strong>
-                </div>
-
-                <hr />
-
-                <div
-                  style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    fontSize: '1.3rem',
-                    fontWeight: 700,
-                  }}
-                >
-                  <span>Total</span>
-
-                  <span
-                    style={{
-                      color: 'var(--color-primary)',
-                    }}
-                  >
-                    ₹{total}
+                <div style={{ display: 'flex', justifyContent: 'space-between', color: '#64748B' }}>
+                  <span>Doorstep Delivery</span>
+                  <span style={{ fontWeight: 700, color: shipping === 0 ? '#16A34A' : '#1A1A2E' }}>
+                    {shipping === 0 ? 'FREE' : `₹${shipping}`}
                   </span>
                 </div>
+
+                <div style={{ display: 'flex', justifyContent: 'space-between', color: '#64748B' }}>
+                  <span>GST (18%)</span>
+                  <span style={{ fontWeight: 700, color: '#1A1A2E' }}>₹{tax}</span>
+                </div>
               </div>
 
-              <div
-                style={{
-                  marginTop: '28px',
-                }}
-              >
-                <label
-                  style={{
-                    display: 'block',
-                    marginBottom: '10px',
-                    fontWeight: 600,
-                  }}
-                >
-                  Coupon Code
-                </label>
+              {/* TOTAL */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 24 }}>
+                <span style={{ fontSize: 16, fontWeight: 800, color: '#1A1A2E' }}>Estimated Total</span>
+                <span style={{ fontSize: 28, fontWeight: 900, color: '#F97316' }}>₹{total}</span>
+              </div>
 
+              {/* COUPON INPUT */}
+              <form onSubmit={handleApplyCoupon} style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
                 <input
                   type="text"
-                  className="input"
+                  placeholder="Coupon code (e.g. HIVE10)"
                   value={coupon}
-                  placeholder="Enter coupon code"
-                  onChange={(e) =>
-                    setCoupon(e.target.value)
-                  }
+                  onChange={(e) => setCoupon(e.target.value)}
+                  style={{ flex: 1, border: '1px solid #E2E8F0', borderRadius: 9999, padding: '8px 16px', fontSize: 13, outline: 'none', background: '#FAF6F1', color: '#1A1A2E' }}
                 />
-
                 <button
-                  className="btn btn-secondary"
-                  style={{
-                    width: '100%',
-                    marginTop: '14px',
-                  }}
+                  type="submit"
+                  style={{ background: '#1A1A2E', color: '#fff', border: 'none', borderRadius: 9999, padding: '8px 18px', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}
                 >
-                  Apply Coupon
+                  Apply
                 </button>
-              </div>
+              </form>
 
-              <div
-                className="glass-card"
-                style={{
-                  padding: '18px',
-                  marginTop: '28px',
-                  background:
-                    'rgba(34,197,94,.08)',
-                }}
-              >
-                🔒 Secure Checkout
-
-                <p
-                  className="text-muted"
-                  style={{
-                    marginTop: '10px',
-                  }}
-                >
-                  All payments are encrypted and
-                  protected using industry-standard
-                  security.
-                </p>
-              </div>
-
-              <button
-                className="btn btn-primary"
-                style={{
-                  width: '100%',
-                  marginTop: '24px',
-                }}
-                onClick={() => router.push('/checkout')}
-              >
-                Proceed to Checkout
-              </button>
-
+              {/* CHECKOUT BUTTON */}
               <Link
-                href="/shop"
-                className="btn btn-secondary"
+                href="/checkout"
                 style={{
                   width: '100%',
-                  marginTop: '14px',
-                  textAlign: 'center',
+                  background: '#F97316',
+                  color: '#FFFFFF',
+                  padding: '14px',
+                  borderRadius: 9999,
+                  fontSize: 15,
+                  fontWeight: 800,
+                  textDecoration: 'none',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 8,
+                  boxShadow: '0 4px 16px rgba(249,115,22,0.4)',
                 }}
               >
-                Continue Shopping
+                Proceed to Checkout <ArrowRight size={18} />
               </Link>
-            </div>
 
+              {/* TRUST BADGE */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'center', marginTop: 18, fontSize: 12, color: '#64748B' }}>
+                <Lock size={14} color="#16A34A" />
+                <span>100% Escrow Protected by Razorpay</span>
+              </div>
+            </div>
           </div>
         )}
-
-      </section>
+      </div>
 
       <Footer />
+
+      <style jsx global>{`
+        @media (max-width: 860px) {
+          .cart-grid {
+            grid-template-columns: 1fr !important;
+          }
+        }
+      `}</style>
     </main>
   )
 }
