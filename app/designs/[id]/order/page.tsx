@@ -47,7 +47,7 @@ function OrderPageContent() {
   const [selectedPrinter, setSelectedPrinter] = useState<string | null>(null)
   const [address, setAddress] = useState('')
   const [placing, setPlacing] = useState(false)
-  const [designThumbnail, setDesignThumbnail] = useState<string>('https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=600&q=80')
+  const [designThumbnail, setDesignThumbnail] = useState<string>('https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=600&q=80')
   const [designTitle, setDesignTitle] = useState<string>('')
 
   // Fetch design details for thumbnail
