@@ -134,20 +134,14 @@ export default function CartPage() {
                         alignItems: 'center',
                       }}
                     >
-                      {item.image ? (
-                        <img src={item.image} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                      ) : (
-                        <svg
-                          width="60"
-                          height="60"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="var(--color-slate-400)"
-                          strokeWidth="1.5"
-                        >
-                          <path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                        </svg>
-                      )}
+                      <img
+                        src={item.image || 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=600&q=80'}
+                        alt={item.name}
+                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                        onError={(e) => {
+                          (e.currentTarget as HTMLImageElement).src = 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=600&q=80'
+                        }}
+                      />
                     </div>
 
                     <div>

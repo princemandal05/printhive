@@ -262,7 +262,7 @@ export default function ProductDetailsPage() {
               <button
                 type="button"
                 onClick={() => {
-                  addToCart({ id: product.id, name: product.name, price: product.price, seller: product.seller, stock: product.stock }, quantity)
+                  addToCart({ id: product.id, name: product.name, price: product.price, seller: product.seller, stock: product.stock, image: product.image }, quantity)
                   router.push('/checkout')
                 }}
                 style={{ flex: 1, minWidth: 160, background: 'linear-gradient(135deg, #FF6B35 0%, #F97316 100%)', color: '#fff', border: 'none', padding: '14px 24px', borderRadius: 14, fontSize: 15, fontWeight: 900, cursor: 'pointer', boxShadow: '0 4px 20px rgba(255,107,53,0.3)' }}
@@ -273,7 +273,7 @@ export default function ProductDetailsPage() {
               <button
                 type="button"
                 onClick={() => {
-                  addToCart({ id: product.id, name: product.name, price: product.price, seller: product.seller, stock: product.stock }, quantity)
+                  addToCart({ id: product.id, name: product.name, price: product.price, seller: product.seller, stock: product.stock, image: product.image }, quantity)
                   setJustAdded(true)
                   setTimeout(() => setJustAdded(false), 2000)
                 }}

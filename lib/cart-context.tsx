@@ -63,7 +63,12 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       const parsedCart = savedCart ? JSON.parse(savedCart) : []
       const parsedWishlist = savedWishlist ? JSON.parse(savedWishlist) : []
 
-      setCart(Array.isArray(parsedCart) ? parsedCart : [])
+      const normalizedCart = (Array.isArray(parsedCart) ? parsedCart : []).map((item: CartItem) => ({
+        ...item,
+        image: item.image || 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=600&q=80',
+      }))
+
+      setCart(normalizedCart)
       setWishlist(Array.isArray(parsedWishlist) ? parsedWishlist : [])
     } catch {
       setCart([])
@@ -101,19 +106,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     initUserSession()
 
     // Listen to Supabase Auth state & cookie changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      if (!isMounted) return
-      let key = 'public'
-      if (session?.user?.id) {
-        const { data: profile } = await supabase.from('profiles').select('role').eq('id', session.user.id).maybeSingle()
-        const role = profile?.role || 'buyer'
-        key = `user_${session.user.id}_${role}`
-      } else if (typeof document !== 'undefined') {
-        const guestMatch = document.cookie.match(/printhive_guest_role=([^;]+)/)
-        const guestRole = guestMatch ? guestMatch[1] : 'public'
-        key = `guest_${guestRole}`
-      }
-      loadPartition(key)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
+      if (isMounted) initUserSession()
     })
 
     return () => {
@@ -145,14 +139,22 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   }, [wishlist])
 
   const addToCart: StoreContextType['addToCart'] = (item, qty = 1) => {
+    const itemWithImg: CartItem = {
+      ...item,
+      image: item.image || 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=600&q=80',
+      quantity: Math.min(item.stock, qty),
+    }
+
     setCart((prev) => {
       const existing = prev.find((i) => i.id === item.id)
       if (existing) {
         return prev.map((i) =>
-          i.id === item.id ? { ...i, quantity: Math.min(i.stock, i.quantity + qty) } : i
+          i.id === item.id
+            ? { ...i, quantity: Math.min(i.stock, i.quantity + qty), image: i.image || itemWithImg.image }
+            : i
         )
       }
-      return [...prev, { ...item, quantity: Math.min(item.stock, qty) }]
+      return [...prev, itemWithImg]
     })
   }
 
