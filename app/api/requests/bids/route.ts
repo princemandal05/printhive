@@ -41,23 +41,40 @@ export async function POST(request: Request) {
 
     const designerName = profile?.full_name || user.email?.split('@')[0] || 'Designer'
 
-    const { data: bid, error: insertError } = await supabase
-      .from('design_request_bids')
-      .insert({
-        request_id,
-        designer_id: user.id,
-        designer_name: designerName,
-        price: parsedPrice,
-        days: parsedDays,
-        note: note ? String(note) : '',
-        rating: 4.9,
-      })
-      .select('*')
-      .single()
+    const noteText = note ? String(note) : ''
+    const candidatePayloads = [
+      { request_id, designer_id: user.id, designer_name: designerName, price: parsedPrice, days: parsedDays, note: noteText, rating: 4.9 },
+      { request_id, designer_id: user.id, designer_name: designerName, price: parsedPrice, turnaround_days: parsedDays, note: noteText, rating: 4.9 },
+      { request_id, designer_id: user.id, designer_name: designerName, price: parsedPrice, delivery_days: parsedDays, note: noteText, rating: 4.9 },
+      { request_id, designer_id: user.id, designer_name: designerName, price: parsedPrice, note: noteText },
+      { request_id, designer_id: user.id, price: parsedPrice, note: noteText },
+      { request_id, designer_id: user.id, price: parsedPrice },
+    ]
+
+    let bid: any = null
+    let insertError: any = null
+
+    for (const payload of candidatePayloads) {
+      const { data: resData, error: err } = await (supabase
+        .from('design_request_bids') as any)
+        .insert(payload)
+        .select('*')
+        .maybeSingle()
+
+      if (!err) {
+        bid = resData || payload
+        insertError = null
+        break
+      }
+      insertError = err
+      if (!err.message?.includes('Could not find the') && !err.message?.includes('column')) {
+        break
+      }
+    }
 
     if (insertError) {
       console.error('Error submitting bid record:', insertError)
-      return NextResponse.json({ error: 'Failed to submit bid' }, { status: 500 })
+      return NextResponse.json({ error: insertError.message || 'Failed to submit bid' }, { status: 500 })
     }
 
     return NextResponse.json({ success: true, bid }, { status: 201 })

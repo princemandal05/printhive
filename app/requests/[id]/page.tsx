@@ -180,17 +180,37 @@ export default function RequestDetailPage() {
         return
       }
 
-      const { error: insertErr } = await supabase.from('design_request_bids').insert({
-        request_id: reqId,
-        designer_id: user.id,
-        designer_name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'Verified Designer',
-        price: priceNum,
-        days: daysNum,
-        note: bidNote.trim() || 'Ready to model and deliver with high precision.',
-      })
+      const designerName = user.user_metadata?.full_name || user.email?.split('@')[0] || 'Verified Designer'
+      const noteContent = bidNote.trim() || 'Ready to model and deliver with high precision.'
 
-      if (insertErr) {
-        setBidError(insertErr.message || 'Failed to submit bid. Please try again.')
+      // Try inserting with standard columns, then fallback across known schema variations
+      const candidatePayloads = [
+        { request_id: reqId, designer_id: user.id, designer_name: designerName, price: priceNum, days: daysNum, note: noteContent },
+        { request_id: reqId, designer_id: user.id, designer_name: designerName, price: priceNum, turnaround_days: daysNum, note: noteContent },
+        { request_id: reqId, designer_id: user.id, designer_name: designerName, price: priceNum, delivery_days: daysNum, note: noteContent },
+        { request_id: reqId, designer_id: user.id, designer_name: designerName, price: priceNum, note: noteContent },
+        { request_id: reqId, designer_id: user.id, price: priceNum, note: noteContent },
+        { request_id: reqId, designer_id: user.id, price: priceNum },
+      ]
+
+      let lastInsertErr: any = null
+      let insertSuccess = false
+
+      for (const payload of candidatePayloads) {
+        const { error: insertErr } = await (supabase.from('design_request_bids') as any).insert(payload)
+        if (!insertErr) {
+          insertSuccess = true
+          break
+        }
+        lastInsertErr = insertErr
+        // If error is not a missing column error (e.g. RLS / Auth / network), don't loop endlessly
+        if (!insertErr.message?.includes('Could not find the') && !insertErr.message?.includes('column')) {
+          break
+        }
+      }
+
+      if (!insertSuccess) {
+        setBidError(lastInsertErr?.message || 'Failed to submit bid. Please try again.')
         setSubmitting(false)
         return
       }
@@ -200,11 +220,11 @@ export default function RequestDetailPage() {
       setBids((prev) => [
         {
           id: `bid-${Date.now()}`,
-          designer: user.user_metadata?.full_name || user.email?.split('@')[0] || 'You',
+          designer: designerName,
           rating: 5.0,
           price: priceNum,
           days: daysNum,
-          note: bidNote.trim() || 'Ready to model and deliver with high precision.',
+          note: noteContent,
           designerId: user.id,
         },
         ...prev,

@@ -53,6 +53,12 @@ CREATE TABLE IF NOT EXISTS public.design_request_bids (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- Ensure columns exist on tables created prior to this schema
+ALTER TABLE public.design_request_bids ADD COLUMN IF NOT EXISTS days INTEGER DEFAULT 2;
+ALTER TABLE public.design_request_bids ADD COLUMN IF NOT EXISTS designer_name TEXT;
+ALTER TABLE public.design_request_bids ADD COLUMN IF NOT EXISTS note TEXT;
+ALTER TABLE public.design_request_bids ADD COLUMN IF NOT EXISTS rating NUMERIC DEFAULT 4.9;
+
 ALTER TABLE public.design_request_bids ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Public read design_request_bids" ON public.design_request_bids;
 CREATE POLICY "Public read design_request_bids" ON public.design_request_bids FOR SELECT USING (true);
