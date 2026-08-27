@@ -10,6 +10,8 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import { detectModelFormat, type ModelFormat } from '@/utils/format-detector'
 
 type CanvasTheme = 'dark' | 'slate' | 'pearl'
+type MaterialFinish = 'standard' | 'matte' | 'silk' | 'metallic' | 'translucent'
+type ViewAngle = 'iso' | 'front' | 'top' | 'side'
 
 interface ThreeViewerProps {
   title?: string
@@ -24,6 +26,17 @@ interface ThreeViewerProps {
   autoRotateDefault?: boolean
   initialTheme?: CanvasTheme
 }
+
+const SWATCH_COLORS = [
+  { name: 'Terracotta Orange', hex: '#ea580c' },
+  { name: 'Stealth Black', hex: '#1e293b' },
+  { name: 'Arctic White', hex: '#f8fafc' },
+  { name: 'Signal Red', hex: '#ef4444' },
+  { name: 'Royal Blue', hex: '#3b82f6' },
+  { name: 'Forest Green', hex: '#10b981' },
+  { name: 'Silk Purple', hex: '#8b5cf6' },
+  { name: 'Warm Gold', hex: '#f59e0b' },
+]
 
 interface ErrorBoundaryProps {
   children: ReactNode
@@ -105,23 +118,33 @@ function ThreeViewerInner({
   const rotatingRef = useRef(rotating)
   const [theme, setTheme] = useState<CanvasTheme>(initialTheme)
   const [bounds, setBounds] = useState(dimensions)
+  const [polyCount, setPolyCount] = useState<number | null>(null)
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [showHint, setShowHint] = useState(true)
   const [isGrabbing, setIsGrabbing] = useState(false)
   const [rotationStep, setRotationStep] = useState(0)
 
+  // Advanced feature controls
+  const [activeColor, setActiveColor] = useState(color)
+  const [materialFinish, setMaterialFinish] = useState<MaterialFinish>('standard')
+  const [showBed, setShowBed] = useState(true)
+  const [showColorPicker, setShowColorPicker] = useState(false)
+
   const sceneRef = useRef<THREE.Scene | null>(null)
   const controlsRef = useRef<OrbitControls | null>(null)
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null)
+  const rendererRef = useRef<THREE.WebGLRenderer | null>(null)
   const groupRef = useRef<THREE.Group | null>(null)
   const shadowPlaneRef = useRef<THREE.Mesh | null>(null)
+  const bedGridRef = useRef<THREE.GridHelper | null>(null)
   const matsRef = useRef<(THREE.MeshPhysicalMaterial | THREE.MeshStandardMaterial)[]>([])
   const initialCamPos = useRef<THREE.Vector3>(new THREE.Vector3())
   const initialTarget = useRef<THREE.Vector3>(new THREE.Vector3())
+  const maxModelDim = useRef<number>(50)
 
   const detected = detectModelFormat({ format, fileName, mimeType, url: modelUrl })
   const fmt: ModelFormat = detected.format
-  const safeColor = /^#[0-9A-Fa-f]{6}$/.test(color || '') ? color! : '#ea580c'
+  const safeColor = /^#[0-9A-Fa-f]{6}$/.test(activeColor || '') ? activeColor : '#ea580c'
 
   // Hide gesture hint after 4 seconds
   useEffect(() => {
@@ -143,16 +166,71 @@ function ThreeViewerInner({
     })
   }, [wireframe])
 
-  // Live filament color update (updates raw materials while preserving textured meshes)
+  // Live material shader / finish / color update
   useEffect(() => {
     const c = new THREE.Color(safeColor)
     matsRef.current.forEach((m) => {
       if ((m as any)._isFilamentMat) {
         m.color.copy(c)
+
+        if (m instanceof THREE.MeshPhysicalMaterial) {
+          switch (materialFinish) {
+            case 'matte':
+              m.roughness = 0.85
+              m.metalness = 0.0
+              m.clearcoat = 0.0
+              m.transmission = 0.0
+              m.opacity = 1.0
+              m.transparent = false
+              break
+            case 'silk':
+              m.roughness = 0.18
+              m.metalness = 0.25
+              m.clearcoat = 0.6
+              m.clearcoatRoughness = 0.1
+              m.transmission = 0.0
+              m.opacity = 1.0
+              m.transparent = false
+              break
+            case 'metallic':
+              m.roughness = 0.28
+              m.metalness = 0.8
+              m.clearcoat = 0.4
+              m.transmission = 0.0
+              m.opacity = 1.0
+              m.transparent = false
+              break
+            case 'translucent':
+              m.roughness = 0.15
+              m.metalness = 0.05
+              m.clearcoat = 0.8
+              m.transmission = 0.65
+              m.opacity = 0.85
+              m.transparent = true
+              break
+            case 'standard':
+            default:
+              m.roughness = 0.32
+              m.metalness = 0.08
+              m.clearcoat = 0.35
+              m.clearcoatRoughness = 0.2
+              m.transmission = 0.0
+              m.opacity = 1.0
+              m.transparent = false
+              break
+          }
+        }
         m.needsUpdate = true
       }
     })
-  }, [safeColor])
+  }, [safeColor, materialFinish])
+
+  // Toggle 3D printer bed grid
+  useEffect(() => {
+    if (bedGridRef.current) {
+      bedGridRef.current.visible = showBed
+    }
+  }, [showBed])
 
   // Dynamic canvas theme background update
   useEffect(() => {
@@ -179,7 +257,7 @@ function ThreeViewerInner({
     const size = box.getSize(new THREE.Vector3())
     const center = box.getCenter(new THREE.Vector3())
 
-    // Center model in X and Z, and place base on Y = 0
+    // Center model in X and Z, and place base on Y = 0 (build plate)
     obj.position.x -= center.x
     obj.position.z -= center.z
     obj.position.y -= box.min.y
@@ -187,10 +265,17 @@ function ThreeViewerInner({
     setBounds({ x: Math.round(size.x), y: Math.round(size.y), z: Math.round(size.z) })
 
     const maxDim = Math.max(size.x, size.y, size.z)
+    maxModelDim.current = maxDim
+
     if (maxDim > 0) {
       if (shadowPlaneRef.current) {
         shadowPlaneRef.current.scale.set(maxDim / 25, maxDim / 25, 1)
         shadowPlaneRef.current.position.y = -0.1
+      }
+
+      if (bedGridRef.current) {
+        const bedSize = Math.max(Math.ceil(maxDim * 1.5 / 10) * 10, 100)
+        bedGridRef.current.scale.set(bedSize / 100, 1, bedSize / 100)
       }
 
       const fov = camera.fov * (Math.PI / 180)
@@ -214,6 +299,37 @@ function ThreeViewerInner({
     }
   }
 
+  // Snap to preset view angles (ISO, Front, Top, Side)
+  const snapViewAngle = (angle: ViewAngle) => {
+    if (!cameraRef.current || !controlsRef.current) return
+    const camera = cameraRef.current
+    const controls = controlsRef.current
+    const targetY = initialTarget.current.y
+    const maxDim = maxModelDim.current || 50
+    const fov = camera.fov * (Math.PI / 180)
+    const dist = Math.max((maxDim / 2 / Math.tan(fov / 2)) * 1.45, 10)
+
+    controls.target.set(0, targetY, 0)
+
+    switch (angle) {
+      case 'front':
+        camera.position.set(0, targetY, dist * 1.25)
+        break
+      case 'top':
+        camera.position.set(0, targetY + dist * 1.35, 0.001)
+        break
+      case 'side':
+        camera.position.set(dist * 1.25, targetY, 0)
+        break
+      case 'iso':
+      default:
+        camera.position.set(dist * 0.65, targetY + dist * 0.35, dist * 0.85)
+        break
+    }
+    camera.lookAt(0, targetY, 0)
+    controls.update()
+  }
+
   // Rotate model orientation by 90 degrees
   const handleRotateOrientation = () => {
     if (!groupRef.current || !cameraRef.current || !controlsRef.current) return
@@ -226,6 +342,17 @@ function ThreeViewerInner({
     groupRef.current.position.set(0, 0, 0)
 
     fitCameraToObject(groupRef.current, cameraRef.current, controlsRef.current)
+  }
+
+  // High-Resolution Snapshot Capture & Download
+  const handleCaptureSnapshot = () => {
+    if (!rendererRef.current || !sceneRef.current || !cameraRef.current) return
+    rendererRef.current.render(sceneRef.current, cameraRef.current)
+    const dataUrl = rendererRef.current.domElement.toDataURL('image/png')
+    const link = document.createElement('a')
+    link.download = `${title.toLowerCase().replace(/[^a-z0-9]/g, '_')}_render.png`
+    link.href = dataUrl
+    link.click()
   }
 
   // Main Three.js setup
@@ -255,6 +382,7 @@ function ThreeViewerInner({
       antialias: true,
       powerPreference: 'high-performance',
       alpha: true,
+      preserveDrawingBuffer: true,
     })
     renderer.setSize(w, h)
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
@@ -262,6 +390,7 @@ function ThreeViewerInner({
     renderer.toneMappingExposure = 1.3
     renderer.shadowMap.enabled = true
     renderer.shadowMap.type = THREE.PCFSoftShadowMap
+    rendererRef.current = renderer
     container.innerHTML = ''
     container.appendChild(renderer.domElement)
 
@@ -276,7 +405,7 @@ function ThreeViewerInner({
     controlsRef.current = controls
 
     // ─── Studio 4-Point Illumination System ───────────────
-    // 1. Camera-Mounted Follow Light (Eliminates harsh pitch-black shadows from any orbit angle)
+    // 1. Camera-Mounted Follow Light
     const cameraKeyLight = new THREE.DirectionalLight(0xffffff, 1.4)
     cameraKeyLight.position.set(10, 20, 30)
     camera.add(cameraKeyLight)
@@ -289,17 +418,24 @@ function ThreeViewerInner({
     const hemiLight = new THREE.HemisphereLight(0xffffff, 0x334155, 1.2)
     scene.add(hemiLight)
 
-    // 3. Top-Down Key Light (accents top bevels and geometry)
+    // 3. Top-Down Key Light
     const topKey = new THREE.DirectionalLight(0xffffff, 1.1)
     topKey.position.set(60, 180, 80)
     topKey.castShadow = true
     topKey.shadow.bias = -0.0001
     scene.add(topKey)
 
-    // 4. Back-Rim Light (defines clean silhouette edges)
+    // 4. Back-Rim Light
     const rimLight = new THREE.DirectionalLight(0xffedd5, 0.9)
     rimLight.position.set(-50, 100, -120)
     scene.add(rimLight)
+
+    // ─── 3D Printer Bed Grid ──────────────────────────────
+    const bedGrid = new THREE.GridHelper(100, 20, 0xea580c, 0x334155)
+    bedGrid.position.y = 0.01
+    bedGridRef.current = bedGrid
+    bedGrid.visible = showBed
+    scene.add(bedGrid)
 
     // ─── Soft Circular Contact Shadow Plane ──────────────
     const shadowCanvas = document.createElement('canvas')
@@ -353,15 +489,23 @@ function ThreeViewerInner({
 
     // Process & Style Loaded Meshes (Preserves original embedded materials & textures when present)
     const styleMeshes = (root: THREE.Object3D) => {
+      let totalTris = 0
       root.traverse((child) => {
         if (child instanceof THREE.Mesh) {
           child.geometry?.computeVertexNormals()
           child.castShadow = true
           child.receiveShadow = true
 
+          if (child.geometry?.attributes?.position) {
+            const count = child.geometry.index
+              ? child.geometry.index.count / 3
+              : child.geometry.attributes.position.count / 3
+            totalTris += Math.round(count)
+          }
+
           const origMat = child.material
           const hasOriginalTexture = !!(origMat && (origMat.map || (origMat as any).normalMap))
-          const hasVertexColors = !!(child.geometry?.attributes?.color)
+          const hasVertexColors = !!child.geometry?.attributes?.color
 
           if (hasOriginalTexture || hasVertexColors) {
             if (origMat instanceof THREE.MeshStandardMaterial || origMat instanceof THREE.MeshPhysicalMaterial) {
@@ -389,6 +533,7 @@ function ThreeViewerInner({
           }
         }
       })
+      if (totalTris > 0) setPolyCount(totalTris)
     }
 
     // Shared fetch helper with abort timeout and non-OK response handling
@@ -424,6 +569,9 @@ function ThreeViewerInner({
           const mesh = new THREE.Mesh(geo, makeFilamentMat())
           mesh.castShadow = true
           mesh.receiveShadow = true
+
+          const tris = Math.round(geo.attributes.position.count / 3)
+          setPolyCount(tris)
 
           // Standard STL files from CAD/Slicers are Z-up; orient upright in Three.js Y-up world
           group.rotation.x = -Math.PI / 2
@@ -666,18 +814,18 @@ function ThreeViewerInner({
         </div>
       )}
 
-      {/* Top-left: Minimal Specs Badge */}
+      {/* Top-left: Minimal Specs & Mesh Analytics Badge */}
       <div
         style={{
           position: 'absolute',
           top: 12,
           left: 12,
           zIndex: 5,
-          background: isLightMode ? 'rgba(255,255,255,0.92)' : 'rgba(15,23,42,0.8)',
+          background: isLightMode ? 'rgba(255,255,255,0.92)' : 'rgba(15,23,42,0.85)',
           backdropFilter: 'blur(10px)',
           border: isLightMode ? '1px solid rgba(0,0,0,0.08)' : '1px solid rgba(255,255,255,0.08)',
           borderRadius: 10,
-          padding: '5px 12px',
+          padding: '6px 12px',
           display: 'flex',
           alignItems: 'center',
           gap: 8,
@@ -687,6 +835,11 @@ function ThreeViewerInner({
         <span style={{ fontSize: 11, fontWeight: 700, color: isLightMode ? '#334155' : '#CBD5E1' }}>
           {bounds.x} × {bounds.y} × {bounds.z} mm
         </span>
+        {polyCount !== null && (
+          <span style={{ fontSize: 10, fontWeight: 700, color: isLightMode ? '#64748B' : '#94A3B8' }}>
+            • {(polyCount / 1000).toFixed(1)}k ▲
+          </span>
+        )}
         <span
           style={{
             background: '#8B5CF6',
@@ -703,12 +856,68 @@ function ThreeViewerInner({
         </span>
       </div>
 
+      {/* Top-right: Snap View Angles & Snapshot Button */}
+      <div
+        style={{
+          position: 'absolute',
+          top: 12,
+          right: 12,
+          zIndex: 5,
+          display: 'flex',
+          gap: 5,
+          alignItems: 'center',
+        }}
+      >
+        {(['iso', 'front', 'top', 'side'] as ViewAngle[]).map((v) => (
+          <button
+            key={v}
+            type="button"
+            onClick={() => snapViewAngle(v)}
+            title={`View from ${v.toUpperCase()}`}
+            style={{
+              background: isLightMode ? 'rgba(255,255,255,0.9)' : 'rgba(15,23,42,0.8)',
+              color: isLightMode ? '#334155' : '#CBD5E1',
+              border: isLightMode ? '1px solid rgba(0,0,0,0.1)' : '1px solid rgba(255,255,255,0.1)',
+              borderRadius: 6,
+              padding: '4px 8px',
+              fontSize: 10.5,
+              fontWeight: 800,
+              cursor: 'pointer',
+              textTransform: 'uppercase',
+              backdropFilter: 'blur(8px)',
+              boxShadow: '0 2px 6px rgba(0,0,0,0.05)',
+            }}
+          >
+            {v}
+          </button>
+        ))}
+
+        <button
+          type="button"
+          onClick={handleCaptureSnapshot}
+          title="Download High-Res Render Snapshot"
+          style={{
+            background: isLightMode ? 'rgba(255,255,255,0.9)' : 'rgba(15,23,42,0.8)',
+            color: '#ea580c',
+            border: isLightMode ? '1px solid rgba(0,0,0,0.1)' : '1px solid rgba(255,255,255,0.1)',
+            borderRadius: 6,
+            padding: '4px 8px',
+            fontSize: 10.5,
+            fontWeight: 800,
+            cursor: 'pointer',
+            backdropFilter: 'blur(8px)',
+          }}
+        >
+          📸 Snap
+        </button>
+      </div>
+
       {/* Center Gesture Hint (fades away automatically) */}
       {showHint && !loading && (
         <div
           style={{
             position: 'absolute',
-            top: 12,
+            top: 50,
             right: 12,
             zIndex: 4,
             background: isLightMode ? 'rgba(255,255,255,0.85)' : 'rgba(15,23,42,0.65)',
@@ -728,7 +937,48 @@ function ThreeViewerInner({
         </div>
       )}
 
-      {/* Bottom-right: Control Pills */}
+      {/* Bottom Color Swatches Bar (when color picker opened) */}
+      {showColorPicker && (
+        <div
+          style={{
+            position: 'absolute',
+            bottom: 54,
+            right: 12,
+            zIndex: 6,
+            background: isLightMode ? 'rgba(255,255,255,0.95)' : 'rgba(15,23,42,0.95)',
+            backdropFilter: 'blur(12px)',
+            border: isLightMode ? '1px solid rgba(0,0,0,0.1)' : '1px solid rgba(255,255,255,0.12)',
+            borderRadius: 12,
+            padding: '8px 10px',
+            display: 'flex',
+            gap: 6,
+            boxShadow: '0 8px 24px rgba(0,0,0,0.2)',
+          }}
+        >
+          {SWATCH_COLORS.map((sw) => (
+            <button
+              key={sw.hex}
+              type="button"
+              onClick={() => {
+                setActiveColor(sw.hex)
+                setShowColorPicker(false)
+              }}
+              title={sw.name}
+              style={{
+                width: 22,
+                height: 22,
+                borderRadius: '50%',
+                background: sw.hex,
+                border: activeColor.toLowerCase() === sw.hex.toLowerCase() ? '2px solid #ea580c' : '1px solid rgba(255,255,255,0.3)',
+                cursor: 'pointer',
+                boxShadow: '0 2px 6px rgba(0,0,0,0.15)',
+              }}
+            />
+          ))}
+        </div>
+      )}
+
+      {/* Bottom-right: Comprehensive Control Toolbar */}
       <div
         style={{
           position: 'absolute',
@@ -740,13 +990,47 @@ function ThreeViewerInner({
           flexWrap: 'wrap',
         }}
       >
+        {/* Filament Finish Selector */}
+        <select
+          value={materialFinish}
+          onChange={(e) => setMaterialFinish(e.target.value as MaterialFinish)}
+          title="Material Finish"
+          style={{
+            background: isLightMode ? 'rgba(255,255,255,0.92)' : 'rgba(15,23,42,0.8)',
+            color: isLightMode ? '#1E293B' : '#CBD5E1',
+            border: isLightMode ? '1px solid rgba(0,0,0,0.1)' : '1px solid rgba(255,255,255,0.1)',
+            borderRadius: 8,
+            padding: '5px 8px',
+            fontSize: 11,
+            fontWeight: 800,
+            cursor: 'pointer',
+            outline: 'none',
+            backdropFilter: 'blur(8px)',
+          }}
+        >
+          <option value="standard">✨ Standard PLA</option>
+          <option value="matte">🧱 Matte Finish</option>
+          <option value="silk">🌟 Silk Gloss</option>
+          <option value="metallic">🥇 Metallic</option>
+          <option value="translucent">💎 Translucent</option>
+        </select>
+
         <ViewerBtn
-          active={false}
-          onClick={handleResetView}
-          label="🎯 Center"
-          title="Reset camera angle (or double-click)"
+          active={showColorPicker}
+          onClick={() => setShowColorPicker(!showColorPicker)}
+          label="🎨 Color"
+          title="Pick Filament Color"
           isLightMode={isLightMode}
         />
+
+        <ViewerBtn
+          active={showBed}
+          onClick={() => setShowBed(!showBed)}
+          label={showBed ? '🖨️ Bed ON' : '🖨️ Bed OFF'}
+          title="Toggle 3D Printer Build Plate"
+          isLightMode={isLightMode}
+        />
+
         <ViewerBtn
           active={false}
           onClick={handleRotateOrientation}
@@ -754,6 +1038,7 @@ function ThreeViewerInner({
           title="Rotate model orientation 90°"
           isLightMode={isLightMode}
         />
+
         <ViewerBtn
           active={false}
           onClick={cycleTheme}
@@ -761,28 +1046,24 @@ function ThreeViewerInner({
           title="Switch Canvas Background Theme"
           isLightMode={isLightMode}
         />
+
         <ViewerBtn
           active={wireframe}
           onClick={() => setWireframe(!wireframe)}
-          label={wireframe ? '◼ Solid' : '◻ Wireframe'}
+          label={wireframe ? '◼ Solid' : '◻ Wire'}
           title="Toggle wireframe mode"
           isLightMode={isLightMode}
         />
+
         <ViewerBtn
           active={rotating}
           onClick={() => setRotating(!rotating)}
-          label={rotating ? '⏸ Pause' : '🔄 Rotate'}
+          label={rotating ? '⏸' : '🔄 Auto'}
           activeColor="#ea580c"
           title="Toggle auto rotation"
           isLightMode={isLightMode}
         />
-        <ViewerBtn
-          active={isFullscreen}
-          onClick={() => setIsFullscreen(!isFullscreen)}
-          label={isFullscreen ? '✖ Exit' : '⛶ Full'}
-          title="Toggle fullscreen view"
-          isLightMode={isLightMode}
-        />
+
       </div>
     </div>
   )
@@ -825,7 +1106,7 @@ function ViewerBtn({
             ? '1px solid rgba(0,0,0,0.1)'
             : '1px solid rgba(255,255,255,0.1)',
         borderRadius: 8,
-        padding: '5px 11px',
+        padding: '5px 10px',
         fontSize: 11,
         fontWeight: 800,
         cursor: 'pointer',
