@@ -37,11 +37,11 @@ export default function OpenStreetMap({
   locations = [],
   selectedId,
   onSelectLocation,
-  center = [28.6139, 77.2090], // Default Center: New Delhi, India
-  zoom = 6,
+  center = [21.7679, 78.8718], // Geographical Center of India
+  zoom = 5,
   isPicker = false,
   onLocationPicked,
-  height = '420px',
+  height = '280px',
 }: OpenStreetMapProps) {
   const mapRef = useRef<HTMLDivElement>(null)
   const mapInstanceRef = useRef<any>(null)
@@ -57,7 +57,7 @@ export default function OpenStreetMap({
   // Safe coordinates validator
   const validCenter: [number, number] = (
     Array.isArray(center) && center.length === 2 && isValidIndiaCoord(center[0], center[1])
-  ) ? center : [28.6139, 77.2090]
+  ) ? center : [21.7679, 78.8718]
 
   // Filter out any invalid location entries using shared validator
   const validLocations = Array.isArray(locations)
@@ -89,21 +89,22 @@ export default function OpenStreetMap({
     document.head.appendChild(script)
   }, [])
 
-  // 2. Initialize Leaflet Map
+  // 2. Initialize Leaflet Map locked to India bounds
   useEffect(() => {
     if (!loaded || !mapRef.current || mapInstanceRef.current) return
     const L = (window as any).L
     if (!L) return
 
+    // Strict India Geographical Bounds
     const indiaBounds = L.latLngBounds(
-      L.latLng(6.5, 68.0),   // South-West India
-      L.latLng(35.5, 97.5)   // North-East India
+      L.latLng(6.8, 68.1),   // Kanyakumari / South-West
+      L.latLng(36.5, 97.4)   // Kashmir / North-East
     )
 
     const map = L.map(mapRef.current, {
       maxBounds: indiaBounds,
       maxBoundsViscosity: 1.0,
-      minZoom: 4,
+      minZoom: 5,
       maxZoom: 18,
     }).setView(validCenter, zoom)
 
@@ -112,7 +113,7 @@ export default function OpenStreetMap({
     // Real OpenStreetMap Tile Layer + Mandatory OpenStreetMap Attribution
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19,
-      attribution: '© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">OpenStreetMap</a> contributors | PrintHive India GPS',
+      attribution: '© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">OpenStreetMap</a> | PrintHive India GPS',
     }).addTo(map)
 
     // Click listener for location picker mode
@@ -120,6 +121,7 @@ export default function OpenStreetMap({
       map.on('click', (e: any) => {
         if (e && e.latlng && isValidIndiaCoord(e.latlng.lat, e.latlng.lng)) {
           onLocationPicked(e.latlng.lat, e.latlng.lng)
+          map.flyTo([e.latlng.lat, e.latlng.lng], Math.max(map.getZoom(), 14), { duration: 0.8 })
         }
       })
     }
@@ -233,6 +235,8 @@ export default function OpenStreetMap({
       marker.bindPopup(popupHtml)
 
       marker.on('click', () => {
+        map.flyTo([loc.lat, loc.lng], 15, { duration: 1.0 })
+        marker.openPopup()
         if (onSelectLocation) onSelectLocation(loc)
       })
 
@@ -242,7 +246,7 @@ export default function OpenStreetMap({
     if (selectedId) {
       const activeLoc = validLocations.find((l) => l.id === selectedId)
       if (activeLoc) {
-        map.setView([activeLoc.lat, activeLoc.lng], 12, { animate: true })
+        map.flyTo([activeLoc.lat, activeLoc.lng], 15, { duration: 1.0 })
       }
     }
   }, [loaded, validLocations, selectedId, isPicker])
@@ -270,7 +274,7 @@ export default function OpenStreetMap({
         }
 
         if (mapInstanceRef.current) {
-          mapInstanceRef.current.flyTo([userLat, userLng], 13, { duration: 1.2 })
+          mapInstanceRef.current.flyTo([userLat, userLng], 15, { duration: 1.2 })
         }
 
         if (onLocationPicked) {

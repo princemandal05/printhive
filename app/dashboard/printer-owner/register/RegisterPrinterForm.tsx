@@ -354,7 +354,7 @@ export default function RegisterPrinterForm() {
               <div style={{ borderRadius: 16, overflow: 'hidden', border: '1px solid #CBD5E1', marginBottom: 16 }}>
                 <OpenStreetMap
                   locations={pickerLocations}
-                  height="300px"
+                  height="260px"
                   onLocationPicked={handleLocationPicked}
                   isPicker
                 />
