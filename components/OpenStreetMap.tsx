@@ -114,11 +114,10 @@ export default function OpenStreetMap({
 
     mapInstanceRef.current = map
 
-    // High-definition clean CartoDB Voyager cartography tiles
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+    // 100% Free OpenStreetMap Tile Layer (Zero API Key required)
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19,
-      subdomains: 'abcd',
-      attribution: '© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">OpenStreetMap</a> | © <a href="https://carto.com/attributions" target="_blank" rel="noreferrer">CARTO</a> | PrintHive India',
+      attribution: '© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">OpenStreetMap</a> contributors | PrintHive India GPS',
     }).addTo(map)
 
     // Force size recalculation so tiles align completely
