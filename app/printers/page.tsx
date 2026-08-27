@@ -35,217 +35,17 @@ export type PrinterHub = MapLocation & {
   formattedDistance?: string
 }
 
-const DEFAULT_INDIA_HUBS: PrinterHub[] = [
-  {
-    id: 'hub-delhi-01',
-    name: 'Bambu Lab X1-Carbon Studio',
-    model: 'Bambu Lab X1-Carbon',
-    technology: 'Multi-Color FDM (0.08mm Layer)',
-    location: 'Connaught Place, New Delhi',
-    state: 'Delhi NCR',
-    lat: 28.6304,
-    lng: 77.2177,
-    materials: ['PLA', 'PETG', 'ABS', 'Carbon Fiber PLA'],
-    base_price: 350,
-    price: 350,
-    status: 'online',
-    working_hours: '08:00 AM - 10:00 PM',
-    rating: 4.98,
-    completedOrders: 148,
-    city: 'New Delhi',
-  },
-  {
-    id: 'hub-blr-01',
-    name: 'Prusa MK4 Rapid Prototyping Lab',
-    model: 'Original Prusa MK4',
-    technology: 'Precision FDM (Input Shaping)',
-    location: 'Koramangala 4th Block, Bengaluru',
-    state: 'Karnataka',
-    lat: 12.9352,
-    lng: 77.6245,
-    materials: ['PLA', 'PETG', 'TPU Flexible', 'PCCF'],
-    base_price: 320,
-    price: 320,
-    status: 'online',
-    working_hours: '24/7 Print Farm',
-    rating: 4.95,
-    completedOrders: 210,
-    city: 'Bengaluru',
-  },
-  {
-    id: 'hub-mum-01',
-    name: 'Formlabs SLA Resin Precision Hub',
-    model: 'Formlabs Form 3+ SLA',
-    technology: 'High-Detail SLA Resin (25μm)',
-    location: 'Bandra West, Mumbai',
-    state: 'Maharashtra',
-    lat: 19.0596,
-    lng: 72.8295,
-    materials: ['Tough 2000 Resin', 'Clear Optical Resin', 'Dental Resin'],
-    base_price: 550,
-    price: 550,
-    status: 'online',
-    working_hours: '09:00 AM - 09:00 PM',
-    rating: 4.99,
-    completedOrders: 92,
-    city: 'Mumbai',
-  },
-  {
-    id: 'hub-hyd-01',
-    name: 'Voron 2.4 High-Speed CoreXY',
-    model: 'Voron 2.4 R2 350mm',
-    technology: 'High-Temp Enclosed CoreXY',
-    location: 'Hitec City, Hyderabad',
-    state: 'Telangana',
-    lat: 17.4474,
-    lng: 78.3762,
-    materials: ['ABS', 'ASA UV-Resistant', 'Nylon PA12', 'PC'],
-    base_price: 380,
-    price: 380,
-    status: 'online',
-    working_hours: '09:00 AM - 11:00 PM',
-    rating: 4.92,
-    completedOrders: 115,
-    city: 'Hyderabad',
-  },
-  {
-    id: 'hub-ncr-01',
-    name: 'Creality K1 Max Industrial Farm',
-    model: 'Creality K1 Max (300x300)',
-    technology: 'Large-Volume High-Speed FDM',
-    location: 'Sector 62, Noida / NCR',
-    state: 'Uttar Pradesh',
-    lat: 28.6280,
-    lng: 77.3649,
-    materials: ['Hyper PLA', 'PETG', 'ABS', 'TPU'],
-    base_price: 290,
-    price: 290,
-    status: 'online',
-    working_hours: '08:30 AM - 09:30 PM',
-    rating: 4.89,
-    completedOrders: 78,
-    city: 'Noida',
-  },
-  {
-    id: 'hub-pune-01',
-    name: 'Anycubic Photon 12K Micro Lab',
-    model: 'Anycubic Photon M5s 12K',
-    technology: 'Ultra-High 12K Resin',
-    location: 'Kothrud, Pune',
-    state: 'Maharashtra',
-    lat: 18.5074,
-    lng: 73.8077,
-    materials: ['Water-Washable Resin', 'ABS-Like Resin'],
-    base_price: 450,
-    price: 450,
-    status: 'online',
-    working_hours: '10:00 AM - 08:00 PM',
-    rating: 4.96,
-    completedOrders: 64,
-    city: 'Pune',
-  },
-  {
-    id: 'hub-chn-01',
-    name: 'Elegoo Saturn 4 Ultra Precision Farm',
-    model: 'Elegoo Saturn 4 Ultra',
-    technology: 'Tilt-Release Resin SLA',
-    location: 'T. Nagar, Chennai',
-    state: 'Tamil Nadu',
-    lat: 13.0418,
-    lng: 80.2341,
-    materials: ['Standard Resin', 'Plant-Based Resin'],
-    base_price: 420,
-    price: 420,
-    status: 'online',
-    working_hours: '09:00 AM - 09:00 PM',
-    rating: 4.93,
-    completedOrders: 85,
-    city: 'Chennai',
-  },
-  {
-    id: 'hub-kol-01',
-    name: 'Snapmaker Artisan Multi-Tool Lab',
-    model: 'Snapmaker Artisan 3-in-1',
-    technology: 'Industrial Multi-Filament FDM',
-    location: 'Salt Lake Sector V, Kolkata',
-    state: 'West Bengal',
-    lat: 22.5804,
-    lng: 88.4378,
-    materials: ['PLA', 'Woodfill PLA', 'PETG'],
-    base_price: 360,
-    price: 360,
-    status: 'online',
-    working_hours: '09:30 AM - 08:30 PM',
-    rating: 4.91,
-    completedOrders: 53,
-    city: 'Kolkata',
-  },
-  {
-    id: 'hub-ahm-01',
-    name: 'Flashforge Guider 3 Plus Studio',
-    model: 'Flashforge Guider 3 Plus',
-    technology: 'Engineering Grade High-Speed FDM',
-    location: 'SG Highway, Ahmedabad',
-    state: 'Gujarat',
-    lat: 23.0225,
-    lng: 72.5714,
-    materials: ['PLA-CF', 'PETG', 'ABS'],
-    base_price: 340,
-    price: 340,
-    status: 'online',
-    working_hours: '09:00 AM - 09:00 PM',
-    rating: 4.94,
-    completedOrders: 71,
-    city: 'Ahmedabad',
-  },
-  {
-    id: 'hub-jpr-01',
-    name: 'Artisan 3D Prototyping Hub',
-    model: 'Creality Ender 3 S1 Pro',
-    technology: 'Dual-Gear Precision FDM',
-    location: 'Malviya Nagar, Jaipur',
-    state: 'Rajasthan',
-    lat: 26.8530,
-    lng: 75.8050,
-    materials: ['PLA', 'PETG', 'Silk PLA'],
-    base_price: 280,
-    price: 280,
-    status: 'online',
-    working_hours: '10:00 AM - 08:00 PM',
-    rating: 4.88,
-    completedOrders: 49,
-    city: 'Jaipur',
-  },
-  {
-    id: 'hub-koc-01',
-    name: 'Kochi Marine 3D Print Works',
-    model: 'Bambu Lab P1S Combo',
-    technology: 'Enclosed High-Speed FDM',
-    location: 'Kakkanad Infopark, Kochi',
-    state: 'Kerala',
-    lat: 9.9984,
-    lng: 76.3582,
-    materials: ['PETG Water-Resistant', 'PLA', 'TPU'],
-    base_price: 330,
-    price: 330,
-    status: 'online',
-    working_hours: '08:00 AM - 10:00 PM',
-    rating: 4.97,
-    completedOrders: 82,
-    city: 'Kochi',
-  },
-]
-
 function PrinterDirectoryContent() {
   const supabase = createClient()
   const searchParams = useSearchParams()
   const preselectedPrinterId = searchParams?.get('printer_id')
 
-  const [printers, setPrinters] = useState<PrinterHub[]>(DEFAULT_INDIA_HUBS)
+  const [printers, setPrinters] = useState<PrinterHub[]>([])
   const [selectedHub, setSelectedHub] = useState<PrinterHub | null>(null)
   const [userCoords, setUserCoords] = useState<{ lat: number; lng: number } | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [activeChip, setActiveChip] = useState<string>('all')
+  const [loading, setLoading] = useState(true)
 
   // Filter States
   const [filterMaxDistance, setFilterMaxDistance] = useState<number | 'All'>('All')
@@ -255,16 +55,15 @@ function PrinterDirectoryContent() {
   const [filterMinRating, setFilterMinRating] = useState<number | 'All'>('All')
   const [showFiltersDrawer, setShowFiltersDrawer] = useState(false)
 
-  // Fetch registered printers from Supabase + Default India Hubs
+  // Fetch real registered printers from Supabase database
   useEffect(() => {
     async function loadPrinters() {
-      let combinedList: PrinterHub[] = DEFAULT_INDIA_HUBS
-
+      setLoading(true)
       try {
         const { data, error } = await supabase.from('printers').select('*')
 
         if (error) {
-          console.warn('Using verified default India hubs:', error.message)
+          console.error('Error fetching registered printers:', error.message)
         } else if (data && data.length > 0) {
           const mapped: PrinterHub[] = data
             .filter((item) => {
@@ -278,7 +77,7 @@ function PrinterDirectoryContent() {
               model: item.printer_model || 'FDM Precision',
               technology: item.technology || 'FDM Dual-Color Precision',
               location: item.address || 'India GPS Location',
-              state: item.state || 'Delhi NCR',
+              state: item.state || '',
               lat: Number(item.latitude),
               lng: Number(item.longitude),
               materials: item.materials || ['PLA', 'PETG'],
@@ -286,25 +85,27 @@ function PrinterDirectoryContent() {
               price: item.base_price || 350,
               status: item.status || (item.is_active ? 'online' : 'offline'),
               working_hours: item.working_hours || '09:00 AM - 09:00 PM',
-              rating: item.rating || 4.9,
-              completedOrders: item.completed_orders || 42,
-              city: item.city || 'New Delhi',
+              rating: item.rating || 5.0,
+              completedOrders: item.completed_orders || 0,
+              city: item.city || '',
             }))
 
-          combinedList = [...mapped, ...DEFAULT_INDIA_HUBS.filter((d) => !mapped.some((m) => m.id === d.id))]
-          setPrinters(combinedList)
+          setPrinters(mapped)
+
+          if (preselectedPrinterId) {
+            const preselected = mapped.find((p) => p.id === preselectedPrinterId)
+            if (preselected) {
+              setSelectedHub(preselected)
+            }
+          }
+        } else {
+          setPrinters([])
         }
       } catch (err: unknown) {
-        console.warn('Printer loading fallback to defaults:', err)
+        console.error('Printer loading exception:', err)
+        setPrinters([])
       } finally {
-        if (preselectedPrinterId) {
-          const preselected =
-            combinedList.find((p) => p.id === preselectedPrinterId) ||
-            DEFAULT_INDIA_HUBS.find((p) => p.id === preselectedPrinterId)
-          if (preselected) {
-            setSelectedHub(preselected)
-          }
-        }
+        setLoading(false)
       }
     }
 
@@ -649,26 +450,61 @@ function PrinterDirectoryContent() {
               </span>
             </div>
 
-            {sortedPrinters.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '48px 24px', background: 'var(--bg-card)', borderRadius: 4, border: '1px dashed var(--border-color)' }}>
-                <div style={{ fontSize: 32, marginBottom: 8 }}>🖨️</div>
-                <div style={{ fontSize: 16, fontWeight: 900, color: 'var(--text-main)', marginBottom: 4 }}>No Hubs Match Your Search</div>
-                <div style={{ fontSize: 13, color: 'var(--text-sub)', marginBottom: 16 }}>Try searching for another city, machine, or resetting your filter criteria.</div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSearchQuery('')
-                    setActiveChip('all')
-                    setFilterMaxDistance('All')
-                    setFilterMaterial('All')
-                    setFilterTechnology('All')
-                    setFilterMaxPrice('All')
-                    setFilterMinRating('All')
-                  }}
-                  style={{ background: '#ea580c', color: '#fff', border: 'none', padding: '8px 18px', borderRadius: 4, fontWeight: 800, cursor: 'pointer', fontSize: 13 }}
-                >
-                  Reset All Filters
-                </button>
+            {loading ? (
+              <div style={{ textAlign: 'center', padding: '60px 24px', background: 'var(--bg-card)', borderRadius: 4, border: '1px solid var(--border-color)', color: 'var(--text-sub)' }}>
+                <div style={{ fontSize: 32, marginBottom: 12 }}>⏳</div>
+                <div style={{ fontSize: 16, fontWeight: 800, color: 'var(--text-main)' }}>Loading Live 3D Printer Hubs…</div>
+                <div style={{ fontSize: 13, marginTop: 4 }}>Connecting to PrintHive India GPS Network</div>
+              </div>
+            ) : sortedPrinters.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '60px 24px', background: 'var(--bg-card)', borderRadius: 4, border: '1px dashed var(--border-color)' }}>
+                <div style={{ fontSize: 36, marginBottom: 12 }}>🖨️</div>
+                <div style={{ fontSize: 18, fontWeight: 900, color: 'var(--text-main)', marginBottom: 6 }}>
+                  {printers.length === 0 ? 'No Registered Printer Hubs Yet' : 'No Hubs Match Your Search Filters'}
+                </div>
+                <p style={{ fontSize: 13, color: 'var(--text-sub)', maxWidth: 460, margin: '0 auto 20px auto', lineHeight: 1.5 }}>
+                  {printers.length === 0
+                    ? 'Be the first print farm or maker in your area to list your machine on the India OpenStreetMap and receive local print jobs.'
+                    : 'Try expanding your search query, adjusting your max distance, or resetting your filter criteria.'}
+                </p>
+                {printers.length === 0 ? (
+                  <Link
+                    href="/printers/register"
+                    style={{
+                      background: 'linear-gradient(135deg, #ea580c 0%, #c2410c 100%)',
+                      color: '#fff',
+                      border: 'none',
+                      padding: '10px 22px',
+                      borderRadius: 4,
+                      fontWeight: 800,
+                      textDecoration: 'none',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 6,
+                      fontSize: 13,
+                      boxShadow: '0 4px 14px rgba(234,88,12,0.3)',
+                    }}
+                  >
+                    <span>🖨️</span>
+                    <span>+ Register Your 3D Printer Now →</span>
+                  </Link>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSearchQuery('')
+                      setActiveChip('all')
+                      setFilterMaxDistance('All')
+                      setFilterMaterial('All')
+                      setFilterTechnology('All')
+                      setFilterMaxPrice('All')
+                      setFilterMinRating('All')
+                    }}
+                    style={{ background: '#ea580c', color: '#fff', border: 'none', padding: '8px 18px', borderRadius: 4, fontWeight: 800, cursor: 'pointer', fontSize: 13 }}
+                  >
+                    Reset All Filters
+                  </button>
+                )}
               </div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
