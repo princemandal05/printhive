@@ -457,54 +457,120 @@ function PrinterDirectoryContent() {
                 <div style={{ fontSize: 13, marginTop: 4 }}>Connecting to PrintHive India GPS Network</div>
               </div>
             ) : sortedPrinters.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '60px 24px', background: 'var(--bg-card)', borderRadius: 4, border: '1px dashed var(--border-color)' }}>
-                <div style={{ fontSize: 36, marginBottom: 12 }}>🖨️</div>
-                <div style={{ fontSize: 18, fontWeight: 900, color: 'var(--text-main)', marginBottom: 6 }}>
-                  {printers.length === 0 ? 'No Registered Printer Hubs Yet' : 'No Hubs Match Your Search Filters'}
-                </div>
-                <p style={{ fontSize: 13, color: 'var(--text-sub)', maxWidth: 460, margin: '0 auto 20px auto', lineHeight: 1.5 }}>
-                  {printers.length === 0
-                    ? 'Be the first print farm or maker in your area to list your machine on the India OpenStreetMap and receive local print jobs.'
-                    : 'Try expanding your search query, adjusting your max distance, or resetting your filter criteria.'}
-                </p>
-                {printers.length === 0 ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                {/* 🌟 1. HIGH-IMPACT MACHINE REGISTRATION ONBOARDING CARD */}
+                <div style={{
+                  background: 'linear-gradient(135deg, rgba(234,88,12,0.06) 0%, var(--bg-card) 100%)',
+                  borderRadius: 4,
+                  border: '1.5px solid rgba(234,88,12,0.3)',
+                  padding: 24,
+                  boxShadow: '0 4px 20px rgba(0,0,0,0.04)',
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, flexWrap: 'wrap', gap: 8 }}>
+                    <span style={{ background: '#ea580c', color: '#fff', padding: '3px 10px', borderRadius: 3, fontSize: 11, fontWeight: 900, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                      ⚡ Network Expansion Active
+                    </span>
+                    <span style={{ fontSize: 12, color: 'var(--text-sub)', fontWeight: 700 }}>
+                      All Indian Cities Supported
+                    </span>
+                  </div>
+
+                  <h2 style={{ fontSize: 22, fontWeight: 900, color: 'var(--text-main)', margin: '0 0 6px 0', letterSpacing: '-0.5px' }}>
+                    Be the First 3D Print Hub in Your City
+                  </h2>
+                  <p style={{ fontSize: 13, color: 'var(--text-sub)', margin: '0 0 18px 0', lineHeight: 1.5 }}>
+                    Own a Bambu Lab, Prusa, Creality, or Resin 3D printer? List your machine on PrintHive to receive local customer print orders and earn 70% direct payouts with zero platform listing fees.
+                  </p>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: 10, marginBottom: 20 }}>
+                    <div style={{ background: 'var(--bg-card)', padding: '10px', borderRadius: 4, border: '1px solid var(--border-color)' }}>
+                      <div style={{ fontSize: 16, marginBottom: 2 }}>💰</div>
+                      <div style={{ fontSize: 12, fontWeight: 800, color: 'var(--text-main)' }}>70% Direct Payouts</div>
+                      <div style={{ fontSize: 11, color: 'var(--text-sub)' }}>UPI / Bank Settlement</div>
+                    </div>
+                    <div style={{ background: 'var(--bg-card)', padding: '10px', borderRadius: 4, border: '1px solid var(--border-color)' }}>
+                      <div style={{ fontSize: 16, marginBottom: 2 }}>📦</div>
+                      <div style={{ fontSize: 12, fontWeight: 800, color: 'var(--text-main)' }}>Dunzo / Porter Pickup</div>
+                      <div style={{ fontSize: 11, color: 'var(--text-sub)' }}>Automated Local Logistics</div>
+                    </div>
+                    <div style={{ background: 'var(--bg-card)', padding: '10px', borderRadius: 4, border: '1px solid var(--border-color)' }}>
+                      <div style={{ fontSize: 16, marginBottom: 2 }}>🛡️</div>
+                      <div style={{ fontSize: 12, fontWeight: 800, color: 'var(--text-main)' }}>Escrow Protected</div>
+                      <div style={{ fontSize: 11, color: 'var(--text-sub)' }}>Guaranteed Payments</div>
+                    </div>
+                  </div>
+
                   <Link
                     href="/printers/register"
                     style={{
                       background: 'linear-gradient(135deg, #ea580c 0%, #c2410c 100%)',
                       color: '#fff',
-                      border: 'none',
-                      padding: '10px 22px',
+                      padding: '12px 20px',
                       borderRadius: 4,
                       fontWeight: 800,
                       textDecoration: 'none',
-                      display: 'inline-flex',
+                      display: 'flex',
                       alignItems: 'center',
-                      gap: 6,
+                      justifyContent: 'center',
+                      gap: 8,
                       fontSize: 13,
-                      boxShadow: '0 4px 14px rgba(234,88,12,0.3)',
+                      boxShadow: '0 4px 16px rgba(234,88,12,0.3)',
+                      textTransform: 'uppercase',
+                      letterSpacing: 0.5,
                     }}
                   >
                     <span>🖨️</span>
-                    <span>+ Register Your 3D Printer Now →</span>
+                    <span>+ Register Your 3D Printer Hub (Takes 2 Mins) →</span>
                   </Link>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSearchQuery('')
-                      setActiveChip('all')
-                      setFilterMaxDistance('All')
-                      setFilterMaterial('All')
-                      setFilterTechnology('All')
-                      setFilterMaxPrice('All')
-                      setFilterMinRating('All')
-                    }}
-                    style={{ background: '#ea580c', color: '#fff', border: 'none', padding: '8px 18px', borderRadius: 4, fontWeight: 800, cursor: 'pointer', fontSize: 13 }}
-                  >
-                    Reset All Filters
-                  </button>
-                )}
+                </div>
+
+                {/* 🚀 2. NEED SOMETHING PRINTED RIGHT NOW? ACTION BOXES */}
+                <div style={{ background: 'var(--bg-card)', padding: 20, borderRadius: 4, border: '1px solid var(--border-color)' }}>
+                  <div style={{ fontSize: 14, fontWeight: 900, color: 'var(--text-main)', marginBottom: 4 }}>
+                    Looking to get a 3D model printed today?
+                  </div>
+                  <div style={{ fontSize: 12, color: 'var(--text-sub)', marginBottom: 14 }}>
+                    Upload your CAD / 3D file or post a custom brief for fast quoting across Indian print farms.
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                    <Link
+                      href="/print-on-demand"
+                      style={{
+                        background: 'var(--bg-card-hover)',
+                        border: '1px solid var(--border-color)',
+                        padding: '12px',
+                        borderRadius: 4,
+                        textDecoration: 'none',
+                        color: 'var(--text-main)',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: 4,
+                      }}
+                    >
+                      <span style={{ fontSize: 13, fontWeight: 800, color: '#ea580c' }}>🚀 Instant 3D Print File</span>
+                      <span style={{ fontSize: 11, color: 'var(--text-sub)' }}>Upload STL/3MF for automated slicing & quote</span>
+                    </Link>
+
+                    <Link
+                      href="/requests/new"
+                      style={{
+                        background: 'var(--bg-card-hover)',
+                        border: '1px solid var(--border-color)',
+                        padding: '12px',
+                        borderRadius: 4,
+                        textDecoration: 'none',
+                        color: 'var(--text-main)',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: 4,
+                      }}
+                    >
+                      <span style={{ fontSize: 13, fontWeight: 800, color: '#2563EB' }}>📝 Post Custom Project</span>
+                      <span style={{ fontSize: 11, color: 'var(--text-sub)' }}>Receive custom bids from designers & hubs</span>
+                    </Link>
+                  </div>
+                </div>
               </div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
