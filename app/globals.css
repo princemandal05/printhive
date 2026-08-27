@@ -119,14 +119,14 @@ html.dark,
 .dark {
   --bg-canvas: #0f0f11;
   --bg-card: #18181b;
-  --bg-card-hover: #27272a;
+  --bg-card-hover: #222227;
   --text-main: #f4f4f5;
   --text-sub: #a1a1aa;
-  --border-color: #27272a;
+  --border-color: rgba(234, 88, 12, 0.4);
 
   --color-primary: #f97316;
   --color-primary-hover: #ea580c;
-  --color-primary-tint: #431407;
+  --color-primary-tint: rgba(234, 88, 12, 0.15);
   --color-primary-active: #c2410c;
 
   --color-slate-950: #f4f4f5;
@@ -136,8 +136,39 @@ html.dark,
   --color-slate-100: #18181b;
   --color-white: #18181b;
 
-  --color-border-light: #27272a;
-  --color-border-strong: #3f3f46;
+  --color-border-light: rgba(234, 88, 12, 0.3);
+  --color-border-strong: rgba(234, 88, 12, 0.6);
+}
+
+:root[data-theme="dark"] input,
+:root[data-theme="dark"] select,
+:root[data-theme="dark"] textarea,
+[data-theme="dark"] input,
+[data-theme="dark"] select,
+[data-theme="dark"] textarea,
+html.dark input,
+html.dark select,
+html.dark textarea,
+.dark input,
+.dark select,
+.dark textarea {
+  border-color: rgba(234, 88, 12, 0.45) !important;
+}
+
+:root[data-theme="dark"] input:focus,
+:root[data-theme="dark"] select:focus,
+:root[data-theme="dark"] textarea:focus,
+[data-theme="dark"] input:focus,
+[data-theme="dark"] select:focus,
+[data-theme="dark"] textarea:focus,
+html.dark input:focus,
+html.dark select:focus,
+html.dark textarea:focus,
+.dark input:focus,
+.dark select:focus,
+.dark textarea:focus {
+  border-color: #ea580c !important;
+  box-shadow: 0 0 0 3px rgba(234, 88, 12, 0.25) !important;
 }
 
 body {
