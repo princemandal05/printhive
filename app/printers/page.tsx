@@ -312,7 +312,7 @@ function PrinterDirectoryContent() {
             >
               <span>⚙️ Filters</span>
               <span style={{ fontSize: 11, background: showFiltersDrawer ? 'rgba(255,255,255,0.25)' : 'var(--bg-card)', padding: '2px 8px', borderRadius: 9999, fontWeight: 800 }}>
-                {filterMaxDistance !== 'All' || filterMaterial !== 'All' || filterTechnology !== 'All' || filterMaxPrice !== 'All' ? 'Active' : 'All'}
+                {activeChip !== 'all' || filterMaxDistance !== 'All' || filterMaterial !== 'All' || filterTechnology !== 'All' || filterMaxPrice !== 'All' || filterMinRating !== 'All' ? 'Active' : 'All'}
               </span>
             </button>
           </div>
@@ -439,7 +439,7 @@ function PrinterDirectoryContent() {
         </div>
 
         {/* 🌟 2-COLUMN AIRBNB-STYLE SPLIT SCREEN LAYOUT */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.2fr) minmax(0, 1fr)', gap: 28, alignItems: 'start' }}>
+        <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)] gap-7 items-start">
           
           {/* LEFT COLUMN: SCROLLABLE HUBS DIRECTORY FEED */}
           <div>
@@ -719,7 +719,7 @@ function PrinterDirectoryContent() {
           </div>
 
           {/* RIGHT COLUMN: STICKY INTERACTIVE OPENSTREETMAP PANE */}
-          <div style={{ position: 'sticky', top: 90, height: 'calc(100vh - 120px)', minHeight: 560, borderRadius: 24, overflow: 'hidden', border: '1px solid var(--border-color)', boxShadow: '0 8px 32px rgba(0,0,0,0.06)' }}>
+          <div className="lg:sticky lg:top-[90px] h-[460px] lg:h-[calc(100vh-120px)] min-h-[420px] lg:min-h-[560px] rounded-3xl overflow-hidden border border-[var(--border-color)] shadow-[0_8px_32px_rgba(0,0,0,0.06)]">
             <OpenStreetMap
               locations={sortedPrinters}
               selectedId={selectedHub?.id}

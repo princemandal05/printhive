@@ -321,6 +321,7 @@ export default function OpenStreetMap({
   // Browser Geolocation Handler
   const handleUseCurrentLocation = () => {
     if (typeof window === 'undefined' || !navigator.geolocation) {
+      setGeoNotificationType('info')
       setGeoNotification('Browser geolocation is not supported on this device.')
       return
     }
@@ -440,7 +441,11 @@ export default function OpenStreetMap({
           left: 14,
           right: 14,
           zIndex: 1000,
-          background: geoNotificationType === 'error' ? 'rgba(239,68,68,0.95)' : 'rgba(16,185,129,0.95)',
+          background: geoNotificationType === 'error'
+            ? 'rgba(239,68,68,0.95)'
+            : geoNotificationType === 'info'
+            ? 'rgba(30,41,59,0.95)'
+            : 'rgba(16,185,129,0.95)',
           backdropFilter: 'blur(10px)',
           color: '#fff',
           padding: '10px 18px',
