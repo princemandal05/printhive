@@ -72,10 +72,10 @@ const ROLE_NAV_LINKS: Record<string, { href: string; label: string }[]> = {
   ],
   printer_owner: [
     { href: '/', label: 'Home' },
-    { href: '/shop', label: 'Shop' },
-    { href: '/browse', label: '3D Models' },
-    { href: '/requests', label: 'Print Briefs' },
+    { href: '/dashboard/printer-owner', label: 'Hub Dashboard' },
+    { href: '/dashboard/printer-owner/register', label: '+ Register Machine' },
     { href: '/printers', label: 'Nearby Hubs' },
+    { href: '/requests', label: 'Print Briefs' },
   ],
   admin: [
     { href: '/', label: 'Home' },

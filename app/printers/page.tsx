@@ -298,15 +298,40 @@ function PrinterDirectoryContent() {
       <Navbar />
 
       <section className="container section-sm" style={{ maxWidth: 1200, margin: '0 auto', padding: '40px 20px' }}>
-        <div className="ateion-pill" style={{ marginBottom: 12 }}>
-          ⚡ Multi-tier Matching Engine (Availability → Distance → Rating)
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 16, marginBottom: 24 }}>
+          <div>
+            <div className="ateion-pill" style={{ marginBottom: 12 }}>
+              ⚡ Multi-tier Matching Engine (Availability → Distance → Rating)
+            </div>
+            <h1 style={{ fontSize: 36, fontWeight: 900, marginBottom: 8, color: 'var(--text-main)' }}>
+              Real Nearby 3D Printer Hub Matching
+            </h1>
+            <p style={{ color: 'var(--text-sub)', fontSize: 16, maxWidth: 680, margin: 0 }}>
+              Find nearest online 3D printer hubs. Select your GPS location or click any pin on OpenStreetMap to match nearby hubs.
+            </p>
+          </div>
+
+          <Link
+            href="/dashboard/printer-owner/register"
+            style={{
+              background: 'linear-gradient(135deg, #ea580c 0%, #c2410c 100%)',
+              color: '#fff',
+              padding: '12px 22px',
+              borderRadius: 99,
+              fontWeight: 800,
+              fontSize: 14,
+              textDecoration: 'none',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 8,
+              boxShadow: '0 4px 16px rgba(234,88,12,0.3)',
+              marginTop: 10,
+            }}
+          >
+            <span>🖨️</span>
+            <span>+ Register Your Machine on Map →</span>
+          </Link>
         </div>
-        <h1 style={{ fontSize: 36, fontWeight: 900, marginBottom: 8, color: 'var(--text-main)' }}>
-          Real Nearby 3D Printer Hub Matching
-        </h1>
-        <p style={{ color: 'var(--text-sub)', fontSize: 16, marginBottom: 28, maxWidth: 760 }}>
-          Find nearest online 3D printer hubs. Select your GPS location or click any pin on OpenStreetMap to match nearby hubs sorted by availability, distance, and rating.
-        </p>
 
         {/* OPENSTREETMAP MAP CONTAINER */}
         <div style={{ marginBottom: 28, border: '1px solid var(--border-color)', borderRadius: 20, overflow: 'hidden', boxShadow: '0 8px 24px rgba(0,0,0,0.06)' }}>
