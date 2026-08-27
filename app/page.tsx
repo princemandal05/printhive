@@ -107,19 +107,41 @@ export default function Home() {
   const [aiSearchQuery, setAiSearchQuery] = useState('')
   const [activeRoleTab, setActiveRoleTab] = useState<'buyer' | 'designer' | 'printer'>('buyer')
   const [isLoggedIn, setIsLoggedIn] = useState(false)
+  const [liveStats, setLiveStats] = useState({
+    hubs: 0,
+    designs: 0,
+    products: 0,
+  })
 
   useEffect(() => {
-    async function checkAuth() {
+    async function checkAuthAndStats() {
       try {
         const { data: { user } } = await supabase.auth.getUser()
         if (user) {
           setIsLoggedIn(true)
         }
+
+        // Fetch dynamic counts from real Supabase tables
+        const [
+          { count: printersCount },
+          { count: designsCount },
+          { count: productsCount },
+        ] = await Promise.all([
+          supabase.from('printers').select('*', { count: 'exact', head: true }),
+          supabase.from('designs').select('*', { count: 'exact', head: true }),
+          supabase.from('products').select('*', { count: 'exact', head: true }),
+        ])
+
+        setLiveStats({
+          hubs: printersCount || 0,
+          designs: designsCount || 0,
+          products: productsCount || 0,
+        })
       } catch (e) {
         // guest mode
       }
     }
-    checkAuth()
+    checkAuthAndStats()
   }, [])
 
   const renderIcon = (type: string) => {
@@ -190,11 +212,13 @@ export default function Home() {
                 </Link>
               </div>
 
-              {/* Quick Feature Stats */}
+              {/* Dynamic Live Network Stats */}
               <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
                 <div style={{ background: 'var(--bg-card)', padding: '14px 20px', borderRadius: 16, border: '1px solid var(--border-color)', flex: 1, minWidth: 120 }}>
-                  <div style={{ fontSize: 22, fontWeight: 900, color: '#FF6B35' }}>3-Sided</div>
-                  <div style={{ fontSize: 12, color: 'var(--text-sub)', fontWeight: 600 }}>Marketplace</div>
+                  <div style={{ fontSize: 22, fontWeight: 900, color: '#FF6B35' }}>
+                    {liveStats.hubs > 0 ? `${liveStats.hubs}+` : 'Active'}
+                  </div>
+                  <div style={{ fontSize: 12, color: 'var(--text-sub)', fontWeight: 600 }}>Printer Hubs</div>
                 </div>
                 <div style={{ background: 'var(--bg-card)', padding: '14px 20px', borderRadius: 16, border: '1px solid var(--border-color)', flex: 1, minWidth: 120 }}>
                   <div style={{ fontSize: 22, fontWeight: 900, color: '#10B981' }}>70/15/15</div>
