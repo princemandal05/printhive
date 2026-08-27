@@ -117,6 +117,8 @@ export default function RegisterPrinterForm() {
         cloudinary_public_id: cloudinaryPublicId,
         status: initialStatus,
         is_active: initialStatus === 'online',
+        rating: 0,
+        completed_orders: 0,
         created_at: new Date().toISOString(),
       })
 

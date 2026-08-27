@@ -279,7 +279,7 @@ export default function OpenStreetMap({
           <div style="font-size: 12px; color: #64748B; margin-bottom: 8px;">📍 ${loc.location || 'India'}</div>
           ${loc.distance ? `<div style="font-size: 12px; font-weight: 800; color: #ea580c; margin-bottom: 4px;">🚀 ${loc.distance} from your location</div>` : ''}
           ${loc.machines ? `<div style="font-size: 12px; color: #475569; margin-bottom: 4px;">⚙️ ${loc.machines.join(', ')}</div>` : ''}
-          ${loc.rating ? `<div style="font-size: 12px; font-weight: 800; color: #D97706;">⭐ ${loc.rating} Verified Rating</div>` : ''}
+          ${loc.rating && Number(loc.rating) > 0 ? `<div style="font-size: 12px; font-weight: 800; color: #D97706;">⭐ ${loc.rating} Verified Rating</div>` : '<div style="font-size: 11px; font-weight: 700; color: #64748B;">★ 0.0 • 🆕 New Hub</div>'}
         </div>
       `
       marker.bindPopup(popupHtml)

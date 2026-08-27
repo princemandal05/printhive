@@ -83,6 +83,8 @@ export async function POST(request: Request) {
         image_url: image_url || '',
         status: 'online',
         is_active: true,
+        rating: 0,
+        completed_orders: 0,
       })
       .select('*')
       .single()

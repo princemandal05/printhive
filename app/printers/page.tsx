@@ -85,8 +85,8 @@ function PrinterDirectoryContent() {
               price: item.base_price || 350,
               status: item.status || (item.is_active ? 'online' : 'offline'),
               working_hours: item.working_hours || '09:00 AM - 09:00 PM',
-              rating: item.rating !== null && item.rating !== undefined && !isNaN(Number(item.rating)) ? Number(item.rating) : 0,
-              completedOrders: item.completed_orders !== null && item.completed_orders !== undefined ? Number(item.completed_orders) : 0,
+              rating: (Number(item.completed_orders || 0) > 0 && item.rating) ? Number(item.rating) : 0,
+              completedOrders: Number(item.completed_orders || 0),
               city: item.city || '',
             }))
 
@@ -660,13 +660,13 @@ function PrinterDirectoryContent() {
 
                       {/* Specs & Performance */}
                       <div style={{ display: 'flex', gap: 10, marginTop: 10, marginBottom: 12, fontSize: 12, color: 'var(--text-sub)', flexWrap: 'wrap', alignItems: 'center' }}>
-                        {(printer.rating ?? 0) > 0 ? (
+                        {(printer.completedOrders ?? 0) > 0 && (printer.rating ?? 0) > 0 ? (
                           <span style={{ fontWeight: 800, color: '#F59E0B' }}>
                             ★ {(printer.rating ?? 0).toFixed(1)} ({printer.completedOrders} {printer.completedOrders === 1 ? 'job' : 'jobs'})
                           </span>
                         ) : (
                           <span style={{ fontWeight: 800, color: 'var(--text-sub)', background: 'var(--bg-card-hover)', border: '1px solid var(--border-color)', padding: '2px 8px', borderRadius: 9999, fontSize: 11 }}>
-                            ★ 0.0 ({printer.completedOrders} jobs) • 🆕 New Hub
+                            ★ 0.0 (0 jobs) • 🆕 New Hub
                           </span>
                         )}
                         <span>•</span>
