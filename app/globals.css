@@ -1828,6 +1828,15 @@ p {
   border: 1px solid var(--border-color) !important;
 }
 
+.leaflet-div-icon,
+.custom-leaflet-marker,
+.custom-picker-marker,
+.printhive-leaflet-pin {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
 .custom-leaflet-marker {
   transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }

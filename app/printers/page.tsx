@@ -342,7 +342,7 @@ function PrinterDirectoryContent() {
             onLocationPicked={handleLocationPicked}
             center={userCoords ? [userCoords.lat, userCoords.lng] : [21.7679, 78.8718]}
             zoom={userCoords ? 14 : 5}
-            height="280px"
+            height="400px"
           />
         </div>
 

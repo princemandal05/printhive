@@ -41,11 +41,12 @@ export default function OpenStreetMap({
   zoom = 5,
   isPicker = false,
   onLocationPicked,
-  height = '280px',
+  height = '400px',
 }: OpenStreetMapProps) {
   const mapRef = useRef<HTMLDivElement>(null)
   const mapInstanceRef = useRef<any>(null)
   const markersRef = useRef<any[]>([])
+  const markersMapRef = useRef<Record<string, any>>({})
   const pickerMarkerRef = useRef<any>(null)
 
   const [loaded, setLoaded] = useState(false)
@@ -104,7 +105,7 @@ export default function OpenStreetMap({
     const map = L.map(mapRef.current, {
       maxBounds: indiaBounds,
       maxBoundsViscosity: 1.0,
-      minZoom: 5,
+      minZoom: 4,
       maxZoom: 18,
     }).setView(validCenter, zoom)
 
@@ -116,23 +117,47 @@ export default function OpenStreetMap({
       attribution: '© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">OpenStreetMap</a> | PrintHive India GPS',
     }).addTo(map)
 
+    // Force size recalculation so tiles and markers align precisely
+    setTimeout(() => {
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.invalidateSize()
+      }
+    }, 200)
+
     // Click listener for location picker mode
     if (isPicker && onLocationPicked) {
       map.on('click', (e: any) => {
         if (e && e.latlng && isValidIndiaCoord(e.latlng.lat, e.latlng.lng)) {
           onLocationPicked(e.latlng.lat, e.latlng.lng)
-          map.flyTo([e.latlng.lat, e.latlng.lng], Math.max(map.getZoom(), 14), { duration: 0.8 })
+          map.flyTo([e.latlng.lat, e.latlng.lng], Math.max(map.getZoom(), 15), { duration: 0.8 })
         }
       })
     }
 
+    const onWindowResize = () => {
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.invalidateSize()
+      }
+    }
+    window.addEventListener('resize', onWindowResize)
+
     return () => {
+      window.removeEventListener('resize', onWindowResize)
       if (mapInstanceRef.current) {
         mapInstanceRef.current.remove()
         mapInstanceRef.current = null
       }
     }
   }, [loaded])
+
+  // Invalidate size whenever height prop changes
+  useEffect(() => {
+    if (mapInstanceRef.current) {
+      setTimeout(() => {
+        mapInstanceRef.current?.invalidateSize()
+      }, 100)
+    }
+  }, [height])
 
   // 3. Update Directory Markers or Draggable Picker Pin
   useEffect(() => {
@@ -141,10 +166,12 @@ export default function OpenStreetMap({
     if (!L) return
 
     const map = mapInstanceRef.current
+    map.invalidateSize()
 
     // Clear previous markers
     markersRef.current.forEach((m) => m.remove())
     markersRef.current = []
+    markersMapRef.current = {}
 
     if (pickerMarkerRef.current) {
       pickerMarkerRef.current.remove()
@@ -157,21 +184,22 @@ export default function OpenStreetMap({
       const pickerIcon = L.divIcon({
         className: 'custom-picker-marker',
         html: `<div style="
-          background: #FF6B35;
+          background: #ea580c;
           color: #fff;
           border: 3px solid #fff;
           border-radius: 50%;
-          width: 38px;
-          height: 38px;
+          width: 40px;
+          height: 40px;
           display: flex;
           align-items: center;
           justify-content: center;
-          font-size: 18px;
-          box-shadow: 0 4px 16px rgba(255,107,53,0.5);
+          font-size: 20px;
+          box-shadow: 0 6px 20px rgba(234,88,12,0.6);
           cursor: grab;
+          transform: translate(-50%, -50%);
         ">📍</div>`,
-        iconSize: [38, 38],
-        iconAnchor: [19, 19],
+        iconSize: [0, 0],
+        iconAnchor: [0, 0],
       })
 
       const draggableMarker = L.marker([pickerLoc.lat, pickerLoc.lng], {
@@ -196,60 +224,88 @@ export default function OpenStreetMap({
     if (validLocations.length === 0) return
 
     // Directory Multi-Marker Rendering
-    const createCustomIcon = (isSelected: boolean) =>
+    const createCustomIcon = (isSelected: boolean, name: string) =>
       L.divIcon({
-        className: 'custom-leaflet-marker',
-        html: `<div style="
-          background: ${isSelected ? '#FF6B35' : '#0F172A'};
-          color: #fff;
-          border: 2px solid #fff;
-          border-radius: 50%;
-          width: 34px;
-          height: 34px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 16px;
-          box-shadow: 0 4px 14px rgba(0,0,0,0.4);
-          transform: scale(${isSelected ? 1.25 : 1});
-          transition: transform 0.2s;
-        ">🖨️</div>`,
-        iconSize: [34, 34],
-        iconAnchor: [17, 17],
+        className: 'printhive-leaflet-pin',
+        html: `
+          <div style="
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transform: translate(-50%, -100%);
+            cursor: pointer;
+          ">
+            <div style="
+              background: ${isSelected ? '#ea580c' : '#0f172a'};
+              color: #fff;
+              border: 2.5px solid #fff;
+              border-radius: 50%;
+              width: ${isSelected ? '44px' : '36px'};
+              height: ${isSelected ? '44px' : '36px'};
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              font-size: ${isSelected ? '20px' : '16px'};
+              box-shadow: 0 6px 18px rgba(0,0,0,0.4);
+              transition: all 0.2s ease;
+            ">🖨️</div>
+            <div style="
+              background: rgba(15, 23, 42, 0.9);
+              color: #fff;
+              font-size: 11px;
+              font-weight: 800;
+              padding: 2px 7px;
+              border-radius: 6px;
+              margin-top: 3px;
+              white-space: nowrap;
+              border: 1px solid rgba(255,255,255,0.2);
+              box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+            ">${name.length > 20 ? name.substring(0, 18) + '…' : name}</div>
+          </div>
+        `,
+        iconSize: [0, 0],
+        iconAnchor: [0, 0],
       })
 
     validLocations.forEach((loc) => {
       const isSelected = loc.id === selectedId
       const marker = L.marker([loc.lat, loc.lng], {
-        icon: createCustomIcon(isSelected),
+        icon: createCustomIcon(isSelected, loc.name || 'Printer Hub'),
       }).addTo(map)
 
       const popupHtml = `
-        <div style="font-family: inherit; padding: 4px; color: #0F172A;">
-          <div style="font-weight: 800; font-size: 14px; margin-bottom: 2px;">${loc.name || 'Printer Hub'}</div>
+        <div style="font-family: inherit; padding: 6px; color: #0F172A; min-width: 180px;">
+          <div style="font-weight: 900; font-size: 14px; margin-bottom: 2px; color: #0F172A;">${loc.name || 'Printer Hub'}</div>
           <div style="font-size: 12px; color: #64748B; margin-bottom: 6px;">📍 ${loc.location || 'India'}</div>
-          ${loc.distance ? `<div style="font-size: 11px; font-weight: 700; color: #FF6B35;">🚀 ${loc.distance}</div>` : ''}
-          ${loc.machines ? `<div style="font-size: 11px; color: #475569; margin-top: 4px;">🖨️ ${loc.machines.join(', ')}</div>` : ''}
+          ${loc.distance ? `<div style="font-size: 11px; font-weight: 800; color: #ea580c; margin-bottom: 4px;">🚀 ${loc.distance}</div>` : ''}
+          ${loc.machines ? `<div style="font-size: 11px; color: #475569;">🖨️ ${loc.machines.join(', ')}</div>` : ''}
         </div>
       `
       marker.bindPopup(popupHtml)
 
       marker.on('click', () => {
-        map.flyTo([loc.lat, loc.lng], 15, { duration: 1.0 })
+        map.flyTo([loc.lat, loc.lng], 16, { duration: 1.0 })
         marker.openPopup()
         if (onSelectLocation) onSelectLocation(loc)
       })
 
       markersRef.current.push(marker)
+      markersMapRef.current[loc.id] = marker
     })
 
-    if (selectedId) {
+    if (selectedId && markersMapRef.current[selectedId]) {
       const activeLoc = validLocations.find((l) => l.id === selectedId)
       if (activeLoc) {
-        map.flyTo([activeLoc.lat, activeLoc.lng], 15, { duration: 1.0 })
+        map.flyTo([activeLoc.lat, activeLoc.lng], 16, { duration: 1.0 })
+        setTimeout(() => {
+          markersMapRef.current[selectedId]?.openPopup()
+        }, 500)
       }
+    } else if (!selectedId && validLocations.length > 1) {
+      const latLngs = validLocations.map((l) => [l.lat, l.lng])
+      map.fitBounds(L.latLngBounds(latLngs), { padding: [50, 50], maxZoom: 12 })
     }
-  }, [loaded, validLocations, selectedId, isPicker])
+  }, [loaded, locations, selectedId, isPicker])
 
   // Browser Geolocation Handler
   const handleUseCurrentLocation = () => {
