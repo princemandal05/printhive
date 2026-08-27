@@ -24,11 +24,13 @@ function OrderTrackingContent() {
   const isJustReviewed = searchParams?.get('reviewed') === 'true'
 
   const [currentStatus, setCurrentStatus] = useState<OrderStatus | null>(null)
+  const [orderDetails, setOrderDetails] = useState<any>(null)
   const [history, setHistory] = useState<HistoryEntry[]>([])
   const [loading, setLoading] = useState(true)
   const [orderNotFound, setOrderNotFound] = useState(false)
   const [actionMsg, setActionMsg] = useState('')
   const [confirmingDelivery, setConfirmingDelivery] = useState(false)
+  const [payingEscrow, setPayingEscrow] = useState(false)
 
   // Load live order and status history from Supabase
   useEffect(() => {
@@ -39,10 +41,10 @@ function OrderTrackingContent() {
       setOrderNotFound(false)
 
       try {
-        // Query order status
+        // Query order status and details
         const { data: orderData, error: orderErr } = await supabase
           .from('orders')
-          .select('status')
+          .select('*')
           .eq('id', orderId)
           .maybeSingle()
 
@@ -54,6 +56,7 @@ function OrderTrackingContent() {
 
         if (orderData?.status) {
           setCurrentStatus(orderData.status as OrderStatus)
+          setOrderDetails(orderData)
         } else {
           setOrderNotFound(true)
         }
@@ -93,6 +96,35 @@ function OrderTrackingContent() {
   const activeStepIndex = currentStatus ? ORDER_LIFECYCLE_STEPS.findIndex((s) => s.key === currentStatus) : -1
   const safeStepIndex = activeStepIndex >= 0 ? activeStepIndex : 0
 
+  const handlePayEscrow = async () => {
+    if (payingEscrow || !currentStatus) return
+    setPayingEscrow(true)
+    setActionMsg('🔒 Connecting to Razorpay Escrow Protection...')
+
+    try {
+      const res = await updateOrderStatus(
+        supabase,
+        orderId,
+        'PAYMENT_CONFIRMED',
+        'Payment verified and secured in Escrow protection.',
+        undefined,
+        currentStatus
+      )
+
+      if (res.success) {
+        setCurrentStatus('PAYMENT_CONFIRMED')
+        setActionMsg('✅ Payment Confirmed! Funds locked in Escrow. Manufacturing starting soon.')
+      } else {
+        setActionMsg(`❌ Payment verification failed: ${res.error || 'Please try again'}`)
+      }
+    } catch (err: any) {
+      console.error('Error completing escrow payment:', err)
+      setActionMsg('❌ Payment processing error. Please try again.')
+    } finally {
+      setPayingEscrow(false)
+    }
+  }
+
   const handleConfirmDelivery = async () => {
     if (confirmingDelivery || !currentStatus) return
     setConfirmingDelivery(true)
@@ -116,6 +148,7 @@ function OrderTrackingContent() {
   }
 
   const isCompletedOrDelivered = currentStatus ? ['DELIVERED', 'COMPLETED'].includes(currentStatus) : false
+  const orderAmount = orderDetails?.total_amount || orderDetails?.total_price || orderDetails?.total || orderDetails?.price || 350
 
   if (loading) {
     return (
@@ -176,6 +209,81 @@ function OrderTrackingContent() {
       <p style={{ color: 'var(--text-sub)', marginBottom: 32, fontSize: 15 }}>
         Real-time audit status history logged directly in PostgreSQL <code style={{ color: '#ea580c' }}>order_status_history</code>.
       </p>
+
+      {/* Status Highlights Banner: Request Dispatched, Accepted & Awaiting Payment, or Declined */}
+      {currentStatus === 'PRINTER_ASSIGNED' && (
+        <div style={{ background: 'rgba(245, 158, 11, 0.08)', border: '1px solid rgba(245, 158, 11, 0.3)', padding: 22, borderRadius: 20, marginBottom: 28, display: 'flex', alignItems: 'center', gap: 16 }}>
+          <div style={{ fontSize: 36 }}>⏳</div>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 17, fontWeight: 900, color: '#D97706', marginBottom: 3 }}>
+              Print Request Dispatched — Awaiting Hub Review
+            </div>
+            <div style={{ fontSize: 13.5, color: 'var(--text-sub)', lineHeight: 1.5 }}>
+              Your 3D CAD model and print specifications have been routed to the printer hub operator. Once they inspect your parameters and accept the job, the Escrow payment button will unlock here for you to confirm.
+            </div>
+          </div>
+        </div>
+      )}
+
+      {currentStatus === 'PRINTER_ACCEPTED' && (
+        <div style={{ background: 'rgba(16, 185, 129, 0.08)', border: '1px solid rgba(16, 185, 129, 0.3)', padding: 24, borderRadius: 20, marginBottom: 28, boxShadow: '0 4px 20px rgba(16,185,129,0.08)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 16, flex: 1, minWidth: 260 }}>
+              <div style={{ fontSize: 36 }}>🎉</div>
+              <div>
+                <div style={{ fontSize: 17, fontWeight: 900, color: '#10B981', marginBottom: 3 }}>
+                  Print Job Accepted by Hub Operator!
+                </div>
+                <div style={{ fontSize: 13.5, color: 'var(--text-sub)', lineHeight: 1.5 }}>
+                  Your 3D slicing specifications have been approved. Pay ₹{orderAmount} securely via Razorpay Escrow to lock your production slot and start active printing.
+                </div>
+              </div>
+            </div>
+
+            <button
+              onClick={handlePayEscrow}
+              disabled={payingEscrow}
+              style={{
+                background: 'linear-gradient(135deg, #ea580c 0%, #c2410c 100%)',
+                color: '#fff',
+                border: 'none',
+                padding: '14px 26px',
+                borderRadius: 9999,
+                fontSize: 14.5,
+                fontWeight: 900,
+                cursor: payingEscrow ? 'not-allowed' : 'pointer',
+                boxShadow: '0 6px 20px rgba(234, 88, 12, 0.35)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                flexShrink: 0,
+              }}
+            >
+              🔒 {payingEscrow ? 'Securing Escrow...' : `Pay ₹${orderAmount} via Escrow`}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {currentStatus === 'CANCELLED' && (
+        <div style={{ background: 'rgba(239, 68, 68, 0.08)', border: '1px solid rgba(239, 68, 68, 0.3)', padding: 22, borderRadius: 20, marginBottom: 28, display: 'flex', alignItems: 'center', gap: 16 }}>
+          <div style={{ fontSize: 36 }}>✕</div>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 17, fontWeight: 900, color: '#EF4444', marginBottom: 3 }}>
+              Job Request Declined by Hub
+            </div>
+            <div style={{ fontSize: 13.5, color: 'var(--text-sub)', lineHeight: 1.5, marginBottom: 8 }}>
+              The printer hub operator was unable to accept this request at this time. You can dispatch your 3D model to another nearby hub.
+            </div>
+            <Link
+              href="/print-on-demand"
+              style={{ background: '#ea580c', color: '#fff', padding: '6px 14px', borderRadius: 9999, fontSize: 12, fontWeight: 800, textDecoration: 'none', display: 'inline-block' }}
+            >
+              Choose Another Hub ↗
+            </Link>
+          </div>
+        </div>
+      )}
 
       {/* 13-STATE INTERACTIVE TIMELINE DISPLAY */}
       <div style={{ background: 'var(--bg-card)', borderRadius: 24, border: '1px solid var(--border-color)', padding: 28, marginBottom: 32, boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>

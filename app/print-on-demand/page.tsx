@@ -207,48 +207,46 @@ function PrintOnDemandContent() {
   const isHubCompatible = selectedHub ? selectedHub.materials.some((m) => m.toLowerCase().includes(material.id.toLowerCase())) : false
   const canSubmit = analysisDone && !!deliveryAddress.trim() && quantity > 0 && isHubCompatible && !!selectedHub
 
-  const handlePlaceOrder = () => {
+  const handlePlaceOrder = async () => {
     if (!canSubmit || !selectedHub) return
     setPlacing(true)
 
-    // Persist complete manufacturing job configuration for checkout reconstruction
-    const printJobPayload = {
-      fileName,
-      meshDimensions,
-      meshVolumeCm3,
-      estimatedWeightGrams,
-      material: material.id,
-      color,
-      quality: quality.name,
-      infill,
-      includeSupports,
-      selectedHubId: selectedHub.id,
-      selectedHubName: selectedHub.name,
-      deliveryAddress,
-      unitPrice,
-      quantity,
-      totalPrice,
-      timestamp: Date.now(),
-    }
-
     try {
-      localStorage.setItem('printhive_current_print_job', JSON.stringify(printJobPayload))
-    } catch (e) {
-      console.warn('Could not persist print job to localStorage:', e)
-    }
+      const notesSummary = `Custom 3D Print: ${fileName || 'Custom Part'} | Material: ${material.id} | Color: ${color} | Quality: ${quality.name} | Infill: ${infill}% | Supports: ${includeSupports ? 'Yes' : 'No'}${specialInstructions ? ` | Notes: ${specialInstructions}` : ''}`
 
-    addToCart(
-      {
-        id: `pod-${Date.now()}`,
-        name: `Custom Print: ${fileName} (${material.id}, ${color})`,
-        price: unitPrice,
-        seller: selectedHub.name,
-        stock: 99,
-        image: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=600&q=80',
-      },
-      quantity
-    )
-    router.push('/checkout')
+      const res = await fetch('/api/orders/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          printer_id: selectedHub.id,
+          quantity,
+          shipping_address: deliveryAddress,
+          custom_total: totalPrice,
+          initial_status: 'PRINTER_ASSIGNED',
+          notes: notesSummary,
+        }),
+      })
+
+      const resData = await res.json()
+
+      if (!res.ok || !resData.success) {
+        if (res.status === 401) {
+          alert('Please log in or sign up to dispatch your print job request!')
+          router.push(`/login?redirect=/print-on-demand`)
+          return
+        }
+        alert(`Could not dispatch order: ${resData.error || 'Please try again'}`)
+        setPlacing(false)
+        return
+      }
+
+      // Successfully created print request! Redirect directly to the live Order Tracking page
+      router.push(`/orders/${resData.order.id}`)
+    } catch (err: any) {
+      console.error('Error creating print job order:', err)
+      alert('An unexpected error occurred while dispatching your print request. Please try again.')
+      setPlacing(false)
+    }
   }
 
   return (

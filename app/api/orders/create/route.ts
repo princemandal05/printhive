@@ -24,6 +24,8 @@ export async function POST(request: Request) {
       quantity,
       shipping_address,
       notes,
+      custom_total,
+      initial_status,
     } = body
 
     const qty = Number.isInteger(Number(quantity)) && Number(quantity) > 0 ? Number(quantity) : 1
@@ -78,8 +80,9 @@ export async function POST(request: Request) {
       derivedPrinterOwnerId = printer.owner_id
     }
 
-    // If no target item was supplied, require valid price
-    const total = Math.round(calculatedUnitPrice * qty * 100) / 100
+    // Determine total amount (using custom_total if passed from instant slicer calculations)
+    const computedTotal = Math.round(calculatedUnitPrice * qty * 100) / 100
+    const total = (Number(custom_total) > 0) ? Math.round(Number(custom_total) * 100) / 100 : computedTotal
 
     if (!Number.isFinite(total) || total <= 0) {
       return NextResponse.json({ error: 'Order total amount must be a finite, positive number' }, { status: 400 })
@@ -89,6 +92,8 @@ export async function POST(request: Request) {
     const printerPayout = Math.round(total * 0.70 * 100) / 100
     const designerRoyalty = Math.round(total * 0.15 * 100) / 100
     const platformFee = Math.round((total - printerPayout - designerRoyalty) * 100) / 100
+
+    const orderStatus = initial_status || (printer_id ? 'PRINTER_ASSIGNED' : 'PENDING_PAYMENT')
 
     const { data: order, error: insertError } = await supabase
       .from('orders')
@@ -111,7 +116,7 @@ export async function POST(request: Request) {
         designer_share: designerRoyalty,
         platform_fee: platformFee,
         platform_share: platformFee,
-        status: 'PENDING_PAYMENT',
+        status: orderStatus,
         payment_status: 'pending',
         shipping_address: shipping_address || '',
         notes: notes || '',
@@ -125,10 +130,14 @@ export async function POST(request: Request) {
     }
 
     // Write initial status record in order_status_history
+    const historyNotes = orderStatus === 'PRINTER_ASSIGNED'
+      ? 'Custom print request dispatched to printer hub. Awaiting operator acceptance before payment.'
+      : 'Order created, awaiting Razorpay payment confirmation.'
+
     const { error: historyErr } = await supabase.from('order_status_history').insert({
       order_id: order.id,
-      status: 'PENDING_PAYMENT',
-      notes: 'Order created, awaiting Razorpay payment confirmation.',
+      status: orderStatus,
+      notes: historyNotes,
       updated_by: user.id,
     })
 
@@ -137,11 +146,22 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Order created, but failed to record initial history' }, { status: 500 })
     }
 
+    // Send real-time notification to printer owner if assigned
+    if (derivedPrinterOwnerId) {
+      await supabase.from('notifications').insert({
+        user_id: derivedPrinterOwnerId,
+        title: '🖨️ New Print Job Request',
+        message: `New print request #${order.id.slice(0, 8)} for ₹${total} received. Review specs and accept the job.`,
+        type: 'order',
+        link: `/dashboard/printer-owner`,
+      })
+    }
+
     // Send real-time notification to buyer
     await supabase.from('notifications').insert({
       user_id: user.id,
-      title: '📦 Order Placed',
-      message: `Your order #${order.id.slice(0, 8)} for ₹${total} has been placed. Complete payment to initiate printing.`,
+      title: '📦 Print Request Dispatched',
+      message: `Your request #${order.id.slice(0, 8)} has been sent to the printer hub for review.`,
       type: 'order',
       link: `/orders/${order.id}`,
     })
