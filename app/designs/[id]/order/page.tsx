@@ -69,32 +69,24 @@ function OrderPageContent() {
   useEffect(() => {
     async function loadPrinters() {
       try {
-        const { data: dbPrinters } = await supabase.from('printers').select('*').limit(5)
+        const { data: dbPrinters } = await supabase.from('printers').select('*')
         if (dbPrinters && dbPrinters.length > 0) {
           const mapped = dbPrinters.map((p: any) => ({
             id: p.id,
-            name: p.name || p.hub_name || 'PrintHive Hub',
-            distance: '1.5 km',
-            rating: p.rating ?? 4.9,
-            price: Number(p.hourly_rate || p.price || 400),
+            name: p.name || p.printer_model || 'PrintHub',
+            distance: 'Nearby',
+            rating: p.rating !== null && p.rating !== undefined ? Number(p.rating) : 0,
+            price: Number(p.base_price || p.price || 350),
           }))
           setPrinters(mapped)
           setSelectedPrinter(mapped[0]?.id || null)
         } else {
-          const defaultHubs = [
-            { id: 'hub-1', name: 'PrintHive Precision Hub 1', distance: '1.2 km', rating: 4.9, price: 450 },
-            { id: 'hub-2', name: 'Metro MakerSpace Hub', distance: '2.8 km', rating: 4.8, price: 420 },
-            { id: 'hub-3', name: 'High-Res Additive Studio', distance: '3.5 km', rating: 4.9, price: 480 },
-          ]
-          setPrinters(defaultHubs)
-          setSelectedPrinter(defaultHubs[0]?.id || null)
+          setPrinters([])
+          setSelectedPrinter(null)
         }
       } catch {
-        const defaultHubs = [
-          { id: 'hub-1', name: 'PrintHive Precision Hub 1', distance: '1.2 km', rating: 4.9, price: 450 },
-        ]
-        setPrinters(defaultHubs)
-        setSelectedPrinter(defaultHubs[0]?.id || null)
+        setPrinters([])
+        setSelectedPrinter(null)
       }
     }
     loadPrinters()
@@ -265,7 +257,7 @@ function OrderPageContent() {
                         <div>
                           <div className="text-sm" style={{ fontWeight: 600 }}>{p.name}</div>
                           <div className="text-xs text-muted">
-                            {p.distance || 'Nearby'} · {p.rating !== undefined ? `★ ${p.rating}` : 'Unrated'}
+                            {p.distance || 'Nearby'} · {(p.rating ?? 0) > 0 ? `★ ${(p.rating ?? 0).toFixed(1)}` : '★ 0.0 (New Hub)'}
                           </div>
                         </div>
                       </div>

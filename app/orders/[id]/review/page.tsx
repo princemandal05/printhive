@@ -19,9 +19,18 @@ export default function LeaveReviewPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setSubmitting(true)
-    await new Promise((res) => setTimeout(res, 800))
-    // Redirect to Shop Page for further actions with review success banner
-    router.push('/shop?reviewed=true')
+    try {
+      await fetch(`/api/orders/${orderId}/review`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ rating, text }),
+      })
+    } catch (err) {
+      console.warn('Review submit note:', err)
+    } finally {
+      setSubmitting(false)
+      router.push(`/orders/${orderId}?reviewed=true`)
+    }
   }
 
   return (

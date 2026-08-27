@@ -85,8 +85,8 @@ function PrinterDirectoryContent() {
               price: item.base_price || 350,
               status: item.status || (item.is_active ? 'online' : 'offline'),
               working_hours: item.working_hours || '09:00 AM - 09:00 PM',
-              rating: item.rating || 5.0,
-              completedOrders: item.completed_orders || 0,
+              rating: item.rating !== null && item.rating !== undefined && !isNaN(Number(item.rating)) ? Number(item.rating) : 0,
+              completedOrders: item.completed_orders !== null && item.completed_orders !== undefined ? Number(item.completed_orders) : 0,
               city: item.city || '',
             }))
 
@@ -121,7 +121,6 @@ function PrinterDirectoryContent() {
           ...printer,
           calculatedDistanceKm: distKm,
           formattedDistance: formatDistance(distKm),
-          distance: formatDistance(distKm),
         }
       }
       return printer
@@ -141,27 +140,36 @@ function PrinterDirectoryContent() {
         if (!matchName && !matchModel && !matchLocation && !matchMaterial) return false
       }
 
-      // 2. Quick Chip Filters
+      // 2. Chip Filtering
       if (activeChip === 'online' && p.status !== 'online') return false
+      if (activeChip === 'sla' && !p.technology?.toLowerCase().includes('sla') && !p.technology?.toLowerCase().includes('resin')) return false
       if (activeChip === 'fdm' && !p.technology?.toLowerCase().includes('fdm')) return false
-      if (activeChip === 'resin' && !p.technology?.toLowerCase().includes('sla') && !p.technology?.toLowerCase().includes('resin')) return false
-      if (activeChip === 'near' && p.calculatedDistanceKm !== undefined && p.calculatedDistanceKm > 25) return false
+      if (activeChip === 'tpu' && !p.materials?.some((m) => m.toLowerCase().includes('tpu'))) return false
+      if (activeChip === 'under400' && (p.base_price || 0) > 400) return false
 
-      // 3. Dropdown Filters
-      if (filterMaxDistance !== 'All' && p.calculatedDistanceKm !== undefined && p.calculatedDistanceKm > filterMaxDistance) {
-        return false
+      // 3. Drawer Distance Filter
+      if (filterMaxDistance !== 'All') {
+        if (p.calculatedDistanceKm === undefined || p.calculatedDistanceKm > filterMaxDistance) return false
       }
-      if (filterMaterial !== 'All' && (!p.materials || !p.materials.some((m) => m.toLowerCase().includes(filterMaterial.toLowerCase())))) {
-        return false
+
+      // 4. Material Filter
+      if (filterMaterial !== 'All') {
+        if (!p.materials?.some((m) => m.toLowerCase() === filterMaterial.toLowerCase())) return false
       }
-      if (filterTechnology !== 'All' && (!p.technology || !p.technology.toLowerCase().includes(filterTechnology.toLowerCase()))) {
-        return false
+
+      // 5. Technology Filter
+      if (filterTechnology !== 'All') {
+        if (p.technology !== filterTechnology) return false
       }
-      if (filterMaxPrice !== 'All' && (p.base_price || 0) > filterMaxPrice) {
-        return false
+
+      // 6. Max Price Filter
+      if (filterMaxPrice !== 'All') {
+        if ((p.base_price || 0) > filterMaxPrice) return false
       }
-      if (filterMinRating !== 'All' && (p.rating || 0) < filterMinRating) {
-        return false
+
+      // 7. Min Rating Filter
+      if (filterMinRating !== 'All') {
+        if ((p.rating || 0) < filterMinRating) return false
       }
 
       return true
@@ -192,22 +200,22 @@ function PrinterDirectoryContent() {
     switch (status) {
       case 'online':
         return (
-          <span style={{ background: '#ECFDF5', color: '#059669', padding: '3px 8px', borderRadius: 4, fontSize: 11, fontWeight: 800, border: '1px solid #A7F3D0', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-            <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#10B981' }} />
+          <span style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#10B981', padding: '4px 12px', borderRadius: 9999, fontSize: 11, fontWeight: 800, border: '1px solid rgba(16, 185, 129, 0.3)', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+            <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#10B981', display: 'inline-block', boxShadow: '0 0 6px #10B981' }} />
             Ready for Orders
           </span>
         )
       case 'busy':
         return (
-          <span style={{ background: '#FEF3C7', color: '#D97706', padding: '3px 8px', borderRadius: 4, fontSize: 11, fontWeight: 800, border: '1px solid #FDE68A', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-            <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#F59E0B' }} />
+          <span style={{ background: 'rgba(245, 158, 11, 0.15)', color: '#F59E0B', padding: '4px 12px', borderRadius: 9999, fontSize: 11, fontWeight: 800, border: '1px solid rgba(245, 158, 11, 0.3)', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+            <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#F59E0B', display: 'inline-block' }} />
             In Queue (~2h)
           </span>
         )
       default:
         return (
-          <span style={{ background: '#FEF2F2', color: '#DC2626', padding: '3px 8px', borderRadius: 4, fontSize: 11, fontWeight: 800, border: '1px solid #FCA5A5', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-            <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#EF4444' }} />
+          <span style={{ background: 'rgba(239, 68, 68, 0.15)', color: '#EF4444', padding: '4px 12px', borderRadius: 9999, fontSize: 11, fontWeight: 800, border: '1px solid rgba(239, 68, 68, 0.3)', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+            <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#EF4444', display: 'inline-block' }} />
             Offline
           </span>
         )
@@ -651,8 +659,16 @@ function PrinterDirectoryContent() {
                       </div>
 
                       {/* Specs & Performance */}
-                      <div style={{ display: 'flex', gap: 12, marginTop: 10, marginBottom: 12, fontSize: 12, color: 'var(--text-sub)', flexWrap: 'wrap', alignItems: 'center' }}>
-                        <span style={{ fontWeight: 800, color: '#F59E0B' }}>★ {printer.rating || '4.9'} ({printer.completedOrders || 50}+ jobs)</span>
+                      <div style={{ display: 'flex', gap: 10, marginTop: 10, marginBottom: 12, fontSize: 12, color: 'var(--text-sub)', flexWrap: 'wrap', alignItems: 'center' }}>
+                        {(printer.rating ?? 0) > 0 ? (
+                          <span style={{ fontWeight: 800, color: '#F59E0B' }}>
+                            ★ {(printer.rating ?? 0).toFixed(1)} ({printer.completedOrders} {printer.completedOrders === 1 ? 'job' : 'jobs'})
+                          </span>
+                        ) : (
+                          <span style={{ fontWeight: 800, color: 'var(--text-sub)', background: 'var(--bg-card-hover)', border: '1px solid var(--border-color)', padding: '2px 8px', borderRadius: 9999, fontSize: 11 }}>
+                            ★ 0.0 ({printer.completedOrders} jobs) • 🆕 New Hub
+                          </span>
+                        )}
                         <span>•</span>
                         <span style={{ color: 'var(--text-main)', fontWeight: 700 }}>⚙️ {printer.technology}</span>
                         <span>•</span>
