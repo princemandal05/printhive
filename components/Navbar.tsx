@@ -61,6 +61,7 @@ const ROLE_NAV_LINKS: Record<string, { href: string; label: string }[]> = {
   seller: [
     { href: '/', label: 'Home' },
     { href: '/shop', label: 'Shop' },
+    { href: '/browse', label: '3D Models' },
     { href: '/dashboard/seller/products/new', label: '+ Add Product' },
   ],
   designer: [
@@ -72,8 +73,8 @@ const ROLE_NAV_LINKS: Record<string, { href: string; label: string }[]> = {
   ],
   printer_owner: [
     { href: '/', label: 'Home' },
-    { href: '/dashboard/printer-owner', label: 'Hub Dashboard' },
-    { href: '/dashboard/printer-owner/register', label: '+ Register Machine' },
+    { href: '/shop', label: 'Shop' },
+    { href: '/browse', label: '3D Models' },
     { href: '/printers', label: 'Nearby Hubs' },
     { href: '/requests', label: 'Print Briefs' },
   ],
