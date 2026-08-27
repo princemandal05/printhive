@@ -55,3 +55,47 @@ export function sortPrintersByDistance<T extends { lat: number; lng: number }>(
     })
     .sort((a, b) => a.calculatedDistanceKm - b.calculatedDistanceKm)
 }
+
+/**
+ * Reverse geocodes coordinates into an Indian address & city.
+ */
+export async function reverseGeocode(lat: number, lng: number) {
+  try {
+    const res = await fetch(`/api/geocode?lat=${lat}&lng=${lng}`)
+    if (!res.ok) return null
+    return await res.json()
+  } catch (err) {
+    console.warn('Reverse geocode error:', err)
+    return null
+  }
+}
+
+/**
+ * Searches for coordinates by Indian city/address text.
+ */
+export async function searchAddress(query: string) {
+  try {
+    const res = await fetch(`/api/geocode?q=${encodeURIComponent(query)}`)
+    if (!res.ok) return []
+    const data = await res.json()
+    return data.results || []
+  } catch (err) {
+    console.warn('Address search error:', err)
+    return []
+  }
+}
+
+/**
+ * Detects approximate user location via IP address without browser prompt.
+ */
+export async function detectIpLocation() {
+  try {
+    const res = await fetch('/api/geocode?type=ip')
+    if (!res.ok) return null
+    return await res.json()
+  } catch (err) {
+    console.warn('IP location detection error:', err)
+    return null
+  }
+}
+

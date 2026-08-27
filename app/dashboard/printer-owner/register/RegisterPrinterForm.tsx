@@ -1,12 +1,13 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import dynamic from 'next/dynamic'
 import { createClient } from '@/utils/supabase/client'
 import type { MapLocation } from '@/components/OpenStreetMap'
 import CloudinaryUploader, { type CloudinaryMetadata } from '@/components/CloudinaryUploader'
+import { reverseGeocode, detectIpLocation } from '@/utils/location'
 
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
@@ -44,13 +45,34 @@ export default function RegisterPrinterForm() {
   const [submitting, setSubmitting] = useState(false)
   const [statusMsg, setStatusMsg] = useState('')
 
+  useEffect(() => {
+    async function initUserLocation() {
+      const geo = await detectIpLocation()
+      if (geo && geo.lat && geo.lng) {
+        setLat(geo.lat)
+        setLng(geo.lng)
+        if (!address && geo.city) {
+          setAddress(`${geo.city}, ${geo.region || 'India'}`)
+        }
+      }
+    }
+    initUserLocation()
+  }, [])
+
   const toggleMaterial = (m: string) => {
     setMaterials((prev) => (prev.includes(m) ? prev.filter((x) => x !== m) : [...prev, m]))
   }
 
-  const handleLocationPicked = (pickedLat: number, pickedLng: number) => {
-    setLat(Number(pickedLat.toFixed(5)))
-    setLng(Number(pickedLng.toFixed(5)))
+  const handleLocationPicked = async (pickedLat: number, pickedLng: number) => {
+    const fixedLat = Number(pickedLat.toFixed(5))
+    const fixedLng = Number(pickedLng.toFixed(5))
+    setLat(fixedLat)
+    setLng(fixedLng)
+    
+    const geo = await reverseGeocode(fixedLat, fixedLng)
+    if (geo && geo.formattedAddress) {
+      setAddress(geo.formattedAddress)
+    }
   }
 
   const handlePrinterPhotoSuccess = (meta: CloudinaryMetadata) => {
