@@ -92,22 +92,22 @@ export default function LoginPage() {
   }
 
   const s: Record<string, React.CSSProperties> = {
-    page: { minHeight: '100vh', background: '#FAF8F5', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '32px 16px', fontFamily: 'inherit' },
-    card: { background: '#FFFFFF', borderRadius: 24, padding: '44px 40px', width: '100%', maxWidth: 440, border: '1px solid #E2E8F0', boxShadow: '0 20px 60px rgba(0, 0, 0, 0.06)' },
-    logo: { fontSize: 26, fontWeight: 900, color: '#0F172A', marginBottom: 24, textAlign: 'center' as const, letterSpacing: '-0.5px' },
-    logoAccent: { color: '#FF6B35' },
-    title: { fontSize: 22, fontWeight: 800, color: '#0F172A', marginBottom: 6, textAlign: 'center' as const },
-    sub: { fontSize: 14, color: '#64748B', textAlign: 'center' as const, marginBottom: 28 },
-    label: { fontSize: 13, fontWeight: 700, color: '#334155', marginBottom: 6, display: 'block' },
+    page: { minHeight: '100vh', background: 'var(--bg-canvas)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '32px 16px', fontFamily: 'inherit' },
+    card: { background: 'var(--bg-card)', borderRadius: 24, padding: '44px 40px', width: '100%', maxWidth: 440, border: '1px solid var(--border-color)', boxShadow: '0 20px 60px rgba(0, 0, 0, 0.06)' },
+    logo: { fontSize: 26, fontWeight: 900, color: 'var(--text-main)', marginBottom: 24, textAlign: 'center' as const, letterSpacing: '-0.5px' },
+    logoAccent: { color: '#ea580c' },
+    title: { fontSize: 22, fontWeight: 800, color: 'var(--text-main)', marginBottom: 6, textAlign: 'center' as const },
+    sub: { fontSize: 14, color: 'var(--text-sub)', textAlign: 'center' as const, marginBottom: 28 },
+    label: { fontSize: 13, fontWeight: 700, color: 'var(--text-main)', marginBottom: 6, display: 'block' },
     labelRow: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 },
-    input: { width: '100%', background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 12, padding: '13px 16px', fontSize: 15, color: '#0F172A', outline: 'none', boxSizing: 'border-box' as const, transition: 'all 0.2s' },
+    input: { width: '100%', background: 'var(--bg-card-hover)', border: '1px solid var(--border-color)', borderRadius: 12, padding: '13px 16px', fontSize: 15, color: 'var(--text-main)', outline: 'none', boxSizing: 'border-box' as const, transition: 'all 0.2s' },
     passwordWrap: { position: 'relative' as const, marginBottom: 18 },
-    toggleBtn: { position: 'absolute' as const, right: 14, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: '#FF6B35', fontSize: 12, cursor: 'pointer', fontWeight: 800 },
-    btn: { width: '100%', background: 'linear-gradient(135deg, #FF6B35 0%, #F97316 100%)', color: '#FFFFFF', border: 'none', borderRadius: 12, padding: '14px 0', fontSize: 15, fontWeight: 800, cursor: 'pointer', marginTop: 4, boxShadow: '0 8px 24px rgba(255, 107, 53, 0.35)', transition: 'all 0.2s' },
+    toggleBtn: { position: 'absolute' as const, right: 14, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: '#ea580c', fontSize: 12, cursor: 'pointer', fontWeight: 800 },
+    btn: { width: '100%', background: 'linear-gradient(135deg, #ea580c 0%, #c2410c 100%)', color: '#FFFFFF', border: 'none', borderRadius: 9999, padding: '14px 0', fontSize: 15, fontWeight: 800, cursor: 'pointer', marginTop: 4, boxShadow: '0 8px 24px rgba(234, 88, 12, 0.35)', transition: 'all 0.2s' },
     btnDisabled: { opacity: 0.5, cursor: 'not-allowed', boxShadow: 'none' },
     error: { background: '#FEF2F2', color: '#991B1B', borderRadius: 12, padding: '12px 16px', fontSize: 13, marginBottom: 18, border: '1px solid #FCA5A5', fontWeight: 600 },
-    forgotLink: { color: '#FF6B35', fontSize: 13, fontWeight: 700, textDecoration: 'none' },
-    signupLink: { textAlign: 'center' as const, marginTop: 22, fontSize: 13, color: '#64748B' },
+    forgotLink: { color: '#ea580c', fontSize: 13, fontWeight: 700, textDecoration: 'none' },
+    signupLink: { textAlign: 'center' as const, marginTop: 22, fontSize: 13, color: 'var(--text-sub)' },
   }
 
   return (
@@ -157,9 +157,9 @@ export default function LoginPage() {
 
         {/* OR DIVIDER */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '20px 0 16px 0' }}>
-          <div style={{ flex: 1, height: 1, background: '#E2E8F0' }} />
-          <span style={{ fontSize: 12, color: '#94A3B8', fontWeight: 700, textTransform: 'uppercase' }}>Or</span>
-          <div style={{ flex: 1, height: 1, background: '#E2E8F0' }} />
+          <div style={{ flex: 1, height: 1, background: 'var(--border-color)' }} />
+          <span style={{ fontSize: 12, color: 'var(--text-sub)', fontWeight: 700, textTransform: 'uppercase' }}>Or</span>
+          <div style={{ flex: 1, height: 1, background: 'var(--border-color)' }} />
         </div>
 
         {/* GOOGLE OAUTH SIGN IN BUTTON */}
@@ -168,10 +168,10 @@ export default function LoginPage() {
           onClick={handleGoogleSignIn}
           style={{
             width: '100%',
-            background: '#FFFFFF',
-            color: '#0F172A',
-            border: '1px solid #CBD5E1',
-            borderRadius: 12,
+            background: 'var(--bg-card)',
+            color: 'var(--text-main)',
+            border: '1px solid var(--border-color)',
+            borderRadius: 9999,
             padding: '12px 0',
             fontSize: 14,
             fontWeight: 800,
@@ -193,19 +193,17 @@ export default function LoginPage() {
           Sign in with Google
         </button>
 
-
-
         {showResetOption && (
           <div style={{ marginTop: 14, textAlign: 'center', display: 'flex', flexDirection: 'column', gap: 8 }}>
             <Link
               href="/forgot-password"
-              style={{ background: '#F8FAFC', color: '#FF6B35', border: '1px solid #FF6B35', padding: '12px 16px', borderRadius: 12, fontSize: 13, fontWeight: 800, textDecoration: 'none', display: 'block' }}
+              style={{ background: 'var(--bg-card-hover)', color: '#ea580c', border: '1px solid #ea580c', padding: '12px 16px', borderRadius: 9999, fontSize: 13, fontWeight: 800, textDecoration: 'none', display: 'block' }}
             >
               Reset your password
             </Link>
             <Link
               href="/signup"
-              style={{ background: 'none', color: '#64748B', border: 'none', padding: '4px 16px', borderRadius: 12, fontSize: 13, fontWeight: 700, textDecoration: 'none', display: 'block' }}
+              style={{ background: 'none', color: 'var(--text-sub)', border: 'none', padding: '4px 16px', borderRadius: 12, fontSize: 13, fontWeight: 700, textDecoration: 'none', display: 'block' }}
             >
               No account with this email yet? Create one →
             </Link>
@@ -213,7 +211,7 @@ export default function LoginPage() {
         )}
 
         <div style={s.signupLink}>
-          New to PrintHive? <Link href="/signup" style={{ color: '#FF6B35', fontWeight: 800, textDecoration: 'none' }}>Create account</Link>
+          New to PrintHive? <Link href="/signup" style={{ color: '#ea580c', fontWeight: 800, textDecoration: 'none' }}>Create account</Link>
         </div>
       </div>
     </div>

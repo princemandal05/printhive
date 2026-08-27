@@ -68,7 +68,7 @@ export default function RequestsListPage() {
   const isFreelancerOrHub = userRole === 'designer' || userRole === 'printer_owner' || userRole === 'admin'
 
   return (
-    <main style={{ minHeight: '100vh', background: '#FAF8F5', color: '#0F172A', fontFamily: 'inherit' }}>
+    <main style={{ minHeight: '100vh', background: 'var(--bg-canvas)', color: 'var(--text-main)', fontFamily: 'inherit' }}>
       <Navbar />
 
       <div style={{ maxWidth: 1140, margin: '0 auto', padding: '32px 20px 60px' }}>
@@ -76,14 +76,14 @@ export default function RequestsListPage() {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16, marginBottom: 24 }}>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-              <h1 style={{ fontSize: 24, fontWeight: 800, color: '#0F172A', margin: 0, letterSpacing: '-0.3px' }}>
+              <h1 style={{ fontSize: 24, fontWeight: 800, color: 'var(--text-main)', margin: 0, letterSpacing: '-0.3px' }}>
                 {isFreelancerOrHub ? 'Client Briefs & Print Job Board' : 'Custom 3D Manufacturing Briefs'}
               </h1>
-              <span style={{ background: '#F1F5F9', color: '#475569', fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 6, border: '1px solid #E2E8F0' }}>
+              <span style={{ background: 'var(--bg-card-hover)', color: 'var(--text-main)', fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 9999, border: '1px solid var(--border-color)' }}>
                 Live Grid
               </span>
             </div>
-            <div style={{ fontSize: 13, color: '#64748B' }}>
+            <div style={{ fontSize: 13, color: 'var(--text-sub)' }}>
               {isFreelancerOrHub
                 ? 'Review custom CAD design briefs and on-demand print requests. Submit competitive bids to win jobs.'
                 : 'Post requirements for custom CAD modeling or localized 3D manufacturing to receive competitive bids.'}
@@ -94,17 +94,17 @@ export default function RequestsListPage() {
             <Link
               href="/requests/new"
               style={{
-                background: '#FF6B35',
+                background: 'linear-gradient(135deg, #ea580c 0%, #c2410c 100%)',
                 color: '#FFFFFF',
-                padding: '8px 16px',
-                borderRadius: 8,
+                padding: '8px 18px',
+                borderRadius: 9999,
                 fontWeight: 700,
                 fontSize: 13,
                 textDecoration: 'none',
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: 6,
-                boxShadow: '0 1px 3px rgba(255,107,53,0.25)',
+                boxShadow: '0 4px 16px rgba(234,88,12,0.25)',
               }}
             >
               <Plus size={15} /> Post New Brief
@@ -113,27 +113,27 @@ export default function RequestsListPage() {
         </div>
 
         {/* SEARCH BAR */}
-        <div style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: 10, padding: '8px 12px', display: 'flex', alignItems: 'center', gap: 8, marginBottom: 20 }}>
-          <Search size={15} color="#94A3B8" />
+        <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 12, padding: '8px 14px', display: 'flex', alignItems: 'center', gap: 8, marginBottom: 20 }}>
+          <Search size={15} color="var(--text-sub)" />
           <input
             type="text"
             placeholder="Search by brief title, polymer material, or specifications..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            style={{ width: '100%', border: 'none', outline: 'none', fontSize: 13, color: '#0F172A', background: 'transparent' }}
+            style={{ width: '100%', border: 'none', outline: 'none', fontSize: 13, color: 'var(--text-main)', background: 'transparent' }}
           />
         </div>
 
         {/* REQUESTS LIST */}
         {loading ? (
-          <div style={{ textAlign: 'center', padding: '60px 20px', color: '#64748B', fontSize: 13 }}>
+          <div style={{ textAlign: 'center', padding: '60px 20px', color: 'var(--text-sub)', fontSize: 13 }}>
             Loading active briefs...
           </div>
         ) : filtered.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '50px 20px', background: '#FFFFFF', borderRadius: 10, border: '1px dashed #CBD5E1' }}>
-            <FileText size={32} color="#94A3B8" style={{ margin: '0 auto 10px' }} />
-            <div style={{ fontSize: 15, fontWeight: 700, color: '#0F172A', marginBottom: 2 }}>No Active Briefs Found</div>
-            <div style={{ fontSize: 12, color: '#64748B', maxWidth: 360, margin: '0 auto 16px' }}>
+          <div style={{ textAlign: 'center', padding: '50px 20px', background: 'var(--bg-card)', borderRadius: 16, border: '1px dashed var(--border-color)' }}>
+            <FileText size={32} color="var(--text-sub)" style={{ margin: '0 auto 10px' }} />
+            <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-main)', marginBottom: 2 }}>No Active Briefs Found</div>
+            <div style={{ fontSize: 12, color: 'var(--text-sub)', maxWidth: 360, margin: '0 auto 16px' }}>
               {isFreelancerOrHub
                 ? 'When buyers submit custom 3D modeling or manufacturing requests, they will appear here.'
                 : 'Post your requirements to receive bids from 3D designers and print hubs.'}
@@ -142,10 +142,11 @@ export default function RequestsListPage() {
               <Link
                 href="/requests/new"
                 style={{
-                  background: '#0F172A',
-                  color: '#FFFFFF',
-                  padding: '8px 16px',
-                  borderRadius: 6,
+                  background: 'var(--bg-card-hover)',
+                  color: 'var(--text-main)',
+                  border: '1px solid var(--border-color)',
+                  padding: '8px 18px',
+                  borderRadius: 9999,
                   fontWeight: 700,
                   fontSize: 12,
                   textDecoration: 'none',
@@ -165,10 +166,10 @@ export default function RequestsListPage() {
                 key={r.id}
                 href={`/requests/${r.id}`}
                 style={{
-                  background: '#FFFFFF',
-                  border: '1px solid #E2E8F0',
-                  borderRadius: 10,
-                  padding: '16px 20px',
+                  background: 'var(--bg-card)',
+                  border: '1px solid var(--border-color)',
+                  borderRadius: 16,
+                  padding: '18px 22px',
                   textDecoration: 'none',
                   color: 'inherit',
                   display: 'flex',
@@ -176,18 +177,18 @@ export default function RequestsListPage() {
                   alignItems: 'center',
                   flexWrap: 'wrap',
                   gap: 14,
-                  transition: 'border-color 0.15s, box-shadow 0.15s',
+                  transition: 'all 0.15s ease',
                 }}
               >
                 <div style={{ flex: 1, minWidth: 280 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4, flexWrap: 'wrap' }}>
                     <span
                       style={{
-                        background: r.status === 'open' ? '#ECFDF5' : r.status === 'awarded' || r.status === 'in_progress' ? '#EFF6FF' : r.status === 'completed' ? '#FAF5FF' : r.status === 'cancelled' || r.status === 'closed' ? '#FEF2F2' : '#F1F5F9',
-                        color: r.status === 'open' ? '#059669' : r.status === 'awarded' || r.status === 'in_progress' ? '#2563EB' : r.status === 'completed' ? '#7C3AED' : r.status === 'cancelled' || r.status === 'closed' ? '#DC2626' : '#475569',
-                        border: `1px solid ${r.status === 'open' ? '#A7F3D0' : r.status === 'awarded' || r.status === 'in_progress' ? '#BFDBFE' : r.status === 'completed' ? '#E9D5FF' : r.status === 'cancelled' || r.status === 'closed' ? '#FECACA' : '#CBD5E1'}`,
+                        background: r.status === 'open' ? '#ECFDF5' : r.status === 'awarded' || r.status === 'in_progress' ? '#EFF6FF' : r.status === 'completed' ? '#FAF5FF' : r.status === 'cancelled' || r.status === 'closed' ? '#FEF2F2' : 'var(--bg-card-hover)',
+                        color: r.status === 'open' ? '#059669' : r.status === 'awarded' || r.status === 'in_progress' ? '#2563EB' : r.status === 'completed' ? '#7C3AED' : r.status === 'cancelled' || r.status === 'closed' ? '#DC2626' : 'var(--text-main)',
+                        border: `1px solid ${r.status === 'open' ? '#A7F3D0' : r.status === 'awarded' || r.status === 'in_progress' ? '#BFDBFE' : r.status === 'completed' ? '#E9D5FF' : r.status === 'cancelled' || r.status === 'closed' ? '#FECACA' : 'var(--border-color)'}`,
                         padding: '1px 6px',
-                        borderRadius: 4,
+                        borderRadius: 9999,
                         fontSize: 10,
                         fontWeight: 700,
                         textTransform: 'uppercase',
@@ -195,19 +196,19 @@ export default function RequestsListPage() {
                     >
                       {r.status === 'open' ? 'Open for Bids' : r.status}
                     </span>
-                    <span style={{ fontSize: 11, color: '#64748B', display: 'inline-flex', alignItems: 'center', gap: 3 }}>
+                    <span style={{ fontSize: 11, color: 'var(--text-sub)', display: 'inline-flex', alignItems: 'center', gap: 3 }}>
                       <Clock size={11} /> Posted {r.postedAt}
                     </span>
-                    <span style={{ fontSize: 11, fontWeight: 700, color: '#EA580C', background: '#FFF7ED', border: '1px solid #FFEDD5', padding: '1px 6px', borderRadius: 4 }}>
+                    <span style={{ fontSize: 11, fontWeight: 700, color: '#EA580C', background: 'rgba(234,88,12,0.12)', border: '1px solid rgba(234,88,12,0.25)', padding: '1px 8px', borderRadius: 9999 }}>
                       Budget: {r.budget}
                     </span>
                   </div>
 
-                  <div style={{ fontSize: 16, fontWeight: 700, color: '#0F172A', margin: '4px 0' }}>
+                  <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-main)', margin: '4px 0' }}>
                     {r.purpose}
                   </div>
 
-                  <div style={{ fontSize: 12, color: '#64748B', lineHeight: 1.4, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                  <div style={{ fontSize: 12, color: 'var(--text-sub)', lineHeight: 1.4, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
                     {r.description}
                   </div>
                 </div>
@@ -215,10 +216,11 @@ export default function RequestsListPage() {
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                   <span
                     style={{
-                      background: '#0F172A',
-                      color: '#FFFFFF',
-                      padding: '8px 14px',
-                      borderRadius: 6,
+                      background: 'var(--bg-card-hover)',
+                      color: 'var(--text-main)',
+                      border: '1px solid var(--border-color)',
+                      padding: '8px 16px',
+                      borderRadius: 9999,
                       fontSize: 12,
                       fontWeight: 700,
                       display: 'inline-flex',

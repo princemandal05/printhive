@@ -178,10 +178,10 @@ export default function RegisterPrinterForm() {
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'rgba(37,99,235,0.12)', color: '#2563EB', border: '1px solid rgba(37,99,235,0.3)', padding: '6px 16px', borderRadius: 99, fontSize: 12, fontWeight: 800, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 12 }}>
             🖨️ Machine Registration & Leaflet GPS Placement
           </div>
-          <h1 style={{ fontSize: 32, fontWeight: 900, color: '#0F172A', margin: 0, letterSpacing: '-0.5px' }}>
+          <h1 style={{ fontSize: 32, fontWeight: 900, color: 'var(--text-main)', margin: 0, letterSpacing: '-0.5px' }}>
             Register 3D Printer Hub
           </h1>
-          <p style={{ color: '#64748B', marginTop: 4, fontSize: 15 }}>
+          <p style={{ color: 'var(--text-sub)', marginTop: 4, fontSize: 15 }}>
             Monetize idle machine hours and start receiving local 3D print orders with 70% direct payouts.
           </p>
         </div>
@@ -196,7 +196,7 @@ export default function RegisterPrinterForm() {
           {/* LEFT FORM */}
           <div>
             <div style={s.card}>
-              <div style={{ fontSize: 18, fontWeight: 900, color: '#0F172A', marginBottom: 16 }}>
+              <div style={{ fontSize: 18, fontWeight: 900, color: 'var(--text-main)', marginBottom: 16 }}>
                 1. Machine Specifications & Pricing
               </div>
 
@@ -296,9 +296,9 @@ export default function RegisterPrinterForm() {
                           borderRadius: 99,
                           fontSize: 13,
                           fontWeight: 700,
-                          border: active ? '1px solid #2563EB' : '1px solid #CBD5E1',
-                          background: active ? '#EFF6FF' : '#F8FAFC',
-                          color: active ? '#2563EB' : '#334155',
+                          border: active ? '1px solid #2563EB' : '1px solid var(--border-color)',
+                          background: active ? 'rgba(37,99,235,0.15)' : 'var(--bg-card-hover)',
+                          color: active ? '#3B82F6' : 'var(--text-main)',
                           cursor: 'pointer',
                         }}
                       >
@@ -320,7 +320,7 @@ export default function RegisterPrinterForm() {
             </div>
 
             <div style={s.card}>
-              <div style={{ fontSize: 18, fontWeight: 900, color: '#0F172A', marginBottom: 16 }}>
+              <div style={{ fontSize: 18, fontWeight: 900, color: 'var(--text-main)', marginBottom: 16 }}>
                 2. Hub Physical Location & Dispatch Radius
               </div>
 
@@ -361,11 +361,11 @@ export default function RegisterPrinterForm() {
               <div style={{ fontSize: 13, fontWeight: 800, color: '#2563EB', textTransform: 'uppercase', marginBottom: 8 }}>
                 📍 Interactive OpenStreetMap GPS Pin
               </div>
-              <div style={{ fontSize: 12, color: '#64748B', marginBottom: 16 }}>
+              <div style={{ fontSize: 12, color: 'var(--text-sub)', marginBottom: 16 }}>
                 Click anywhere on the map or drag the pin to set your exact printer hub dispatch coordinates.
               </div>
 
-              <div style={{ borderRadius: 4, overflow: 'hidden', border: '1px solid var(--border-color)', marginBottom: 16 }}>
+              <div style={{ borderRadius: 16, overflow: 'hidden', border: '1px solid var(--border-color)', marginBottom: 16 }}>
                 <OpenStreetMap
                   locations={pickerLocations}
                   height="260px"
@@ -374,7 +374,7 @@ export default function RegisterPrinterForm() {
                 />
               </div>
 
-              <div style={{ background: 'var(--bg-card)', padding: 14, borderRadius: 4, border: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', fontSize: 13, fontWeight: 700, color: 'var(--text-main)' }}>
+              <div style={{ background: 'var(--bg-card)', padding: 14, borderRadius: 12, border: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', fontSize: 13, fontWeight: 700, color: 'var(--text-main)' }}>
                 <span>Lat: {lat}</span>
                 <span>Lng: {lng}</span>
               </div>

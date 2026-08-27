@@ -113,7 +113,10 @@
   --color-border-strong: #d4d4d8;
 }
 
-[data-theme="dark"] {
+:root[data-theme="dark"],
+[data-theme="dark"],
+html.dark,
+.dark {
   --bg-canvas: #0f0f11;
   --bg-card: #18181b;
   --bg-card-hover: #27272a;

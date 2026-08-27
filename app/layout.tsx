@@ -40,6 +40,11 @@ export default function RootLayout({
                 var t = localStorage.getItem("printhive-theme") || localStorage.getItem("ateion-theme");
                 if (!t) t = "dark";
                 document.documentElement.setAttribute("data-theme", t);
+                if (t === "dark") {
+                  document.documentElement.classList.add("dark");
+                } else {
+                  document.documentElement.classList.remove("dark");
+                }
               })();
             `,
           }}

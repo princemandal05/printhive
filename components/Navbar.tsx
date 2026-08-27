@@ -107,9 +107,18 @@ export default function Navbar() {
   useEffect(() => {
     let active = true
 
-    const savedTheme = (localStorage.getItem('ateion-theme') as 'light' | 'dark') || 'light'
+    const savedTheme =
+      (document.documentElement.getAttribute('data-theme') as 'light' | 'dark') ||
+      (localStorage.getItem('printhive-theme') as 'light' | 'dark') ||
+      (localStorage.getItem('ateion-theme') as 'light' | 'dark') ||
+      'dark'
     setTheme(savedTheme)
     document.documentElement.setAttribute('data-theme', savedTheme)
+    if (savedTheme === 'dark') {
+      document.documentElement.classList.add('dark')
+    } else {
+      document.documentElement.classList.remove('dark')
+    }
 
     async function loadSession() {
       setRoleLoading(true)
@@ -166,8 +175,14 @@ export default function Navbar() {
   const toggleTheme = () => {
     const nextTheme = theme === 'light' ? 'dark' : 'light'
     setTheme(nextTheme)
+    localStorage.setItem('printhive-theme', nextTheme)
     localStorage.setItem('ateion-theme', nextTheme)
     document.documentElement.setAttribute('data-theme', nextTheme)
+    if (nextTheme === 'dark') {
+      document.documentElement.classList.add('dark')
+    } else {
+      document.documentElement.classList.remove('dark')
+    }
   }
 
   const handleSignOut = async () => {

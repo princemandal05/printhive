@@ -128,12 +128,12 @@ export default function NewRequestPage() {
 
   const inputStyle: React.CSSProperties = {
     width: '100%',
-    background: '#F8FAFC',
-    border: '1px solid #CBD5E1',
+    background: 'var(--bg-card-hover)',
+    border: '1px solid var(--border-color)',
     borderRadius: 8,
     padding: '10px 12px',
     fontSize: 13,
-    color: '#0F172A',
+    color: 'var(--text-main)',
     outline: 'none',
     boxSizing: 'border-box',
     fontWeight: 500,
@@ -143,26 +143,26 @@ export default function NewRequestPage() {
     display: 'block',
     fontSize: 12,
     fontWeight: 700,
-    color: '#334155',
+    color: 'var(--text-main)',
     marginBottom: 6,
   }
 
   return (
-    <main style={{ minHeight: '100vh', background: '#FAF8F5', color: '#0F172A', fontFamily: 'inherit' }}>
+    <main style={{ minHeight: '100vh', background: 'var(--bg-canvas)', color: 'var(--text-main)', fontFamily: 'inherit' }}>
       <Navbar />
 
       <div style={{ maxWidth: 780, margin: '0 auto', padding: '32px 20px 60px' }}>
         {/* HEADER SECTION */}
         <div style={{ marginBottom: 24 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#64748B', fontWeight: 600, marginBottom: 6 }}>
-            <Link href="/dashboard/buyer" style={{ color: '#64748B', textDecoration: 'none' }}>Dashboard</Link>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--text-sub)', fontWeight: 600, marginBottom: 6 }}>
+            <Link href="/dashboard/buyer" style={{ color: 'var(--text-sub)', textDecoration: 'none' }}>Dashboard</Link>
             <span>/</span>
-            <span style={{ color: '#0F172A' }}>New Custom Brief</span>
+            <span style={{ color: 'var(--text-main)' }}>New Custom Brief</span>
           </div>
-          <h1 style={{ fontSize: 24, fontWeight: 800, color: '#0F172A', margin: 0, letterSpacing: '-0.3px' }}>
+          <h1 style={{ fontSize: 24, fontWeight: 800, color: 'var(--text-main)', margin: 0, letterSpacing: '-0.3px' }}>
             Post a Custom 3D Design Brief
           </h1>
-          <p style={{ color: '#64748B', fontSize: 13, lineHeight: 1.5, margin: '4px 0 0' }}>
+          <p style={{ color: 'var(--text-sub)', fontSize: 13, lineHeight: 1.5, margin: '4px 0 0' }}>
             Submit technical requirements for CAD modeling or on-demand printing. Verified designers and print farms across India will review and bid.
           </p>
         </div>
@@ -184,7 +184,7 @@ export default function NewRequestPage() {
         )}
 
         {/* MAIN FORM CARD */}
-        <div style={{ background: '#FFFFFF', borderRadius: 12, border: '1px solid #E2E8F0', padding: 24, boxShadow: '0 1px 3px rgba(0,0,0,0.02)' }}>
+        <div style={{ background: 'var(--bg-card)', borderRadius: 16, border: '1px solid var(--border-color)', padding: 24, boxShadow: '0 4px 20px rgba(0,0,0,0.04)' }}>
           {/* PURPOSE */}
           <div style={{ marginBottom: 18 }}>
             <label style={labelStyle}>
@@ -290,19 +290,19 @@ export default function NewRequestPage() {
                 justifyContent: 'center',
                 gap: 4,
                 padding: '20px 16px',
-                background: '#F8FAFC',
-                border: '1px dashed #CBD5E1',
+                background: 'var(--bg-card-hover)',
+                border: '1px dashed var(--border-color)',
                 borderRadius: 8,
                 cursor: 'pointer',
                 textAlign: 'center',
                 transition: 'all 0.15s',
               }}
             >
-              <UploadCloud size={24} color="#64748B" />
-              <div style={{ fontSize: 13, fontWeight: 700, color: '#0F172A', marginTop: 4 }}>
+              <UploadCloud size={24} color="var(--text-sub)" />
+              <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-main)', marginTop: 4 }}>
                 Click to attach reference photos, CAD files, or PDF/Word specs
               </div>
-              <div style={{ fontSize: 11, color: '#94A3B8' }}>
+              <div style={{ fontSize: 11, color: 'var(--text-sub)' }}>
                 Supports PNG, JPG, PDF, DOCX, TXT, and STL files (Up to 15MB each)
               </div>
             </label>
@@ -311,7 +311,7 @@ export default function NewRequestPage() {
           {/* ATTACHED FILES LIST */}
           {attachedFiles.length > 0 && (
             <div style={{ marginBottom: 20 }}>
-              <div style={{ fontSize: 11, fontWeight: 700, color: '#64748B', textTransform: 'uppercase', marginBottom: 6 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-sub)', textTransform: 'uppercase', marginBottom: 6 }}>
                 Attached files ({attachedFiles.length}):
               </div>
               <div style={{ display: 'grid', gap: 6 }}>
@@ -322,17 +322,17 @@ export default function NewRequestPage() {
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'space-between',
-                      background: '#F1F5F9',
+                      background: 'var(--bg-card-hover)',
                       padding: '8px 12px',
                       borderRadius: 6,
-                      border: '1px solid #E2E8F0',
+                      border: '1px solid var(--border-color)',
                       fontSize: 12,
                     }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <FileText size={14} color="#64748B" />
-                      <span style={{ fontWeight: 700, color: '#0F172A' }}>{file.name}</span>
-                      <span style={{ fontSize: 11, color: '#64748B' }}>({(file.size / 1024 / 1024).toFixed(2)} MB)</span>
+                      <FileText size={14} color="var(--text-sub)" />
+                      <span style={{ fontWeight: 700, color: 'var(--text-main)' }}>{file.name}</span>
+                      <span style={{ fontSize: 11, color: 'var(--text-sub)' }}>({(file.size / 1024 / 1024).toFixed(2)} MB)</span>
                     </div>
                     <button
                       type="button"
@@ -353,15 +353,15 @@ export default function NewRequestPage() {
             disabled={submitting || !purpose.trim()}
             style={{
               width: '100%',
-              background: submitting || !purpose.trim() ? '#CBD5E1' : '#FF6B35',
+              background: submitting || !purpose.trim() ? 'var(--bg-card-hover)' : 'linear-gradient(135deg, #ea580c 0%, #c2410c 100%)',
               color: '#FFFFFF',
               border: 'none',
               padding: '12px 20px',
-              borderRadius: 8,
+              borderRadius: 9999,
               fontSize: 14,
               fontWeight: 800,
               cursor: submitting || !purpose.trim() ? 'not-allowed' : 'pointer',
-              boxShadow: submitting || !purpose.trim() ? 'none' : '0 2px 10px rgba(255,107,53,0.3)',
+              boxShadow: submitting || !purpose.trim() ? 'none' : '0 4px 16px rgba(234,88,12,0.3)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
