@@ -128,6 +128,8 @@ function ThreeViewerInner({
   const [activeColor, setActiveColor] = useState(color)
   const [materialFinish, setMaterialFinish] = useState<MaterialFinish>('standard')
   const [showBed, setShowBed] = useState(true)
+  const [isFloating, setIsFloating] = useState(false)
+  const isFloatingRef = useRef(isFloating)
   const [showColorPicker, setShowColorPicker] = useState(false)
 
   const sceneRef = useRef<THREE.Scene | null>(null)
@@ -145,6 +147,17 @@ function ThreeViewerInner({
   const detected = detectModelFormat({ format, fileName, mimeType, url: modelUrl })
   const fmt: ModelFormat = detected.format
   const safeColor = /^#[0-9A-Fa-f]{6}$/.test(activeColor || '') ? activeColor : '#ea580c'
+
+  // Sync floating state
+  useEffect(() => {
+    isFloatingRef.current = isFloating
+    if (groupRef.current) {
+      const baseRotX = fmt === 'stl' || fmt === '3mf' ? -Math.PI / 2 : 0
+      const tiltX = isFloating ? Math.PI / 5.5 : 0
+      groupRef.current.rotation.x = baseRotX + (rotationStep % 2 === 1 ? Math.PI / 2 : 0) + tiltX
+      groupRef.current.rotation.y = rotationStep >= 2 ? Math.PI : 0
+    }
+  }, [isFloating, rotationStep, fmt])
 
   // Hide gesture hint after 4 seconds
   useEffect(() => {
@@ -263,6 +276,12 @@ function ThreeViewerInner({
     obj.position.y -= box.min.y
 
     setBounds({ x: Math.round(size.x), y: Math.round(size.y), z: Math.round(size.z) })
+
+    // Auto-detect flat relief designs (e.g. pins, badges, keychains, coins) and enable floating showcase
+    const isFlat = size.y <= Math.max(size.x, size.z) * 0.32 || size.y <= 15
+    if (isFlat) {
+      setIsFloating(true)
+    }
 
     const maxDim = Math.max(size.x, size.y, size.z)
     maxModelDim.current = maxDim
@@ -666,8 +685,25 @@ function ThreeViewerInner({
 
     // Render loop
     let animId: number
+    const clock = new THREE.Clock()
     const tick = () => {
       animId = requestAnimationFrame(tick)
+      const time = clock.getElapsedTime()
+
+      if (groupRef.current && isFloatingRef.current) {
+        const floatOffset = Math.sin(time * 2.2) * (maxModelDim.current * 0.025)
+        groupRef.current.position.y = (maxModelDim.current * 0.15) + floatOffset
+        if (shadowPlaneRef.current) {
+          shadowPlaneRef.current.position.y = -0.05
+          shadowPlaneRef.current.scale.setScalar((maxModelDim.current / 22) * (1 + Math.sin(time * 2.2) * 0.06))
+        }
+      } else if (groupRef.current) {
+        groupRef.current.position.y = 0
+        if (shadowPlaneRef.current) {
+          shadowPlaneRef.current.scale.set(maxModelDim.current / 25, maxModelDim.current / 25, 1)
+        }
+      }
+
       controls.update()
       renderer.render(scene, camera)
     }
@@ -1020,6 +1056,14 @@ function ThreeViewerInner({
           onClick={() => setShowColorPicker(!showColorPicker)}
           label="🎨 Color"
           title="Pick Filament Color"
+          isLightMode={isLightMode}
+        />
+
+        <ViewerBtn
+          active={isFloating}
+          onClick={() => setIsFloating(!isFloating)}
+          label={isFloating ? '🛸 Float ON' : '🛸 Float'}
+          title="Toggle Floating Showcase View for flat / relief models"
           isLightMode={isLightMode}
         />
 
