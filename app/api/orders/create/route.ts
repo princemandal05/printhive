@@ -1,9 +1,10 @@
-import { createClient } from '@/utils/supabase/server'
+import { createClient, createAdminClient } from '@/utils/supabase/server'
 import { NextResponse } from 'next/server'
 
 export async function POST(request: Request) {
   try {
     const supabase = await createClient()
+    const adminSupabase = await createAdminClient()
     const { data: { user }, error: authError } = await supabase.auth.getUser()
 
     if (authError || !user) {
@@ -35,9 +36,11 @@ export async function POST(request: Request) {
     let derivedDesignerId: string | null = null
     let derivedPrinterOwnerId: string | null = null
 
+    const db = adminSupabase || supabase
+
     // 1. Fetch authoritative product price and seller if product_id is provided
     if (product_id) {
-      const { data: product, error: productErr } = await supabase
+      const { data: product, error: productErr } = await db
         .from('products')
         .select('id, price, seller_id')
         .eq('id', product_id)
@@ -52,7 +55,7 @@ export async function POST(request: Request) {
 
     // 2. Fetch authoritative design price and designer if design_id is provided
     if (design_id) {
-      const { data: design, error: designErr } = await supabase
+      const { data: design, error: designErr } = await db
         .from('designs')
         .select('id, price, designer_id')
         .eq('id', design_id)
@@ -67,7 +70,7 @@ export async function POST(request: Request) {
 
     // 3. Fetch authoritative printer base price and owner if printer_id is provided
     if (printer_id) {
-      const { data: printer, error: printerErr } = await supabase
+      const { data: printer, error: printerErr } = await db
         .from('printers')
         .select('id, base_price, owner_id')
         .eq('id', printer_id)
@@ -95,38 +98,42 @@ export async function POST(request: Request) {
 
     const orderStatus = initial_status || (printer_id ? 'PRINTER_ASSIGNED' : 'PENDING_PAYMENT')
 
-    const { data: order, error: insertError } = await supabase
+    const insertPayload: Record<string, any> = {
+      user_id: user.id,
+      buyer_id: user.id,
+      seller_id: derivedSellerId,
+      designer_id: derivedDesignerId,
+      printer_owner_id: derivedPrinterOwnerId,
+      product_id: product_id || null,
+      design_id: design_id || null,
+      printer_id: printer_id || null,
+      total_amount: total,
+      total_price: total,
+      total: total,
+      price: total,
+      amount: total,
+      printer_payout: printerPayout,
+      printer_share: printerPayout,
+      designer_royalty: designerRoyalty,
+      designer_share: designerRoyalty,
+      platform_fee: platformFee,
+      platform_share: platformFee,
+      status: orderStatus,
+      payment_status: 'pending',
+      shipping_address: typeof shipping_address === 'string' ? shipping_address : JSON.stringify(shipping_address || {}),
+      notes: notes || '',
+      created_at: new Date().toISOString(),
+    }
+
+    const { data: order, error: insertError } = await db
       .from('orders')
-      .insert({
-        buyer_id: user.id,
-        seller_id: derivedSellerId,
-        designer_id: derivedDesignerId,
-        printer_owner_id: derivedPrinterOwnerId,
-        product_id: product_id || null,
-        design_id: design_id || null,
-        printer_id: printer_id || null,
-        total_amount: total,
-        total_price: total,
-        total: total,
-        price: total,
-        amount: total,
-        printer_payout: printerPayout,
-        printer_share: printerPayout,
-        designer_royalty: designerRoyalty,
-        designer_share: designerRoyalty,
-        platform_fee: platformFee,
-        platform_share: platformFee,
-        status: orderStatus,
-        payment_status: 'pending',
-        shipping_address: shipping_address || '',
-        notes: notes || '',
-      })
+      .insert(insertPayload)
       .select('*')
       .single()
 
     if (insertError) {
       console.error('Error inserting order record:', insertError)
-      return NextResponse.json({ error: 'Failed to create order' }, { status: 500 })
+      return NextResponse.json({ error: insertError.message || 'Failed to create order' }, { status: 500 })
     }
 
     // Write initial status record in order_status_history
@@ -134,41 +141,43 @@ export async function POST(request: Request) {
       ? 'Custom print request dispatched to printer hub. Awaiting operator acceptance before payment.'
       : 'Order created, awaiting Razorpay payment confirmation.'
 
-    const { error: historyErr } = await supabase.from('order_status_history').insert({
+    const { error: historyErr } = await db.from('order_status_history').insert({
       order_id: order.id,
       status: orderStatus,
       notes: historyNotes,
       updated_by: user.id,
+      created_at: new Date().toISOString(),
     })
 
     if (historyErr) {
-      console.error('Error inserting initial order status history:', historyErr)
-      return NextResponse.json({ error: 'Order created, but failed to record initial history' }, { status: 500 })
+      console.warn('Initial order status history warning:', historyErr.message)
     }
 
     // Send real-time notification to printer owner if assigned
     if (derivedPrinterOwnerId) {
-      await supabase.from('notifications').insert({
+      await db.from('notifications').insert({
         user_id: derivedPrinterOwnerId,
         title: '🖨️ New Print Job Request',
         message: `New print request #${order.id.slice(0, 8)} for ₹${total} received. Review specs and accept the job.`,
         type: 'order',
         link: `/dashboard/printer-owner`,
+        created_at: new Date().toISOString(),
       })
     }
 
     // Send real-time notification to buyer
-    await supabase.from('notifications').insert({
+    await db.from('notifications').insert({
       user_id: user.id,
       title: '📦 Print Request Dispatched',
       message: `Your request #${order.id.slice(0, 8)} has been sent to the printer hub for review.`,
       type: 'order',
       link: `/orders/${order.id}`,
+      created_at: new Date().toISOString(),
     })
 
     return NextResponse.json({ success: true, order }, { status: 201 })
   } catch (error: any) {
     console.error('Unexpected error in order creation API:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 })
   }
 }
