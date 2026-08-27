@@ -96,10 +96,13 @@ export default function RegisterPrinterForm() {
       }
 
       const displayName = printerName.trim() || model.trim() || '3D Printer Unit'
+      const modelName = model.trim() || displayName
+      const cityName = address ? address.split(',')[0]?.trim() : 'New Delhi'
 
       const { error: insertErr } = await supabase.from('printers').insert({
         owner_id: user.id,
-        printer_model: model || displayName,
+        name: displayName,
+        printer_model: modelName,
         technology,
         build_volume: buildVolume,
         max_resolution: maxResolution,
@@ -109,6 +112,7 @@ export default function RegisterPrinterForm() {
         latitude: lat,
         longitude: lng,
         address: address || 'New Delhi Print Hub',
+        city: cityName,
         image_url: printerImageUrl,
         cloudinary_public_id: cloudinaryPublicId,
         status: initialStatus,
