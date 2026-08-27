@@ -456,7 +456,7 @@ function PrinterDirectoryContent() {
                 <div style={{ fontSize: 16, fontWeight: 800, color: 'var(--text-main)' }}>Loading Live 3D Printer Hubs…</div>
                 <div style={{ fontSize: 13, marginTop: 4 }}>Connecting to PrintHive India GPS Network</div>
               </div>
-            ) : sortedPrinters.length === 0 ? (
+            ) : printers.length === 0 ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                 {/* 🌟 1. HIGH-IMPACT MACHINE REGISTRATION ONBOARDING CARD */}
                 <div style={{
@@ -571,6 +571,41 @@ function PrinterDirectoryContent() {
                     </Link>
                   </div>
                 </div>
+              </div>
+            ) : sortedPrinters.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '50px 24px', background: 'var(--bg-card)', borderRadius: 4, border: '1px dashed var(--border-color)' }}>
+                <div style={{ fontSize: 32, marginBottom: 10 }}>🔍</div>
+                <div style={{ fontSize: 16, fontWeight: 900, color: 'var(--text-main)', marginBottom: 4 }}>
+                  No Hubs Match Your Active Filters
+                </div>
+                <p style={{ fontSize: 13, color: 'var(--text-sub)', maxWidth: 420, margin: '0 auto 16px auto', lineHeight: 1.5 }}>
+                  We found registered printer hubs on the network, but none match your current search keywords or distance/material filters.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSearchQuery('')
+                    setActiveChip('all')
+                    setFilterMaxDistance('All')
+                    setFilterMaterial('All')
+                    setFilterTechnology('All')
+                    setFilterMaxPrice('All')
+                    setFilterMinRating('All')
+                  }}
+                  style={{
+                    background: '#ea580c',
+                    color: '#fff',
+                    border: 'none',
+                    padding: '9px 20px',
+                    borderRadius: 4,
+                    fontWeight: 800,
+                    cursor: 'pointer',
+                    fontSize: 13,
+                    boxShadow: '0 2px 8px rgba(234,88,12,0.25)',
+                  }}
+                >
+                  Reset All Filters
+                </button>
               </div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
