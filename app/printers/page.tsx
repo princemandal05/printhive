@@ -162,6 +162,8 @@ function PrinterDirectoryContent() {
   // Fetch real registered printers from Supabase, merged with verified India hubs
   useEffect(() => {
     async function loadPrinters() {
+      let combinedList: PrinterHub[] = DEFAULT_INDIA_HUBS
+
       try {
         const { data, error } = await supabase
           .from('printers')
@@ -169,10 +171,7 @@ function PrinterDirectoryContent() {
 
         if (error) {
           console.warn('Using verified default India hubs:', error.message)
-          return
-        }
-
-        if (data && data.length > 0) {
+        } else if (data && data.length > 0) {
           const mapped: PrinterHub[] = data
             .filter((item) => {
               const lat = Number(item.latitude)
@@ -197,16 +196,20 @@ function PrinterDirectoryContent() {
               city: item.city || 'New Delhi',
             }))
 
-          const combined = [...mapped, ...DEFAULT_INDIA_HUBS.filter(d => !mapped.some(m => m.id === d.id))]
-          setPrinters(combined)
-
-          if (preselectedPrinterId) {
-            const preselected = combined.find((p) => p.id === preselectedPrinterId)
-            if (preselected) setSelectedHub(preselected)
-          }
+          combinedList = [...mapped, ...DEFAULT_INDIA_HUBS.filter((d) => !mapped.some((m) => m.id === d.id))]
+          setPrinters(combinedList)
         }
       } catch (err: unknown) {
         console.warn('Printer loading fallback to defaults:', err)
+      } finally {
+        if (preselectedPrinterId) {
+          const preselected =
+            combinedList.find((p) => p.id === preselectedPrinterId) ||
+            DEFAULT_INDIA_HUBS.find((p) => p.id === preselectedPrinterId)
+          if (preselected) {
+            setSelectedHub(preselected)
+          }
+        }
       }
     }
 
