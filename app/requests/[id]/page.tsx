@@ -62,6 +62,12 @@ export default function RequestDetailPage() {
   const [submitting, setSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
   const [bidError, setBidError] = useState<string | null>(null)
+  const [acceptedBidId, setAcceptedBidId] = useState<string | null>(null)
+
+  const handleAcceptBid = (bid: BidType) => {
+    setAcceptedBidId(bid.id)
+    router.push(`/checkout?bidId=${bid.id}&requestId=${reqId}&price=${bid.price}&seller=${encodeURIComponent(bid.designer)}`)
+  }
 
   const loadData = async () => {
     if (!reqId) return
@@ -399,8 +405,70 @@ export default function RequestDetailPage() {
                       ))}
                     </div>
                   )}
+
+                  {/* TWO-STAGE MILESTONE ESCROW BADGE */}
+                    <div style={{ background: 'rgba(139, 92, 246, 0.08)', border: '1px solid rgba(139, 92, 246, 0.25)', borderRadius: 14, padding: '14px 18px', marginBottom: 24 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#8B5CF6', fontSize: 13, fontWeight: 900, marginBottom: 4 }}>
+                        <ShieldCheck size={16} /> Two-Stage Escrow Milestone Protection
+                      </div>
+                      <div style={{ fontSize: 12, color: 'var(--text-sub)', lineHeight: 1.4 }}>
+                        • <strong>Milestone 1:</strong> Digital 3D CAD approval (50% escrow release upon 3D proof verification).<br />
+                        • <strong>Milestone 2:</strong> Physical 3D printing &amp; doorstep delivery (50% escrow release upon unboxing QA).
+                      </div>
+                    </div>
+
+                    {/* BIDS COMPARISON MATRIX */}
+                    {bids.length > 1 && (
+                      <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 16, padding: 18, marginBottom: 24, overflowX: 'auto' }}>
+                        <div style={{ fontSize: 13, fontWeight: 900, color: 'var(--text-main)', marginBottom: 12, textTransform: 'uppercase' }}>
+                          📊 Side-by-Side Proposal Comparison Matrix
+                        </div>
+                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+                          <thead>
+                            <tr style={{ borderBottom: '1px solid var(--border-color)', textAlign: 'left', color: 'var(--text-sub)' }}>
+                              <th style={{ padding: '8px 10px', fontWeight: 800 }}>Designer / Hub</th>
+                              <th style={{ padding: '8px 10px', fontWeight: 800 }}>Bid Price</th>
+                              <th style={{ padding: '8px 10px', fontWeight: 800 }}>Turnaround</th>
+                              <th style={{ padding: '8px 10px', fontWeight: 800 }}>Escrow Milestone</th>
+                              <th style={{ padding: '8px 10px', fontWeight: 800 }}>Action</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {bids.map((b) => (
+                              <tr key={`matrix-${b.id}`} style={{ borderBottom: '1px solid var(--border-color)' }}>
+                                <td style={{ padding: '10px', fontWeight: 800, color: 'var(--text-main)' }}>
+                                  {b.designer} ⭐ {b.rating}
+                                </td>
+                                <td style={{ padding: '10px', fontWeight: 900, color: '#ea580c' }}>
+                                  ₹{b.price}
+                                </td>
+                                <td style={{ padding: '10px', color: 'var(--text-sub)' }}>
+                                  {b.days} {b.days === 1 ? 'day' : 'days'}
+                                </td>
+                                <td style={{ padding: '10px', color: '#10B981', fontWeight: 700 }}>
+                                  50% CAD / 50% Print
+                                </td>
+                                <td style={{ padding: '10px' }}>
+                                  {isOwner ? (
+                                    <button
+                                      type="button"
+                                      onClick={() => handleAcceptBid(b)}
+                                      style={{ background: acceptedBidId === b.id ? '#10B981' : '#ea580c', color: '#fff', border: 'none', padding: '5px 12px', borderRadius: 6, fontSize: 11, fontWeight: 800, cursor: 'pointer' }}
+                                    >
+                                      {acceptedBidId === b.id ? 'Selected' : 'Accept'}
+                                    </button>
+                                  ) : (
+                                    <span style={{ fontSize: 11, color: 'var(--text-sub)' }}>Submitted</span>
+                                  )}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
 
               {/* RIGHT SIDEBAR: ACTIONS */}
               <div style={{ position: 'sticky', top: 90 }}>

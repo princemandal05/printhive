@@ -294,13 +294,26 @@ export default function CheckoutPage() {
         <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 32, alignItems: 'start' }}>
           {/* Main Checkout Section */}
           <div>
-            {/* 1. Shipping Address Box */}
+            {/* 1. Shipping Address Box with Quick Address Book */}
             <div style={{ background: 'var(--bg-card)', padding: 28, borderRadius: 20, border: '1px solid var(--border-color)', marginBottom: 24, boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 8 }}>
                 <h2 style={{ fontSize: 18, fontWeight: 800, color: 'var(--text-main)', margin: 0 }}>
                   1. Delivery Address
                 </h2>
-                <span style={{ fontSize: 12, color: '#ea580c', fontWeight: 700 }}>Prince Mandal, New Delhi 110001</span>
+                <div style={{ display: 'flex', gap: 6 }}>
+                  <button
+                    type="button"
+                    style={{ background: '#ea580c', color: '#fff', border: 'none', borderRadius: 99, padding: '4px 10px', fontSize: 11, fontWeight: 800, cursor: 'pointer' }}
+                  >
+                    🏠 Home (Default)
+                  </button>
+                  <button
+                    type="button"
+                    style={{ background: 'var(--bg-card-hover)', color: 'var(--text-main)', border: '1px solid var(--border-color)', borderRadius: 99, padding: '4px 10px', fontSize: 11, fontWeight: 800, cursor: 'pointer' }}
+                  >
+                    🏢 Studio Lab
+                  </button>
+                </div>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
                 <input style={inputStyle} placeholder="First Name" defaultValue="Prince" />

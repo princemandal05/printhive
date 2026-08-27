@@ -47,6 +47,32 @@ export default function PrinterOwnerClient({ user, initialPrinters, initialOrder
   const [orders, setOrders] = useState<OrderJob[]>(initialOrders)
   const [updatingId, setUpdatingId] = useState<string | null>(null)
 
+  // Spool inventory state (persisted to localStorage)
+  const [spools, setSpools] = useState([
+    { id: 'spool-1', name: 'Black PLA Pro (1.75mm)', remainingGrams: 1450, totalGrams: 2000, colorHex: '#1e293b' },
+    { id: 'spool-2', name: 'Terracotta Orange PLA', remainingGrams: 820, totalGrams: 1000, colorHex: '#ea580c' },
+    { id: 'spool-3', name: 'Clear PETG Heavy-Duty', remainingGrams: 350, totalGrams: 1000, colorHex: '#38bdf8' },
+    { id: 'spool-4', name: 'Engineering ABS (Black)', remainingGrams: 280, totalGrams: 1000, colorHex: '#0f172a' },
+  ])
+  const [selectedMaterialFilter, setSelectedMaterialFilter] = useState('ALL')
+  const [showSpoolModal, setShowSpoolModal] = useState(false)
+  const [newSpoolName, setNewSpoolName] = useState('')
+  const [newSpoolWeight, setNewSpoolWeight] = useState(1000)
+
+  const handleAddSpool = () => {
+    if (!newSpoolName.trim()) return
+    const newSpool = {
+      id: `spool-${Date.now()}`,
+      name: newSpoolName,
+      remainingGrams: Number(newSpoolWeight),
+      totalGrams: Number(newSpoolWeight),
+      colorHex: '#ea580c',
+    }
+    setSpools([newSpool, ...spools])
+    setNewSpoolName('')
+    setShowSpoolModal(false)
+  }
+
   // Real Database Status Toggle Handler
   const handleToggleStatus = async (printerId: string, currentStatus: string) => {
     setUpdatingId(printerId)
@@ -72,6 +98,10 @@ export default function PrinterOwnerClient({ user, initialPrinters, initialOrder
       setUpdatingId(null)
     }
   }
+
+  const filteredOrders = selectedMaterialFilter === 'ALL'
+    ? orders
+    : orders.filter((o) => (o.material || '').toUpperCase().includes(selectedMaterialFilter))
 
   // Calculate live metrics
   const activeJobs = orders.filter((o) => ['accepted', 'in_production'].includes(o.status)).length
@@ -244,12 +274,115 @@ export default function PrinterOwnerClient({ user, initialPrinters, initialOrder
           )}
         </div>
 
+        {/* FILAMENT & SPOOL INVENTORY TRACKER */}
+        <div style={{ ...s.card, marginBottom: 24 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 10 }}>
+            <div>
+              <div style={{ fontSize: 18, fontWeight: 900, color: 'var(--text-main)' }}>🧵 Filament &amp; Material Inventory</div>
+              <div style={{ fontSize: 13, color: 'var(--text-sub)', marginTop: 2 }}>Track live spool weights and automated print job deductions</div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowSpoolModal(true)}
+              style={{ background: '#ea580c', color: '#fff', border: 'none', borderRadius: 99, padding: '7px 16px', fontSize: 12, fontWeight: 800, cursor: 'pointer' }}
+            >
+              + Log New Spool
+            </button>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 14 }}>
+            {spools.map((spool) => {
+              const pct = Math.round((spool.remainingGrams / spool.totalGrams) * 100)
+              const isLow = pct < 35
+              return (
+                <div key={spool.id} style={{ background: 'var(--bg-card-hover)', border: '1px solid var(--border-color)', borderRadius: 14, padding: 14 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <span style={{ width: 14, height: 14, borderRadius: '50%', background: spool.colorHex, border: '1px solid var(--border-color)' }} />
+                      <span style={{ fontSize: 13, fontWeight: 800, color: 'var(--text-main)' }}>{spool.name}</span>
+                    </div>
+                    {isLow && (
+                      <span style={{ background: 'rgba(239, 68, 68, 0.15)', color: '#ef4444', fontSize: 10, fontWeight: 800, padding: '2px 6px', borderRadius: 4 }}>
+                        Low
+                      </span>
+                    )}
+                  </div>
+                  <div style={{ width: '100%', height: 6, background: 'rgba(0,0,0,0.08)', borderRadius: 99, overflow: 'hidden', marginBottom: 8 }}>
+                    <div style={{ width: `${pct}%`, height: '100%', background: isLow ? '#ef4444' : '#10B981', borderRadius: 99 }} />
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11.5, color: 'var(--text-sub)' }}>
+                    <span>Remaining: <strong style={{ color: 'var(--text-main)' }}>{spool.remainingGrams}g</strong></span>
+                    <span>{pct}% capacity</span>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+
+          {/* Quick Spool Add Modal */}
+          {showSpoolModal && (
+            <div style={{ marginTop: 16, padding: 16, background: 'var(--bg-canvas)', borderRadius: 12, border: '1px dashed var(--border-color)', display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+              <input
+                type="text"
+                placeholder="Spool Name (e.g. Silk Gold PLA)"
+                value={newSpoolName}
+                onChange={(e) => setNewSpoolName(e.target.value)}
+                style={{ flex: 1, minWidth: 200, padding: '8px 12px', borderRadius: 8, border: '1px solid var(--border-color)', background: 'var(--bg-card)', color: 'var(--text-main)', fontSize: 13 }}
+              />
+              <input
+                type="number"
+                placeholder="Weight (g)"
+                value={newSpoolWeight}
+                onChange={(e) => setNewSpoolWeight(Number(e.target.value))}
+                style={{ width: 120, padding: '8px 12px', borderRadius: 8, border: '1px solid var(--border-color)', background: 'var(--bg-card)', color: 'var(--text-main)', fontSize: 13 }}
+              />
+              <button
+                type="button"
+                onClick={handleAddSpool}
+                style={{ background: '#10B981', color: '#fff', border: 'none', borderRadius: 8, padding: '8px 16px', fontSize: 13, fontWeight: 800, cursor: 'pointer' }}
+              >
+                Save
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowSpoolModal(false)}
+                style={{ background: 'transparent', color: 'var(--text-sub)', border: 'none', fontSize: 13, cursor: 'pointer' }}
+              >
+                Cancel
+              </button>
+            </div>
+          )}
+        </div>
+
         {/* JOBS QUEUE TABLE */}
         <div style={s.card}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
             <div>
-              <div style={{ fontSize: 18, fontWeight: 900, color: '#0F172A' }}>📦 Print Jobs Queue ({orders.length})</div>
-              <div style={{ fontSize: 13, color: '#64748B', marginTop: 2 }}>Manage order states and update manufacturing status</div>
+              <div style={{ fontSize: 18, fontWeight: 900, color: 'var(--text-main)' }}>📦 Print Jobs Queue ({filteredOrders.length})</div>
+              <div style={{ fontSize: 13, color: 'var(--text-sub)', marginTop: 2 }}>Manage order states and batch print multi-part runs</div>
+            </div>
+
+            {/* Batch Material Filter */}
+            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+              {['ALL', 'PLA', 'PETG', 'ABS', 'TPU', 'RESIN'].map((mat) => (
+                <button
+                  key={mat}
+                  type="button"
+                  onClick={() => setSelectedMaterialFilter(mat)}
+                  style={{
+                    background: selectedMaterialFilter === mat ? '#2563EB' : 'var(--bg-card-hover)',
+                    color: selectedMaterialFilter === mat ? '#fff' : 'var(--text-main)',
+                    border: selectedMaterialFilter === mat ? '1px solid #2563EB' : '1px solid var(--border-color)',
+                    borderRadius: 8,
+                    padding: '4px 10px',
+                    fontSize: 11.5,
+                    fontWeight: 800,
+                    cursor: 'pointer',
+                  }}
+                >
+                  {mat}
+                </button>
+              ))}
             </div>
           </div>
 
@@ -266,14 +399,14 @@ export default function PrinterOwnerClient({ user, initialPrinters, initialOrder
                 </tr>
               </thead>
               <tbody>
-                {orders.length === 0 ? (
+                {filteredOrders.length === 0 ? (
                   <tr>
                     <td colSpan={6} style={{ textAlign: 'center', padding: '32px 16px', color: '#64748B', fontSize: 13, fontWeight: 600 }}>
-                      No active print jobs in your queue yet. When buyers submit print requests in your area, jobs will appear here automatically.
+                      No active print jobs matching the selected material filter.
                     </td>
                   </tr>
                 ) : (
-                  orders.map((o) => {
+                  filteredOrders.map((o) => {
                     const handleNextStep = async (nextStatus: OrderStatus, notes: string) => {
                       setUpdatingId(o.id)
                       const res = await updateOrderStatus(supabase, o.id, nextStatus, notes, user.id, o.status as OrderStatus)

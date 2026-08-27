@@ -183,6 +183,29 @@ function OrderTrackingContent() {
           📊 Order Lifecycle Progress Timeline
         </div>
 
+        {/* Live Printing Layer Telemetry Widget (when in PRINTING phase) */}
+        {currentStatus === 'PRINTING' && (
+          <div style={{ background: 'rgba(234, 88, 12, 0.06)', border: '1px solid rgba(234, 88, 12, 0.25)', borderRadius: 16, padding: '16px 20px', marginBottom: 24 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ width: 10, height: 10, borderRadius: '50%', background: '#ea580c', animation: 'ping 1.5s infinite' }} />
+                <span style={{ fontSize: 13, fontWeight: 900, color: '#ea580c', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                  Live Machine Telemetry
+                </span>
+              </div>
+              <span style={{ fontSize: 12, fontWeight: 800, color: 'var(--text-main)' }}>Layer 420 / 1,250 (34%)</span>
+            </div>
+            <div style={{ width: '100%', height: 8, background: 'rgba(0,0,0,0.08)', borderRadius: 99, overflow: 'hidden', marginBottom: 12 }}>
+              <div style={{ width: '34%', height: '100%', background: 'linear-gradient(90deg, #ea580c, #f97316)', borderRadius: 99 }} />
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, fontSize: 11.5, color: 'var(--text-sub)' }}>
+              <div>🔥 Hotend: <strong style={{ color: 'var(--text-main)' }}>215°C</strong></div>
+              <div>🖨️ Bed: <strong style={{ color: 'var(--text-main)' }}>60°C</strong></div>
+              <div>⏱️ Est. Remaining: <strong style={{ color: '#ea580c' }}>~1h 15m</strong></div>
+            </div>
+          </div>
+        )}
+
         <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
           {ORDER_LIFECYCLE_STEPS.slice(0, 11).map((step, idx) => {
             const isPassed = idx <= safeStepIndex
@@ -226,6 +249,67 @@ function OrderTrackingContent() {
               </div>
             )
           })}
+        </div>
+      </div>
+
+      {/* PROOF-OF-PRINT QA QUALITY CARD (when printed/dispatched/delivered) */}
+      {['PRINTED', 'QA_PASSED', 'PACKAGED', 'DISPATCHED', 'DELIVERED', 'COMPLETED'].includes(currentStatus || '') && (
+        <div style={{ background: 'var(--bg-card)', borderRadius: 24, border: '1px solid var(--border-color)', padding: 24, marginBottom: 32, boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span style={{ fontSize: 18 }}>📸</span>
+              <h3 style={{ fontSize: 16, fontWeight: 900, margin: 0, color: 'var(--text-main)' }}>
+                Proof-of-Print Quality Verification
+              </h3>
+            </div>
+            <span style={{ background: 'rgba(16, 185, 129, 0.12)', color: '#10B981', padding: '3px 10px', borderRadius: 99, fontSize: 11, fontWeight: 800 }}>
+              ✅ QA Tolerances Verified
+            </span>
+          </div>
+
+          <div style={{ display: 'flex', gap: 16, alignItems: 'center', flexWrap: 'wrap' }}>
+            <img
+              src="https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=400&q=80"
+              alt="Proof of Print"
+              style={{ width: 120, height: 90, borderRadius: 12, objectFit: 'cover', border: '1px solid var(--border-color)' }}
+            />
+            <div style={{ flex: 1, minWidth: 200 }}>
+              <div style={{ fontSize: 13, fontWeight: 800, color: 'var(--text-main)', marginBottom: 4 }}>
+                Physical Print Inspected by Hub Operator
+              </div>
+              <div style={{ fontSize: 12, color: 'var(--text-sub)', lineHeight: 1.4 }}>
+                Watertight layer adhesion verified • Zero stringing • Surface geometry within ±0.15 mm tolerance envelope.
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ESCROW BREAKDOWN RECEIPT CARD */}
+      <div style={{ background: 'var(--bg-card)', borderRadius: 24, border: '1px solid var(--border-color)', padding: 24, marginBottom: 32 }}>
+        <div style={{ fontSize: 16, fontWeight: 900, color: 'var(--text-main)', marginBottom: 14, display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span>🧾 Escrow Payout Breakdown</span>
+          <span style={{ fontSize: 11, background: 'rgba(139, 92, 246, 0.1)', color: '#8B5CF6', padding: '2px 8px', borderRadius: 6, fontWeight: 800 }}>
+            Escrow Guarded
+          </span>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
+          <div style={{ background: 'var(--bg-card-hover)', padding: 14, borderRadius: 14, border: '1px solid var(--border-color)' }}>
+            <div style={{ fontSize: 11, color: 'var(--text-sub)', fontWeight: 800, textTransform: 'uppercase' }}>70% Printer Hub</div>
+            <div style={{ fontSize: 16, fontWeight: 900, color: 'var(--text-main)', marginTop: 4 }}>Manufacturing</div>
+            <div style={{ fontSize: 11, color: '#10B981', marginTop: 2 }}>{isCompletedOrDelivered ? '● Disbursed' : '● Held in Escrow'}</div>
+          </div>
+          <div style={{ background: 'var(--bg-card-hover)', padding: 14, borderRadius: 14, border: '1px solid var(--border-color)' }}>
+            <div style={{ fontSize: 11, color: 'var(--text-sub)', fontWeight: 800, textTransform: 'uppercase' }}>15% 3D Designer</div>
+            <div style={{ fontSize: 16, fontWeight: 900, color: 'var(--text-main)', marginTop: 4 }}>CAD Royalty</div>
+            <div style={{ fontSize: 11, color: '#10B981', marginTop: 2 }}>{isCompletedOrDelivered ? '● Disbursed' : '● Held in Escrow'}</div>
+          </div>
+          <div style={{ background: 'var(--bg-card-hover)', padding: 14, borderRadius: 14, border: '1px solid var(--border-color)' }}>
+            <div style={{ fontSize: 11, color: 'var(--text-sub)', fontWeight: 800, textTransform: 'uppercase' }}>15% PrintHive</div>
+            <div style={{ fontSize: 16, fontWeight: 900, color: 'var(--text-main)', marginTop: 4 }}>Platform &amp; QA</div>
+            <div style={{ fontSize: 11, color: '#10B981', marginTop: 2 }}>● Processed</div>
+          </div>
         </div>
       </div>
 
