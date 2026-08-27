@@ -243,20 +243,20 @@ export default function OpenStreetMap({
           <div style="
             display: flex;
             align-items: center;
-            gap: 5px;
-            background: ${isSelected ? '#ea580c' : 'rgba(15, 23, 42, 0.92)'};
+            gap: 6px;
+            background: ${isSelected ? '#ea580c' : 'rgba(15, 23, 42, 0.94)'};
             color: #fff;
-            padding: 4px 9px 4px 6px;
-            border-radius: 4px;
-            border: 1.5px solid ${isSelected ? '#fff' : 'rgba(255,255,255,0.3)'};
-            box-shadow: ${isSelected ? '0 0 16px rgba(234,88,12,0.8)' : '0 3px 10px rgba(0,0,0,0.35)'};
+            padding: 5px 12px 5px 8px;
+            border-radius: 9999px;
+            border: 2px solid ${isSelected ? '#fff' : 'rgba(255,255,255,0.4)'};
+            box-shadow: ${isSelected ? '0 0 20px rgba(234,88,12,0.85)' : '0 4px 14px rgba(0,0,0,0.35)'};
             transform: translate(-50%, -50%);
             cursor: pointer;
             white-space: nowrap;
             transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
           ">
-            <span style="font-size: 13px; line-height: 1;">🖨️</span>
-            <span style="font-size: 11px; font-weight: 800; letter-spacing: 0.3px;">${cityName}</span>
+            <span style="font-size: 14px; line-height: 1;">🖨️</span>
+            <span style="font-size: 12px; font-weight: 800; letter-spacing: 0.3px;">${cityName}</span>
           </div>
         `,
         iconSize: [0, 0],
@@ -272,15 +272,15 @@ export default function OpenStreetMap({
 
       // Rich Floating Glassmorphic Popup Card
       const popupHtml = `
-        <div style="font-family: inherit; padding: 4px; color: #0F172A; min-width: 200px;">
-          <div style="font-weight: 900; font-size: 14px; margin-bottom: 3px; color: #0F172A; display: flex; align-items: center; gap: 6px;">
+        <div style="font-family: inherit; padding: 6px; color: #0F172A; min-width: 210px; border-radius: 16px;">
+          <div style="font-weight: 900; font-size: 15px; margin-bottom: 4px; color: #0F172A; display: flex; align-items: center; gap: 6px;">
             <span>🖨️</span>
             <span>${loc.name || 'Printer Hub'}</span>
           </div>
-          <div style="font-size: 12px; color: #64748B; margin-bottom: 6px;">📍 ${loc.location || 'India'}</div>
-          ${loc.distance ? `<div style="font-size: 11px; font-weight: 800; color: #ea580c; margin-bottom: 4px;">🚀 ${loc.distance} from your location</div>` : ''}
-          ${loc.machines ? `<div style="font-size: 11px; color: #475569; margin-bottom: 4px;">⚙️ ${loc.machines.join(', ')}</div>` : ''}
-          ${loc.rating ? `<div style="font-size: 11px; font-weight: 800; color: #D97706;">⭐ ${loc.rating} Verified Rating</div>` : ''}
+          <div style="font-size: 12px; color: #64748B; margin-bottom: 8px;">📍 ${loc.location || 'India'}</div>
+          ${loc.distance ? `<div style="font-size: 12px; font-weight: 800; color: #ea580c; margin-bottom: 4px;">🚀 ${loc.distance} from your location</div>` : ''}
+          ${loc.machines ? `<div style="font-size: 12px; color: #475569; margin-bottom: 4px;">⚙️ ${loc.machines.join(', ')}</div>` : ''}
+          ${loc.rating ? `<div style="font-size: 12px; font-weight: 800; color: #D97706;">⭐ ${loc.rating} Verified Rating</div>` : ''}
         </div>
       `
       marker.bindPopup(popupHtml)
@@ -375,7 +375,7 @@ export default function OpenStreetMap({
   }
 
   return (
-    <div style={{ position: 'relative', width: '100%', height, borderRadius: 4, overflow: 'hidden', isolation: 'isolate', zIndex: 1, border: '1px solid var(--border-color)' }}>
+    <div style={{ position: 'relative', width: '100%', height, borderRadius: 24, overflow: 'hidden', isolation: 'isolate', zIndex: 1, border: '1px solid var(--border-color)', boxShadow: '0 12px 36px rgba(0,0,0,0.06)' }}>
       {/* Map Engine Loading State */}
       {!loaded && !loadError && (
         <div style={{ position: 'absolute', inset: 0, background: 'var(--bg-card)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-sub)', fontSize: 14, fontWeight: 700, zIndex: 10 }}>
@@ -393,8 +393,8 @@ export default function OpenStreetMap({
 
       {/* Empty Location Notice */}
       {loaded && !isPicker && validLocations.length === 0 && (
-        <div style={{ position: 'absolute', top: 12, left: 12, zIndex: 1000, background: 'rgba(15, 23, 42, 0.9)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255,255,255,0.2)', borderRadius: 4, padding: '6px 12px', color: '#f8fafc', fontSize: 12, fontWeight: 700 }}>
-          📍 No active printer hubs pinned in this view yet.
+        <div style={{ position: 'absolute', top: 14, left: 14, zIndex: 1000, background: 'rgba(15, 23, 42, 0.9)', backdropFilter: 'blur(10px)', border: '1px solid rgba(255,255,255,0.2)', borderRadius: 9999, padding: '7px 16px', color: '#f8fafc', fontSize: 12, fontWeight: 700, boxShadow: '0 4px 16px rgba(0,0,0,0.2)' }}>
+          📍 Nationwide India FabLab Network
         </div>
       )}
 
@@ -406,24 +406,25 @@ export default function OpenStreetMap({
           disabled={isLocating}
           style={{
             position: 'absolute',
-            top: 12,
-            right: 12,
+            top: 14,
+            right: 14,
             zIndex: 1000,
-            background: 'rgba(15, 23, 42, 0.9)',
-            backdropFilter: 'blur(8px)',
+            background: 'rgba(15, 23, 42, 0.92)',
+            backdropFilter: 'blur(10px)',
             color: '#FFFFFF',
             border: '1px solid rgba(255, 255, 255, 0.3)',
-            borderRadius: 4,
-            padding: '7px 14px',
+            borderRadius: 9999,
+            padding: '8px 18px',
             fontSize: 12,
             fontWeight: 800,
             cursor: 'pointer',
             display: 'flex',
             alignItems: 'center',
-            gap: 6,
-            boxShadow: '0 4px 14px rgba(0,0,0,0.3)',
+            gap: 8,
+            boxShadow: '0 4px 16px rgba(0,0,0,0.25)',
             textTransform: 'uppercase',
             letterSpacing: 0.5,
+            transition: 'all 0.2s ease',
           }}
         >
           <span>{isLocating ? '⏳' : '🎯'}</span>
@@ -435,17 +436,18 @@ export default function OpenStreetMap({
       {geoNotification && (
         <div style={{
           position: 'absolute',
-          bottom: 12,
-          left: 12,
-          right: 12,
+          bottom: 14,
+          left: 14,
+          right: 14,
           zIndex: 1000,
           background: geoNotificationType === 'error' ? 'rgba(239,68,68,0.95)' : 'rgba(16,185,129,0.95)',
+          backdropFilter: 'blur(10px)',
           color: '#fff',
-          padding: '8px 14px',
-          borderRadius: 4,
+          padding: '10px 18px',
+          borderRadius: 14,
           fontSize: 12,
           fontWeight: 700,
-          boxShadow: '0 4px 16px rgba(0,0,0,0.3)',
+          boxShadow: '0 6px 24px rgba(0,0,0,0.3)',
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
@@ -454,7 +456,7 @@ export default function OpenStreetMap({
           <button
             type="button"
             onClick={() => setGeoNotification(null)}
-            style={{ background: 'none', border: 'none', color: '#fff', fontSize: 14, cursor: 'pointer', fontWeight: 800 }}
+            style={{ background: 'none', border: 'none', color: '#fff', fontSize: 16, cursor: 'pointer', fontWeight: 800, paddingLeft: 12 }}
           >
             ✕
           </button>

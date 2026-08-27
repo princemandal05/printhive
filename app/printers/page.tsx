@@ -222,10 +222,10 @@ function PrinterDirectoryContent() {
         {/* HEADER BAR */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 16, marginBottom: 20 }}>
           <div>
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'rgba(234,88,12,0.1)', color: '#ea580c', border: '1px solid rgba(234,88,12,0.2)', padding: '4px 12px', borderRadius: 4, fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8 }}>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'rgba(234,88,12,0.1)', color: '#ea580c', border: '1px solid rgba(234,88,12,0.2)', padding: '5px 14px', borderRadius: 9999, fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8 }}>
               ⚡ Real-Time FabLab Network
             </div>
-            <h1 style={{ fontSize: 30, fontWeight: 900, color: 'var(--text-main)', margin: '0 0 6px 0', letterSpacing: '-0.5px' }}>
+            <h1 style={{ fontSize: 32, fontWeight: 900, color: 'var(--text-main)', margin: '0 0 6px 0', letterSpacing: '-0.5px' }}>
               Nearby 3D Printer Hubs
             </h1>
             <p style={{ color: 'var(--text-sub)', fontSize: 14, margin: 0 }}>
@@ -238,17 +238,18 @@ function PrinterDirectoryContent() {
             style={{
               background: 'linear-gradient(135deg, #ea580c 0%, #c2410c 100%)',
               color: '#fff',
-              padding: '10px 18px',
-              borderRadius: 4,
+              padding: '12px 24px',
+              borderRadius: 9999,
               fontWeight: 800,
               fontSize: 13,
               textDecoration: 'none',
               display: 'inline-flex',
               alignItems: 'center',
-              gap: 6,
-              boxShadow: '0 4px 14px rgba(234,88,12,0.25)',
+              gap: 8,
+              boxShadow: '0 6px 20px rgba(234,88,12,0.3)',
               textTransform: 'uppercase',
               letterSpacing: 0.5,
+              transition: 'all 0.2s ease',
             }}
           >
             <span>🖨️</span>
@@ -257,7 +258,7 @@ function PrinterDirectoryContent() {
         </div>
 
         {/* SEARCH & QUICK CHIPS BAR */}
-        <div style={{ background: 'var(--bg-card)', padding: '16px', borderRadius: 4, border: '1px solid var(--border-color)', marginBottom: 20, display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <div style={{ background: 'var(--bg-card)', padding: '18px 20px', borderRadius: 20, border: '1px solid var(--border-color)', marginBottom: 24, display: 'flex', flexDirection: 'column', gap: 14, boxShadow: '0 8px 30px rgba(0,0,0,0.03)' }}>
           <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
             {/* Search Input */}
             <div style={{ flex: '1 1 280px', position: 'relative' }}>
@@ -270,8 +271,8 @@ function PrinterDirectoryContent() {
                   width: '100%',
                   background: 'var(--bg-card-hover)',
                   border: '1px solid var(--border-color)',
-                  borderRadius: 4,
-                  padding: '10px 14px',
+                  borderRadius: 14,
+                  padding: '12px 16px',
                   fontSize: 13,
                   color: 'var(--text-main)',
                   outline: 'none',
@@ -283,7 +284,7 @@ function PrinterDirectoryContent() {
                 <button
                   type="button"
                   onClick={() => setSearchQuery('')}
-                  style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: 'var(--text-sub)', cursor: 'pointer', fontWeight: 800 }}
+                  style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: 'var(--text-sub)', cursor: 'pointer', fontWeight: 800 }}
                 >
                   ✕
                 </button>
@@ -298,26 +299,26 @@ function PrinterDirectoryContent() {
                 background: showFiltersDrawer ? '#ea580c' : 'var(--bg-card-hover)',
                 color: showFiltersDrawer ? '#fff' : 'var(--text-main)',
                 border: '1px solid var(--border-color)',
-                borderRadius: 4,
-                padding: '10px 16px',
+                borderRadius: 14,
+                padding: '10px 18px',
                 fontSize: 13,
                 fontWeight: 800,
                 cursor: 'pointer',
                 display: 'inline-flex',
                 alignItems: 'center',
-                gap: 6,
+                gap: 8,
                 transition: 'all 0.15s ease',
               }}
             >
               <span>⚙️ Filters</span>
-              <span style={{ fontSize: 11, background: showFiltersDrawer ? 'rgba(255,255,255,0.2)' : 'var(--bg-card)', padding: '1px 6px', borderRadius: 3 }}>
+              <span style={{ fontSize: 11, background: showFiltersDrawer ? 'rgba(255,255,255,0.25)' : 'var(--bg-card)', padding: '2px 8px', borderRadius: 9999, fontWeight: 800 }}>
                 {filterMaxDistance !== 'All' || filterMaterial !== 'All' || filterTechnology !== 'All' || filterMaxPrice !== 'All' ? 'Active' : 'All'}
               </span>
             </button>
           </div>
 
           {/* Quick Filter Chips */}
-          <div style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 4, scrollbarWidth: 'none' }}>
+          <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 4, scrollbarWidth: 'none' }}>
             {[
               { id: 'all', label: '🔥 All Hubs' },
               { id: 'online', label: '🟢 Online & Ready' },
@@ -333,13 +334,14 @@ function PrinterDirectoryContent() {
                   background: activeChip === chip.id ? 'var(--text-main)' : 'var(--bg-card-hover)',
                   color: activeChip === chip.id ? 'var(--bg-canvas)' : 'var(--text-sub)',
                   border: '1px solid var(--border-color)',
-                  borderRadius: 4,
-                  padding: '6px 12px',
+                  borderRadius: 9999,
+                  padding: '7px 16px',
                   fontSize: 12,
                   fontWeight: 700,
                   cursor: 'pointer',
                   whiteSpace: 'nowrap',
                   transition: 'all 0.15s ease',
+                  boxShadow: activeChip === chip.id ? '0 4px 12px rgba(0,0,0,0.1)' : 'none',
                 }}
               >
                 {chip.label}
@@ -349,7 +351,7 @@ function PrinterDirectoryContent() {
 
           {/* Expandable Advanced Filters Drawer */}
           {showFiltersDrawer && (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 12, paddingTop: 12, borderTop: '1px solid var(--border-color)' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 12, paddingTop: 14, borderTop: '1px solid var(--border-color)' }}>
               <div>
                 <label style={{ display: 'block', fontSize: 11, fontWeight: 800, color: 'var(--text-sub)', textTransform: 'uppercase', marginBottom: 4 }}>
                   📍 Max Distance
@@ -357,7 +359,7 @@ function PrinterDirectoryContent() {
                 <select
                   value={filterMaxDistance}
                   onChange={(e) => setFilterMaxDistance(e.target.value === 'All' ? 'All' : Number(e.target.value))}
-                  style={{ width: '100%', background: 'var(--bg-card-hover)', border: '1px solid var(--border-color)', borderRadius: 4, padding: '6px 10px', fontSize: 12, color: 'var(--text-main)', fontWeight: 700 }}
+                  style={{ width: '100%', background: 'var(--bg-card-hover)', border: '1px solid var(--border-color)', borderRadius: 10, padding: '8px 12px', fontSize: 12, color: 'var(--text-main)', fontWeight: 700 }}
                 >
                   <option value="All">Any Distance</option>
                   <option value="5">&lt; 5 km</option>
@@ -374,7 +376,7 @@ function PrinterDirectoryContent() {
                 <select
                   value={filterMaterial}
                   onChange={(e) => setFilterMaterial(e.target.value)}
-                  style={{ width: '100%', background: 'var(--bg-card-hover)', border: '1px solid var(--border-color)', borderRadius: 4, padding: '6px 10px', fontSize: 12, color: 'var(--text-main)', fontWeight: 700 }}
+                  style={{ width: '100%', background: 'var(--bg-card-hover)', border: '1px solid var(--border-color)', borderRadius: 10, padding: '8px 12px', fontSize: 12, color: 'var(--text-main)', fontWeight: 700 }}
                 >
                   <option value="All">All Materials</option>
                   <option value="PLA">PLA</option>
@@ -393,7 +395,7 @@ function PrinterDirectoryContent() {
                 <select
                   value={filterTechnology}
                   onChange={(e) => setFilterTechnology(e.target.value)}
-                  style={{ width: '100%', background: 'var(--bg-card-hover)', border: '1px solid var(--border-color)', borderRadius: 4, padding: '6px 10px', fontSize: 12, color: 'var(--text-main)', fontWeight: 700 }}
+                  style={{ width: '100%', background: 'var(--bg-card-hover)', border: '1px solid var(--border-color)', borderRadius: 10, padding: '8px 12px', fontSize: 12, color: 'var(--text-main)', fontWeight: 700 }}
                 >
                   <option value="All">All Technologies</option>
                   <option value="FDM">FDM Precision</option>
@@ -409,7 +411,7 @@ function PrinterDirectoryContent() {
                 <select
                   value={filterMaxPrice}
                   onChange={(e) => setFilterMaxPrice(e.target.value === 'All' ? 'All' : Number(e.target.value))}
-                  style={{ width: '100%', background: 'var(--bg-card-hover)', border: '1px solid var(--border-color)', borderRadius: 4, padding: '6px 10px', fontSize: 12, color: 'var(--text-main)', fontWeight: 700 }}
+                  style={{ width: '100%', background: 'var(--bg-card-hover)', border: '1px solid var(--border-color)', borderRadius: 10, padding: '8px 12px', fontSize: 12, color: 'var(--text-main)', fontWeight: 700 }}
                 >
                   <option value="All">Any Price</option>
                   <option value="300">&lt; ₹300 / job</option>
@@ -425,7 +427,7 @@ function PrinterDirectoryContent() {
                 <select
                   value={filterMinRating}
                   onChange={(e) => setFilterMinRating(e.target.value === 'All' ? 'All' : Number(e.target.value))}
-                  style={{ width: '100%', background: 'var(--bg-card-hover)', border: '1px solid var(--border-color)', borderRadius: 4, padding: '6px 10px', fontSize: 12, color: 'var(--text-main)', fontWeight: 700 }}
+                  style={{ width: '100%', background: 'var(--bg-card-hover)', border: '1px solid var(--border-color)', borderRadius: 10, padding: '8px 12px', fontSize: 12, color: 'var(--text-main)', fontWeight: 700 }}
                 >
                   <option value="All">Any Rating</option>
                   <option value="4.9">4.9+ ★</option>
@@ -437,37 +439,37 @@ function PrinterDirectoryContent() {
         </div>
 
         {/* 🌟 2-COLUMN AIRBNB-STYLE SPLIT SCREEN LAYOUT */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.2fr) minmax(0, 1fr)', gap: 24, alignItems: 'start' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.2fr) minmax(0, 1fr)', gap: 28, alignItems: 'start' }}>
           
           {/* LEFT COLUMN: SCROLLABLE HUBS DIRECTORY FEED */}
           <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-              <span style={{ fontSize: 13, fontWeight: 800, color: 'var(--text-main)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+              <span style={{ fontSize: 14, fontWeight: 800, color: 'var(--text-main)' }}>
                 {sortedPrinters.length} Verified Print Hubs Found
               </span>
-              <span style={{ fontSize: 11, color: 'var(--text-sub)', fontWeight: 600 }}>
+              <span style={{ fontSize: 12, color: 'var(--text-sub)', fontWeight: 600 }}>
                 Auto-sorted by Availability & Distance
               </span>
             </div>
 
             {loading ? (
-              <div style={{ textAlign: 'center', padding: '60px 24px', background: 'var(--bg-card)', borderRadius: 4, border: '1px solid var(--border-color)', color: 'var(--text-sub)' }}>
+              <div style={{ textAlign: 'center', padding: '60px 24px', background: 'var(--bg-card)', borderRadius: 20, border: '1px solid var(--border-color)', color: 'var(--text-sub)' }}>
                 <div style={{ fontSize: 32, marginBottom: 12 }}>⏳</div>
                 <div style={{ fontSize: 16, fontWeight: 800, color: 'var(--text-main)' }}>Loading Live 3D Printer Hubs…</div>
                 <div style={{ fontSize: 13, marginTop: 4 }}>Connecting to PrintHive India GPS Network</div>
               </div>
             ) : printers.length === 0 ? (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
                 {/* 🌟 1. HIGH-IMPACT MACHINE REGISTRATION ONBOARDING CARD */}
                 <div style={{
-                  background: 'linear-gradient(135deg, rgba(234,88,12,0.06) 0%, var(--bg-card) 100%)',
-                  borderRadius: 4,
+                  background: 'linear-gradient(135deg, rgba(234,88,12,0.08) 0%, var(--bg-card) 100%)',
+                  borderRadius: 24,
                   border: '1.5px solid rgba(234,88,12,0.3)',
-                  padding: 24,
-                  boxShadow: '0 4px 20px rgba(0,0,0,0.04)',
+                  padding: 28,
+                  boxShadow: '0 8px 30px rgba(234,88,12,0.06)',
                 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, flexWrap: 'wrap', gap: 8 }}>
-                    <span style={{ background: '#ea580c', color: '#fff', padding: '3px 10px', borderRadius: 3, fontSize: 11, fontWeight: 900, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14, flexWrap: 'wrap', gap: 8 }}>
+                    <span style={{ background: '#ea580c', color: '#fff', padding: '4px 12px', borderRadius: 9999, fontSize: 11, fontWeight: 900, textTransform: 'uppercase', letterSpacing: 0.5 }}>
                       ⚡ Network Expansion Active
                     </span>
                     <span style={{ fontSize: 12, color: 'var(--text-sub)', fontWeight: 700 }}>
@@ -475,28 +477,28 @@ function PrinterDirectoryContent() {
                     </span>
                   </div>
 
-                  <h2 style={{ fontSize: 22, fontWeight: 900, color: 'var(--text-main)', margin: '0 0 6px 0', letterSpacing: '-0.5px' }}>
+                  <h2 style={{ fontSize: 24, fontWeight: 900, color: 'var(--text-main)', margin: '0 0 8px 0', letterSpacing: '-0.5px' }}>
                     Be the First 3D Print Hub in Your City
                   </h2>
-                  <p style={{ fontSize: 13, color: 'var(--text-sub)', margin: '0 0 18px 0', lineHeight: 1.5 }}>
+                  <p style={{ fontSize: 14, color: 'var(--text-sub)', margin: '0 0 20px 0', lineHeight: 1.6 }}>
                     Own a Bambu Lab, Prusa, Creality, or Resin 3D printer? List your machine on PrintHive to receive local customer print orders and earn 70% direct payouts with zero platform listing fees.
                   </p>
 
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: 10, marginBottom: 20 }}>
-                    <div style={{ background: 'var(--bg-card)', padding: '10px', borderRadius: 4, border: '1px solid var(--border-color)' }}>
-                      <div style={{ fontSize: 16, marginBottom: 2 }}>💰</div>
-                      <div style={{ fontSize: 12, fontWeight: 800, color: 'var(--text-main)' }}>70% Direct Payouts</div>
-                      <div style={{ fontSize: 11, color: 'var(--text-sub)' }}>UPI / Bank Settlement</div>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: 12, marginBottom: 22 }}>
+                    <div style={{ background: 'var(--bg-card)', padding: '14px', borderRadius: 16, border: '1px solid var(--border-color)', boxShadow: '0 4px 14px rgba(0,0,0,0.02)' }}>
+                      <div style={{ fontSize: 20, marginBottom: 4 }}>💰</div>
+                      <div style={{ fontSize: 13, fontWeight: 800, color: 'var(--text-main)' }}>70% Direct Payouts</div>
+                      <div style={{ fontSize: 11, color: 'var(--text-sub)', marginTop: 2 }}>UPI / Bank Settlement</div>
                     </div>
-                    <div style={{ background: 'var(--bg-card)', padding: '10px', borderRadius: 4, border: '1px solid var(--border-color)' }}>
-                      <div style={{ fontSize: 16, marginBottom: 2 }}>📦</div>
-                      <div style={{ fontSize: 12, fontWeight: 800, color: 'var(--text-main)' }}>Dunzo / Porter Pickup</div>
-                      <div style={{ fontSize: 11, color: 'var(--text-sub)' }}>Automated Local Logistics</div>
+                    <div style={{ background: 'var(--bg-card)', padding: '14px', borderRadius: 16, border: '1px solid var(--border-color)', boxShadow: '0 4px 14px rgba(0,0,0,0.02)' }}>
+                      <div style={{ fontSize: 20, marginBottom: 4 }}>📦</div>
+                      <div style={{ fontSize: 13, fontWeight: 800, color: 'var(--text-main)' }}>Dunzo / Porter Pickup</div>
+                      <div style={{ fontSize: 11, color: 'var(--text-sub)', marginTop: 2 }}>Automated Local Logistics</div>
                     </div>
-                    <div style={{ background: 'var(--bg-card)', padding: '10px', borderRadius: 4, border: '1px solid var(--border-color)' }}>
-                      <div style={{ fontSize: 16, marginBottom: 2 }}>🛡️</div>
-                      <div style={{ fontSize: 12, fontWeight: 800, color: 'var(--text-main)' }}>Escrow Protected</div>
-                      <div style={{ fontSize: 11, color: 'var(--text-sub)' }}>Guaranteed Payments</div>
+                    <div style={{ background: 'var(--bg-card)', padding: '14px', borderRadius: 16, border: '1px solid var(--border-color)', boxShadow: '0 4px 14px rgba(0,0,0,0.02)' }}>
+                      <div style={{ fontSize: 20, marginBottom: 4 }}>🛡️</div>
+                      <div style={{ fontSize: 13, fontWeight: 800, color: 'var(--text-main)' }}>Escrow Protected</div>
+                      <div style={{ fontSize: 11, color: 'var(--text-sub)', marginTop: 2 }}>Guaranteed Payments</div>
                     </div>
                   </div>
 
@@ -505,18 +507,19 @@ function PrinterDirectoryContent() {
                     style={{
                       background: 'linear-gradient(135deg, #ea580c 0%, #c2410c 100%)',
                       color: '#fff',
-                      padding: '12px 20px',
-                      borderRadius: 4,
+                      padding: '14px 24px',
+                      borderRadius: 9999,
                       fontWeight: 800,
                       textDecoration: 'none',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
                       gap: 8,
-                      fontSize: 13,
-                      boxShadow: '0 4px 16px rgba(234,88,12,0.3)',
+                      fontSize: 14,
+                      boxShadow: '0 6px 20px rgba(234,88,12,0.35)',
                       textTransform: 'uppercase',
                       letterSpacing: 0.5,
+                      transition: 'all 0.2s ease',
                     }}
                   >
                     <span>🖨️</span>
@@ -525,31 +528,32 @@ function PrinterDirectoryContent() {
                 </div>
 
                 {/* 🚀 2. NEED SOMETHING PRINTED RIGHT NOW? ACTION BOXES */}
-                <div style={{ background: 'var(--bg-card)', padding: 20, borderRadius: 4, border: '1px solid var(--border-color)' }}>
-                  <div style={{ fontSize: 14, fontWeight: 900, color: 'var(--text-main)', marginBottom: 4 }}>
+                <div style={{ background: 'var(--bg-card)', padding: 24, borderRadius: 24, border: '1px solid var(--border-color)', boxShadow: '0 8px 24px rgba(0,0,0,0.02)' }}>
+                  <div style={{ fontSize: 16, fontWeight: 900, color: 'var(--text-main)', marginBottom: 4 }}>
                     Looking to get a 3D model printed today?
                   </div>
-                  <div style={{ fontSize: 12, color: 'var(--text-sub)', marginBottom: 14 }}>
+                  <div style={{ fontSize: 13, color: 'var(--text-sub)', marginBottom: 16 }}>
                     Upload your CAD / 3D file or post a custom brief for fast quoting across Indian print farms.
                   </div>
 
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
                     <Link
                       href="/print-on-demand"
                       style={{
                         background: 'var(--bg-card-hover)',
                         border: '1px solid var(--border-color)',
-                        padding: '12px',
-                        borderRadius: 4,
+                        padding: '16px',
+                        borderRadius: 18,
                         textDecoration: 'none',
                         color: 'var(--text-main)',
                         display: 'flex',
                         flexDirection: 'column',
-                        gap: 4,
+                        gap: 6,
+                        transition: 'all 0.2s ease',
                       }}
                     >
-                      <span style={{ fontSize: 13, fontWeight: 800, color: '#ea580c' }}>🚀 Instant 3D Print File</span>
-                      <span style={{ fontSize: 11, color: 'var(--text-sub)' }}>Upload STL/3MF for automated slicing & quote</span>
+                      <span style={{ fontSize: 14, fontWeight: 800, color: '#ea580c' }}>🚀 Instant 3D Print File</span>
+                      <span style={{ fontSize: 12, color: 'var(--text-sub)' }}>Upload STL/3MF for automated slicing & quote</span>
                     </Link>
 
                     <Link
@@ -557,28 +561,29 @@ function PrinterDirectoryContent() {
                       style={{
                         background: 'var(--bg-card-hover)',
                         border: '1px solid var(--border-color)',
-                        padding: '12px',
-                        borderRadius: 4,
+                        padding: '16px',
+                        borderRadius: 18,
                         textDecoration: 'none',
                         color: 'var(--text-main)',
                         display: 'flex',
                         flexDirection: 'column',
-                        gap: 4,
+                        gap: 6,
+                        transition: 'all 0.2s ease',
                       }}
                     >
-                      <span style={{ fontSize: 13, fontWeight: 800, color: '#2563EB' }}>📝 Post Custom Project</span>
-                      <span style={{ fontSize: 11, color: 'var(--text-sub)' }}>Receive custom bids from designers & hubs</span>
+                      <span style={{ fontSize: 14, fontWeight: 800, color: '#2563EB' }}>📝 Post Custom Project</span>
+                      <span style={{ fontSize: 12, color: 'var(--text-sub)' }}>Receive custom bids from designers & hubs</span>
                     </Link>
                   </div>
                 </div>
               </div>
             ) : sortedPrinters.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '50px 24px', background: 'var(--bg-card)', borderRadius: 4, border: '1px dashed var(--border-color)' }}>
-                <div style={{ fontSize: 32, marginBottom: 10 }}>🔍</div>
-                <div style={{ fontSize: 16, fontWeight: 900, color: 'var(--text-main)', marginBottom: 4 }}>
+              <div style={{ textAlign: 'center', padding: '50px 24px', background: 'var(--bg-card)', borderRadius: 24, border: '1px dashed var(--border-color)' }}>
+                <div style={{ fontSize: 36, marginBottom: 10 }}>🔍</div>
+                <div style={{ fontSize: 18, fontWeight: 900, color: 'var(--text-main)', marginBottom: 4 }}>
                   No Hubs Match Your Active Filters
                 </div>
-                <p style={{ fontSize: 13, color: 'var(--text-sub)', maxWidth: 420, margin: '0 auto 16px auto', lineHeight: 1.5 }}>
+                <p style={{ fontSize: 13, color: 'var(--text-sub)', maxWidth: 420, margin: '0 auto 18px auto', lineHeight: 1.5 }}>
                   We found registered printer hubs on the network, but none match your current search keywords or distance/material filters.
                 </p>
                 <button
@@ -596,19 +601,19 @@ function PrinterDirectoryContent() {
                     background: '#ea580c',
                     color: '#fff',
                     border: 'none',
-                    padding: '9px 20px',
-                    borderRadius: 4,
+                    padding: '10px 24px',
+                    borderRadius: 9999,
                     fontWeight: 800,
                     cursor: 'pointer',
                     fontSize: 13,
-                    boxShadow: '0 2px 8px rgba(234,88,12,0.25)',
+                    boxShadow: '0 4px 14px rgba(234,88,12,0.3)',
                   }}
                 >
                   Reset All Filters
                 </button>
               </div>
             ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                 {sortedPrinters.map((printer) => {
                   const isSelected = selectedHub && printer.id === selectedHub.id
 
@@ -618,18 +623,18 @@ function PrinterDirectoryContent() {
                       onClick={() => setSelectedHub(printer)}
                       style={{
                         background: isSelected ? 'var(--bg-card-hover)' : 'var(--bg-card)',
-                        borderRadius: 4,
+                        borderRadius: 20,
                         border: isSelected ? '2px solid #ea580c' : '1px solid var(--border-color)',
-                        padding: 18,
+                        padding: 22,
                         cursor: 'pointer',
-                        boxShadow: isSelected ? '0 4px 20px rgba(234,88,12,0.15)' : '0 2px 8px rgba(0,0,0,0.03)',
-                        transition: 'all 0.15s ease',
+                        boxShadow: isSelected ? '0 8px 30px rgba(234,88,12,0.18)' : '0 4px 16px rgba(0,0,0,0.02)',
+                        transition: 'all 0.2s ease',
                       }}
                     >
                       {/* Top Row: Name, City & Status Badge */}
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, marginBottom: 6 }}>
                         <div>
-                          <div style={{ fontSize: 16, fontWeight: 900, color: 'var(--text-main)', marginBottom: 2 }}>
+                          <div style={{ fontSize: 17, fontWeight: 900, color: 'var(--text-main)', marginBottom: 2 }}>
                             {printer.name}
                           </div>
                           <div style={{ fontSize: 12, color: 'var(--text-sub)', display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -655,17 +660,17 @@ function PrinterDirectoryContent() {
                       </div>
 
                       {/* Material Tags */}
-                      <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap', marginBottom: 14 }}>
+                      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 14 }}>
                         {printer.materials?.map((m: string) => (
                           <span
                             key={m}
                             style={{
                               background: 'var(--bg-card-hover)',
                               border: '1px solid var(--border-color)',
-                              padding: '2px 8px',
-                              borderRadius: 3,
+                              padding: '4px 10px',
+                              borderRadius: 9999,
                               fontSize: 11,
-                              fontWeight: 600,
+                              fontWeight: 700,
                               color: 'var(--text-main)',
                             }}
                           >
@@ -675,10 +680,10 @@ function PrinterDirectoryContent() {
                       </div>
 
                       {/* Bottom Row: Starting Price & Order Button */}
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, borderTop: '1px solid var(--border-color)' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 14, borderTop: '1px solid var(--border-color)' }}>
                         <div>
                           <span style={{ fontSize: 11, color: 'var(--text-sub)', display: 'block' }}>Base Rate</span>
-                          <span style={{ fontSize: 16, fontWeight: 900, color: 'var(--text-main)' }}>
+                          <span style={{ fontSize: 17, fontWeight: 900, color: 'var(--text-main)' }}>
                             ₹{printer.base_price || 350} <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-sub)' }}>/ job</span>
                           </span>
                         </div>
@@ -689,17 +694,18 @@ function PrinterDirectoryContent() {
                           style={{
                             background: isSelected ? 'linear-gradient(135deg, #ea580c 0%, #c2410c 100%)' : '#ea580c',
                             color: '#fff',
-                            padding: '8px 16px',
-                            borderRadius: 4,
+                            padding: '10px 20px',
+                            borderRadius: 9999,
                             fontWeight: 800,
                             fontSize: 12,
                             textDecoration: 'none',
                             display: 'inline-flex',
                             alignItems: 'center',
                             gap: 6,
-                            boxShadow: '0 2px 10px rgba(234,88,12,0.25)',
+                            boxShadow: '0 4px 14px rgba(234,88,12,0.3)',
                             textTransform: 'uppercase',
                             letterSpacing: 0.5,
+                            transition: 'all 0.15s ease',
                           }}
                         >
                           <span>⚡ Request Print →</span>
@@ -713,7 +719,7 @@ function PrinterDirectoryContent() {
           </div>
 
           {/* RIGHT COLUMN: STICKY INTERACTIVE OPENSTREETMAP PANE */}
-          <div style={{ position: 'sticky', top: 90, height: 'calc(100vh - 120px)', minHeight: 560, borderRadius: 4, overflow: 'hidden', border: '1px solid var(--border-color)', boxShadow: '0 4px 20px rgba(0,0,0,0.06)' }}>
+          <div style={{ position: 'sticky', top: 90, height: 'calc(100vh - 120px)', minHeight: 560, borderRadius: 24, overflow: 'hidden', border: '1px solid var(--border-color)', boxShadow: '0 8px 32px rgba(0,0,0,0.06)' }}>
             <OpenStreetMap
               locations={sortedPrinters}
               selectedId={selectedHub?.id}

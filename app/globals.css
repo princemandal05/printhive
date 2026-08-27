@@ -1837,6 +1837,30 @@ p {
   box-shadow: none !important;
 }
 
+.leaflet-bar {
+  border-radius: 12px !important;
+  overflow: hidden;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15) !important;
+  border: 1px solid rgba(0, 0, 0, 0.1) !important;
+}
+
+.leaflet-bar a {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+}
+
+.leaflet-popup-content-wrapper {
+  border-radius: 18px !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2) !important;
+  padding: 6px !important;
+}
+
+.leaflet-tooltip {
+  border-radius: 9999px !important;
+  padding: 6px 14px !important;
+  font-weight: 700 !important;
+}
+
 .custom-leaflet-marker {
   transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
