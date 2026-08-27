@@ -293,17 +293,19 @@ export default function OpenStreetMap({
       markersMapRef.current[loc.id] = marker
     })
 
-    if (selectedId && markersMapRef.current[selectedId]) {
-      const activeLoc = validLocations.find((l) => l.id === selectedId)
-      if (activeLoc) {
-        map.flyTo([activeLoc.lat, activeLoc.lng], 16, { duration: 1.0 })
-        setTimeout(() => {
-          markersMapRef.current[selectedId]?.openPopup()
-        }, 500)
-      }
-    } else if (!selectedId && validLocations.length > 1) {
+    const activeMarker = selectedId ? markersMapRef.current[selectedId] : null
+    const activeLoc = selectedId ? validLocations.find((l) => l.id === selectedId) : null
+
+    if (activeMarker && activeLoc) {
+      map.flyTo([activeLoc.lat, activeLoc.lng], 16, { duration: 1.0 })
+      setTimeout(() => {
+        activeMarker.openPopup()
+      }, 500)
+    } else if (validLocations.length > 1) {
       const latLngs = validLocations.map((l) => [l.lat, l.lng])
       map.fitBounds(L.latLngBounds(latLngs), { padding: [50, 50], maxZoom: 12 })
+    } else if (validLocations.length === 1) {
+      map.flyTo([validLocations[0].lat, validLocations[0].lng], 14, { duration: 1.0 })
     }
   }, [loaded, locations, selectedId, isPicker])
 
