@@ -180,7 +180,10 @@ export default function BrowseClient({ designs = [] }: { designs: DesignRow[] })
 
           const parsed: DesignRow[] = data.map((d: any) => {
             const tags = Array.isArray(d.tags) ? d.tags : []
-            const recordMat = (Array.isArray(d.materials) && d.materials[0]) || (typeof d.material === 'string' ? d.material : null) || tags.find((t: string) => MATERIALS.includes(t)) || 'PLA'
+            const matchedTagMat = tags
+              .map((t: string) => MATERIALS.find((m) => m.toLowerCase() === String(t).toLowerCase() && m !== 'All Materials'))
+              .find(Boolean)
+            const recordMat = (Array.isArray(d.materials) && d.materials[0]) || (typeof d.material === 'string' ? d.material : null) || matchedTagMat || 'PLA'
             const recordEstTime = d.estimated_print_time || (d.estimated_time ? String(d.estimated_time) : undefined)
 
             return {
