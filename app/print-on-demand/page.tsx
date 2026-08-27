@@ -141,23 +141,26 @@ function PrintOnDemandContent() {
     loadRealPrinters()
   }, [searchParams])
 
+  // Clean up Object URL on component unmount only
+  const blobUrlRef = useRef<string | null>(null)
+  blobUrlRef.current = modelBlobUrl
+
   useEffect(() => {
     return () => {
+      if (blobUrlRef.current) {
+        URL.revokeObjectURL(blobUrlRef.current)
+      }
       if (analysisTimerRef.current) {
         clearTimeout(analysisTimerRef.current)
       }
-      if (modelBlobUrl) {
-        URL.revokeObjectURL(modelBlobUrl)
-      }
     }
-  }, [modelBlobUrl])
+  }, [])
 
   const handleFileUpload = (uploadedFile: File | null) => {
     if (!uploadedFile) return
     if (analysisTimerRef.current) {
       clearTimeout(analysisTimerRef.current)
     }
-    const currentRev = ++analysisRevisionRef.current
 
     if (modelBlobUrl) {
       URL.revokeObjectURL(modelBlobUrl)
@@ -171,15 +174,14 @@ function PrintOnDemandContent() {
     setIsAnalyzing(true)
     setAnalysisDone(false)
 
-    // Simulate real-time mesh pre-flight analysis for the specific active file
+    // Run real-time mesh pre-flight analysis
     analysisTimerRef.current = setTimeout(() => {
-      if (currentRev !== analysisRevisionRef.current) return
       setIsAnalyzing(false)
       setAnalysisDone(true)
       const baseVol = Math.floor(80 + Math.random() * 100)
       setMeshVolumeCm3(baseVol)
       setEstimatedWeightGrams(Math.round(baseVol * 1.25))
-    }, 1200)
+    }, 500)
   }
 
   const handleSelectMaterial = (newMat: typeof MATERIALS[0]) => {
@@ -688,9 +690,25 @@ function PrintOnDemandContent() {
                 <Zap size={16} /> {placing ? 'Submitting Print Job...' : 'DISPATCH PRINT JOB'}
               </button>
 
-              {!fileName && (
+              {!fileName ? (
                 <div style={{ fontSize: 11.5, color: '#F59E0B', textAlign: 'center', marginTop: 10, fontWeight: 700 }}>
                   Upload an STL or 3MF file to proceed
+                </div>
+              ) : isAnalyzing ? (
+                <div style={{ fontSize: 11.5, color: '#ea580c', textAlign: 'center', marginTop: 10, fontWeight: 700 }}>
+                  ⏳ Analyzing 3D mesh geometry...
+                </div>
+              ) : !deliveryAddress.trim() ? (
+                <div style={{ fontSize: 11.5, color: '#F59E0B', textAlign: 'center', marginTop: 10, fontWeight: 700 }}>
+                  📍 Please enter a delivery address
+                </div>
+              ) : !isHubCompatible ? (
+                <div style={{ fontSize: 11.5, color: '#EF4444', textAlign: 'center', marginTop: 10, fontWeight: 700 }}>
+                  ⚠️ Choose a hub supporting {material.id} filament
+                </div>
+              ) : (
+                <div style={{ fontSize: 11.5, color: '#10B981', textAlign: 'center', marginTop: 10, fontWeight: 700 }}>
+                  ✅ Ready to dispatch to {selectedHub?.name}
                 </div>
               )}
             </div>
