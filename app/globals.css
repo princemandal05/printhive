@@ -136,10 +136,17 @@ html.dark,
   --color-slate-100: #18181b;
   --color-white: #18181b;
 
-  --color-border-light: rgba(234, 88, 12, 0.3);
-  --color-border-strong: rgba(234, 88, 12, 0.6);
+  --color-border-light: rgba(234, 88, 12, 0.35);
+  --color-border-strong: rgba(234, 88, 12, 0.65);
 }
 
+/* ==========================================================================
+   PRINTHIVE — GLOBAL DARK MODE ORANGE LINES SYSTEM
+   Ensures all cards, inputs, buttons, tables, dividers, navbars, and panels
+   exhibit sleek, cohesive glowing orange outline borders in Dark Mode.
+   ========================================================================== */
+
+/* 1. Form Controls (Inputs, Selects, Textareas) */
 :root[data-theme="dark"] input,
 :root[data-theme="dark"] select,
 :root[data-theme="dark"] textarea,
@@ -152,7 +159,7 @@ html.dark textarea,
 .dark input,
 .dark select,
 .dark textarea {
-  border-color: rgba(234, 88, 12, 0.45) !important;
+  border: 1px solid rgba(234, 88, 12, 0.45) !important;
 }
 
 :root[data-theme="dark"] input:focus,
@@ -168,7 +175,97 @@ html.dark textarea:focus,
 .dark select:focus,
 .dark textarea:focus {
   border-color: #ea580c !important;
-  box-shadow: 0 0 0 3px rgba(234, 88, 12, 0.25) !important;
+  box-shadow: 0 0 0 3px rgba(234, 88, 12, 0.3) !important;
+}
+
+/* 2. Header & Navigation Bars */
+:root[data-theme="dark"] header,
+:root[data-theme="dark"] .navbar,
+[data-theme="dark"] header,
+[data-theme="dark"] .navbar,
+html.dark header,
+html.dark .navbar,
+.dark header,
+.dark .navbar {
+  border-bottom-color: rgba(234, 88, 12, 0.4) !important;
+}
+
+/* 3. Cards, Containers, Sections, and Drawers */
+:root[data-theme="dark"] hr,
+[data-theme="dark"] hr,
+html.dark hr,
+.dark hr {
+  border-color: rgba(234, 88, 12, 0.35) !important;
+}
+
+:root[data-theme="dark"] .card,
+:root[data-theme="dark"] [class*="card"],
+[data-theme="dark"] .card,
+[data-theme="dark"] [class*="card"],
+html.dark .card,
+html.dark [class*="card"],
+.dark .card,
+.dark [class*="card"] {
+  border-color: rgba(234, 88, 12, 0.38) !important;
+}
+
+/* 4. Tables & Table Rows */
+:root[data-theme="dark"] table,
+:root[data-theme="dark"] th,
+:root[data-theme="dark"] td,
+[data-theme="dark"] table,
+[data-theme="dark"] th,
+[data-theme="dark"] td,
+html.dark table,
+html.dark th,
+html.dark td,
+.dark table,
+.dark th,
+.dark td {
+  border-color: rgba(234, 88, 12, 0.3) !important;
+}
+
+/* 5. Tailwind Border Utility Classes */
+:root[data-theme="dark"] .border,
+:root[data-theme="dark"] .border-t,
+:root[data-theme="dark"] .border-b,
+:root[data-theme="dark"] .border-l,
+:root[data-theme="dark"] .border-r,
+:root[data-theme="dark"] .border-x,
+:root[data-theme="dark"] .border-y,
+[data-theme="dark"] .border,
+[data-theme="dark"] .border-t,
+[data-theme="dark"] .border-b,
+[data-theme="dark"] .border-l,
+[data-theme="dark"] .border-r,
+[data-theme="dark"] .border-x,
+[data-theme="dark"] .border-y,
+html.dark .border,
+html.dark .border-t,
+html.dark .border-b,
+html.dark .border-l,
+html.dark .border-r,
+html.dark .border-x,
+html.dark .border-y,
+.dark .border,
+.dark .border-t,
+.dark .border-b,
+.dark .border-l,
+.dark .border-r,
+.dark .border-x,
+.dark .border-y {
+  border-color: rgba(234, 88, 12, 0.4) !important;
+}
+
+:root[data-theme="dark"] .divide-y > :not([hidden]) ~ :not([hidden]),
+:root[data-theme="dark"] .divide-x > :not([hidden]) ~ :not([hidden]),
+[data-theme="dark"] .divide-y > :not([hidden]) ~ :not([hidden]),
+[data-theme="dark"] .divide-x > :not([hidden]) ~ :not([hidden]),
+html.dark .divide-y > :not([hidden]) ~ :not([hidden]),
+html.dark .divide-x > :not([hidden]) ~ :not([hidden]),
+.dark .divide-y > :not([hidden]) ~ :not([hidden]),
+.dark .divide-x > :not([hidden]) ~ :not([hidden]) {
+  border-color: rgba(234, 88, 12, 0.3) !important;
 }
 
 body {
