@@ -459,90 +459,6 @@ function PrinterDirectoryContent() {
           </Link>
         </div>
 
-        {/* 🇮🇳 INDIAN STATES QUICK NAVIGATION BAR */}
-        <div style={{ marginBottom: 16 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8, flexWrap: 'wrap', gap: 8 }}>
-            <div style={{ fontSize: 11, fontWeight: 800, color: 'var(--text-sub)', textTransform: 'uppercase', letterSpacing: 0.8, display: 'flex', alignItems: 'center', gap: 6 }}>
-              <span>🇮🇳 Jump to State Network:</span>
-            </div>
-            {selectedState && (
-              <button
-                type="button"
-                onClick={() => {
-                  setSelectedState(null)
-                  setMapCenter([21.7679, 78.8718])
-                  setMapZoom(5)
-                  setSelectedHub(null)
-                }}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  color: '#ea580c',
-                  fontSize: 12,
-                  fontWeight: 800,
-                  cursor: 'pointer',
-                  padding: 0,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 4,
-                }}
-              >
-                ⟲ Reset to Full India View
-              </button>
-            )}
-          </div>
-          <div style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 6, scrollbarWidth: 'none' }}>
-            {INDIAN_STATES.map((st) => {
-              const isStateActive = selectedState === st.name || (st.name === 'All India' && !selectedState)
-              const count = st.name === 'All India'
-                ? printers.length
-                : printers.filter((p) => p.state === st.name || p.location.toLowerCase().includes(st.name.toLowerCase())).length
-
-              return (
-                <button
-                  key={st.code}
-                  type="button"
-                  onClick={() => {
-                    const newState = st.name === 'All India' ? null : st.name
-                    setSelectedState(newState)
-                    setMapCenter(st.center as [number, number])
-                    setMapZoom(st.zoom)
-                    setSelectedHub(null)
-                  }}
-                  style={{
-                    background: isStateActive ? '#ea580c' : 'var(--bg-card)',
-                    color: isStateActive ? '#fff' : 'var(--text-main)',
-                    border: isStateActive ? '1.5px solid #ea580c' : '1px solid var(--border-color)',
-                    borderRadius: 4,
-                    padding: '7px 12px',
-                    fontSize: 12,
-                    fontWeight: 800,
-                    cursor: 'pointer',
-                    whiteSpace: 'nowrap',
-                    boxShadow: isStateActive ? '0 2px 8px rgba(234,88,12,0.3)' : 'none',
-                    transition: 'all 0.15s ease',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: 6,
-                  }}
-                >
-                  <span>{st.name === 'All India' ? '🇮🇳 All India' : st.name}</span>
-                  <span style={{
-                    background: isStateActive ? 'rgba(255,255,255,0.25)' : 'var(--bg-card-hover)',
-                    color: isStateActive ? '#fff' : 'var(--text-sub)',
-                    padding: '1px 6px',
-                    borderRadius: 3,
-                    fontSize: 10,
-                    fontWeight: 900,
-                  }}>
-                    {count}
-                  </span>
-                </button>
-              )
-            })}
-          </div>
-        </div>
-
         {/* OPENSTREETMAP MAP CONTAINER WITH FULL INDIA VIEWPORT */}
         <div style={{ marginBottom: 24, border: '1px solid var(--border-color)', borderRadius: 4, overflow: 'hidden', boxShadow: '0 4px 20px rgba(0,0,0,0.08)', position: 'relative' }}>
           {/* MAP HUD OVERLAY */}
@@ -564,7 +480,7 @@ function PrinterDirectoryContent() {
             gap: 8,
             boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
           }}>
-            <span>🇮🇳 {selectedState ? `${selectedState} Region` : 'Nationwide India GPS'}</span>
+            <span>🇮🇳 Nationwide India GPS</span>
             <span style={{ color: '#F97316' }}>•</span>
             <span style={{ color: '#94A3B8' }}>{filteredPrinters.length} Hubs Available</span>
           </div>
