@@ -5,10 +5,25 @@ import Link from 'next/link'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 import { createClient } from '@/utils/supabase/client'
+import {
+  Package,
+  ShieldCheck,
+  Printer,
+  CheckCircle2,
+  Clock,
+  Truck,
+  ArrowRight,
+  Sparkles,
+  Layers,
+  RotateCcw,
+} from 'lucide-react'
 
 type OrderStatus =
+  | 'pending_payment'
   | 'processing'
+  | 'assigned'
   | 'printing'
+  | 'quality_check'
   | 'shipped'
   | 'delivered'
   | 'cancelled'
@@ -25,14 +40,31 @@ type Order = {
   image?: string
 }
 
-const FILTERS = [
-  'All',
-  'processing',
-  'printing',
-  'shipped',
-  'delivered',
-  'cancelled',
+const LIFECYCLE_STAGES = [
+  { key: 'placed', label: 'Placed' },
+  { key: 'escrow', label: 'Escrow Secured' },
+  { key: 'assigned', label: 'Hub Assigned' },
+  { key: 'printing', label: 'Printing' },
+  { key: 'qa', label: 'Quality Check' },
+  { key: 'shipped', label: 'Dispatched' },
+  { key: 'delivered', label: 'Delivered' },
 ]
+
+function getStageIndex(status: string): number {
+  switch (status.toLowerCase()) {
+    case 'cancelled': return -1
+    case 'pending_payment': return 0
+    case 'processing': return 1
+    case 'assigned': return 2
+    case 'printing': return 3
+    case 'quality_check': return 4
+    case 'shipped': return 5
+    case 'delivered': return 6
+    default: return 1
+  }
+}
+
+const FILTERS = ['All', 'active', 'printing', 'shipped', 'delivered', 'cancelled']
 
 export default function OrdersPage() {
   const supabase = createClient()
@@ -41,7 +73,6 @@ export default function OrdersPage() {
   const [search, setSearch] = useState('')
   const [filter, setFilter] = useState('All')
 
-  // Fetch real user orders from database
   useEffect(() => {
     async function fetchUserOrders() {
       setLoading(true)
@@ -64,12 +95,12 @@ export default function OrdersPage() {
             const mappedOrders: Order[] = data.map((o: any) => ({
               id: String(o.id || ''),
               product: o.items?.[0]?.name || o.product_name || '3D Printed Custom Order',
-              seller: o.seller || 'PrintHive Verified Partner',
+              seller: o.seller || 'PrintHive Verified Hub',
               total: o.total_price || o.total || 0,
               quantity: o.items?.[0]?.quantity || 1,
               status: (o.status as OrderStatus) || 'processing',
               orderedOn: o.created_at ? new Date(o.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Recently',
-              estimatedDelivery: '3-5 Business Days',
+              estimatedDelivery: '2-4 Business Days',
               image: o.items?.[0]?.image || undefined,
             }))
             setOrders(mappedOrders)
@@ -95,8 +126,12 @@ export default function OrdersPage() {
         order.product.toLowerCase().includes(search.toLowerCase()) ||
         order.id.toLowerCase().includes(search.toLowerCase())
 
-      const matchesFilter =
-        filter === 'All' || order.status === filter
+      let matchesFilter = true
+      if (filter === 'active') {
+        matchesFilter = order.status !== 'delivered' && order.status !== 'cancelled'
+      } else if (filter !== 'All') {
+        matchesFilter = order.status === filter
+      }
 
       return matchesSearch && matchesFilter
     })
@@ -105,208 +140,257 @@ export default function OrdersPage() {
   const totalOrders = orders.length
   const deliveredOrders = orders.filter((o) => o.status === 'delivered').length
   const activeOrders = orders.filter(
-    (o) => o.status === 'processing' || o.status === 'printing' || o.status === 'shipped'
+    (o) => o.status !== 'delivered' && o.status !== 'cancelled'
   ).length
 
   return (
-    <main style={{ minHeight: '100vh', transition: 'background 0.3s ease' }}>
+    <main style={{ minHeight: '100vh', background: 'var(--bg-canvas)', color: 'var(--text-main)', transition: 'background 0.3s ease' }}>
       <Navbar />
 
-      <section className="container section-sm" style={{ maxWidth: 1100, margin: '0 auto', padding: '40px 20px' }}>
-        <div className="section-eyebrow">My Orders</div>
-        <h1 className="section-heading" style={{ marginBottom: 12 }}>
-          Order History
-        </h1>
+      <div style={{ maxWidth: 1200, margin: '0 auto', padding: '36px 20px 80px' }}>
+        {/* HEADER */}
+        <div style={{ marginBottom: 32 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
+            <h1 style={{ fontSize: 28, fontWeight: 900, color: 'var(--text-main)', margin: 0, letterSpacing: '-0.5px' }}>
+              Order Lifecycle &amp; Manufacturing History
+            </h1>
+            <span style={{ background: 'rgba(16, 185, 129, 0.1)', color: '#10B981', border: '1px solid rgba(16, 185, 129, 0.3)', fontSize: 11, fontWeight: 800, padding: '3px 10px', borderRadius: 99 }}>
+              Escrow Monitored
+            </span>
+          </div>
+          <p style={{ color: 'var(--text-sub)', fontSize: 14.5, margin: 0, maxWidth: 680, lineHeight: 1.5 }}>
+            Real-time status tracking from slicing and print queue to quality inspection, dispatch, and final escrow payout release.
+          </p>
+        </div>
 
-        <p className="section-subheading" style={{ marginBottom: 40 }}>
-          Track your purchases, monitor real-time delivery status, download invoices, and reorder your 3D printed items.
-        </p>
-
-        {/* Statistics Bar */}
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-            gap: '20px',
-            marginBottom: '40px',
-          }}
-        >
-          <div className="glass-card" style={{ padding: '24px' }}>
-            <h2 style={{ fontSize: 32, fontWeight: 900, color: 'var(--text-main)', margin: 0 }}>{totalOrders}</h2>
-            <p className="text-muted" style={{ margin: '4px 0 0' }}>Total Orders</p>
+        {/* STATS SUMMARY BAR */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16, marginBottom: 32 }}>
+          <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 20, padding: 22 }}>
+            <div style={{ fontSize: 12, fontWeight: 800, color: 'var(--text-sub)', textTransform: 'uppercase', marginBottom: 4 }}>Total Print Orders</div>
+            <div style={{ fontSize: 30, fontWeight: 900, color: 'var(--text-main)' }}>{totalOrders}</div>
           </div>
 
-          <div className="glass-card" style={{ padding: '24px' }}>
-            <h2 style={{ fontSize: 32, fontWeight: 900, color: '#f59e0b', margin: 0 }}>{activeOrders}</h2>
-            <p className="text-muted" style={{ margin: '4px 0 0' }}>Active Orders</p>
+          <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 20, padding: 22 }}>
+            <div style={{ fontSize: 12, fontWeight: 800, color: 'var(--text-sub)', textTransform: 'uppercase', marginBottom: 4 }}>Active Orders</div>
+            <div style={{ fontSize: 30, fontWeight: 900, color: '#ea580c' }}>{activeOrders}</div>
           </div>
 
-          <div className="glass-card" style={{ padding: '24px' }}>
-            <h2 style={{ fontSize: 32, fontWeight: 900, color: '#10b981', margin: 0 }}>{deliveredOrders}</h2>
-            <p className="text-muted" style={{ margin: '4px 0 0' }}>Delivered Orders</p>
+          <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 20, padding: 22 }}>
+            <div style={{ fontSize: 12, fontWeight: 800, color: 'var(--text-sub)', textTransform: 'uppercase', marginBottom: 4 }}>Delivered &amp; Verified</div>
+            <div style={{ fontSize: 30, fontWeight: 900, color: '#10B981' }}>{deliveredOrders}</div>
           </div>
         </div>
 
-        {/* Search & Filter Bar */}
+        {/* SEARCH & FILTERS */}
         {orders.length > 0 && (
-          <div className="glass-card" style={{ padding: '24px', marginBottom: '40px' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '20px' }}>
-              <input
-                className="input"
-                placeholder="Search orders by product or order ID..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
+          <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 16, padding: 16, marginBottom: 28, display: 'grid', gridTemplateColumns: '1fr 200px', gap: 12 }}>
+            <input
+              placeholder="Search orders by product name or order ID..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              style={{ width: '100%', background: 'var(--bg-card-hover)', border: '1px solid var(--border-color)', borderRadius: 10, padding: '10px 14px', fontSize: 13, color: 'var(--text-main)', outline: 'none' }}
+            />
 
-              <select
-                className="input"
-                value={filter}
-                onChange={(e) => setFilter(e.target.value)}
-              >
-                {FILTERS.map((item) => (
-                  <option key={item} value={item}>
-                    {item}
-                  </option>
-                ))}
-              </select>
+            <select
+              value={filter}
+              onChange={(e) => setFilter(e.target.value)}
+              style={{ background: 'var(--bg-card-hover)', border: '1px solid var(--border-color)', borderRadius: 10, padding: '10px 14px', fontSize: 13, color: 'var(--text-main)', fontWeight: 700, outline: 'none' }}
+            >
+              {FILTERS.map((item) => (
+                <option key={item} value={item}>
+                  {item.toUpperCase()}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+
+        {/* ORDERS LIST */}
+        {loading ? (
+          <div style={{ padding: '60px 20px', textAlign: 'center', color: 'var(--text-sub)' }}>
+            Loading manufacturing orders pipeline...
+          </div>
+        ) : filteredOrders.length > 0 ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+            {filteredOrders.map((order) => {
+              const currentStage = getStageIndex(order.status)
+              const isCancelled = order.status === 'cancelled'
+              return (
+                <div
+                  key={order.id}
+                  style={{
+                    background: 'var(--bg-card)',
+                    border: '1px solid var(--border-color)',
+                    borderRadius: 24,
+                    padding: 26,
+                    boxShadow: '0 4px 20px rgba(0,0,0,0.02)',
+                  }}
+                >
+                  {/* TOP ROW: PRODUCT INFO & PRICE */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '120px 1fr auto', gap: 22, alignItems: 'center', marginBottom: 22 }}>
+                    <div style={{ height: 110, borderRadius: 16, background: 'var(--bg-card-hover)', overflow: 'hidden' }}>
+                      <img
+                        src={order.image || 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=600&q=80'}
+                        alt={order.product}
+                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                      />
+                    </div>
+
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                        <h3 style={{ fontSize: 18, fontWeight: 900, color: 'var(--text-main)', margin: 0 }}>
+                          {order.product}
+                        </h3>
+                      </div>
+
+                      <div style={{ fontSize: 12.5, color: 'var(--text-sub)', display: 'flex', gap: 12, flexWrap: 'wrap', marginTop: 4 }}>
+                        <span>Order ID: <strong style={{ color: 'var(--text-main)' }}>#{order.id.slice(0, 8)}</strong></span>
+                        <span>•</span>
+                        <span>Hub: <strong style={{ color: 'var(--text-main)' }}>{order.seller}</strong></span>
+                        <span>•</span>
+                        <span>Ordered: <strong style={{ color: 'var(--text-main)' }}>{order.orderedOn}</strong></span>
+                      </div>
+                    </div>
+
+                    <div style={{ textAlign: 'right' }}>
+                      <div style={{ fontSize: 11, fontWeight: 800, color: 'var(--text-sub)', textTransform: 'uppercase' }}>Escrow Total</div>
+                      <div style={{ fontSize: 24, fontWeight: 900, color: isCancelled ? '#EF4444' : '#ea580c' }}>₹{order.total}</div>
+                      <div style={{ fontSize: 11, color: isCancelled ? '#EF4444' : order.status === 'delivered' ? '#10B981' : '#10B981', fontWeight: 800, marginTop: 2 }}>
+                        {isCancelled ? '✕ Cancelled & Refunded' : order.status === 'delivered' ? '✓ Payout Released' : '🔒 Escrow Held'}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 7-STAGE MANUFACTURING LIFECYCLE TRACKER OR CANCELLED STATUS */}
+                  {isCancelled ? (
+                    <div style={{ background: 'rgba(239, 68, 68, 0.06)', border: '1px solid rgba(239, 68, 68, 0.2)', borderRadius: 16, padding: '14px 20px', marginBottom: 18, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#EF4444', fontWeight: 800, fontSize: 13.5 }}>
+                        <span>✕ This print job was cancelled</span>
+                      </div>
+                      <span style={{ fontSize: 12, color: 'var(--text-sub)' }}>Escrow funds returned to buyer account</span>
+                    </div>
+                  ) : (
+                    <div style={{ background: 'var(--bg-card-hover)', borderRadius: 16, padding: '16px 20px', marginBottom: 18 }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 6, position: 'relative' }}>
+                        {LIFECYCLE_STAGES.map((stage, idx) => {
+                          const isDone = idx <= currentStage
+                          const isCurrent = idx === currentStage
+                          return (
+                            <div key={stage.key} style={{ textAlign: 'center' }}>
+                              <div
+                                style={{
+                                  width: 22,
+                                  height: 22,
+                                  borderRadius: '50%',
+                                  background: isDone ? '#ea580c' : 'var(--border-color)',
+                                  color: '#fff',
+                                  fontSize: 10,
+                                  fontWeight: 900,
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  margin: '0 auto 6px',
+                                  boxShadow: isCurrent ? '0 0 0 3px rgba(234, 88, 12, 0.25)' : 'none',
+                                }}
+                              >
+                                {isDone ? '✓' : idx + 1}
+                              </div>
+                              <div style={{ fontSize: 11, fontWeight: isCurrent ? 800 : 600, color: isCurrent ? '#ea580c' : isDone ? 'var(--text-main)' : 'var(--text-sub)' }}>
+                                {stage.label}
+                              </div>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* BOTTOM ACTION BAR */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 14, borderTop: '1px solid var(--border-color)' }}>
+                    <div style={{ fontSize: 12, color: 'var(--text-sub)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <Truck size={14} color="#ea580c" />
+                      <span>Estimated delivery: <strong>{order.estimatedDelivery}</strong></span>
+                    </div>
+
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <Link
+                        href={`/orders/${order.id}`}
+                        style={{
+                          background: '#ea580c',
+                          color: '#fff',
+                          padding: '7px 16px',
+                          borderRadius: 99,
+                          fontSize: 12,
+                          fontWeight: 800,
+                          textDecoration: 'none',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: 4,
+                        }}
+                      >
+                        Inspect Details <ArrowRight size={13} />
+                      </Link>
+
+                      {order.status === 'delivered' && (
+                        <Link
+                          href={`/orders/${order.id}/review`}
+                          style={{
+                            background: 'var(--bg-card-hover)',
+                            color: 'var(--text-main)',
+                            border: '1px solid var(--border-color)',
+                            padding: '7px 14px',
+                            borderRadius: 99,
+                            fontSize: 12,
+                            fontWeight: 700,
+                            textDecoration: 'none',
+                          }}
+                        >
+                          Rate Print Quality
+                        </Link>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        ) : orders.length > 0 ? (
+          <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 24, padding: '48px 24px', textAlign: 'center', maxWidth: 460, margin: '40px auto' }}>
+            <div style={{ width: 52, height: 52, borderRadius: 16, background: 'rgba(234, 88, 12, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 14px', color: '#ea580c' }}>
+              <Package size={24} />
+            </div>
+            <h3 style={{ fontSize: 18, fontWeight: 900, marginBottom: 6 }}>No Matching Orders</h3>
+            <p style={{ fontSize: 13, color: 'var(--text-sub)', marginBottom: 20 }}>
+              No orders matched your search &ldquo;{search}&rdquo; or active filter &ldquo;{filter}&rdquo;.
+            </p>
+            <button
+              type="button"
+              onClick={() => { setSearch(''); setFilter('All') }}
+              style={{ background: '#ea580c', color: '#fff', border: 'none', padding: '9px 18px', borderRadius: 99, fontWeight: 800, fontSize: 12.5, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6 }}
+            >
+              <RotateCcw size={13} /> Reset Filters
+            </button>
+          </div>
+        ) : (
+          <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 24, padding: '60px 24px', textAlign: 'center', maxWidth: 480, margin: '40px auto' }}>
+            <div style={{ width: 56, height: 56, borderRadius: 18, background: 'rgba(234, 88, 12, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', color: '#ea580c' }}>
+              <Package size={26} />
+            </div>
+            <h3 style={{ fontSize: 20, fontWeight: 900, marginBottom: 8 }}>No Print Orders Yet</h3>
+            <p style={{ fontSize: 13.5, color: 'var(--text-sub)', marginBottom: 24, lineHeight: 1.6 }}>
+              You haven&apos;t placed any 3D print orders. Explore ready-made products in our marketplace or upload your own STL file.
+            </p>
+            <div style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
+              <Link href="/shop" style={{ background: '#ea580c', color: '#fff', padding: '10px 20px', borderRadius: 99, fontWeight: 800, fontSize: 13, textDecoration: 'none' }}>
+                Explore Marketplace
+              </Link>
+              <Link href="/print-on-demand" style={{ background: 'var(--bg-card-hover)', border: '1px solid var(--border-color)', color: 'var(--text-main)', padding: '10px 18px', borderRadius: 99, fontWeight: 700, fontSize: 13, textDecoration: 'none' }}>
+                Upload Custom STL
+              </Link>
             </div>
           </div>
         )}
-
-        {/* Loading State */}
-        {loading ? (
-          <div style={{ textAlign: 'center', padding: '60px 20px', color: 'var(--text-sub)' }}>
-            ⚡ Fetching your real order history...
-          </div>
-        ) : filteredOrders.length > 0 ? (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-            {filteredOrders.map((order) => (
-              <div key={order.id} className="glass-card" style={{ padding: '28px' }}>
-                <div style={{ display: 'grid', gridTemplateColumns: '160px 1fr auto', gap: '24px', alignItems: 'center' }}>
-                  {/* Product Image Thumbnail */}
-                  <div
-                    style={{
-                      height: '140px',
-                      borderRadius: '16px',
-                      overflow: 'hidden',
-                      background: 'linear-gradient(135deg,var(--color-slate-100),var(--color-border-light))',
-                      display: 'flex',
-                      justifyContent: 'center',
-                      alignItems: 'center',
-                    }}
-                  >
-                    {order.image ? (
-                      <img src={order.image} alt={order.product} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                    ) : (
-                      <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="var(--color-slate-400)" strokeWidth="1.5">
-                        <path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                      </svg>
-                    )}
-                  </div>
-
-                  {/* Order Info */}
-                  <div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px', marginBottom: '12px' }}>
-                      <h2 style={{ fontSize: 20, fontWeight: 800, margin: 0, color: 'var(--text-main)' }}>{order.product}</h2>
-
-                      <span
-                        className={`badge ${
-                          order.status === 'delivered'
-                            ? 'badge-success'
-                            : order.status === 'cancelled'
-                            ? 'badge-danger'
-                            : order.status === 'shipped'
-                            ? 'badge-primary'
-                            : 'badge-warning'
-                        }`}
-                      >
-                        {order.status.toUpperCase()}
-                      </span>
-                    </div>
-
-                    <p className="text-muted" style={{ margin: '3px 0' }}>
-                      Order ID: <strong>{order.id}</strong>
-                    </p>
-                    <p className="text-muted" style={{ margin: '3px 0' }}>
-                      Seller: <strong>{order.seller}</strong>
-                    </p>
-                    <p className="text-muted" style={{ margin: '3px 0' }}>
-                      Quantity: {order.quantity}
-                    </p>
-                    <p className="text-muted" style={{ margin: '3px 0' }}>
-                      Ordered On: {order.orderedOn}
-                    </p>
-                    <p className="text-muted" style={{ margin: '3px 0' }}>
-                      Expected Delivery: {order.estimatedDelivery}
-                    </p>
-
-                    <div style={{ marginTop: '14px', fontSize: '1.4rem', fontWeight: 800, color: '#ea580c' }}>
-                      ₹{order.total}
-                    </div>
-                  </div>
-
-                  {/* Actions */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', minWidth: '180px' }}>
-                    <Link href={`/orders/${order.id}`} className="btn btn-primary">
-                      Track Order
-                    </Link>
-
-                    {order.status === 'delivered' && (
-                      <Link href={`/orders/${order.id}/review`} className="btn btn-secondary">
-                        Write Review
-                      </Link>
-                    )}
-
-                    <Link href="/contact" className="btn btn-secondary">
-                      Support Inquiry
-                    </Link>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : orders.length > 0 ? (
-          <div className="empty-state" style={{ padding: '60px 30px', textAlign: 'center', background: 'var(--bg-card)', borderRadius: 24, border: '1px solid var(--border-color)' }}>
-            <div style={{ fontSize: 42, marginBottom: 12 }}>🔍</div>
-            <h2 style={{ fontSize: 22, fontWeight: 800, color: 'var(--text-main)', marginBottom: 8 }}>No Matching Orders Found</h2>
-            <p className="text-muted" style={{ maxWidth: 480, margin: '0 auto', fontSize: 14 }}>
-              No orders matched your search or status filter. Try clearing your filter or searching for another keyword.
-            </p>
-          </div>
-        ) : (
-          <div className="empty-state" style={{ padding: '80px 30px', textAlign: 'center', background: 'var(--bg-card)', borderRadius: 24, border: '1px solid var(--border-color)' }}>
-            <div style={{ fontSize: 48, marginBottom: 16 }}>📦</div>
-            <h2 style={{ fontSize: 24, fontWeight: 800, color: 'var(--text-main)', marginBottom: 8 }}>No Orders Placed Yet</h2>
-            <p className="text-muted" style={{ maxWidth: 480, margin: '0 auto 24px', fontSize: 14 }}>
-              You haven&apos;t placed any 3D print orders yet. Browse our marketplace or upload a custom model to start your first order!
-            </p>
-
-            <Link href="/shop" className="btn btn-primary" style={{ background: '#ea580c', color: '#fff', padding: '12px 28px', borderRadius: 99, fontWeight: 800, textDecoration: 'none' }}>
-              Start Shopping
-            </Link>
-          </div>
-        )}
-
-        {/* Customer Support Band */}
-        <section className="glass-card" style={{ marginTop: '60px', padding: '40px', textAlign: 'center' }}>
-          <div className="section-eyebrow">Customer Support</div>
-          <h2 style={{ fontSize: '2rem', marginTop: '10px', marginBottom: '18px' }}>
-            Need Help With Your Order?
-          </h2>
-          <p className="text-muted" style={{ maxWidth: '720px', margin: '0 auto 32px' }}>
-            Our support team can help with delivery updates, refunds, damaged products, replacements, custom printing requests and invoice issues.
-          </p>
-
-          <div style={{ display: 'flex', justifyContent: 'center', gap: '16px', flexWrap: 'wrap' }}>
-            <Link href="/contact" className="btn btn-primary">
-              Contact Support
-            </Link>
-            <Link href="/shop" className="btn btn-secondary">
-              Continue Shopping
-            </Link>
-          </div>
-        </section>
-      </section>
+      </div>
 
       <Footer />
     </main>

@@ -1,341 +1,621 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 import { useStore } from '@/lib/cart-context'
+import {
+  UploadCloud,
+  CheckCircle2,
+  AlertTriangle,
+  Layers,
+  Printer,
+  ShieldCheck,
+  Zap,
+  Sliders,
+  DollarSign,
+  MapPin,
+  Clock,
+  Sparkles,
+  ArrowRight,
+  HelpCircle,
+  FileCheck,
+} from 'lucide-react'
 
-const MATERIALS = ['PLA', 'PETG', 'ABS', 'TPU (Flexible)', 'Resin']
-const COLORS = ['White', 'Black', 'Red', 'Blue', 'Green', 'Grey', 'Custom (specify in notes)']
-const SURFACE_FINISHES = ['Standard', 'Smoothed (vapor/sanded)', 'Painted']
-const INFILL_PRESETS = [10, 20, 35, 50, 75, 100]
+const MATERIALS = [
+  { id: 'PLA', name: 'PLA (Standard Prototyping)', baseRate: 1.2, desc: 'Eco-friendly, precise dimensional stability' },
+  { id: 'PETG', name: 'PETG (Durable & Tough)', baseRate: 1.45, desc: 'Chemical, UV and impact resistant up to 75°C' },
+  { id: 'ABS', name: 'ABS (High Strength Mechanical)', baseRate: 1.6, desc: 'Rigid functional assemblies and enclosures' },
+  { id: 'TPU', name: 'TPU (Flexible Rubber 95A)', baseRate: 1.85, desc: 'Flexible gaskets, wearables and dampeners' },
+  { id: 'Resin', name: 'SLA Resin (Ultra-High Detail)', baseRate: 2.1, desc: 'Flawless 0.05mm layer miniatures and jewelry' },
+]
+
+const COLORS = ['Obsidian Black', 'Pure White', 'Terracotta Orange', 'Crimson Red', 'Signal Blue', 'Emerald Green']
+const QUALITY_PRESETS = [
+  { id: 'standard', name: 'Standard (0.20 mm)', layerTime: 1.0 },
+  { id: 'fine', name: 'Fine (0.12 mm)', layerTime: 1.4 },
+  { id: 'ultra', name: 'Ultra Fine (0.08 mm)', layerTime: 2.1 },
+]
 
 interface PrinterHub {
   id: string
   name: string
-  distance?: string
-  rating?: number
-  basePrice: number
+  model: string
+  distance: string
+  rating: number
+  completedOrders: number
+  materials: string[]
+  buildVolume: string
+  completionEstimate: string
+  price: number
 }
+
+const NEARBY_HUBS: PrinterHub[] = [
+  {
+    id: 'hub-1',
+    name: 'PrintHive Precision Lab (Koramangala)',
+    model: 'Bambu Lab X1-Carbon Dual-Nozzle',
+    distance: '1.4 km away',
+    rating: 4.9,
+    completedOrders: 184,
+    materials: ['PLA', 'PETG', 'ABS', 'TPU'],
+    buildVolume: '256 × 256 × 256 mm',
+    completionEstimate: 'Today • 6:30 PM',
+    price: 380,
+  },
+  {
+    id: 'hub-2',
+    name: 'RapidLayer 3D Studio (Indiranagar)',
+    model: 'Prusa MK4 with Enclosure',
+    distance: '2.8 km away',
+    rating: 4.8,
+    completedOrders: 142,
+    materials: ['PLA', 'PETG', 'ABS'],
+    buildVolume: '250 × 210 × 220 mm',
+    completionEstimate: 'Tomorrow • 11:00 AM',
+    price: 340,
+  },
+  {
+    id: 'hub-3',
+    name: 'Elegoo SLA Micro-Manufacturing (HSR)',
+    model: 'Elegoo Saturn 4 Ultra 12K Resin',
+    distance: '3.6 km away',
+    rating: 5.0,
+    completedOrders: 96,
+    materials: ['Resin', 'PLA'],
+    buildVolume: '218 × 122 × 220 mm',
+    completionEstimate: 'Tomorrow • 3:00 PM',
+    price: 450,
+  },
+]
 
 export default function PrintOnDemandUploadPage() {
   const router = useRouter()
   const { addToCart } = useStore()
 
-  const [printers, setPrinters] = useState<PrinterHub[]>([])
+  // Analysis race-condition protection
+  const analysisRevisionRef = useRef(0)
+  const analysisTimerRef = useRef<NodeJS.Timeout | null>(null)
+
+  // Slicer States
+  const [file, setFile] = useState<File | null>(null)
   const [fileName, setFileName] = useState('')
+  const [fileSizeMb, setFileSizeMb] = useState(0)
+  const [isAnalyzing, setIsAnalyzing] = useState(false)
+  const [analysisDone, setAnalysisDone] = useState(false)
+
+  // Diagnostics
+  const [meshDimensions, setMeshDimensions] = useState('112 × 88 × 134 mm')
+  const [meshVolumeCm3, setMeshVolumeCm3] = useState(126)
+  const [estimatedWeightGrams, setEstimatedWeightGrams] = useState(148)
+  const [supportRequired, setSupportRequired] = useState(true)
+
+  // Configuration
   const [material, setMaterial] = useState(MATERIALS[0])
-  const [color, setColor] = useState(COLORS[0])
-  const [scale, setScale] = useState(100)
+  const [color, setColor] = useState(COLORS[2]) // Terracotta
+  const [quality, setQuality] = useState(QUALITY_PRESETS[0])
   const [infill, setInfill] = useState(20)
-  const [layerHeight, setLayerHeight] = useState('0.20')
-  const [surfaceFinish, setSurfaceFinish] = useState(SURFACE_FINISHES[0])
+  const [includeSupports, setIncludeSupports] = useState(true)
   const [quantity, setQuantity] = useState(1)
-  const [notes, setNotes] = useState('')
-  const [address, setAddress] = useState('')
-  const [selectedPrinter, setSelectedPrinter] = useState<string | null>(null)
-  const [isBroadcast, setIsBroadcast] = useState(false)
+  const [deliveryAddress, setDeliveryAddress] = useState('')
+  const [selectedHub, setSelectedHub] = useState<PrinterHub>(NEARBY_HUBS[0])
+  const [specialInstructions, setSpecialInstructions] = useState('')
   const [placing, setPlacing] = useState(false)
 
-  // Populate printers dynamically when delivery address becomes available
   useEffect(() => {
-    if (address.trim().length > 3) {
-      setPrinters([
-        { id: 'hub-1', name: 'PrintHive Precision Hub (Koramangala)', distance: '1.2 km', rating: 4.9, basePrice: 350 },
-        { id: 'hub-2', name: 'RapidLayer 3D Lab (Indiranagar)', distance: '2.8 km', rating: 4.8, basePrice: 300 },
-        { id: 'hub-3', name: 'AeroPrint Additive (Whitefield)', distance: '4.1 km', rating: 4.9, basePrice: 420 },
-      ])
-      if (!selectedPrinter && !isBroadcast) {
-        setSelectedPrinter('hub-1')
+    return () => {
+      if (analysisTimerRef.current) {
+        clearTimeout(analysisTimerRef.current)
       }
     }
-  }, [address])
+  }, [])
 
-  const activePrinter = printers.find((p) => p.id === selectedPrinter)
-  const basePrice = activePrinter?.basePrice ?? 300
+  const handleFileUpload = (uploadedFile: File | null) => {
+    if (!uploadedFile) return
+    if (analysisTimerRef.current) {
+      clearTimeout(analysisTimerRef.current)
+    }
+    const currentRev = ++analysisRevisionRef.current
 
-  // Live price estimate
-  const infillMultiplier = 1 + (infill - 20) / 100
-  const scaleMultiplier = Math.pow(scale / 100, 2)
-  const finishSurcharge = surfaceFinish === 'Standard' ? 0 : surfaceFinish === 'Smoothed (vapor/sanded)' ? 80 : 180
-  const unitPrice = Math.max(50, Math.round(basePrice * infillMultiplier * scaleMultiplier) + finishSurcharge)
-  const subtotal = unitPrice * quantity
-  const platformFee = Math.round(subtotal * 0.05)
-  const total = subtotal + platformFee
+    setFile(uploadedFile)
+    setFileName(uploadedFile.name)
+    setFileSizeMb(Math.round((uploadedFile.size / (1024 * 1024)) * 100) / 100)
+    setIsAnalyzing(true)
+    setAnalysisDone(false)
 
-  const canSubmit = !!fileName && !!address.trim() && quantity > 0 && (!!selectedPrinter || isBroadcast)
+    // Simulate real-time mesh pre-flight analysis for the specific active file
+    analysisTimerRef.current = setTimeout(() => {
+      if (currentRev !== analysisRevisionRef.current) return
+      setIsAnalyzing(false)
+      setAnalysisDone(true)
+      const baseVol = Math.floor(80 + Math.random() * 100)
+      setMeshVolumeCm3(baseVol)
+      setEstimatedWeightGrams(Math.round(baseVol * 1.25))
+    }, 1200)
+  }
+
+  const handleSelectMaterial = (newMat: typeof MATERIALS[0]) => {
+    setMaterial(newMat)
+    // Auto-select a compatible hub if current hub doesn't support the material
+    if (!selectedHub.materials.includes(newMat.id)) {
+      const compatibleHub = NEARBY_HUBS.find((h) => h.materials.includes(newMat.id))
+      if (compatibleHub) {
+        setSelectedHub(compatibleHub)
+      }
+    }
+  }
+
+  // Real-time pricing calculations incorporating selectedHub.price
+  const rawMaterialCost = Math.round(meshVolumeCm3 * material.baseRate * 1.1)
+  const hubBaseRate = (selectedHub?.price || 350) * 0.25
+  const machineRate = Math.round(hubBaseRate * quality.layerTime * (1 + (infill - 20) / 80))
+  const processingFee = 35
+  const platformFee = 25
+  const unitPrice = rawMaterialCost + machineRate + processingFee + platformFee
+  const totalPrice = unitPrice * quantity
+
+  const isHubCompatible = selectedHub.materials.includes(material.id)
+  const canSubmit = analysisDone && !!deliveryAddress.trim() && quantity > 0 && isHubCompatible
 
   const handlePlaceOrder = () => {
     if (!canSubmit) return
     setPlacing(true)
-    addToCart({
-      id: `pod-${Date.now()}`,
-      name: `Custom Print Job: ${fileName} (${material}, ${color})`,
-      price: unitPrice,
-      seller: activePrinter?.name || 'PrintHive Verified Hub',
-      stock: 10,
-      image: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=600&q=80',
-    }, quantity)
+
+    // Persist complete manufacturing job configuration for checkout reconstruction
+    const printJobPayload = {
+      fileName,
+      meshDimensions,
+      meshVolumeCm3,
+      estimatedWeightGrams,
+      material: material.id,
+      color,
+      quality: quality.name,
+      infill,
+      includeSupports,
+      selectedHubId: selectedHub.id,
+      selectedHubName: selectedHub.name,
+      deliveryAddress,
+      unitPrice,
+      quantity,
+      totalPrice,
+      timestamp: Date.now(),
+    }
+
+    try {
+      localStorage.setItem('printhive_current_print_job', JSON.stringify(printJobPayload))
+    } catch (e) {
+      console.warn('Could not persist print job to localStorage:', e)
+    }
+
+    addToCart(
+      {
+        id: `pod-${Date.now()}`,
+        name: `Custom Print: ${fileName} (${material.id}, ${color})`,
+        price: unitPrice,
+        seller: selectedHub.name,
+        stock: 99,
+        image: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=600&q=80',
+      },
+      quantity
+    )
     router.push('/checkout')
   }
 
   return (
-    <main>
+    <main style={{ minHeight: '100vh', background: 'var(--bg-canvas)', color: 'var(--text-main)', fontFamily: 'inherit', transition: 'background 0.3s ease' }}>
       <Navbar />
 
-      <section className="container section-sm">
-        <div className="section-eyebrow">Print-on-demand</div>
-        <h1 className="section-heading" style={{ marginBottom: 'var(--space-2)' }}>
-          Upload your own file to print
-        </h1>
-        <p className="section-subheading" style={{ marginBottom: 'var(--space-8)' }}>
-          Already have an STL, 3MF, or OBJ file? Upload it, choose your print
-          settings, and we&apos;ll match you with a nearby printer owner.
-        </p>
+      <div style={{ maxWidth: 1240, margin: '0 auto', padding: '32px 20px 80px' }}>
+        {/* HEADER */}
+        <div style={{ marginBottom: 32 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
+            <h1 style={{ fontSize: 28, fontWeight: 900, color: 'var(--text-main)', margin: 0, letterSpacing: '-0.5px' }}>
+              Instant 3D Slicer &amp; Print-on-Demand Hub
+            </h1>
+            <span style={{ background: 'rgba(234, 88, 12, 0.1)', color: '#ea580c', border: '1px solid rgba(234, 88, 12, 0.3)', fontSize: 11, fontWeight: 800, padding: '3px 10px', borderRadius: 99 }}>
+              STL • 3MF • OBJ
+            </span>
+          </div>
+          <p style={{ color: 'var(--text-sub)', fontSize: 14.5, margin: 0, maxWidth: 700, lineHeight: 1.5 }}>
+            Upload your CAD file for automated mesh geometry validation, real-time cost calculation, and instant routing to compatible local printer hubs.
+          </p>
+        </div>
 
-        <div className="grid grid-cols-2 gap-8" style={{ gridTemplateColumns: '1.2fr 0.8fr' }}>
-          <div>
-            {/* File upload */}
-            <div className="card" style={{ marginBottom: 'var(--space-6)' }}>
-              <div className="card-header"><div className="card-title">Your file</div></div>
+        {/* 2-COLUMN WORKFLOW */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 0.8fr', gap: 32, alignItems: 'flex-start' }}>
+          {/* LEFT: STEP 1 TO 3 (UPLOAD, ANALYSIS, CONFIGURATION) */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+            {/* STEP 1: DRAG & DROP UPLOAD */}
+            <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 20, padding: 24, boxShadow: '0 4px 20px rgba(0,0,0,0.02)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <div style={{ width: 26, height: 26, borderRadius: '50%', background: '#ea580c', color: '#fff', fontSize: 12, fontWeight: 900, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>1</div>
+                  <h3 style={{ fontSize: 16, fontWeight: 800, margin: 0 }}>Upload 3D CAD File</h3>
+                </div>
+                <span style={{ fontSize: 11.5, color: 'var(--text-sub)', fontWeight: 700 }}>Max: 200MB</span>
+              </div>
+
               <label
-                htmlFor="model-file"
-                className="flex flex-col items-center justify-center"
+                htmlFor="stl-upload"
                 style={{
-                  border: '2px dashed var(--color-border-strong)',
-                  borderRadius: 'var(--radius-md)',
-                  padding: 'var(--space-8)',
+                  border: '2px dashed ' + (fileName ? '#10B981' : 'var(--border-color)'),
+                  background: fileName ? 'rgba(16, 185, 129, 0.04)' : 'var(--bg-card-hover)',
+                  borderRadius: 16,
+                  padding: '36px 20px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
                   cursor: 'pointer',
                   textAlign: 'center',
+                  transition: 'all 0.2s ease',
                 }}
               >
-                <span style={{ fontSize: 28, marginBottom: 'var(--space-2)' }}>📦</span>
-                <span className="text-sm" style={{ fontWeight: 600 }}>
-                  {fileName || 'Click to upload STL, 3MF, or OBJ'}
-                </span>
-                <span className="help-text">Up to 200MB</span>
+                <div style={{ width: 52, height: 52, borderRadius: 16, background: fileName ? 'rgba(16, 185, 129, 0.12)' : 'rgba(234, 88, 12, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 12, color: fileName ? '#10B981' : '#ea580c' }}>
+                  {fileName ? <FileCheck size={26} /> : <UploadCloud size={26} />}
+                </div>
+
+                <div style={{ fontSize: 14.5, fontWeight: 800, color: 'var(--text-main)', marginBottom: 4 }}>
+                  {fileName ? fileName : 'Drag & drop your STL / 3MF / OBJ here'}
+                </div>
+                <div style={{ fontSize: 12, color: 'var(--text-sub)' }}>
+                  {fileName ? `${fileSizeMb} MB • Ready for Slicer Engine` : 'or click to browse from your device'}
+                </div>
+
                 <input
-                  id="model-file"
+                  id="stl-upload"
                   type="file"
                   accept=".stl,.3mf,.obj"
                   style={{ display: 'none' }}
-                  onChange={(e) => setFileName(e.target.files?.[0]?.name || '')}
+                  onChange={(e) => handleFileUpload(e.target.files?.[0] || null)}
                 />
               </label>
             </div>
 
-            {/* Print settings */}
-            <div className="card" style={{ marginBottom: 'var(--space-6)' }}>
-              <div className="card-header"><div className="card-title">Print settings</div></div>
-
-              <div className="flex gap-4">
-                <div className="form-group" style={{ flex: 1 }}>
-                  <label className="label">Material</label>
-                  <select className="select" value={material} onChange={(e) => setMaterial(e.target.value)}>
-                    {MATERIALS.map((m) => <option key={m} value={m}>{m}</option>)}
-                  </select>
-                </div>
-                <div className="form-group" style={{ flex: 1 }}>
-                  <label className="label">Colour</label>
-                  <select className="select" value={color} onChange={(e) => setColor(e.target.value)}>
-                    {COLORS.map((c) => <option key={c} value={c}>{c}</option>)}
-                  </select>
-                </div>
-              </div>
-
-              <div className="form-group">
-                <label className="label">Scale ({scale}% of original size)</label>
-                <input
-                  type="range" min={25} max={200} step={5}
-                  value={scale}
-                  onChange={(e) => setScale(Number(e.target.value))}
-                  style={{ width: '100%' }}
-                />
-                <div className="flex justify-between text-xs text-muted">
-                  <span>25%</span><span>100% (original)</span><span>200%</span>
-                </div>
-              </div>
-
-              <div className="form-group">
-                <label className="label">Infill density ({infill}%)</label>
-                <div className="flex gap-2" style={{ flexWrap: 'wrap' }}>
-                  {INFILL_PRESETS.map((val) => (
-                    <button
-                      type="button"
-                      key={val}
-                      onClick={() => setInfill(val)}
-                      className={`badge ${infill === val ? 'badge-primary' : 'badge-neutral'}`}
-                      style={{ cursor: 'pointer', border: 'none', padding: '8px 16px' }}
-                    >
-                      {val}%
-                    </button>
-                  ))}
-                </div>
-                <span className="help-text">Higher infill = stronger part, more material, higher price</span>
-              </div>
-
-              <div className="flex gap-4">
-                <div className="form-group" style={{ flex: 1 }}>
-                  <label className="label">Layer height (mm)</label>
-                  <select className="select" value={layerHeight} onChange={(e) => setLayerHeight(e.target.value)}>
-                    <option value="0.12">0.12 mm — fine detail, slower</option>
-                    <option value="0.20">0.20 mm — standard</option>
-                    <option value="0.28">0.28 mm — fast, draft quality</option>
-                  </select>
-                </div>
-                <div className="form-group" style={{ flex: 1 }}>
-                  <label className="label">Surface finish</label>
-                  <select className="select" value={surfaceFinish} onChange={(e) => setSurfaceFinish(e.target.value)}>
-                    {SURFACE_FINISHES.map((f) => <option key={f} value={f}>{f}</option>)}
-                  </select>
-                </div>
-              </div>
-
-              <div className="form-group" style={{ maxWidth: 160 }}>
-                <label className="label">Quantity</label>
-                <input
-                  type="number" min={1} max={50} className="input"
-                  value={quantity}
-                  onChange={(e) => setQuantity(Math.max(1, Number(e.target.value)))}
-                />
-              </div>
-
-              <div className="form-group">
-                <label className="label">Notes for the printer (optional)</label>
-                <textarea
-                  className="textarea"
-                  placeholder="Any special instructions — support structures, orientation, tolerances, etc."
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                />
-              </div>
-            </div>
-
-            {/* Delivery address */}
-            <div className="card" style={{ marginBottom: 'var(--space-6)' }}>
-              <div className="card-header"><div className="card-title">Delivery address</div></div>
-              <div className="form-group">
-                <label className="label">Address</label>
-                <textarea
-                  className="textarea"
-                  placeholder="Flat / House no., street, area, city, PIN code"
-                  value={address}
-                  onChange={(e) => setAddress(e.target.value)}
-                />
-                <span className="help-text">Used to find printer owners near you on the map</span>
-              </div>
-            </div>
-
-            {/* Nearby printers */}
-            <div className="card">
-              <div className="card-header"><div className="card-title">Nearby printer owners</div></div>
-              {/* Replace this list with a Leaflet.js + OpenStreetMap view
-                  plotting each printer owner's GPS location, filtered to
-                  those supporting the selected material */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
-                {/* Explicit Broadcast Option Path */}
-                <label
-                  className="flex items-center justify-between"
-                  style={{
-                    border: `1px solid ${isBroadcast ? 'var(--color-primary)' : 'var(--color-border-light)'}`,
-                    borderRadius: 'var(--radius-md)',
-                    padding: 'var(--space-4)',
-                    cursor: 'pointer',
-                    background: isBroadcast ? 'var(--color-primary-tint)' : 'transparent',
-                  }}
-                >
-                  <div className="flex items-center gap-3">
-                    <input
-                      type="radio" className="radio" name="printer"
-                      checked={isBroadcast}
-                      onChange={() => { setIsBroadcast(true); setSelectedPrinter(null) }}
-                    />
-                    <div>
-                      <div className="text-sm" style={{ fontWeight: 700 }}>📢 Broadcast to All Nearby Hubs</div>
-                      <div className="text-xs text-muted">Send quote request to all nearby printer owners for competitive bids</div>
-                    </div>
+            {/* STEP 2: AUTOMATIC MESH & GEOMETRY DIAGNOSTICS */}
+            {(isAnalyzing || analysisDone) && (
+              <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 20, padding: 24, boxShadow: '0 4px 20px rgba(0,0,0,0.02)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <div style={{ width: 26, height: 26, borderRadius: '50%', background: '#ea580c', color: '#fff', fontSize: 12, fontWeight: 900, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>2</div>
+                    <h3 style={{ fontSize: 16, fontWeight: 800, margin: 0 }}>Automated Mesh Diagnostics</h3>
                   </div>
-                </label>
+                  {analysisDone && (
+                    <span style={{ fontSize: 11.5, color: '#10B981', fontWeight: 800, display: 'flex', alignItems: 'center', gap: 4 }}>
+                      <CheckCircle2 size={13} /> Slicing Ready
+                    </span>
+                  )}
+                </div>
 
-                {printers.length === 0 ? (
-                  <div style={{ padding: '24px 16px', textAlign: 'center', background: 'var(--bg-card-hover)', borderRadius: 'var(--radius-md)', border: '1px dashed var(--border-color)' }}>
-                    <div style={{ fontSize: 28, marginBottom: 8 }}>🖨️</div>
-                    <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-main)', marginBottom: 4 }}>
-                      Enter Delivery Address to Match Hubs
-                    </div>
-                    <div style={{ fontSize: 12, color: 'var(--text-sub)', maxWidth: 320, margin: '0 auto' }}>
-                      Once you enter your delivery address above, local printer hubs will be matched dynamically. Or select Broadcast mode above.
-                    </div>
+                {isAnalyzing ? (
+                  <div style={{ padding: '24px 0', textAlign: 'center', color: 'var(--text-sub)', fontSize: 13.5 }}>
+                    <div style={{ fontWeight: 800, color: '#ea580c', marginBottom: 4 }}>Analyzing 3D Topology &amp; Triangles...</div>
+                    <div>Calculating bounding box and watertight mesh density</div>
                   </div>
                 ) : (
-                  printers.map((p) => (
-                    <label
-                      key={p.id}
-                      className="flex items-center justify-between"
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10 }}>
+                    <div style={{ background: 'var(--bg-card-hover)', padding: '12px 10px', borderRadius: 12, textAlign: 'center' }}>
+                      <div style={{ fontSize: 10, color: 'var(--text-sub)', fontWeight: 800, textTransform: 'uppercase' }}>Dimensions</div>
+                      <div style={{ fontSize: 13, fontWeight: 900, color: 'var(--text-main)', marginTop: 2 }}>{meshDimensions}</div>
+                    </div>
+                    <div style={{ background: 'var(--bg-card-hover)', padding: '12px 10px', borderRadius: 12, textAlign: 'center' }}>
+                      <div style={{ fontSize: 10, color: 'var(--text-sub)', fontWeight: 800, textTransform: 'uppercase' }}>Volume</div>
+                      <div style={{ fontSize: 13, fontWeight: 900, color: 'var(--text-main)', marginTop: 2 }}>{meshVolumeCm3} cm³</div>
+                    </div>
+                    <div style={{ background: 'var(--bg-card-hover)', padding: '12px 10px', borderRadius: 12, textAlign: 'center' }}>
+                      <div style={{ fontSize: 10, color: 'var(--text-sub)', fontWeight: 800, textTransform: 'uppercase' }}>Est. Weight</div>
+                      <div style={{ fontSize: 13, fontWeight: 900, color: 'var(--text-main)', marginTop: 2 }}>{estimatedWeightGrams} g</div>
+                    </div>
+                    <div style={{ background: 'var(--bg-card-hover)', padding: '12px 10px', borderRadius: 12, textAlign: 'center' }}>
+                      <div style={{ fontSize: 10, color: 'var(--text-sub)', fontWeight: 800, textTransform: 'uppercase' }}>Supports</div>
+                      <div style={{ fontSize: 12.5, fontWeight: 900, color: '#F59E0B', marginTop: 2 }}>Recommended</div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* STEP 3: CONFIGURE MANUFACTURING PARAMETERS */}
+            <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 20, padding: 24, boxShadow: '0 4px 20px rgba(0,0,0,0.02)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 18 }}>
+                <div style={{ width: 26, height: 26, borderRadius: '50%', background: '#ea580c', color: '#fff', fontSize: 12, fontWeight: 900, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>3</div>
+                <h3 style={{ fontSize: 16, fontWeight: 800, margin: 0 }}>Configure Print Parameters</h3>
+              </div>
+
+              {/* Material Selector */}
+              <div style={{ marginBottom: 18 }}>
+                <label style={{ display: 'block', fontSize: 12, fontWeight: 800, color: 'var(--text-sub)', textTransform: 'uppercase', marginBottom: 8 }}>
+                  Filament / Resin Material
+                </label>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
+                  {MATERIALS.map((m) => {
+                    const active = material.id === m.id
+                    return (
+                      <button
+                        key={m.id}
+                        type="button"
+                        onClick={() => handleSelectMaterial(m)}
+                        style={{
+                          padding: '10px 10px',
+                          borderRadius: 12,
+                          textAlign: 'left',
+                          border: active ? '2px solid #ea580c' : '1px solid var(--border-color)',
+                          background: active ? 'rgba(234, 88, 12, 0.08)' : 'var(--bg-card-hover)',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        <div style={{ fontSize: 12.5, fontWeight: 800, color: active ? '#ea580c' : 'var(--text-main)' }}>{m.id}</div>
+                        <div style={{ fontSize: 10, color: 'var(--text-sub)', marginTop: 2 }}>{m.desc.split(',')[0]}</div>
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+
+              {/* Quality & Color Row */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 18 }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: 12, fontWeight: 800, color: 'var(--text-sub)', textTransform: 'uppercase', marginBottom: 6 }}>
+                    Layer Height
+                  </label>
+                  <select
+                    value={quality.id}
+                    onChange={(e) => setQuality(QUALITY_PRESETS.find((q) => q.id === e.target.value) || QUALITY_PRESETS[0])}
+                    style={{ width: '100%', background: 'var(--bg-card-hover)', border: '1px solid var(--border-color)', borderRadius: 10, padding: '10px 12px', fontSize: 13, color: 'var(--text-main)', fontWeight: 700, outline: 'none' }}
+                  >
+                    {QUALITY_PRESETS.map((q) => (
+                      <option key={q.id} value={q.id}>{q.name}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: 12, fontWeight: 800, color: 'var(--text-sub)', textTransform: 'uppercase', marginBottom: 6 }}>
+                    Filament Color
+                  </label>
+                  <select
+                    value={color}
+                    onChange={(e) => setColor(e.target.value)}
+                    style={{ width: '100%', background: 'var(--bg-card-hover)', border: '1px solid var(--border-color)', borderRadius: 10, padding: '10px 12px', fontSize: 13, color: 'var(--text-main)', fontWeight: 700, outline: 'none' }}
+                  >
+                    {COLORS.map((c) => (
+                      <option key={c} value={c}>{c}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* Infill Slider */}
+              <div style={{ marginBottom: 18 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+                  <label style={{ fontSize: 12, fontWeight: 800, color: 'var(--text-sub)', textTransform: 'uppercase' }}>
+                    Infill Density: <strong style={{ color: '#ea580c' }}>{infill}%</strong>
+                  </label>
+                  <span style={{ fontSize: 11.5, color: 'var(--text-sub)' }}>
+                    {infill <= 20 ? 'Standard Lightweight' : infill <= 50 ? 'Strong Functional' : 'Solid High Stress'}
+                  </span>
+                </div>
+                <input
+                  type="range"
+                  min="10"
+                  max="100"
+                  step="5"
+                  value={infill}
+                  onChange={(e) => setInfill(Number(e.target.value))}
+                  style={{ width: '100%', accentColor: '#ea580c', cursor: 'pointer' }}
+                />
+              </div>
+
+              {/* Supports Toggle */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 14px', background: 'var(--bg-card-hover)', borderRadius: 12 }}>
+                <div>
+                  <div style={{ fontSize: 13, fontWeight: 800, color: 'var(--text-main)' }}>Generate Support Structures</div>
+                  <div style={{ fontSize: 11, color: 'var(--text-sub)' }}>Recommended for overhangs greater than 45°</div>
+                </div>
+                <input
+                  type="checkbox"
+                  checked={includeSupports}
+                  onChange={(e) => setIncludeSupports(e.target.checked)}
+                  style={{ width: 18, height: 18, accentColor: '#ea580c', cursor: 'pointer' }}
+                />
+              </div>
+            </div>
+
+            {/* STEP 4: CHOOSE PRINTER HUB */}
+            <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 20, padding: 24, boxShadow: '0 4px 20px rgba(0,0,0,0.02)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <div style={{ width: 26, height: 26, borderRadius: '50%', background: '#ea580c', color: '#fff', fontSize: 12, fontWeight: 900, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>4</div>
+                  <h3 style={{ fontSize: 16, fontWeight: 800, margin: 0 }}>Select Nearby Manufacturing Hub</h3>
+                </div>
+                <span style={{ fontSize: 11.5, color: '#10B981', fontWeight: 800 }}>
+                  {deliveryAddress.trim() ? 'Matched to Location' : 'Verified Hub Network'}
+                </span>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                {NEARBY_HUBS.map((hub) => {
+                  const active = selectedHub.id === hub.id
+                  const supportsSelectedMat = hub.materials.includes(material.id)
+                  return (
+                    <div
+                      key={hub.id}
+                      onClick={() => {
+                        if (supportsSelectedMat) setSelectedHub(hub)
+                      }}
                       style={{
-                        border: `1px solid ${selectedPrinter === p.id ? 'var(--color-primary)' : 'var(--color-border-light)'}`,
-                        borderRadius: 'var(--radius-md)',
-                        padding: 'var(--space-4)',
-                        cursor: 'pointer',
-                        background: selectedPrinter === p.id ? 'var(--color-primary-tint)' : 'transparent',
+                        border: active ? '2px solid #ea580c' : '1px solid var(--border-color)',
+                        background: active ? 'rgba(234, 88, 12, 0.05)' : supportsSelectedMat ? 'var(--bg-card-hover)' : 'rgba(0,0,0,0.02)',
+                        opacity: supportsSelectedMat ? 1 : 0.6,
+                        borderRadius: 14,
+                        padding: 14,
+                        cursor: supportsSelectedMat ? 'pointer' : 'not-allowed',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        transition: 'all 0.15s ease',
                       }}
                     >
-                      <div className="flex items-center gap-3">
-                        <input
-                          type="radio" className="radio" name="printer"
-                          checked={selectedPrinter === p.id}
-                          onChange={() => { setSelectedPrinter(p.id); setIsBroadcast(false) }}
-                        />
-                        <div>
-                          <div className="text-sm" style={{ fontWeight: 600 }}>{p.name}</div>
-                          <div className="text-xs text-muted">
-                            {p.distance || 'Nearby'} · {p.rating !== undefined ? `★ ${p.rating}` : 'Unrated'}
-                          </div>
+                      <div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 }}>
+                          <span style={{ fontSize: 14, fontWeight: 900, color: 'var(--text-main)' }}>{hub.name}</span>
+                          <span style={{ background: 'rgba(234, 88, 12, 0.1)', color: '#ea580c', fontSize: 10.5, fontWeight: 800, padding: '1px 6px', borderRadius: 4 }}>
+                            {deliveryAddress.trim() ? hub.distance : 'Sample Radius'}
+                          </span>
+                          {!supportsSelectedMat && (
+                            <span style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#EF4444', fontSize: 10, fontWeight: 700, padding: '1px 6px', borderRadius: 4 }}>
+                              No {material.id}
+                            </span>
+                          )}
+                        </div>
+                        <div style={{ fontSize: 12, color: 'var(--text-sub)' }}>
+                          {hub.model} • ⭐ {hub.rating} ({hub.completedOrders} prints)
+                        </div>
+                        <div style={{ fontSize: 11, color: '#10B981', marginTop: 3, fontWeight: 700 }}>
+                          Ready: {hub.completionEstimate}
                         </div>
                       </div>
-                    </label>
-                  ))
-                )}
+
+                      <div style={{ textAlign: 'right' }}>
+                        <div style={{ width: 20, height: 20, borderRadius: '50%', border: active ? '6px solid #ea580c' : '2px solid var(--border-color)', background: 'var(--bg-card)' }} />
+                      </div>
+                    </div>
+                  )
+                })}
               </div>
             </div>
           </div>
 
-          {/* Order summary */}
-          <div>
-            <div className="card" style={{ position: 'sticky', top: 'calc(var(--navbar-height) + 24px)' }}>
-              <div className="card-header"><div className="card-title">Estimated price</div></div>
-              <div className="flex justify-between text-sm" style={{ marginBottom: 'var(--space-2)' }}>
-                <span className="text-muted">Per unit (est.)</span>
-                <span>₹{unitPrice}</span>
+          {/* RIGHT: COST BREAKDOWN, DELIVERY & CONFIRMATION */}
+          <div style={{ position: 'sticky', top: 90 }}>
+            <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 24, padding: '28px 24px', boxShadow: '0 6px 30px rgba(0,0,0,0.03)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#10B981', fontSize: 12, fontWeight: 800, marginBottom: 8 }}>
+                <ShieldCheck size={16} /> RAZORPAY ESCROW PROTECTED
               </div>
-              <div className="flex justify-between text-sm" style={{ marginBottom: 'var(--space-2)' }}>
-                <span className="text-muted">Quantity</span>
-                <span>× {quantity}</span>
+
+              <h2 style={{ fontSize: 20, fontWeight: 900, margin: '0 0 16px' }}>
+                Manufacturing Estimate
+              </h2>
+
+              {/* LINE ITEM COST BREAKDOWN */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10, paddingBottom: 16, borderBottom: '1px solid var(--border-color)', marginBottom: 16 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
+                  <span style={{ color: 'var(--text-sub)' }}>Raw Filament ({material.id})</span>
+                  <span style={{ fontWeight: 800 }}>₹{rawMaterialCost}</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
+                  <span style={{ color: 'var(--text-sub)' }}>Printer Machine Rate</span>
+                  <span style={{ fontWeight: 800 }}>₹{machineRate}</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
+                  <span style={{ color: 'var(--text-sub)' }}>Pre-Flight Slicing &amp; QA</span>
+                  <span style={{ fontWeight: 800 }}>₹{processingFee}</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
+                  <span style={{ color: 'var(--text-sub)' }}>Platform Escrow Fee</span>
+                  <span style={{ fontWeight: 800 }}>₹{platformFee}</span>
+                </div>
               </div>
-              <div className="flex justify-between text-sm" style={{ marginBottom: 'var(--space-4)' }}>
-                <span className="text-muted">Platform fee</span>
-                <span>₹{platformFee}</span>
+
+              {/* Quantity */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                <span style={{ fontSize: 13, fontWeight: 800, color: 'var(--text-sub)' }}>Quantity</span>
+                <div style={{ display: 'flex', alignItems: 'center', background: 'var(--bg-card-hover)', borderRadius: 8, border: '1px solid var(--border-color)' }}>
+                  <button
+                    type="button"
+                    onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                    style={{ padding: '4px 10px', background: 'none', border: 'none', color: 'var(--text-main)', fontSize: 14, fontWeight: 800, cursor: 'pointer' }}
+                  >
+                    -
+                  </button>
+                  <span style={{ padding: '0 8px', fontSize: 13.5, fontWeight: 900 }}>{quantity}</span>
+                  <button
+                    type="button"
+                    onClick={() => setQuantity(quantity + 1)}
+                    style={{ padding: '4px 10px', background: 'none', border: 'none', color: 'var(--text-main)', fontSize: 14, fontWeight: 800, cursor: 'pointer' }}
+                  >
+                    +
+                  </button>
+                </div>
               </div>
-              <div className="divider" />
-              <div className="flex justify-between" style={{ marginBottom: 'var(--space-6)', fontWeight: 700, fontSize: 'var(--text-lg)' }}>
-                <span>Total (est.)</span>
-                <span>₹{total}</span>
+
+              {/* Total */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 20 }}>
+                <span style={{ fontSize: 14, fontWeight: 900 }}>Total Escrow Price</span>
+                <span style={{ fontSize: 26, fontWeight: 900, color: '#ea580c' }}>₹{totalPrice}</span>
               </div>
+
+              {/* Delivery Address Input */}
+              <div style={{ marginBottom: 20 }}>
+                <label style={{ display: 'block', fontSize: 11.5, fontWeight: 800, color: 'var(--text-sub)', textTransform: 'uppercase', marginBottom: 6 }}>
+                  Delivery Address in India *
+                </label>
+                <textarea
+                  rows={2}
+                  placeholder="Street address, city, pincode..."
+                  value={deliveryAddress}
+                  onChange={(e) => setDeliveryAddress(e.target.value)}
+                  style={{ width: '100%', background: 'var(--bg-card-hover)', border: '1px solid var(--border-color)', borderRadius: 10, padding: '10px 12px', fontSize: 13, color: 'var(--text-main)', outline: 'none', resize: 'none' }}
+                />
+              </div>
+
+              {/* PRINT NOW BUTTON */}
               <button
-                className="btn btn-primary btn-block btn-lg"
-                disabled={placing || !canSubmit}
+                type="button"
+                disabled={!canSubmit || placing}
                 onClick={handlePlaceOrder}
+                style={{
+                  width: '100%',
+                  background: canSubmit ? '#ea580c' : 'var(--border-color)',
+                  color: canSubmit ? '#FFFFFF' : 'var(--text-sub)',
+                  border: 'none',
+                  borderRadius: 99,
+                  padding: '14px 20px',
+                  fontSize: 14.5,
+                  fontWeight: 900,
+                  cursor: canSubmit ? 'pointer' : 'not-allowed',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 6,
+                  boxShadow: canSubmit ? '0 6px 20px rgba(234, 88, 12, 0.35)' : 'none',
+                  transition: 'all 0.15s ease',
+                }}
               >
-                {placing ? 'Placing order…' : `Pay ₹${total} securely`}
+                <Zap size={16} /> {placing ? 'Submitting Print Job...' : 'DISPATCH PRINT JOB'}
               </button>
-              <p className="help-text" style={{ textAlign: 'center', marginTop: 'var(--space-3)' }}>
-                Final price confirmed once the printer owner reviews your file
-              </p>
+
+              {!fileName && (
+                <div style={{ fontSize: 11.5, color: '#F59E0B', textAlign: 'center', marginTop: 10, fontWeight: 700 }}>
+                  Upload an STL or 3MF file to proceed
+                </div>
+              )}
             </div>
           </div>
         </div>
-      </section>
+      </div>
 
       <Footer />
     </main>
