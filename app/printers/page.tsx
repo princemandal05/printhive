@@ -200,22 +200,22 @@ function PrinterDirectoryContent() {
     switch (status) {
       case 'online':
         return (
-          <span style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#10B981', padding: '4px 12px', borderRadius: 9999, fontSize: 11, fontWeight: 800, border: '1px solid rgba(16, 185, 129, 0.3)', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-            <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#10B981', display: 'inline-block', boxShadow: '0 0 6px #10B981' }} />
+          <span style={{ background: 'rgba(16, 185, 129, 0.12)', color: '#10B981', padding: '5px 12px', borderRadius: 9999, fontSize: 11.5, fontWeight: 800, border: '1px solid rgba(16, 185, 129, 0.3)', display: 'inline-flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap', flexShrink: 0, lineHeight: 1 }}>
+            <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#10B981', display: 'inline-block', boxShadow: '0 0 6px #10B981', flexShrink: 0 }} />
             Ready for Orders
           </span>
         )
       case 'busy':
         return (
-          <span style={{ background: 'rgba(245, 158, 11, 0.15)', color: '#F59E0B', padding: '4px 12px', borderRadius: 9999, fontSize: 11, fontWeight: 800, border: '1px solid rgba(245, 158, 11, 0.3)', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-            <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#F59E0B', display: 'inline-block' }} />
+          <span style={{ background: 'rgba(245, 158, 11, 0.12)', color: '#F59E0B', padding: '5px 12px', borderRadius: 9999, fontSize: 11.5, fontWeight: 800, border: '1px solid rgba(245, 158, 11, 0.3)', display: 'inline-flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap', flexShrink: 0, lineHeight: 1 }}>
+            <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#F59E0B', display: 'inline-block', flexShrink: 0 }} />
             In Queue (~2h)
           </span>
         )
       default:
         return (
-          <span style={{ background: 'rgba(239, 68, 68, 0.15)', color: '#EF4444', padding: '4px 12px', borderRadius: 9999, fontSize: 11, fontWeight: 800, border: '1px solid rgba(239, 68, 68, 0.3)', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-            <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#EF4444', display: 'inline-block' }} />
+          <span style={{ background: 'rgba(239, 68, 68, 0.12)', color: '#EF4444', padding: '5px 12px', borderRadius: 9999, fontSize: 11.5, fontWeight: 800, border: '1px solid rgba(239, 68, 68, 0.3)', display: 'inline-flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap', flexShrink: 0, lineHeight: 1 }}>
+            <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#EF4444', display: 'inline-block', flexShrink: 0 }} />
             Offline
           </span>
         )
@@ -640,12 +640,12 @@ function PrinterDirectoryContent() {
                       }}
                     >
                       {/* Top Row: Name, City & Status Badge */}
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, marginBottom: 6 }}>
-                        <div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, marginBottom: 6 }}>
+                        <div style={{ flex: 1, minWidth: 0 }}>
                           <div style={{ fontSize: 17, fontWeight: 900, color: 'var(--text-main)', marginBottom: 2 }}>
                             {printer.name}
                           </div>
-                          <div style={{ fontSize: 12, color: 'var(--text-sub)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <div style={{ fontSize: 12, color: 'var(--text-sub)', display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
                             <span>📍 {printer.location}</span>
                             {printer.distance && (
                               <span style={{ color: '#ea580c', fontWeight: 800 }}>• 🚀 {printer.distance}</span>
@@ -653,7 +653,7 @@ function PrinterDirectoryContent() {
                           </div>
                         </div>
 
-                        <div>
+                        <div style={{ flexShrink: 0 }}>
                           {getStatusBadge(printer.status)}
                         </div>
                       </div>
