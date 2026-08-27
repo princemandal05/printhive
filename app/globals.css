@@ -141,12 +141,12 @@ html.dark,
 }
 
 /* ==========================================================================
-   PRINTHIVE — GLOBAL DARK MODE ORANGE LINES SYSTEM
-   Ensures all cards, inputs, buttons, tables, dividers, navbars, and panels
-   exhibit sleek, cohesive glowing orange outline borders in Dark Mode.
+   PRINTHIVE — GLOBAL DARK MODE NEON ORANGE LINES & GLOW SYSTEM
+   Delivers a futuristic neon luminescence for all borders, inputs,
+   cards, and outlines across the platform.
    ========================================================================== */
 
-/* 1. Form Controls (Inputs, Selects, Textareas) */
+/* 1. Form Controls (Inputs, Selects, Textareas) with Neon Luminescence */
 :root[data-theme="dark"] input,
 :root[data-theme="dark"] select,
 :root[data-theme="dark"] textarea,
@@ -159,7 +159,9 @@ html.dark textarea,
 .dark input,
 .dark select,
 .dark textarea {
-  border: 1px solid rgba(234, 88, 12, 0.45) !important;
+  border: 1px solid rgba(249, 115, 22, 0.5) !important;
+  box-shadow: 0 0 10px rgba(249, 115, 22, 0.12), inset 0 0 6px rgba(249, 115, 22, 0.04) !important;
+  transition: all 0.2s ease;
 }
 
 :root[data-theme="dark"] input:focus,
@@ -174,11 +176,11 @@ html.dark textarea:focus,
 .dark input:focus,
 .dark select:focus,
 .dark textarea:focus {
-  border-color: #ea580c !important;
-  box-shadow: 0 0 0 3px rgba(234, 88, 12, 0.3) !important;
+  border-color: #f97316 !important;
+  box-shadow: 0 0 16px rgba(249, 115, 22, 0.4), 0 0 0 2px rgba(249, 115, 22, 0.3) !important;
 }
 
-/* 2. Header & Navigation Bars */
+/* 2. Header & Navigation Bars with Neon Glow */
 :root[data-theme="dark"] header,
 :root[data-theme="dark"] .navbar,
 [data-theme="dark"] header,
@@ -187,15 +189,17 @@ html.dark header,
 html.dark .navbar,
 .dark header,
 .dark .navbar {
-  border-bottom-color: rgba(234, 88, 12, 0.4) !important;
+  border-bottom: 1px solid rgba(249, 115, 22, 0.45) !important;
+  box-shadow: 0 4px 20px rgba(249, 115, 22, 0.1) !important;
 }
 
-/* 3. Cards, Containers, Sections, and Drawers */
+/* 3. Cards, Containers, and Modals with Neon Outline & Ambient Glow */
 :root[data-theme="dark"] hr,
 [data-theme="dark"] hr,
 html.dark hr,
 .dark hr {
-  border-color: rgba(234, 88, 12, 0.35) !important;
+  border-color: rgba(249, 115, 22, 0.4) !important;
+  box-shadow: 0 0 8px rgba(249, 115, 22, 0.2) !important;
 }
 
 :root[data-theme="dark"] .card,
@@ -206,7 +210,8 @@ html.dark .card,
 html.dark [class*="card"],
 .dark .card,
 .dark [class*="card"] {
-  border-color: rgba(234, 88, 12, 0.38) !important;
+  border-color: rgba(249, 115, 22, 0.4) !important;
+  box-shadow: 0 0 14px rgba(249, 115, 22, 0.08), 0 8px 32px rgba(0, 0, 0, 0.4) !important;
 }
 
 /* 4. Tables & Table Rows */
@@ -222,10 +227,10 @@ html.dark td,
 .dark table,
 .dark th,
 .dark td {
-  border-color: rgba(234, 88, 12, 0.3) !important;
+  border-color: rgba(249, 115, 22, 0.35) !important;
 }
 
-/* 5. Tailwind Border Utility Classes */
+/* 5. Tailwind Border Utility Classes with Neon Ambient Line */
 :root[data-theme="dark"] .border,
 :root[data-theme="dark"] .border-t,
 :root[data-theme="dark"] .border-b,
@@ -254,7 +259,7 @@ html.dark .border-y,
 .dark .border-r,
 .dark .border-x,
 .dark .border-y {
-  border-color: rgba(234, 88, 12, 0.4) !important;
+  border-color: rgba(249, 115, 22, 0.45) !important;
 }
 
 :root[data-theme="dark"] .divide-y > :not([hidden]) ~ :not([hidden]),
@@ -265,7 +270,7 @@ html.dark .divide-y > :not([hidden]) ~ :not([hidden]),
 html.dark .divide-x > :not([hidden]) ~ :not([hidden]),
 .dark .divide-y > :not([hidden]) ~ :not([hidden]),
 .dark .divide-x > :not([hidden]) ~ :not([hidden]) {
-  border-color: rgba(234, 88, 12, 0.3) !important;
+  border-color: rgba(249, 115, 22, 0.35) !important;
 }
 
 body {
