@@ -440,15 +440,17 @@ function PrinterDirectoryContent() {
             style={{
               background: 'linear-gradient(135deg, #ea580c 0%, #c2410c 100%)',
               color: '#fff',
-              padding: '12px 22px',
-              borderRadius: 99,
+              padding: '10px 20px',
+              borderRadius: 4,
               fontWeight: 800,
-              fontSize: 14,
+              fontSize: 13,
               textDecoration: 'none',
               display: 'inline-flex',
               alignItems: 'center',
               gap: 8,
-              boxShadow: '0 4px 16px rgba(234,88,12,0.3)',
+              boxShadow: '0 4px 14px rgba(234,88,12,0.25)',
+              textTransform: 'uppercase',
+              letterSpacing: 0.5,
               marginTop: 10,
             }}
           >
@@ -458,11 +460,11 @@ function PrinterDirectoryContent() {
         </div>
 
         {/* 🇮🇳 INDIAN STATES QUICK NAVIGATION FILTER PILLS */}
-        <div style={{ marginBottom: 16 }}>
-          <div style={{ fontSize: 12, fontWeight: 800, color: 'var(--text-sub)', textTransform: 'uppercase', marginBottom: 8, letterSpacing: 0.5, display: 'flex', alignItems: 'center', gap: 6 }}>
+        <div style={{ marginBottom: 14 }}>
+          <div style={{ fontSize: 11, fontWeight: 800, color: 'var(--text-sub)', textTransform: 'uppercase', marginBottom: 8, letterSpacing: 0.8, display: 'flex', alignItems: 'center', gap: 6 }}>
             <span>🇮🇳 Select Indian State / Region:</span>
           </div>
-          <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 6, scrollbarWidth: 'none' }}>
+          <div style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 6, scrollbarWidth: 'none' }}>
             {INDIAN_STATES.map((st) => {
               const isStateActive = selectedState === st.name || (st.name === 'All India' && !selectedState)
               return (
@@ -480,14 +482,16 @@ function PrinterDirectoryContent() {
                     background: isStateActive ? '#ea580c' : 'var(--bg-card)',
                     color: isStateActive ? '#fff' : 'var(--text-main)',
                     border: isStateActive ? '1px solid #ea580c' : '1px solid var(--border-color)',
-                    borderRadius: 99,
-                    padding: '8px 16px',
-                    fontSize: 13,
+                    borderRadius: 4,
+                    padding: '6px 14px',
+                    fontSize: 12,
                     fontWeight: 800,
                     cursor: 'pointer',
                     whiteSpace: 'nowrap',
-                    boxShadow: isStateActive ? '0 4px 14px rgba(234,88,12,0.3)' : 'none',
+                    boxShadow: isStateActive ? '0 2px 8px rgba(234,88,12,0.25)' : 'none',
                     transition: 'all 0.15s ease',
+                    textTransform: 'uppercase',
+                    letterSpacing: 0.5,
                   }}
                 >
                   {st.name === 'All India' ? '🇮🇳 All India' : `📍 ${st.name}`}
@@ -498,7 +502,7 @@ function PrinterDirectoryContent() {
         </div>
 
         {/* OPENSTREETMAP MAP CONTAINER */}
-        <div style={{ marginBottom: 28, border: '1px solid var(--border-color)', borderRadius: 20, overflow: 'hidden', boxShadow: '0 8px 24px rgba(0,0,0,0.06)' }}>
+        <div style={{ marginBottom: 24, border: '1px solid var(--border-color)', borderRadius: 4, overflow: 'hidden', boxShadow: '0 4px 16px rgba(0,0,0,0.06)' }}>
           <OpenStreetMap
             locations={sortedPrinters}
             selectedId={selectedHub?.id}
@@ -511,7 +515,7 @@ function PrinterDirectoryContent() {
         </div>
 
         {/* 6 REAL-TIME FILTER CONTROLS BAR */}
-        <div style={{ background: 'var(--bg-card)', padding: 24, borderRadius: 20, border: '1px solid var(--border-color)', marginBottom: 32, display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <div style={{ background: 'var(--bg-card)', padding: 20, borderRadius: 4, border: '1px solid var(--border-color)', marginBottom: 24, display: 'flex', flexDirection: 'column', gap: 14 }}>
           <div style={{ fontSize: 14, fontWeight: 800, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: 6 }}>
             <span>🔍 Filter Nearby Printers ({sortedPrinters.length} Matched)</span>
           </div>
