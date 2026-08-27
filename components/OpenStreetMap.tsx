@@ -105,7 +105,7 @@ export default function OpenStreetMap({
     const map = L.map(mapRef.current, {
       maxBounds: indiaBounds,
       maxBoundsViscosity: 1.0,
-      minZoom: 4,
+      minZoom: 5,
       maxZoom: 18,
     }).setView(validCenter, zoom)
 
@@ -149,6 +149,13 @@ export default function OpenStreetMap({
       }
     }
   }, [loaded])
+
+  // Sync center and zoom updates (e.g. Indian state navigation)
+  useEffect(() => {
+    if (mapInstanceRef.current && validCenter && !selectedId) {
+      mapInstanceRef.current.flyTo(validCenter, zoom, { duration: 1.0 })
+    }
+  }, [validCenter[0], validCenter[1], zoom])
 
   // Invalidate size whenever height prop changes
   useEffect(() => {

@@ -20,6 +20,7 @@ const OpenStreetMap = dynamic(() => import('@/components/OpenStreetMap'), {
 })
 
 export type PrinterHub = MapLocation & {
+  state?: string
   model?: string
   technology?: string
   materials?: string[]
@@ -34,6 +35,20 @@ export type PrinterHub = MapLocation & {
   formattedDistance?: string
 }
 
+export const INDIAN_STATES = [
+  { name: 'All India', code: 'ALL', center: [21.7679, 78.8718], zoom: 5 },
+  { name: 'Delhi NCR', code: 'DL', center: [28.6139, 77.2090], zoom: 10 },
+  { name: 'Maharashtra', code: 'MH', center: [19.0760, 72.8777], zoom: 8 },
+  { name: 'Karnataka', code: 'KA', center: [12.9716, 77.5946], zoom: 8 },
+  { name: 'Telangana', code: 'TG', center: [17.3850, 78.4867], zoom: 9 },
+  { name: 'Tamil Nadu', code: 'TN', center: [13.0827, 80.2707], zoom: 8 },
+  { name: 'Gujarat', code: 'GJ', center: [23.0225, 72.5714], zoom: 8 },
+  { name: 'Uttar Pradesh', code: 'UP', center: [26.8467, 80.9462], zoom: 8 },
+  { name: 'West Bengal', code: 'WB', center: [22.5726, 88.3639], zoom: 8 },
+  { name: 'Rajasthan', code: 'RJ', center: [26.9124, 75.7873], zoom: 8 },
+  { name: 'Kerala', code: 'KL', center: [10.8505, 76.2711], zoom: 8 },
+]
+
 const DEFAULT_INDIA_HUBS: PrinterHub[] = [
   {
     id: 'hub-delhi-01',
@@ -41,6 +56,7 @@ const DEFAULT_INDIA_HUBS: PrinterHub[] = [
     model: 'Bambu Lab X1-Carbon',
     technology: 'Multi-Color FDM (0.08mm Layer)',
     location: 'Connaught Place, New Delhi',
+    state: 'Delhi NCR',
     lat: 28.6304,
     lng: 77.2177,
     materials: ['PLA', 'PETG', 'ABS', 'Carbon Fiber PLA'],
@@ -58,6 +74,7 @@ const DEFAULT_INDIA_HUBS: PrinterHub[] = [
     model: 'Original Prusa MK4',
     technology: 'Precision FDM (Input Shaping)',
     location: 'Koramangala 4th Block, Bengaluru',
+    state: 'Karnataka',
     lat: 12.9352,
     lng: 77.6245,
     materials: ['PLA', 'PETG', 'TPU Flexible', 'PCCF'],
@@ -75,6 +92,7 @@ const DEFAULT_INDIA_HUBS: PrinterHub[] = [
     model: 'Formlabs Form 3+ SLA',
     technology: 'High-Detail SLA Resin (25μm)',
     location: 'Bandra West, Mumbai',
+    state: 'Maharashtra',
     lat: 19.0596,
     lng: 72.8295,
     materials: ['Tough 2000 Resin', 'Clear Optical Resin', 'Dental Resin'],
@@ -92,6 +110,7 @@ const DEFAULT_INDIA_HUBS: PrinterHub[] = [
     model: 'Voron 2.4 R2 350mm',
     technology: 'High-Temp Enclosed CoreXY',
     location: 'Hitec City, Hyderabad',
+    state: 'Telangana',
     lat: 17.4474,
     lng: 78.3762,
     materials: ['ABS', 'ASA UV-Resistant', 'Nylon PA12', 'PC'],
@@ -109,6 +128,7 @@ const DEFAULT_INDIA_HUBS: PrinterHub[] = [
     model: 'Creality K1 Max (300x300)',
     technology: 'Large-Volume High-Speed FDM',
     location: 'Sector 62, Noida / NCR',
+    state: 'Uttar Pradesh',
     lat: 28.6280,
     lng: 77.3649,
     materials: ['Hyper PLA', 'PETG', 'ABS', 'TPU'],
@@ -126,6 +146,7 @@ const DEFAULT_INDIA_HUBS: PrinterHub[] = [
     model: 'Anycubic Photon M5s 12K',
     technology: 'Ultra-High 12K Resin',
     location: 'Kothrud, Pune',
+    state: 'Maharashtra',
     lat: 18.5074,
     lng: 73.8077,
     materials: ['Water-Washable Resin', 'ABS-Like Resin'],
@@ -137,6 +158,96 @@ const DEFAULT_INDIA_HUBS: PrinterHub[] = [
     completedOrders: 64,
     city: 'Pune',
   },
+  {
+    id: 'hub-chn-01',
+    name: 'Elegoo Saturn 4 Ultra Precision Farm',
+    model: 'Elegoo Saturn 4 Ultra',
+    technology: 'Tilt-Release Resin SLA',
+    location: 'T. Nagar, Chennai',
+    state: 'Tamil Nadu',
+    lat: 13.0418,
+    lng: 80.2341,
+    materials: ['Standard Resin', 'Plant-Based Resin'],
+    base_price: 420,
+    price: 420,
+    status: 'online',
+    working_hours: '09:00 AM - 09:00 PM',
+    rating: 4.93,
+    completedOrders: 85,
+    city: 'Chennai',
+  },
+  {
+    id: 'hub-kol-01',
+    name: 'Snapmaker Artisan Multi-Tool Lab',
+    model: 'Snapmaker Artisan 3-in-1',
+    technology: 'Industrial Multi-Filament FDM',
+    location: 'Salt Lake Sector V, Kolkata',
+    state: 'West Bengal',
+    lat: 22.5804,
+    lng: 88.4378,
+    materials: ['PLA', 'Woodfill PLA', 'PETG'],
+    base_price: 360,
+    price: 360,
+    status: 'online',
+    working_hours: '09:30 AM - 08:30 PM',
+    rating: 4.91,
+    completedOrders: 53,
+    city: 'Kolkata',
+  },
+  {
+    id: 'hub-ahm-01',
+    name: 'Flashforge Guider 3 Plus Studio',
+    model: 'Flashforge Guider 3 Plus',
+    technology: 'Engineering Grade High-Speed FDM',
+    location: 'SG Highway, Ahmedabad',
+    state: 'Gujarat',
+    lat: 23.0225,
+    lng: 72.5714,
+    materials: ['PLA-CF', 'PETG', 'ABS'],
+    base_price: 340,
+    price: 340,
+    status: 'online',
+    working_hours: '09:00 AM - 09:00 PM',
+    rating: 4.94,
+    completedOrders: 71,
+    city: 'Ahmedabad',
+  },
+  {
+    id: 'hub-jpr-01',
+    name: 'Artisan 3D Prototyping Hub',
+    model: 'Creality Ender 3 S1 Pro',
+    technology: 'Dual-Gear Precision FDM',
+    location: 'Malviya Nagar, Jaipur',
+    state: 'Rajasthan',
+    lat: 26.8530,
+    lng: 75.8050,
+    materials: ['PLA', 'PETG', 'Silk PLA'],
+    base_price: 280,
+    price: 280,
+    status: 'online',
+    working_hours: '10:00 AM - 08:00 PM',
+    rating: 4.88,
+    completedOrders: 49,
+    city: 'Jaipur',
+  },
+  {
+    id: 'hub-koc-01',
+    name: 'Kochi Marine 3D Print Works',
+    model: 'Bambu Lab P1S Combo',
+    technology: 'Enclosed High-Speed FDM',
+    location: 'Kakkanad Infopark, Kochi',
+    state: 'Kerala',
+    lat: 9.9984,
+    lng: 76.3582,
+    materials: ['PETG Water-Resistant', 'PLA', 'TPU'],
+    base_price: 330,
+    price: 330,
+    status: 'online',
+    working_hours: '08:00 AM - 10:00 PM',
+    rating: 4.97,
+    completedOrders: 82,
+    city: 'Kochi',
+  },
 ]
 
 function PrinterDirectoryContent() {
@@ -146,6 +257,9 @@ function PrinterDirectoryContent() {
 
   const [printers, setPrinters] = useState<PrinterHub[]>(DEFAULT_INDIA_HUBS)
   const [selectedHub, setSelectedHub] = useState<PrinterHub | null>(null)
+  const [selectedState, setSelectedState] = useState<string | null>(null)
+  const [mapCenter, setMapCenter] = useState<[number, number]>([21.7679, 78.8718])
+  const [mapZoom, setMapZoom] = useState<number>(5)
   const [userCoords, setUserCoords] = useState<{ lat: number; lng: number } | null>(null)
   const [loading, setLoading] = useState(false)
   const [loadError, setLoadError] = useState<string | null>(null)
@@ -184,6 +298,7 @@ function PrinterDirectoryContent() {
               model: item.printer_model || 'FDM Precision',
               technology: item.technology || 'FDM Dual-Color Precision',
               location: item.address || 'India GPS Location',
+              state: item.state || 'Delhi NCR',
               lat: Number(item.latitude),
               lng: Number(item.longitude),
               materials: item.materials || ['PLA', 'PETG'],
@@ -230,8 +345,17 @@ function PrinterDirectoryContent() {
     return printer
   })
 
-  // Apply 6 Filter Criteria
+  // Apply Filters (including Indian State)
   const filteredPrinters = processedPrinters.filter((p) => {
+    // 0. Indian State Filter
+    if (
+      selectedState &&
+      p.state !== selectedState &&
+      !p.location.toLowerCase().includes(selectedState.toLowerCase()) &&
+      !p.city?.toLowerCase().includes(selectedState.toLowerCase())
+    ) {
+      return false
+    }
     // 1. Distance Filter
     if (filterMaxDistance !== 'All' && p.calculatedDistanceKm !== undefined && p.calculatedDistanceKm > filterMaxDistance) {
       return false
@@ -298,7 +422,7 @@ function PrinterDirectoryContent() {
       <Navbar />
 
       <section className="container section-sm" style={{ maxWidth: 1200, margin: '0 auto', padding: '40px 20px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 16, marginBottom: 24 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 16, marginBottom: 20 }}>
           <div>
             <div className="ateion-pill" style={{ marginBottom: 12 }}>
               ⚡ Multi-tier Matching Engine (Availability → Distance → Rating)
@@ -307,7 +431,7 @@ function PrinterDirectoryContent() {
               Real Nearby 3D Printer Hub Matching
             </h1>
             <p style={{ color: 'var(--text-sub)', fontSize: 16, maxWidth: 680, margin: 0 }}>
-              Find nearest online 3D printer hubs. Select your GPS location or click any pin on OpenStreetMap to match nearby hubs.
+              Find nearest online 3D printer hubs. Select your Indian state, use GPS location, or click any pin on OpenStreetMap to match nearby verified hubs.
             </p>
           </div>
 
@@ -333,6 +457,46 @@ function PrinterDirectoryContent() {
           </Link>
         </div>
 
+        {/* 🇮🇳 INDIAN STATES QUICK NAVIGATION FILTER PILLS */}
+        <div style={{ marginBottom: 16 }}>
+          <div style={{ fontSize: 12, fontWeight: 800, color: 'var(--text-sub)', textTransform: 'uppercase', marginBottom: 8, letterSpacing: 0.5, display: 'flex', alignItems: 'center', gap: 6 }}>
+            <span>🇮🇳 Select Indian State / Region:</span>
+          </div>
+          <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 6, scrollbarWidth: 'none' }}>
+            {INDIAN_STATES.map((st) => {
+              const isStateActive = selectedState === st.name || (st.name === 'All India' && !selectedState)
+              return (
+                <button
+                  key={st.code}
+                  type="button"
+                  onClick={() => {
+                    const newState = st.name === 'All India' ? null : st.name
+                    setSelectedState(newState)
+                    setMapCenter(st.center as [number, number])
+                    setMapZoom(st.zoom)
+                    setSelectedHub(null)
+                  }}
+                  style={{
+                    background: isStateActive ? '#ea580c' : 'var(--bg-card)',
+                    color: isStateActive ? '#fff' : 'var(--text-main)',
+                    border: isStateActive ? '1px solid #ea580c' : '1px solid var(--border-color)',
+                    borderRadius: 99,
+                    padding: '8px 16px',
+                    fontSize: 13,
+                    fontWeight: 800,
+                    cursor: 'pointer',
+                    whiteSpace: 'nowrap',
+                    boxShadow: isStateActive ? '0 4px 14px rgba(234,88,12,0.3)' : 'none',
+                    transition: 'all 0.15s ease',
+                  }}
+                >
+                  {st.name === 'All India' ? '🇮🇳 All India' : `📍 ${st.name}`}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+
         {/* OPENSTREETMAP MAP CONTAINER */}
         <div style={{ marginBottom: 28, border: '1px solid var(--border-color)', borderRadius: 20, overflow: 'hidden', boxShadow: '0 8px 24px rgba(0,0,0,0.06)' }}>
           <OpenStreetMap
@@ -340,8 +504,8 @@ function PrinterDirectoryContent() {
             selectedId={selectedHub?.id}
             onSelectLocation={(loc) => setSelectedHub(loc as PrinterHub)}
             onLocationPicked={handleLocationPicked}
-            center={userCoords ? [userCoords.lat, userCoords.lng] : [21.7679, 78.8718]}
-            zoom={userCoords ? 14 : 5}
+            center={userCoords ? [userCoords.lat, userCoords.lng] : mapCenter}
+            zoom={userCoords ? 14 : mapZoom}
             height="400px"
           />
         </div>
