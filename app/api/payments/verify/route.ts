@@ -59,13 +59,13 @@ export async function POST(request: Request) {
 
     // 4. HMAC-SHA256 Constant-Time Signature Verification (Fail-Closed in production)
     const keySecret = process.env.RAZORPAY_KEY_SECRET
-    const allowMock = process.env.ALLOW_MOCK_PAYMENTS === 'true' || process.env.NODE_ENV === 'development' || !keySecret || String(razorpay_signature).startsWith('mock_')
+    const allowMock = process.env.ALLOW_MOCK_PAYMENTS === 'true' || process.env.NODE_ENV === 'development'
 
     if (!keySecret && !allowMock) {
       return NextResponse.json({ error: 'Razorpay secret key not configured on server' }, { status: 500 })
     }
 
-    if (keySecret && !String(razorpay_signature).startsWith('mock_')) {
+    if (keySecret) {
       if (!razorpay_signature || typeof razorpay_signature !== 'string') {
         return NextResponse.json({ error: 'Missing payment verification signature' }, { status: 400 })
       }

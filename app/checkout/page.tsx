@@ -115,8 +115,22 @@ export default function CheckoutPage() {
   })
 
   const handleConfirmPayment = async () => {
+    setMockOrderData(null)
+
     if (!cart || cart.length === 0) {
       alert('Your cart is empty. Please add items before checking out.')
+      setPlacing(false)
+      return
+    }
+
+    if (
+      !addressData.firstName.trim() ||
+      !addressData.lastName.trim() ||
+      !addressData.fullAddress.trim() ||
+      !addressData.city.trim() ||
+      !addressData.pincode.trim()
+    ) {
+      alert('Please fill in all required delivery address fields.')
       setPlacing(false)
       return
     }
@@ -141,7 +155,7 @@ export default function CheckoutPage() {
           items: cart,
           paymentMethod: paymentCategory || 'upi',
           isCod: paymentCategory === 'cod',
-          shippingAddress: `${addressData.firstName} ${addressData.lastName}, ${addressData.fullAddress}, ${addressData.city} ${addressData.pincode}`,
+          shippingAddress: `${addressData.firstName.trim()} ${addressData.lastName.trim()}, ${addressData.fullAddress.trim()}, ${addressData.city.trim()} ${addressData.pincode.trim()}`,
         }),
       })
 
@@ -160,6 +174,7 @@ export default function CheckoutPage() {
       if (orderData.isCod) {
         clearCart()
         setShowModal(false)
+        setMockOrderData(null)
         router.push(`/orders/${currentOrderId}`)
         return
       }
@@ -175,8 +190,7 @@ export default function CheckoutPage() {
       // 2. Load official Razorpay SDK if live keys exist
       const isLoaded = await loadRazorpayScript()
       if (!isLoaded) {
-        setMockOrderData(orderData)
-        setShowModal(true)
+        alert('Unable to load Razorpay payment gateway. Please check your internet connection.')
         setPlacing(false)
         return
       }
@@ -293,7 +307,9 @@ export default function CheckoutPage() {
 
       clearCart()
       setShowModal(false)
-      router.push(`/orders/${mockOrderData.orderId}`)
+      const finishedOrderId = mockOrderData.orderId
+      setMockOrderData(null)
+      router.push(`/orders/${finishedOrderId}`)
     } catch (err) {
       console.error('Simulation verification error:', err)
       alert('Verification error occurred during simulation.')
@@ -343,24 +359,63 @@ export default function CheckoutPage() {
                 <div style={{ display: 'flex', gap: 6 }}>
                   <button
                     type="button"
-                    style={{ background: '#ea580c', color: '#fff', border: 'none', borderRadius: 99, padding: '4px 10px', fontSize: 11, fontWeight: 800, cursor: 'pointer' }}
+                    onClick={() => setAddressData({
+                      firstName: 'Prince',
+                      lastName: 'Mandal',
+                      fullAddress: '123 Innovation Park, Connaught Place',
+                      city: 'New Delhi',
+                      pincode: '110001',
+                    })}
+                    style={{ background: addressData.city === 'New Delhi' ? '#ea580c' : 'var(--bg-card-hover)', color: addressData.city === 'New Delhi' ? '#fff' : 'var(--text-main)', border: '1px solid var(--border-color)', borderRadius: 99, padding: '4px 10px', fontSize: 11, fontWeight: 800, cursor: 'pointer' }}
                   >
                     🏠 Home (Default)
                   </button>
                   <button
                     type="button"
-                    style={{ background: 'var(--bg-card-hover)', color: 'var(--text-main)', border: '1px solid var(--border-color)', borderRadius: 99, padding: '4px 10px', fontSize: 11, fontWeight: 800, cursor: 'pointer' }}
+                    onClick={() => setAddressData({
+                      firstName: 'Prince',
+                      lastName: 'Mandal',
+                      fullAddress: 'Hive Maker Space, Block 4B, Sector 62',
+                      city: 'Noida',
+                      pincode: '201301',
+                    })}
+                    style={{ background: addressData.city === 'Noida' ? '#ea580c' : 'var(--bg-card-hover)', color: addressData.city === 'Noida' ? '#fff' : 'var(--text-main)', border: '1px solid var(--border-color)', borderRadius: 99, padding: '4px 10px', fontSize: 11, fontWeight: 800, cursor: 'pointer' }}
                   >
                     🏢 Studio Lab
                   </button>
                 </div>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
-                <input style={inputStyle} placeholder="First Name" defaultValue="Prince" />
-                <input style={inputStyle} placeholder="Last Name" defaultValue="Mandal" />
-                <input style={{ ...inputStyle, gridColumn: 'span 2' }} placeholder="Full Address" defaultValue="123 Innovation Park, Connaught Place" />
-                <input style={inputStyle} placeholder="City" defaultValue="New Delhi" />
-                <input style={inputStyle} placeholder="Pincode" defaultValue="110001" />
+                <input
+                  style={inputStyle}
+                  placeholder="First Name"
+                  value={addressData.firstName}
+                  onChange={(e) => setAddressData((prev) => ({ ...prev, firstName: e.target.value }))}
+                />
+                <input
+                  style={inputStyle}
+                  placeholder="Last Name"
+                  value={addressData.lastName}
+                  onChange={(e) => setAddressData((prev) => ({ ...prev, lastName: e.target.value }))}
+                />
+                <input
+                  style={{ ...inputStyle, gridColumn: 'span 2' }}
+                  placeholder="Full Address"
+                  value={addressData.fullAddress}
+                  onChange={(e) => setAddressData((prev) => ({ ...prev, fullAddress: e.target.value }))}
+                />
+                <input
+                  style={inputStyle}
+                  placeholder="City"
+                  value={addressData.city}
+                  onChange={(e) => setAddressData((prev) => ({ ...prev, city: e.target.value }))}
+                />
+                <input
+                  style={inputStyle}
+                  placeholder="Pincode"
+                  value={addressData.pincode}
+                  onChange={(e) => setAddressData((prev) => ({ ...prev, pincode: e.target.value }))}
+                />
               </div>
             </div>
 
@@ -747,7 +802,7 @@ export default function CheckoutPage() {
           <div style={{ background: '#0F172A', color: '#fff', borderRadius: 24, padding: 36, maxWidth: 480, width: '100%', border: '1px solid rgba(255,255,255,0.15)', boxShadow: '0 25px 60px rgba(0,0,0,0.8)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
               <div style={{ fontSize: 20, fontWeight: 900, color: '#38BDF8' }}>🔒 Authorize Payment</div>
-              <button type="button" onClick={() => setShowModal(false)} style={{ background: 'transparent', border: 'none', color: '#94A3B8', fontSize: 20, cursor: 'pointer' }}>✕</button>
+              <button type="button" onClick={() => { setShowModal(false); setMockOrderData(null); }} style={{ background: 'transparent', border: 'none', color: '#94A3B8', fontSize: 20, cursor: 'pointer' }}>✕</button>
             </div>
 
             <div style={{ background: 'rgba(255,255,255,0.05)', padding: 16, borderRadius: 16, marginBottom: 20 }}>

@@ -46,30 +46,41 @@ export async function POST(request: Request) {
     }
 
     // Only allow cancelling if still in PENDING_PAYMENT or pending
-    if (order.status === 'PENDING_PAYMENT' || order.status === 'pending') {
-      await adminSupabase
-        .from('orders')
-        .update({
-          status: 'cancelled',
-          payment_status: 'failed',
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', targetOrderId)
+    const { data: updatedOrders, error: updateErr } = await adminSupabase
+      .from('orders')
+      .update({
+        status: 'cancelled',
+        payment_status: 'failed',
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', targetOrderId)
+      .in('status', ['PENDING_PAYMENT', 'pending'])
+      .select('id, status')
 
-      await updateOrderStatus(
-        adminSupabase,
-        targetOrderId,
-        'CANCELLED',
-        typeof reason === 'string' ? reason : 'Payment modal dismissed or cancelled by buyer.',
-        user.id,
-        order.status
-      )
+    if (updateErr) {
+      console.error('Failed to update order status to cancelled:', updateErr)
+      return NextResponse.json({ error: 'Failed to cancel order' }, { status: 500 })
     }
+
+    if (!updatedOrders || updatedOrders.length === 0) {
+      return NextResponse.json({
+        success: false,
+        message: 'Order is not in an active pending payment state',
+      }, { status: 400 })
+    }
+
+    await updateOrderStatus(
+      adminSupabase,
+      targetOrderId,
+      'CANCELLED',
+      typeof reason === 'string' ? reason : 'Payment modal dismissed or cancelled by buyer.',
+      user.id,
+      order.status
+    )
 
     return NextResponse.json({ success: true, message: 'Order marked as cancelled' })
   } catch (err: unknown) {
-    const error = err as Error
-    console.error('Payment cancellation error:', error)
-    return NextResponse.json({ error: error.message || 'Cancellation failed' }, { status: 500 })
+    console.error('Payment cancellation error:', err)
+    return NextResponse.json({ error: 'Payment cancellation failed' }, { status: 500 })
   }
 }
