@@ -152,25 +152,25 @@ export default function UploadDesignForm() {
 
   const inputStyle: React.CSSProperties = {
     width: '100%',
-    background: '#F8FAFC',
-    border: '1px solid #CBD5E1',
+    background: 'var(--bg-card-hover)',
+    border: '1px solid var(--border-color)',
     borderRadius: 12,
     padding: '12px 16px',
     fontSize: 14,
-    color: '#0F172A',
+    color: 'var(--text-main)',
     outline: 'none',
     boxSizing: 'border-box',
     fontWeight: 600,
   }
 
   const s: Record<string, React.CSSProperties> = {
-    page: { minHeight: '100vh', background: '#FAF8F5', color: '#0F172A', fontFamily: 'inherit' },
-    nav: { background: '#0F172A', padding: '0 32px', height: 68, display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.08)' },
-    logo: { fontSize: 20, fontWeight: 900, color: '#fff', letterSpacing: '-0.5px' },
-    logoAccent: { color: '#FF6B35' },
+    page: { minHeight: '100vh', background: 'var(--bg-canvas)', color: 'var(--text-main)', fontFamily: 'inherit' },
+    nav: { background: 'var(--bg-card)', padding: '0 32px', height: 68, display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid var(--border-color)' },
+    logo: { fontSize: 20, fontWeight: 900, color: 'var(--text-main)', letterSpacing: '-0.5px' },
+    logoAccent: { color: '#ea580c' },
     body: { maxWidth: 1100, margin: '0 auto', padding: '36px 24px' },
-    card: { background: '#FFFFFF', borderRadius: 20, border: '1px solid #E2E8F0', padding: 28, boxShadow: '0 8px 30px rgba(0,0,0,0.04)', marginBottom: 24 },
-    label: { fontSize: 13, fontWeight: 800, color: '#334155', marginBottom: 6, display: 'block', textTransform: 'uppercase' as const, letterSpacing: 0.5 },
+    card: { background: 'var(--bg-card)', borderRadius: 20, border: '1px solid var(--border-color)', padding: 28, boxShadow: '0 8px 30px rgba(0,0,0,0.04)', marginBottom: 24 },
+    label: { fontSize: 13, fontWeight: 800, color: 'var(--text-main)', marginBottom: 6, display: 'block', textTransform: 'uppercase' as const, letterSpacing: 0.5 },
   }
 
   return (
@@ -179,25 +179,25 @@ export default function UploadDesignForm() {
       <nav style={s.nav}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
           <div style={s.logo}>
-            <Link href="/" style={{ textDecoration: 'none', color: '#fff' }}>
+            <Link href="/" style={{ textDecoration: 'none', color: 'inherit' }}>
               Print<span style={s.logoAccent}>Hive</span>
             </Link>{' '}
-            <span style={{ fontSize: 12, color: '#94A3B8', fontWeight: 600 }}>Creator Studio</span>
+            <span style={{ fontSize: 12, color: 'var(--text-sub)', fontWeight: 600 }}>Creator Studio</span>
           </div>
         </div>
-        <a href="/dashboard/designer" style={{ color: '#94A3B8', fontSize: 13, fontWeight: 700, textDecoration: 'none' }}>← Back to Creator Studio</a>
+        <a href="/dashboard/designer" style={{ color: 'var(--text-sub)', fontSize: 13, fontWeight: 700, textDecoration: 'none' }}>← Back to Creator Studio</a>
       </nav>
 
       <div style={s.body}>
         {/* PAGE TITLE & STEPPER */}
         <div style={{ marginBottom: 28 }}>
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'rgba(139,92,246,0.12)', color: '#8B5CF6', border: '1px solid rgba(139,92,246,0.3)', padding: '6px 16px', borderRadius: 99, fontSize: 12, fontWeight: 800, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 12 }}>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'rgba(234,88,12,0.12)', color: '#ea580c', border: '1px solid rgba(234,88,12,0.3)', padding: '6px 16px', borderRadius: 9999, fontSize: 12, fontWeight: 800, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 12 }}>
             🎨 3D Model Upload & Royalty Publishing
           </div>
-          <h1 style={{ fontSize: 32, fontWeight: 900, color: '#0F172A', margin: 0, letterSpacing: '-0.5px' }}>
+          <h1 style={{ fontSize: 32, fontWeight: 900, color: 'var(--text-main)', margin: 0, letterSpacing: '-0.5px' }}>
             Publish STL / 3MF Design
           </h1>
-          <p style={{ color: '#64748B', marginTop: 4, fontSize: 15 }}>
+          <p style={{ color: 'var(--text-sub)', marginTop: 4, fontSize: 15 }}>
             Upload digital 3D models to Cloudinary CDN and earn 15% automated royalties whenever printed.
           </p>
         </div>
@@ -212,7 +212,7 @@ export default function UploadDesignForm() {
           {/* LEFT FORM COLUMNS */}
           <div>
             <div style={s.card}>
-              <div style={{ fontSize: 18, fontWeight: 900, color: '#0F172A', marginBottom: 16 }}>
+              <div style={{ fontSize: 18, fontWeight: 900, color: 'var(--text-main)', marginBottom: 16 }}>
                 1. 3D Model File & Preview Image (Cloudinary CDN)
               </div>
               
@@ -239,14 +239,14 @@ export default function UploadDesignForm() {
 
             <div style={s.card}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-                <div style={{ fontSize: 18, fontWeight: 900, color: '#0F172A' }}>
+                <div style={{ fontSize: 18, fontWeight: 900, color: 'var(--text-main)' }}>
                   2. Design Title & Printing Instructions
                 </div>
                 <button
                   type="button"
                   onClick={handleGeminiAiGenerate}
                   disabled={generatingAi}
-                  style={{ background: 'linear-gradient(135deg, #8B5CF6, #7C3AED)', color: '#fff', border: 'none', borderRadius: 99, padding: '6px 14px', fontSize: 12, fontWeight: 800, cursor: 'pointer' }}
+                  style={{ background: 'linear-gradient(135deg, #ea580c, #c2410c)', color: '#fff', border: 'none', borderRadius: 9999, padding: '6px 16px', fontSize: 12, fontWeight: 800, cursor: 'pointer' }}
                 >
                   {generatingAi ? 'Generating…' : '✨ Gemini AI Specs'}
                 </button>
@@ -282,10 +282,10 @@ export default function UploadDesignForm() {
                       type="button"
                       onClick={() => toggleMaterial(m)}
                       style={{
-                        background: materials.includes(m) ? '#8B5CF6' : '#F1F5F9',
-                        color: materials.includes(m) ? '#fff' : '#475569',
-                        border: 'none',
-                        borderRadius: 8,
+                        background: materials.includes(m) ? '#ea580c' : 'var(--bg-card-hover)',
+                        color: materials.includes(m) ? '#fff' : 'var(--text-main)',
+                        border: '1px solid var(--border-color)',
+                        borderRadius: 9999,
                         padding: '6px 14px',
                         fontSize: 12,
                         fontWeight: 700,
@@ -310,7 +310,7 @@ export default function UploadDesignForm() {
             </div>
 
             <div style={s.card}>
-              <div style={{ fontSize: 18, fontWeight: 900, color: '#0F172A', marginBottom: 16 }}>
+              <div style={{ fontSize: 18, fontWeight: 900, color: 'var(--text-main)', marginBottom: 16 }}>
                 3. Royalty & Monetization Settings
               </div>
 
@@ -325,16 +325,16 @@ export default function UploadDesignForm() {
                     type="button"
                     onClick={() => setPricingType(item.id as any)}
                     style={{
-                      background: pricingType === item.id ? '#F3E8FF' : '#F8FAFC',
-                      border: pricingType === item.id ? '2px solid #8B5CF6' : '1px solid #CBD5E1',
-                      borderRadius: 14,
+                      background: pricingType === item.id ? 'rgba(234, 88, 12, 0.15)' : 'var(--bg-card-hover)',
+                      border: pricingType === item.id ? '2px solid #ea580c' : '1px solid var(--border-color)',
+                      borderRadius: 16,
                       padding: 14,
                       textAlign: 'left',
                       cursor: 'pointer',
                     }}
                   >
-                    <div style={{ fontSize: 13, fontWeight: 800, color: '#0F172A' }}>{item.title}</div>
-                    <div style={{ fontSize: 11, color: '#64748B' }}>{item.sub}</div>
+                    <div style={{ fontSize: 13, fontWeight: 800, color: 'var(--text-main)' }}>{item.title}</div>
+                    <div style={{ fontSize: 11, color: 'var(--text-sub)' }}>{item.sub}</div>
                   </button>
                 ))}
               </div>
@@ -358,15 +358,15 @@ export default function UploadDesignForm() {
               disabled={submitting || isUploadingModel || !title || !cloudinaryFileUrl}
               style={{
                 width: '100%',
-                background: 'linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)',
+                background: 'linear-gradient(135deg, #ea580c 0%, #c2410c 100%)',
                 color: '#fff',
                 border: 'none',
                 padding: '16px 32px',
-                borderRadius: 16,
+                borderRadius: 9999,
                 fontSize: 16,
                 fontWeight: 900,
                 cursor: 'pointer',
-                boxShadow: '0 8px 24px rgba(139,92,246,0.35)',
+                boxShadow: '0 8px 24px rgba(234,88,12,0.35)',
                 opacity: submitting || isUploadingModel || !title || !cloudinaryFileUrl ? 0.6 : 1,
               }}
             >
@@ -378,7 +378,7 @@ export default function UploadDesignForm() {
             {cloudinaryFileUrl && (
               <div style={s.card}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                  <div style={{ fontSize: 13, fontWeight: 800, color: '#8B5CF6', textTransform: 'uppercase' }}>
+                  <div style={{ fontSize: 13, fontWeight: 800, color: '#ea580c', textTransform: 'uppercase' }}>
                     🧊 3D Pre-Flight Inspection
                   </div>
                   <span style={{ fontSize: 10, fontWeight: 900, background: 'rgba(16, 185, 129, 0.1)', color: '#10B981', padding: '2px 8px', borderRadius: 99 }}>
@@ -397,27 +397,27 @@ export default function UploadDesignForm() {
             )}
 
             <div style={s.card}>
-              <div style={{ fontSize: 13, fontWeight: 800, color: '#8B5CF6', textTransform: 'uppercase', marginBottom: 12 }}>
+              <div style={{ fontSize: 13, fontWeight: 800, color: '#ea580c', textTransform: 'uppercase', marginBottom: 12 }}>
                 Live Marketplace Card Preview
               </div>
 
-              <div style={{ background: '#F8FAFC', borderRadius: 16, border: '1px solid #E2E8F0', overflow: 'hidden' }}>
+              <div style={{ background: 'var(--bg-card-hover)', borderRadius: 16, border: '1px solid var(--border-color)', overflow: 'hidden' }}>
                 <img
                   src={previewImageUrl || 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=600&q=80'}
                   alt="3D Preview"
                   style={{ width: '100%', height: 160, objectFit: 'cover' }}
                 />
                 <div style={{ padding: 16 }}>
-                  <div style={{ fontSize: 11, color: '#8B5CF6', fontWeight: 800, textTransform: 'uppercase', marginBottom: 4 }}>{category}</div>
-                  <div style={{ fontSize: 15, fontWeight: 900, color: '#0F172A', marginBottom: 6 }}>{title || 'Model Title Preview'}</div>
-                  <div style={{ fontSize: 12, color: '#64748B', marginBottom: 12 }}>Materials: {materials.join(', ')}</div>
+                  <div style={{ fontSize: 11, color: '#ea580c', fontWeight: 800, textTransform: 'uppercase', marginBottom: 4 }}>{category}</div>
+                  <div style={{ fontSize: 15, fontWeight: 900, color: 'var(--text-main)', marginBottom: 6 }}>{title || 'Model Title Preview'}</div>
+                  <div style={{ fontSize: 12, color: 'var(--text-sub)', marginBottom: 12 }}>Materials: {materials.join(', ')}</div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div style={{ fontSize: 17, fontWeight: 900, color: pricingType === 'free' ? '#10B981' : '#0F172A' }}>
+                    <div style={{ fontSize: 17, fontWeight: 900, color: pricingType === 'free' ? '#10B981' : 'var(--text-main)' }}>
                       {pricingType === 'free' ? 'Free (₹0)' : `₹${price || '0'}`}
                     </div>
                     <span
                       style={{
-                        background: pricingType === 'free' ? '#10B981' : pricingType === 'one_time' ? '#0284C7' : '#8B5CF6',
+                        background: pricingType === 'free' ? '#10B981' : pricingType === 'one_time' ? '#0284C7' : '#ea580c',
                         color: '#fff',
                         padding: '4px 10px',
                         borderRadius: 8,

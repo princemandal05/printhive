@@ -225,25 +225,25 @@ export default function NewProductForm() {
 
   const inputStyle: React.CSSProperties = {
     width: '100%',
-    background: '#F8FAFC',
-    border: '1px solid #CBD5E1',
+    background: 'var(--bg-card-hover)',
+    border: '1px solid var(--border-color)',
     borderRadius: 12,
     padding: '12px 16px',
     fontSize: 14,
-    color: '#0F172A',
+    color: 'var(--text-main)',
     outline: 'none',
     boxSizing: 'border-box',
     fontWeight: 600,
   }
 
   const s: Record<string, React.CSSProperties> = {
-    page: { minHeight: '100vh', background: '#FAF8F5', color: '#0F172A', fontFamily: 'inherit' },
-    nav: { background: '#0F172A', padding: '0 32px', height: 68, display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.08)' },
-    logo: { fontSize: 20, fontWeight: 900, color: '#fff', letterSpacing: '-0.5px' },
-    logoAccent: { color: '#FF6B35' },
+    page: { minHeight: '100vh', background: 'var(--bg-canvas)', color: 'var(--text-main)', fontFamily: 'inherit' },
+    nav: { background: 'var(--bg-card)', padding: '0 32px', height: 68, display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid var(--border-color)' },
+    logo: { fontSize: 20, fontWeight: 900, color: 'var(--text-main)', letterSpacing: '-0.5px' },
+    logoAccent: { color: '#ea580c' },
     body: { maxWidth: 1100, margin: '0 auto', padding: '36px 24px' },
-    card: { background: '#FFFFFF', borderRadius: 20, border: '1px solid #E2E8F0', padding: 28, boxShadow: '0 8px 30px rgba(0,0,0,0.04)', marginBottom: 24 },
-    label: { fontSize: 13, fontWeight: 800, color: '#334155', marginBottom: 6, display: 'block', textTransform: 'uppercase' as const, letterSpacing: 0.5 },
+    card: { background: 'var(--bg-card)', borderRadius: 20, border: '1px solid var(--border-color)', padding: 28, boxShadow: '0 8px 30px rgba(0,0,0,0.04)', marginBottom: 24 },
+    label: { fontSize: 13, fontWeight: 800, color: 'var(--text-main)', marginBottom: 6, display: 'block', textTransform: 'uppercase' as const, letterSpacing: 0.5 },
   }
 
   return (
@@ -252,13 +252,13 @@ export default function NewProductForm() {
       <nav style={s.nav}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
           <div style={s.logo}>
-            <Link href="/" style={{ textDecoration: 'none', color: '#fff' }}>
+            <Link href="/" style={{ textDecoration: 'none', color: 'inherit' }}>
               Print<span style={s.logoAccent}>Hive</span>
             </Link>{' '}
-            <span style={{ fontSize: 12, color: '#94A3B8', fontWeight: 600 }}>Seller Central</span>
+            <span style={{ fontSize: 12, color: 'var(--text-sub)', fontWeight: 600 }}>Seller Central</span>
           </div>
         </div>
-        <Link href="/dashboard/seller" style={{ color: '#94A3B8', fontSize: 13, fontWeight: 700, textDecoration: 'none' }}>
+        <Link href="/dashboard/seller" style={{ color: 'var(--text-sub)', fontSize: 13, fontWeight: 700, textDecoration: 'none' }}>
           ← Back to Seller Hub
         </Link>
       </nav>
@@ -266,27 +266,27 @@ export default function NewProductForm() {
       <div style={s.body}>
         {/* PAGE TITLE & STEPPER */}
         <div style={{ marginBottom: 28 }}>
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'rgba(255,107,53,0.12)', color: '#FF6B35', border: '1px solid rgba(255,107,53,0.3)', padding: '6px 16px', borderRadius: 99, fontSize: 12, fontWeight: 800, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 12 }}>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'rgba(234,88,12,0.12)', color: '#ea580c', border: '1px solid rgba(234,88,12,0.3)', padding: '6px 16px', borderRadius: 9999, fontSize: 12, fontWeight: 800, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 12 }}>
             ⚡ Amazon Seller Listing Wizard
           </div>
-          <h1 style={{ fontSize: 32, fontWeight: 900, color: '#0F172A', margin: 0, letterSpacing: '-0.5px' }}>
+          <h1 style={{ fontSize: 32, fontWeight: 900, color: 'var(--text-main)', margin: 0, letterSpacing: '-0.5px' }}>
             List a Ready-Made Product
           </h1>
-          <p style={{ color: '#64748B', marginTop: 4, fontSize: 15 }}>
+          <p style={{ color: 'var(--text-sub)', marginTop: 4, fontSize: 15 }}>
             Publish ready-to-ship physical 3D printed items with Cloudinary media CDN & Gemini AI metadata.
           </p>
         </div>
 
         {statusMsg && (
           <div style={{
-            background: statusMsg.type === 'success' ? '#ECFDF5' : statusMsg.type === 'error' ? '#FEF2F2' : '#EFF6FF',
-            color: statusMsg.type === 'success' ? '#065F46' : statusMsg.type === 'error' ? '#991B1B' : '#1E40AF',
+            background: statusMsg.type === 'success' ? '#ECFDF5' : statusMsg.type === 'error' ? '#FEF2F2' : 'rgba(234,88,12,0.1)',
+            color: statusMsg.type === 'success' ? '#065F46' : statusMsg.type === 'error' ? '#991B1B' : '#ea580c',
             padding: '14px 20px',
             borderRadius: 14,
             fontSize: 14,
             marginBottom: 24,
             fontWeight: 700,
-            border: statusMsg.type === 'success' ? '1px solid #A7F3D0' : statusMsg.type === 'error' ? '1px solid #FECACA' : '1px solid #BFDBFE',
+            border: statusMsg.type === 'success' ? '1px solid #A7F3D0' : statusMsg.type === 'error' ? '1px solid #FECACA' : '1px solid rgba(234,88,12,0.25)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
@@ -310,19 +310,19 @@ export default function NewProductForm() {
           <div>
             {/* STEP 1: MEDIA UPLOAD */}
             <div style={s.card}>
-              <div style={{ fontSize: 18, fontWeight: 900, color: '#0F172A', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 10 }}>
+              <div style={{ fontSize: 18, fontWeight: 900, color: 'var(--text-main)', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 10 }}>
                 <span>1.</span> Product Photos (Cloudinary CDN)
               </div>
               <label
                 htmlFor="product-photo"
                 style={{
-                  border: '2px dashed #CBD5E1',
+                  border: '2px dashed var(--border-color)',
                   borderRadius: 16,
                   padding: 32,
                   cursor: uploadingPhoto ? 'wait' : 'pointer',
                   textAlign: 'center',
                   display: 'block',
-                  background: '#F8FAFC',
+                  background: 'var(--bg-card-hover)',
                   transition: 'all 0.2s',
                   position: 'relative',
                   overflow: 'hidden',
@@ -337,7 +337,7 @@ export default function NewProductForm() {
                     left: 0,
                     height: 4,
                     width: `${uploadProgress}%`,
-                    background: 'linear-gradient(90deg, #FF6B35, #8B5CF6)',
+                    background: 'linear-gradient(90deg, #ea580c, #f97316)',
                     transition: 'width 0.2s ease',
                   }} />
                 )}
@@ -345,14 +345,14 @@ export default function NewProductForm() {
                 <div style={{ fontSize: 36, marginBottom: 8 }}>
                   {uploadingPhoto ? '⏳' : previewUrl ? '🖼️' : '☁️'}
                 </div>
-                <div style={{ fontSize: 15, fontWeight: 800, color: '#0F172A' }}>
+                <div style={{ fontSize: 15, fontWeight: 800, color: 'var(--text-main)' }}>
                   {uploadingPhoto
                     ? `Uploading to Cloudinary CDN (${uploadProgress}%)…`
                     : photoName
                     ? `Uploaded: ${photoName}`
                     : 'Click to Upload High-Res Product Photos'}
                 </div>
-                <div style={{ fontSize: 13, color: '#64748B', marginTop: 4 }}>
+                <div style={{ fontSize: 13, color: 'var(--text-sub)', marginTop: 4 }}>
                   Auto-optimized PNG/JPG delivered via Cloudinary CDN
                 </div>
                 <input
@@ -366,10 +366,10 @@ export default function NewProductForm() {
               </label>
 
               {previewUrl && (
-                <div style={{ marginTop: 16, display: 'flex', alignItems: 'center', gap: 12, background: '#F1F5F9', padding: 10, borderRadius: 12 }}>
+                <div style={{ marginTop: 16, display: 'flex', alignItems: 'center', gap: 12, background: 'var(--bg-card-hover)', padding: 10, borderRadius: 12 }}>
                   <img src={previewUrl} alt="Thumbnail" style={{ width: 56, height: 56, borderRadius: 8, objectFit: 'cover' }} />
                   <div>
-                    <div style={{ fontSize: 13, fontWeight: 800, color: '#0F172A' }}>{photoName || 'Product Image'}</div>
+                    <div style={{ fontSize: 13, fontWeight: 800, color: 'var(--text-main)' }}>{photoName || 'Product Image'}</div>
                     <span style={{ fontSize: 12, color: cloudinaryUrl ? '#10B981' : '#F59E0B', fontWeight: 700 }}>
                       {cloudinaryUrl ? '✅ Cloudinary CDN ready' : '⚡ Local preview (upload pending)'}
                     </span>
@@ -381,14 +381,14 @@ export default function NewProductForm() {
             {/* STEP 2: PRODUCT DETAILS & GEMINI AI */}
             <div style={s.card}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-                <div style={{ fontSize: 18, fontWeight: 900, color: '#0F172A', display: 'flex', alignItems: 'center', gap: 10 }}>
+                <div style={{ fontSize: 18, fontWeight: 900, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: 10 }}>
                   <span>2.</span> Listing Information & AI Copywriter
                 </div>
                 <button
                   type="button"
                   onClick={handleGeminiAiGenerate}
                   disabled={generatingAi}
-                  style={{ background: 'linear-gradient(135deg, #8B5CF6, #7C3AED)', color: '#fff', border: 'none', borderRadius: 99, padding: '6px 14px', fontSize: 12, fontWeight: 800, cursor: 'pointer' }}
+                  style={{ background: 'linear-gradient(135deg, #ea580c, #c2410c)', color: '#fff', border: 'none', borderRadius: 9999, padding: '6px 16px', fontSize: 12, fontWeight: 800, cursor: 'pointer' }}
                 >
                   {generatingAi ? 'Generating…' : '✨ Auto-Fill with Gemini AI'}
                 </button>
@@ -432,7 +432,7 @@ export default function NewProductForm() {
                   <label style={s.label}>Gemini AI SEO Keywords</label>
                   <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                     {tags.map((t) => (
-                      <span key={t} style={{ background: '#F3E8FF', color: '#7C3AED', padding: '4px 10px', borderRadius: 99, fontSize: 12, fontWeight: 700 }}>
+                      <span key={t} style={{ background: 'rgba(234,88,12,0.12)', color: '#ea580c', padding: '4px 12px', borderRadius: 9999, fontSize: 12, fontWeight: 700 }}>
                         #{t}
                       </span>
                     ))}
@@ -443,7 +443,7 @@ export default function NewProductForm() {
 
             {/* STEP 3: PRICING & INVENTORY */}
             <div style={s.card}>
-              <div style={{ fontSize: 18, fontWeight: 900, color: '#0F172A', marginBottom: 16 }}>
+              <div style={{ fontSize: 18, fontWeight: 900, color: 'var(--text-main)', marginBottom: 16 }}>
                 3. Pricing & Inventory Management
               </div>
 
@@ -474,7 +474,7 @@ export default function NewProductForm() {
                 </div>
               </div>
 
-              <div style={{ background: '#EFF6FF', border: '1px solid #BFDBFE', padding: 14, borderRadius: 12, fontSize: 13, color: '#1E40AF', fontWeight: 600 }}>
+              <div style={{ background: 'rgba(234,88,12,0.1)', border: '1px solid rgba(234,88,12,0.25)', padding: 14, borderRadius: 12, fontSize: 13, color: '#ea580c', fontWeight: 600 }}>
                 💡 <strong>Seller Payout Split:</strong> You receive <strong>70% direct payout</strong> on orders, held securely by Razorpay Escrow until customer delivery confirmation.
               </div>
             </div>
@@ -485,16 +485,16 @@ export default function NewProductForm() {
               style={{
                 width: '100%',
                 background: (submitting || !name || !price || uploadingPhoto)
-                  ? '#94A3B8'
-                  : 'linear-gradient(135deg, #FF6B35 0%, #F97316 100%)',
+                  ? 'var(--bg-card-hover)'
+                  : 'linear-gradient(135deg, #ea580c 0%, #c2410c 100%)',
                 color: '#fff',
                 border: 'none',
                 padding: '16px 32px',
-                borderRadius: 16,
+                borderRadius: 9999,
                 fontSize: 16,
                 fontWeight: 900,
                 cursor: (submitting || !name || !price || uploadingPhoto) ? 'not-allowed' : 'pointer',
-                boxShadow: '0 8px 24px rgba(255,107,53,0.35)',
+                boxShadow: '0 8px 24px rgba(234,88,12,0.35)',
                 transition: 'all 0.2s ease',
               }}
             >

@@ -233,9 +233,9 @@ export default function CloudinaryUploader({
   return (
     <div
       style={{
-        background: '#F8FAFC',
-        border: '2px dashed #CBD5E1',
-        borderRadius: 16,
+        background: 'var(--bg-card-hover)',
+        border: '2px dashed var(--border-color)',
+        borderRadius: 20,
         padding: 24,
         textAlign: 'center',
         position: 'relative',
@@ -250,30 +250,30 @@ export default function CloudinaryUploader({
       />
 
       <div style={{ marginBottom: 12 }}>
-        <span style={{ fontSize: 13, fontWeight: 800, color: '#475569', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+        <span style={{ fontSize: 13, fontWeight: 800, color: 'var(--text-main)', textTransform: 'uppercase', letterSpacing: 0.5 }}>
           {label}
         </span>
       </div>
 
       {uploadedUrl ? (
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: '#ECFDF5', color: '#065F46', padding: '6px 14px', borderRadius: 99, fontSize: 12, fontWeight: 800, border: '1px solid #A7F3D0' }}>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'rgba(16, 185, 129, 0.15)', color: '#10B981', padding: '6px 16px', borderRadius: 9999, fontSize: 12, fontWeight: 800, border: '1px solid rgba(16, 185, 129, 0.3)' }}>
             <span>✅ {activeType === 'model' ? '3D Model' : 'Media'} Uploaded to Cloudinary</span>
           </div>
-          <div style={{ fontSize: 11, color: '#64748B', maxWidth: 360, wordBreak: 'break-all' }}>
-            <a href={uploadedUrl} target="_blank" rel="noopener noreferrer" style={{ color: '#2563EB', fontWeight: 600 }}>
+          <div style={{ fontSize: 11, color: 'var(--text-sub)', maxWidth: 360, wordBreak: 'break-all' }}>
+            <a href={uploadedUrl} target="_blank" rel="noopener noreferrer" style={{ color: '#ea580c', fontWeight: 600 }}>
               {uploadedUrl}
             </a>
           </div>
           {uploadedMeta && (
-            <div style={{ fontSize: 10, color: '#94A3B8' }}>
+            <div style={{ fontSize: 10, color: 'var(--text-sub)' }}>
               Format: {uploadedMeta.extension || uploadedMeta.format} · Size: {(uploadedMeta.file_size / 1024).toFixed(1)} KB · File: {uploadedMeta.original_filename}
             </div>
           )}
           <button
             type="button"
             onClick={() => fileInputRef.current?.click()}
-            style={{ marginTop: 8, background: '#E2E8F0', border: 'none', borderRadius: 8, padding: '6px 14px', fontSize: 12, fontWeight: 700, cursor: 'pointer', color: '#334155' }}
+            style={{ marginTop: 8, background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 9999, padding: '6px 16px', fontSize: 12, fontWeight: 700, cursor: 'pointer', color: 'var(--text-main)' }}
           >
             Change File
           </button>
@@ -285,15 +285,15 @@ export default function CloudinaryUploader({
             onClick={() => fileInputRef.current?.click()}
             disabled={uploading}
             style={{
-              background: 'linear-gradient(135deg, #FF6B35 0%, #E0531F 100%)',
+              background: 'linear-gradient(135deg, #ea580c 0%, #c2410c 100%)',
               color: '#FFFFFF',
               border: 'none',
-              borderRadius: 12,
-              padding: '12px 24px',
+              borderRadius: 9999,
+              padding: '12px 28px',
               fontSize: 14,
               fontWeight: 800,
               cursor: uploading ? 'not-allowed' : 'pointer',
-              boxShadow: '0 4px 14px rgba(255,107,53,0.35)',
+              boxShadow: '0 4px 16px rgba(234,88,12,0.35)',
               opacity: uploading ? 0.6 : 1,
             }}
           >
