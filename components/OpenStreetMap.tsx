@@ -96,33 +96,36 @@ export default function OpenStreetMap({
     const L = (window as any).L
     if (!L) return
 
-    // Strict India Geographical Bounds
+    // Strict India Geographical Bounds (Kashmir to Kanyakumari, Gujarat to Arunachal)
     const indiaBounds = L.latLngBounds(
-      L.latLng(6.8, 68.1),   // Kanyakumari / South-West
-      L.latLng(36.5, 97.4)   // Kashmir / North-East
+      L.latLng(6.5, 68.0),   // South-West
+      L.latLng(37.5, 97.5)   // North-East
     )
 
     const map = L.map(mapRef.current, {
       maxBounds: indiaBounds,
-      maxBoundsViscosity: 1.0,
-      minZoom: 5,
+      maxBoundsViscosity: 0.9,
+      minZoom: 4,
       maxZoom: 18,
-    }).setView(validCenter, zoom)
+    })
+
+    // Fit entire India map on initial mount
+    map.fitBounds(indiaBounds, { padding: [15, 15] })
 
     mapInstanceRef.current = map
 
-    // Real OpenStreetMap Tile Layer + Mandatory OpenStreetMap Attribution
+    // Real OpenStreetMap Tile Layer with clean styling
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19,
       attribution: '© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">OpenStreetMap</a> | PrintHive India GPS',
     }).addTo(map)
 
-    // Force size recalculation so tiles and markers align precisely
+    // Force size recalculation so tiles align completely
     setTimeout(() => {
       if (mapInstanceRef.current) {
         mapInstanceRef.current.invalidateSize()
       }
-    }, 200)
+    }, 150)
 
     // Click listener for location picker mode
     if (isPicker && onLocationPicked) {
@@ -193,15 +196,15 @@ export default function OpenStreetMap({
         html: `<div style="
           background: #ea580c;
           color: #fff;
-          border: 3px solid #fff;
-          border-radius: 50%;
-          width: 40px;
-          height: 40px;
+          border: 2px solid #fff;
+          border-radius: 4px;
+          width: 38px;
+          height: 38px;
           display: flex;
           align-items: center;
           justify-content: center;
-          font-size: 20px;
-          box-shadow: 0 6px 20px rgba(234,88,12,0.6);
+          font-size: 18px;
+          box-shadow: 0 4px 14px rgba(234,88,12,0.6);
           cursor: grab;
           transform: translate(-50%, -50%);
         ">📍</div>`,
@@ -230,68 +233,66 @@ export default function OpenStreetMap({
 
     if (validLocations.length === 0) return
 
-    // Directory Multi-Marker Rendering
-    const createCustomIcon = (isSelected: boolean, name: string) =>
-      L.divIcon({
+    // Sleek, Non-Overlapping Precision Marker Icons
+    const createCustomIcon = (isSelected: boolean, loc: MapLocation) => {
+      const cityName = (loc.location || '').split(',')[0].trim() || 'Hub'
+      return L.divIcon({
         className: 'printhive-leaflet-pin',
         html: `
           <div style="
             display: flex;
-            flex-direction: column;
             align-items: center;
-            transform: translate(-50%, -100%);
+            gap: 5px;
+            background: ${isSelected ? '#ea580c' : 'rgba(15, 23, 42, 0.92)'};
+            color: #fff;
+            padding: 4px 9px 4px 6px;
+            border-radius: 4px;
+            border: 1.5px solid ${isSelected ? '#fff' : 'rgba(255,255,255,0.3)'};
+            box-shadow: ${isSelected ? '0 0 16px rgba(234,88,12,0.8)' : '0 3px 10px rgba(0,0,0,0.35)'};
+            transform: translate(-50%, -50%);
             cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
           ">
-            <div style="
-              background: ${isSelected ? '#ea580c' : '#0f172a'};
-              color: #fff;
-              border: 2px solid #fff;
-              border-radius: 4px;
-              width: ${isSelected ? '44px' : '36px'};
-              height: ${isSelected ? '44px' : '36px'};
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              font-size: ${isSelected ? '20px' : '16px'};
-              box-shadow: 0 4px 14px rgba(0,0,0,0.4);
-              transition: all 0.2s ease;
-            ">🖨️</div>
-            <div style="
-              background: rgba(15, 23, 42, 0.95);
-              color: #fff;
-              font-size: 11px;
-              font-weight: 800;
-              padding: 3px 8px;
-              border-radius: 2px;
-              margin-top: 3px;
-              white-space: nowrap;
-              border: 1px solid rgba(255,255,255,0.3);
-              box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-            ">${name.length > 20 ? name.substring(0, 18) + '…' : name}</div>
+            <span style="font-size: 13px; line-height: 1;">🖨️</span>
+            <span style="font-size: 11px; font-weight: 800; letter-spacing: 0.3px;">${cityName}</span>
           </div>
         `,
         iconSize: [0, 0],
         iconAnchor: [0, 0],
       })
+    }
 
     validLocations.forEach((loc) => {
       const isSelected = loc.id === selectedId
       const marker = L.marker([loc.lat, loc.lng], {
-        icon: createCustomIcon(isSelected, loc.name || 'Printer Hub'),
+        icon: createCustomIcon(isSelected, loc),
       }).addTo(map)
 
+      // Rich Floating Glassmorphic Popup Card
       const popupHtml = `
-        <div style="font-family: inherit; padding: 6px; color: #0F172A; min-width: 180px; border-radius: 4px;">
-          <div style="font-weight: 900; font-size: 14px; margin-bottom: 2px; color: #0F172A;">${loc.name || 'Printer Hub'}</div>
+        <div style="font-family: inherit; padding: 4px; color: #0F172A; min-width: 200px;">
+          <div style="font-weight: 900; font-size: 14px; margin-bottom: 3px; color: #0F172A; display: flex; align-items: center; gap: 6px;">
+            <span>🖨️</span>
+            <span>${loc.name || 'Printer Hub'}</span>
+          </div>
           <div style="font-size: 12px; color: #64748B; margin-bottom: 6px;">📍 ${loc.location || 'India'}</div>
-          ${loc.distance ? `<div style="font-size: 11px; font-weight: 800; color: #ea580c; margin-bottom: 4px;">🚀 ${loc.distance}</div>` : ''}
-          ${loc.machines ? `<div style="font-size: 11px; color: #475569;">🖨️ ${loc.machines.join(', ')}</div>` : ''}
+          ${loc.distance ? `<div style="font-size: 11px; font-weight: 800; color: #ea580c; margin-bottom: 4px;">🚀 ${loc.distance} from your location</div>` : ''}
+          ${loc.machines ? `<div style="font-size: 11px; color: #475569; margin-bottom: 4px;">⚙️ ${loc.machines.join(', ')}</div>` : ''}
+          ${loc.rating ? `<div style="font-size: 11px; font-weight: 800; color: #D97706;">⭐ ${loc.rating} Verified Rating</div>` : ''}
         </div>
       `
       marker.bindPopup(popupHtml)
 
+      // Sleek Hover Tooltip
+      marker.bindTooltip(`<strong>${loc.name}</strong><br/>${loc.location}`, {
+        direction: 'top',
+        offset: [0, -14],
+        opacity: 0.95,
+      })
+
       marker.on('click', () => {
-        map.flyTo([loc.lat, loc.lng], 16, { duration: 1.0 })
+        map.flyTo([loc.lat, loc.lng], 15, { duration: 1.0 })
         marker.openPopup()
         if (onSelectLocation) onSelectLocation(loc)
       })
@@ -304,13 +305,13 @@ export default function OpenStreetMap({
     const activeLoc = selectedId ? validLocations.find((l) => l.id === selectedId) : null
 
     if (activeMarker && activeLoc) {
-      map.flyTo([activeLoc.lat, activeLoc.lng], 16, { duration: 1.0 })
+      map.flyTo([activeLoc.lat, activeLoc.lng], 15, { duration: 1.0 })
       setTimeout(() => {
         activeMarker.openPopup()
       }, 500)
-    } else if (validLocations.length > 1) {
+    } else if (validLocations.length > 1 && !selectedId) {
       const latLngs = validLocations.map((l) => [l.lat, l.lng])
-      map.fitBounds(L.latLngBounds(latLngs), { padding: [50, 50], maxZoom: 12 })
+      map.fitBounds(L.latLngBounds(latLngs), { padding: [40, 40], maxZoom: 11 })
     } else if (validLocations.length === 1) {
       map.flyTo([validLocations[0].lat, validLocations[0].lng], 14, { duration: 1.0 })
     }
