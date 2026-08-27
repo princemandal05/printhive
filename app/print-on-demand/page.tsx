@@ -1,12 +1,13 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect, useRef, Suspense } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 import ThreeViewer from '@/components/ThreeViewer'
 import { useStore } from '@/lib/cart-context'
+import { createClient } from '@/utils/supabase/client'
 import {
   UploadCloud,
   CheckCircle2,
@@ -61,48 +62,16 @@ interface PrinterHub {
   price: number
 }
 
-const NEARBY_HUBS: PrinterHub[] = [
-  {
-    id: 'hub-1',
-    name: 'PrintHive Precision Lab (Koramangala)',
-    model: 'Bambu Lab X1-Carbon Dual-Nozzle',
-    distance: '1.4 km away',
-    rating: 4.9,
-    completedOrders: 312,
-    materials: ['PLA', 'PETG', 'ABS', 'TPU'],
-    buildVolume: '256 × 256 × 256 mm',
-    completionEstimate: 'Ready in ~4h 30m',
-    price: 350,
-  },
-  {
-    id: 'hub-2',
-    name: 'Apex Rapid Fab (Indiranagar)',
-    model: 'Prusa MK4 Enclosed System',
-    distance: '3.2 km away',
-    rating: 4.8,
-    completedOrders: 189,
-    materials: ['PLA', 'PETG', 'ABS'],
-    buildVolume: '250 × 210 × 220 mm',
-    completionEstimate: 'Ready in ~6h 00m',
-    price: 320,
-  },
-  {
-    id: 'hub-3',
-    name: 'Zenith Micro SLA Center (HSR Layout)',
-    model: 'Formlabs Form 3+ SLA Laser',
-    distance: '4.8 km away',
-    rating: 5.0,
-    completedOrders: 420,
-    materials: ['Resin', 'PLA'],
-    buildVolume: '145 × 145 × 185 mm',
-    completionEstimate: 'Ready in ~8h 15m',
-    price: 480,
-  },
-]
-
-export default function PrintOnDemandPage() {
+function PrintOnDemandContent() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const supabase = createClient()
   const { addToCart } = useStore()
+
+  // Real Printer Hubs from database
+  const [hubs, setHubs] = useState<PrinterHub[]>([])
+  const [selectedHub, setSelectedHub] = useState<PrinterHub | null>(null)
+  const [loadingHubs, setLoadingHubs] = useState(true)
 
   // Analysis race-condition protection
   const analysisRevisionRef = useRef(0)
@@ -130,9 +99,47 @@ export default function PrintOnDemandPage() {
   const [includeSupports, setIncludeSupports] = useState(true)
   const [quantity, setQuantity] = useState(1)
   const [deliveryAddress, setDeliveryAddress] = useState('')
-  const [selectedHub, setSelectedHub] = useState<PrinterHub>(NEARBY_HUBS[0])
   const [specialInstructions, setSpecialInstructions] = useState('')
   const [placing, setPlacing] = useState(false)
+
+  // Load real printers from Supabase database
+  useEffect(() => {
+    async function loadRealPrinters() {
+      setLoadingHubs(true)
+      try {
+        const { data, error } = await supabase.from('printers').select('*')
+        if (data && data.length > 0) {
+          const mapped: PrinterHub[] = data.map((item: any) => ({
+            id: item.id,
+            name: item.name || item.printer_model || 'PrintHive Hub',
+            model: item.printer_model || item.name || '3D Printer Unit',
+            distance: item.address ? item.address.split(',')[0]?.trim() || 'Nearby Hub' : 'Nearby Hub',
+            rating: (Number(item.completed_orders || 0) > 0 && item.rating) ? Number(item.rating) : 0,
+            completedOrders: Number(item.completed_orders || 0),
+            materials: Array.isArray(item.materials) && item.materials.length > 0 ? item.materials : ['PLA', 'PETG', 'ABS', 'TPU', 'Resin'],
+            buildVolume: item.build_volume || '256 × 256 × 256 mm',
+            completionEstimate: item.working_hours || 'Ready in ~4h 30m',
+            price: Number(item.base_price || 350),
+          }))
+          setHubs(mapped)
+
+          const preselectedId = searchParams?.get('printer_id')
+          const found = preselectedId ? mapped.find((h) => h.id === preselectedId) : null
+          setSelectedHub(found || mapped[0])
+        } else {
+          setHubs([])
+          setSelectedHub(null)
+        }
+      } catch (err) {
+        console.error('Failed to load printer hubs:', err)
+        setHubs([])
+        setSelectedHub(null)
+      } finally {
+        setLoadingHubs(false)
+      }
+    }
+    loadRealPrinters()
+  }, [searchParams])
 
   useEffect(() => {
     return () => {
@@ -178,8 +185,8 @@ export default function PrintOnDemandPage() {
   const handleSelectMaterial = (newMat: typeof MATERIALS[0]) => {
     setMaterial(newMat)
     // Auto-select a compatible hub if current hub doesn't support the material
-    if (!selectedHub.materials.includes(newMat.id)) {
-      const compatibleHub = NEARBY_HUBS.find((h) => h.materials.includes(newMat.id))
+    if (selectedHub && !selectedHub.materials.some((m) => m.toLowerCase().includes(newMat.id.toLowerCase()))) {
+      const compatibleHub = hubs.find((h) => h.materials.some((m) => m.toLowerCase().includes(newMat.id.toLowerCase())))
       if (compatibleHub) {
         setSelectedHub(compatibleHub)
       }
@@ -195,11 +202,11 @@ export default function PrintOnDemandPage() {
   const unitPrice = rawMaterialCost + machineRate + processingFee + platformFee
   const totalPrice = unitPrice * quantity
 
-  const isHubCompatible = selectedHub.materials.includes(material.id)
-  const canSubmit = analysisDone && !!deliveryAddress.trim() && quantity > 0 && isHubCompatible
+  const isHubCompatible = selectedHub ? selectedHub.materials.some((m) => m.toLowerCase().includes(material.id.toLowerCase())) : false
+  const canSubmit = analysisDone && !!deliveryAddress.trim() && quantity > 0 && isHubCompatible && !!selectedHub
 
   const handlePlaceOrder = () => {
-    if (!canSubmit) return
+    if (!canSubmit || !selectedHub) return
     setPlacing(true)
 
     // Persist complete manufacturing job configuration for checkout reconstruction
@@ -497,54 +504,87 @@ export default function PrintOnDemandPage() {
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                {NEARBY_HUBS.map((hub) => {
-                  const active = selectedHub.id === hub.id
-                  const supportsSelectedMat = hub.materials.includes(material.id)
-                  return (
-                    <div
-                      key={hub.id}
-                      onClick={() => {
-                        if (supportsSelectedMat) setSelectedHub(hub)
-                      }}
+                {loadingHubs ? (
+                  <div style={{ padding: 24, textAlign: 'center', color: 'var(--text-sub)', fontSize: 13, background: 'var(--bg-card-hover)', borderRadius: 12 }}>
+                    ⏳ Connecting to registered Indian printer hubs...
+                  </div>
+                ) : hubs.length === 0 ? (
+                  <div style={{ padding: 24, textAlign: 'center', background: 'var(--bg-card-hover)', borderRadius: 12, border: '1px dashed var(--border-color)' }}>
+                    <div style={{ fontSize: 24, marginBottom: 6 }}>🖨️</div>
+                    <div style={{ fontSize: 14, fontWeight: 800, color: 'var(--text-main)', marginBottom: 4 }}>
+                      No Registered Hubs Found
+                    </div>
+                    <p style={{ fontSize: 12, color: 'var(--text-sub)', marginBottom: 12 }}>
+                      Be the first to list your Bambu Lab, Prusa, or Resin machine in your area!
+                    </p>
+                    <Link
+                      href="/dashboard/printer-owner/register"
                       style={{
-                        border: active ? '2px solid #ea580c' : '1px solid var(--border-color)',
-                        background: active ? 'rgba(234, 88, 12, 0.05)' : supportsSelectedMat ? 'var(--bg-card-hover)' : 'rgba(0,0,0,0.02)',
-                        opacity: supportsSelectedMat ? 1 : 0.6,
-                        borderRadius: 14,
-                        padding: 14,
-                        cursor: supportsSelectedMat ? 'pointer' : 'not-allowed',
-                        display: 'flex',
-                        justifyContent: 'space-between',
+                        background: '#ea580c',
+                        color: '#fff',
+                        padding: '8px 16px',
+                        borderRadius: 9999,
+                        fontSize: 12,
+                        fontWeight: 800,
+                        textDecoration: 'none',
+                        display: 'inline-flex',
                         alignItems: 'center',
-                        transition: 'all 0.15s ease',
+                        gap: 6,
                       }}
                     >
-                      <div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 }}>
-                          <span style={{ fontSize: 14, fontWeight: 900, color: 'var(--text-main)' }}>{hub.name}</span>
-                          <span style={{ background: 'rgba(234, 88, 12, 0.1)', color: '#ea580c', fontSize: 10.5, fontWeight: 800, padding: '1px 6px', borderRadius: 4 }}>
-                            {deliveryAddress.trim() ? hub.distance : 'Sample Radius'}
-                          </span>
-                          {!supportsSelectedMat && (
-                            <span style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#EF4444', fontSize: 10, fontWeight: 700, padding: '1px 6px', borderRadius: 4 }}>
-                              No {material.id}
+                      + Register 3D Machine
+                    </Link>
+                  </div>
+                ) : (
+                  hubs.map((hub) => {
+                    const active = selectedHub?.id === hub.id
+                    const supportsSelectedMat = hub.materials?.some((m) => m.toLowerCase().includes(material.id.toLowerCase())) ?? true
+                    return (
+                      <div
+                        key={hub.id}
+                        onClick={() => {
+                          if (supportsSelectedMat) setSelectedHub(hub)
+                        }}
+                        style={{
+                          border: active ? '2px solid #ea580c' : '1px solid var(--border-color)',
+                          background: active ? 'rgba(234, 88, 12, 0.05)' : supportsSelectedMat ? 'var(--bg-card-hover)' : 'rgba(0,0,0,0.02)',
+                          opacity: supportsSelectedMat ? 1 : 0.6,
+                          borderRadius: 14,
+                          padding: 14,
+                          cursor: supportsSelectedMat ? 'pointer' : 'not-allowed',
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          transition: 'all 0.15s ease',
+                        }}
+                      >
+                        <div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 }}>
+                            <span style={{ fontSize: 14, fontWeight: 900, color: 'var(--text-main)' }}>{hub.name}</span>
+                            <span style={{ background: 'rgba(234, 88, 12, 0.1)', color: '#ea580c', fontSize: 10.5, fontWeight: 800, padding: '1px 6px', borderRadius: 4 }}>
+                              {hub.distance}
                             </span>
-                          )}
+                            {!supportsSelectedMat && (
+                              <span style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#EF4444', fontSize: 10, fontWeight: 700, padding: '1px 6px', borderRadius: 4 }}>
+                                No {material.id}
+                              </span>
+                            )}
+                          </div>
+                          <div style={{ fontSize: 12, color: 'var(--text-sub)' }}>
+                            {hub.model} • {hub.completedOrders > 0 && hub.rating > 0 ? `⭐ ${hub.rating.toFixed(1)} (${hub.completedOrders} prints)` : '★ 0.0 (0 jobs) • 🆕 New Hub'}
+                          </div>
+                          <div style={{ fontSize: 11, color: '#10B981', marginTop: 3, fontWeight: 700 }}>
+                            Ready: {hub.completionEstimate}
+                          </div>
                         </div>
-                        <div style={{ fontSize: 12, color: 'var(--text-sub)' }}>
-                          {hub.model} • ⭐ {hub.rating} ({hub.completedOrders} prints)
-                        </div>
-                        <div style={{ fontSize: 11, color: '#10B981', marginTop: 3, fontWeight: 700 }}>
-                          Ready: {hub.completionEstimate}
-                        </div>
-                      </div>
 
-                      <div style={{ textAlign: 'right' }}>
-                        <div style={{ width: 20, height: 20, borderRadius: '50%', border: active ? '6px solid #ea580c' : '2px solid var(--border-color)', background: 'var(--bg-card)' }} />
+                        <div style={{ textAlign: 'right' }}>
+                          <div style={{ width: 20, height: 20, borderRadius: '50%', border: active ? '6px solid #ea580c' : '2px solid var(--border-color)', background: 'var(--bg-card)' }} />
+                        </div>
                       </div>
-                    </div>
-                  )
-                })}
+                    )
+                  })
+                )}
               </div>
             </div>
           </div>
@@ -660,5 +700,13 @@ export default function PrintOnDemandPage() {
 
       <Footer />
     </main>
+  )
+}
+
+export default function PrintOnDemandPage() {
+  return (
+    <Suspense fallback={<div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>Loading Print-on-Demand...</div>}>
+      <PrintOnDemandContent />
+    </Suspense>
   )
 }
