@@ -436,7 +436,7 @@ function PrinterDirectoryContent() {
           </div>
 
           <Link
-            href="/dashboard/printer-owner/register"
+            href="/printers/register"
             style={{
               background: 'linear-gradient(135deg, #ea580c 0%, #c2410c 100%)',
               color: '#fff',

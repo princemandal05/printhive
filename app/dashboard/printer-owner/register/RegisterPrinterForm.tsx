@@ -8,10 +8,13 @@ import { createClient } from '@/utils/supabase/client'
 import type { MapLocation } from '@/components/OpenStreetMap'
 import CloudinaryUploader, { type CloudinaryMetadata } from '@/components/CloudinaryUploader'
 
+import Navbar from '@/components/Navbar'
+import Footer from '@/components/Footer'
+
 const OpenStreetMap = dynamic(() => import('@/components/OpenStreetMap'), {
   ssr: false,
   loading: () => (
-    <div style={{ height: 340, background: 'var(--bg-card)', borderRadius: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-sub)', fontSize: 13, fontWeight: 700 }}>
+    <div style={{ height: 340, background: 'var(--bg-card)', borderRadius: 4, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-sub)', fontSize: 13, fontWeight: 700 }}>
       🗺️ Loading Leaflet OpenStreetMap Engine...
     </div>
   ),
@@ -66,7 +69,7 @@ export default function RegisterPrinterForm() {
       if (authErr || !user) {
         setStatusMsg('❌ Authentication required: Please log in to register your printer machine.')
         setSubmitting(false)
-        router.push('/login?next=/dashboard/printer-owner/register')
+        router.push('/login?next=/printers/register')
         return
       }
 
@@ -97,6 +100,9 @@ export default function RegisterPrinterForm() {
         setSubmitting(false)
         return
       }
+
+      // Upgrade profile role to printer_owner if currently buyer
+      await supabase.from('profiles').update({ role: 'printer_owner' }).eq('id', user.id)
     } catch (err: unknown) {
       const error = err as Error
       console.error('Printer insert exception:', error)
@@ -106,7 +112,7 @@ export default function RegisterPrinterForm() {
     }
 
     setSubmitting(false)
-    router.push('/dashboard/printer-owner')
+    router.push('/printers')
     router.refresh()
   }
 
@@ -122,41 +128,27 @@ export default function RegisterPrinterForm() {
 
   const inputStyle: React.CSSProperties = {
     width: '100%',
-    background: '#F8FAFC',
-    border: '1px solid #CBD5E1',
-    borderRadius: 12,
+    background: 'var(--bg-card)',
+    border: '1px solid var(--border-color)',
+    borderRadius: 4,
     padding: '12px 16px',
     fontSize: 14,
-    color: '#0F172A',
+    color: 'var(--text-main)',
     outline: 'none',
     boxSizing: 'border-box',
     fontWeight: 600,
   }
 
   const s: Record<string, React.CSSProperties> = {
-    page: { minHeight: '100vh', background: '#FAF8F5', color: '#0F172A', fontFamily: 'inherit' },
-    nav: { background: '#0F172A', padding: '0 32px', height: 68, display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.08)' },
-    logo: { fontSize: 20, fontWeight: 900, color: '#fff', letterSpacing: '-0.5px' },
-    logoAccent: { color: '#FF6B35' },
-    body: { maxWidth: 1100, margin: '0 auto', padding: '36px 24px' },
-    card: { background: '#FFFFFF', borderRadius: 20, border: '1px solid #E2E8F0', padding: 28, boxShadow: '0 8px 30px rgba(0,0,0,0.04)', marginBottom: 24 },
-    label: { fontSize: 13, fontWeight: 800, color: '#334155', marginBottom: 6, display: 'block', textTransform: 'uppercase' as const, letterSpacing: 0.5 },
+    page: { minHeight: '100vh', background: 'var(--bg-canvas)', color: 'var(--text-main)', fontFamily: 'inherit' },
+    body: { maxWidth: 1100, margin: '0 auto', padding: '40px 24px' },
+    card: { background: 'var(--bg-card)', borderRadius: 4, border: '1px solid var(--border-color)', padding: 28, boxShadow: '0 4px 16px rgba(0,0,0,0.04)', marginBottom: 24 },
+    label: { fontSize: 12, fontWeight: 800, color: 'var(--text-sub)', marginBottom: 6, display: 'block', textTransform: 'uppercase' as const, letterSpacing: 0.5 },
   }
 
   return (
     <div style={s.page}>
-      {/* COMMAND HUB NAVIGATION */}
-      <nav style={s.nav}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-          <div style={s.logo}>
-            <Link href="/" style={{ textDecoration: 'none', color: '#fff' }}>
-              Print<span style={s.logoAccent}>Hive</span>
-            </Link>{' '}
-            <span style={{ fontSize: 12, color: '#94A3B8', fontWeight: 600 }}>Printer Hub Command</span>
-          </div>
-        </div>
-        <a href="/dashboard/printer-owner" style={{ color: '#94A3B8', fontSize: 13, fontWeight: 700, textDecoration: 'none' }}>← Back to Command Hub</a>
-      </nav>
+      <Navbar />
 
       <div style={s.body}>
         {/* PAGE HEADER */}
@@ -351,7 +343,7 @@ export default function RegisterPrinterForm() {
                 Click anywhere on the map or drag the pin to set your exact printer hub dispatch coordinates.
               </div>
 
-              <div style={{ borderRadius: 16, overflow: 'hidden', border: '1px solid #CBD5E1', marginBottom: 16 }}>
+              <div style={{ borderRadius: 4, overflow: 'hidden', border: '1px solid var(--border-color)', marginBottom: 16 }}>
                 <OpenStreetMap
                   locations={pickerLocations}
                   height="260px"
@@ -360,7 +352,7 @@ export default function RegisterPrinterForm() {
                 />
               </div>
 
-              <div style={{ background: '#F8FAFC', padding: 14, borderRadius: 12, border: '1px solid #E2E8F0', display: 'flex', justifyContent: 'space-between', fontSize: 13, fontWeight: 700 }}>
+              <div style={{ background: 'var(--bg-card)', padding: 14, borderRadius: 4, border: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', fontSize: 13, fontWeight: 700, color: 'var(--text-main)' }}>
                 <span>Lat: {lat}</span>
                 <span>Lng: {lng}</span>
               </div>
@@ -368,6 +360,7 @@ export default function RegisterPrinterForm() {
           </div>
         </div>
       </div>
+      <Footer />
     </div>
   )
 }
