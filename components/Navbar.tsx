@@ -76,6 +76,7 @@ const ROLE_NAV_LINKS: Record<string, { href: string; label: string }[]> = {
     { href: '/shop', label: 'Shop' },
     { href: '/browse', label: '3D Models' },
     { href: '/printers', label: 'Nearby Hubs' },
+    { href: '/printers/register', label: '+ Register Printer' },
     { href: '/requests', label: 'Print Briefs' },
   ],
   admin: [
