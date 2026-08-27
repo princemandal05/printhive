@@ -837,7 +837,7 @@ function ThreeViewerInner({
         </span>
         {polyCount !== null && (
           <span style={{ fontSize: 10, fontWeight: 700, color: isLightMode ? '#64748B' : '#94A3B8' }}>
-            • {(polyCount / 1000).toFixed(1)}k ▲
+            • {polyCount >= 1000 ? `${(polyCount / 1000).toFixed(1)}k` : polyCount} ▲
           </span>
         )}
         <span
