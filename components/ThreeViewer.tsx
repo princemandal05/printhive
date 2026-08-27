@@ -51,13 +51,21 @@ class ThreeViewerErrorBoundary extends Component<ErrorBoundaryProps, ErrorBounda
   render() {
     if (this.state.hasError) {
       return (
-        <div style={{
-          height: 440, background: '#0F172A', borderRadius: 20,
-          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-          color: '#F8FAFC', border: '1px solid rgba(255,255,255,0.08)',
-        }}>
+        <div
+          style={{
+            height: 440,
+            background: '#0F172A',
+            borderRadius: 20,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: '#F8FAFC',
+            border: '1px solid rgba(255,255,255,0.08)',
+          }}
+        >
           <div style={{ fontSize: 40, marginBottom: 10 }}>🧊</div>
-          <p style={{ fontSize: 14, fontWeight: 700, color: '#94A3B8' }}>Unable to preview this model</p>
+          <p style={{ fontSize: 14, fontWeight: 700, color: '#94A3B8' }}>Unable to preview this 3D model</p>
         </div>
       )
     }
@@ -75,7 +83,7 @@ export default function ThreeViewer(props: ThreeViewerProps) {
 
 function ThreeViewerInner({
   title = '3D Model',
-  color = '#FF6B35',
+  color = '#ea580c',
   wireframeDefault = false,
   autoRotateDefault = false,
   initialTheme = 'dark',
@@ -100,17 +108,20 @@ function ThreeViewerInner({
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [showHint, setShowHint] = useState(true)
   const [isGrabbing, setIsGrabbing] = useState(false)
+  const [rotationStep, setRotationStep] = useState(0)
 
   const sceneRef = useRef<THREE.Scene | null>(null)
   const controlsRef = useRef<OrbitControls | null>(null)
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null)
   const groupRef = useRef<THREE.Group | null>(null)
-  const matsRef = useRef<THREE.MeshPhysicalMaterial[]>([])
+  const shadowPlaneRef = useRef<THREE.Mesh | null>(null)
+  const matsRef = useRef<(THREE.MeshPhysicalMaterial | THREE.MeshStandardMaterial)[]>([])
   const initialCamPos = useRef<THREE.Vector3>(new THREE.Vector3())
+  const initialTarget = useRef<THREE.Vector3>(new THREE.Vector3())
 
   const detected = detectModelFormat({ format, fileName, mimeType, url: modelUrl })
   const fmt: ModelFormat = detected.format
-  const safeColor = /^#[0-9A-Fa-f]{6}$/.test(color || '') ? color! : '#FF6B35'
+  const safeColor = /^#[0-9A-Fa-f]{6}$/.test(color || '') ? color! : '#ea580c'
 
   // Hide gesture hint after 4 seconds
   useEffect(() => {
@@ -126,19 +137,27 @@ function ThreeViewerInner({
 
   // Sync wireframe
   useEffect(() => {
-    matsRef.current.forEach(m => { m.wireframe = wireframe; m.needsUpdate = true })
+    matsRef.current.forEach((m) => {
+      m.wireframe = wireframe
+      m.needsUpdate = true
+    })
   }, [wireframe])
 
-  // Live filament color update (no reload)
+  // Live filament color update (updates raw materials while preserving textured meshes)
   useEffect(() => {
     const c = new THREE.Color(safeColor)
-    matsRef.current.forEach(m => { m.color.copy(c); m.needsUpdate = true })
+    matsRef.current.forEach((m) => {
+      if ((m as any)._isFilamentMat) {
+        m.color.copy(c)
+        m.needsUpdate = true
+      }
+    })
   }, [safeColor])
 
   // Dynamic canvas theme background update
   useEffect(() => {
     if (!sceneRef.current) return
-    const bgHex = theme === 'dark' ? '#0F172A' : theme === 'slate' ? '#1E293B' : '#E2E8F0'
+    const bgHex = theme === 'dark' ? '#0F172A' : theme === 'slate' ? '#1E293B' : '#F1F5F9'
     sceneRef.current.background = new THREE.Color(bgHex)
   }, [theme])
 
@@ -150,6 +169,64 @@ function ThreeViewerInner({
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   }, [isFullscreen])
+
+  // Refit camera helper
+  const fitCameraToObject = (obj: THREE.Object3D, camera: THREE.PerspectiveCamera, controls: OrbitControls) => {
+    obj.updateMatrixWorld(true)
+    const box = new THREE.Box3().setFromObject(obj)
+    if (box.isEmpty()) return
+
+    const size = box.getSize(new THREE.Vector3())
+    const center = box.getCenter(new THREE.Vector3())
+
+    // Center model in X and Z, and place base on Y = 0
+    obj.position.x -= center.x
+    obj.position.z -= center.z
+    obj.position.y -= box.min.y
+
+    setBounds({ x: Math.round(size.x), y: Math.round(size.y), z: Math.round(size.z) })
+
+    const maxDim = Math.max(size.x, size.y, size.z)
+    if (maxDim > 0) {
+      if (shadowPlaneRef.current) {
+        shadowPlaneRef.current.scale.set(maxDim / 25, maxDim / 25, 1)
+        shadowPlaneRef.current.position.y = -0.1
+      }
+
+      const fov = camera.fov * (Math.PI / 180)
+      let dist = (maxDim / 2 / Math.tan(fov / 2)) * 1.45
+      dist = Math.max(dist, 8)
+
+      const targetY = size.y * 0.45
+      controls.target.set(0, targetY, 0)
+      initialTarget.current.set(0, targetY, 0)
+
+      camera.position.set(dist * 0.65, targetY + dist * 0.35, dist * 0.85)
+      initialCamPos.current.copy(camera.position)
+
+      camera.near = Math.max(maxDim / 200, 0.05)
+      camera.far = Math.max(maxDim * 60, 4000)
+      camera.updateProjectionMatrix()
+
+      controls.minDistance = Math.max(maxDim * 0.05, 0.5)
+      controls.maxDistance = Math.max(dist * 8, maxDim * 15, 100)
+      controls.update()
+    }
+  }
+
+  // Rotate model orientation by 90 degrees
+  const handleRotateOrientation = () => {
+    if (!groupRef.current || !cameraRef.current || !controlsRef.current) return
+    const nextStep = (rotationStep + 1) % 4
+    setRotationStep(nextStep)
+
+    const baseRotX = fmt === 'stl' || fmt === '3mf' ? -Math.PI / 2 : 0
+    groupRef.current.rotation.x = baseRotX + (nextStep % 2 === 1 ? Math.PI / 2 : 0)
+    groupRef.current.rotation.y = nextStep >= 2 ? Math.PI : 0
+    groupRef.current.position.set(0, 0, 0)
+
+    fitCameraToObject(groupRef.current, cameraRef.current, controlsRef.current)
+  }
 
   // Main Three.js setup
   useEffect(() => {
@@ -163,16 +240,17 @@ function ThreeViewerInner({
 
     // Scene with Studio Background
     const scene = new THREE.Scene()
-    const bgHex = theme === 'dark' ? '#0F172A' : theme === 'slate' ? '#1E293B' : '#E2E8F0'
+    const bgHex = theme === 'dark' ? '#0F172A' : theme === 'slate' ? '#1E293B' : '#F1F5F9'
     scene.background = new THREE.Color(bgHex)
     sceneRef.current = scene
 
     // Camera
-    const camera = new THREE.PerspectiveCamera(38, w / h, 0.1, 5000)
+    const camera = new THREE.PerspectiveCamera(40, w / h, 0.1, 5000)
     camera.position.set(0, 40, 120)
     cameraRef.current = camera
+    scene.add(camera)
 
-    // Renderer
+    // Renderer with Tone Mapping & Soft Shadows
     const renderer = new THREE.WebGLRenderer({
       antialias: true,
       powerPreference: 'high-performance',
@@ -181,65 +259,65 @@ function ThreeViewerInner({
     renderer.setSize(w, h)
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
     renderer.toneMapping = THREE.ACESFilmicToneMapping
-    renderer.toneMappingExposure = 1.15
+    renderer.toneMappingExposure = 1.3
     renderer.shadowMap.enabled = true
     renderer.shadowMap.type = THREE.PCFSoftShadowMap
     container.innerHTML = ''
     container.appendChild(renderer.domElement)
 
-    // Smooth orbit controls
+    // Smooth Orbit Controls
     const controls = new OrbitControls(camera, renderer.domElement)
     controls.enableDamping = true
     controls.dampingFactor = 0.06
     controls.autoRotate = rotatingRef.current
-    controls.autoRotateSpeed = 1.2
+    controls.autoRotateSpeed = 1.4
     controls.enableZoom = true
     controls.enablePan = true
-    controls.minDistance = 2
     controlsRef.current = controls
 
-    // ─── Studio Lighting Setup ──────────────────────────
-    // Ambient / Hemisphere
-    scene.add(new THREE.HemisphereLight(0xffffff, 0x1e293b, 0.8))
+    // ─── Studio 4-Point Illumination System ───────────────
+    // 1. Camera-Mounted Follow Light (Eliminates harsh pitch-black shadows from any orbit angle)
+    const cameraKeyLight = new THREE.DirectionalLight(0xffffff, 1.4)
+    cameraKeyLight.position.set(10, 20, 30)
+    camera.add(cameraKeyLight)
 
-    // Main Key light (Top-right front)
-    const key = new THREE.DirectionalLight(0xffffff, 1.35)
-    key.position.set(100, 160, 120)
-    key.castShadow = true
-    key.shadow.bias = -0.0001
-    scene.add(key)
+    const cameraFillLight = new THREE.DirectionalLight(0xdbeafe, 0.9)
+    cameraFillLight.position.set(-25, -10, 25)
+    camera.add(cameraFillLight)
 
-    // Fill light (Soft gentle fill from left)
-    const fill = new THREE.DirectionalLight(0xa5b4fc, 0.7)
-    fill.position.set(-120, 60, 80)
-    scene.add(fill)
+    // 2. Global Hemisphere Sky/Ground Ambient Light
+    const hemiLight = new THREE.HemisphereLight(0xffffff, 0x334155, 1.2)
+    scene.add(hemiLight)
 
-    // Rim / backlight (defines edge silhouette)
-    const rim = new THREE.DirectionalLight(0xffedd5, 0.9)
-    rim.position.set(-20, 120, -160)
-    scene.add(rim)
+    // 3. Top-Down Key Light (accents top bevels and geometry)
+    const topKey = new THREE.DirectionalLight(0xffffff, 1.1)
+    topKey.position.set(60, 180, 80)
+    topKey.castShadow = true
+    topKey.shadow.bias = -0.0001
+    scene.add(topKey)
 
-    // Subtle Under-bounce
-    const bounce = new THREE.DirectionalLight(0x334155, 0.35)
-    bounce.position.set(0, -100, 40)
-    scene.add(bounce)
+    // 4. Back-Rim Light (defines clean silhouette edges)
+    const rimLight = new THREE.DirectionalLight(0xffedd5, 0.9)
+    rimLight.position.set(-50, 100, -120)
+    scene.add(rimLight)
 
-    // ─── Soft Contact Shadow Plane ──────────────────────
+    // ─── Soft Circular Contact Shadow Plane ──────────────
     const shadowCanvas = document.createElement('canvas')
-    shadowCanvas.width = 128
-    shadowCanvas.height = 128
+    shadowCanvas.width = 256
+    shadowCanvas.height = 256
     const ctx = shadowCanvas.getContext('2d')
     if (ctx) {
-      const grad = ctx.createRadialGradient(64, 64, 0, 64, 64, 64)
+      const grad = ctx.createRadialGradient(128, 128, 0, 128, 128, 128)
       grad.addColorStop(0, 'rgba(0, 0, 0, 0.45)')
-      grad.addColorStop(0.5, 'rgba(0, 0, 0, 0.15)')
+      grad.addColorStop(0.4, 'rgba(0, 0, 0, 0.18)')
+      grad.addColorStop(0.8, 'rgba(0, 0, 0, 0.04)')
       grad.addColorStop(1, 'rgba(0, 0, 0, 0)')
       ctx.fillStyle = grad
-      ctx.fillRect(0, 0, 128, 128)
+      ctx.fillRect(0, 0, 256, 256)
     }
     const shadowTexture = new THREE.CanvasTexture(shadowCanvas)
     const shadowPlane = new THREE.Mesh(
-      new THREE.PlaneGeometry(120, 120),
+      new THREE.PlaneGeometry(80, 80),
       new THREE.MeshBasicMaterial({
         map: shadowTexture,
         transparent: true,
@@ -247,86 +325,80 @@ function ThreeViewerInner({
       })
     )
     shadowPlane.rotation.x = -Math.PI / 2
-    shadowPlane.position.y = -0.5
+    shadowPlane.position.y = 0
+    shadowPlaneRef.current = shadowPlane
     scene.add(shadowPlane)
 
-    // ─── Model group ────────────────────────────────────
+    // ─── Model Group Container ───────────────────────────
     const group = new THREE.Group()
     groupRef.current = group
     scene.add(group)
 
-    // PBR filament material factory
-    const makeMat = (): THREE.MeshPhysicalMaterial => {
+    // Photorealistic Filament PBR Material Factory
+    const makeFilamentMat = (): THREE.MeshPhysicalMaterial => {
       const mat = new THREE.MeshPhysicalMaterial({
         color: new THREE.Color(safeColor),
-        roughness: 0.3,
+        roughness: 0.32,
         metalness: 0.08,
-        clearcoat: 0.3,
-        clearcoatRoughness: 0.18,
-        reflectivity: 0.55,
+        clearcoat: 0.35,
+        clearcoatRoughness: 0.2,
+        reflectivity: 0.6,
         wireframe,
         side: THREE.DoubleSide,
       })
+      ;(mat as any)._isFilamentMat = true
       matsRef.current.push(mat)
       return mat
     }
 
+    // Process & Style Loaded Meshes (Preserves original embedded materials & textures when present)
     const styleMeshes = (root: THREE.Object3D) => {
-      root.traverse(child => {
+      root.traverse((child) => {
         if (child instanceof THREE.Mesh) {
           child.geometry?.computeVertexNormals()
-          child.material = makeMat()
           child.castShadow = true
           child.receiveShadow = true
+
+          const origMat = child.material
+          const hasOriginalTexture = !!(origMat && (origMat.map || (origMat as any).normalMap))
+          const hasVertexColors = !!(child.geometry?.attributes?.color)
+
+          if (hasOriginalTexture || hasVertexColors) {
+            if (origMat instanceof THREE.MeshStandardMaterial || origMat instanceof THREE.MeshPhysicalMaterial) {
+              origMat.roughness = Math.min(origMat.roughness ?? 0.4, 0.5)
+              origMat.metalness = Math.min(origMat.metalness ?? 0.1, 0.2)
+              origMat.wireframe = wireframe
+              origMat.side = THREE.DoubleSide
+              origMat.needsUpdate = true
+              matsRef.current.push(origMat)
+            } else if (origMat) {
+              const enhancedMat = new THREE.MeshStandardMaterial({
+                color: (origMat as any).color ? (origMat as any).color : 0xffffff,
+                map: (origMat as any).map || null,
+                vertexColors: hasVertexColors,
+                roughness: 0.4,
+                metalness: 0.08,
+                wireframe,
+                side: THREE.DoubleSide,
+              })
+              child.material = enhancedMat
+              matsRef.current.push(enhancedMat)
+            }
+          } else {
+            child.material = makeFilamentMat()
+          }
         }
       })
-    }
-
-    // Fit model to fill camera perfectly
-    const fitCamera = (obj: THREE.Object3D) => {
-      const box = new THREE.Box3().setFromObject(obj)
-      if (box.isEmpty()) return
-
-      const size = box.getSize(new THREE.Vector3())
-      const center = box.getCenter(new THREE.Vector3())
-      obj.position.sub(center)
-
-      if (!disposed) {
-        setBounds({ x: Math.round(size.x), y: Math.round(size.y), z: Math.round(size.z) })
-      }
-
-      const maxDim = Math.max(size.x, size.y, size.z)
-      if (maxDim > 0) {
-        shadowPlane.scale.set(maxDim / 35, maxDim / 35, 1)
-        shadowPlane.position.y = -size.y / 2 - 0.2
-
-        const fov = camera.fov * (Math.PI / 180)
-        let dist = (maxDim / 2 / Math.tan(fov / 2)) * 1.35
-        dist = Math.max(dist, 10)
-
-        camera.position.set(dist * 0.6, dist * 0.35, dist * 0.75)
-        initialCamPos.current.copy(camera.position)
-        camera.lookAt(0, 0, 0)
-        controls.target.set(0, 0, 0)
-        camera.near = Math.max(maxDim / 200, 0.05)
-        camera.far = Math.max(maxDim * 50, 3000)
-        camera.updateProjectionMatrix()
-
-        // Derive OrbitControls limits dynamically from maxDim and computed fit distance
-        controls.minDistance = Math.max(maxDim * 0.05, 0.5)
-        controls.maxDistance = Math.max(dist * 8, maxDim * 15, 100)
-        controls.update()
-      }
     }
 
     // Shared fetch helper with abort timeout and non-OK response handling
     const fetchModelData = async (url: string, asText = false) => {
       const controller = new AbortController()
-      const timeoutId = setTimeout(() => controller.abort(), 30000)
+      const timeoutId = setTimeout(() => controller.abort(), 35000)
       try {
         const res = await fetch(url, { signal: controller.signal })
         if (!res.ok) {
-          throw new Error(`HTTP ${res.status}: Failed to fetch model file`)
+          throw new Error(`HTTP ${res.status}: Failed to fetch 3D model file`)
         }
         return asText ? await res.text() : await res.arrayBuffer()
       } finally {
@@ -334,68 +406,96 @@ function ThreeViewerInner({
       }
     }
 
-    // ─── Load model ─────────────────────────────────────
+    // ─── Load Model ──────────────────────────────────────
     const load = async () => {
-      if (!modelUrl) { setLoading(false); setError('No model file URL.'); return }
+      if (!modelUrl) {
+        setLoading(false)
+        setError('No model file URL available.')
+        return
+      }
 
       try {
         if (fmt === 'stl') {
           const buf = (await fetchModelData(modelUrl)) as ArrayBuffer
           if (disposed) return
           const geo = new STLLoader().parse(buf)
-          if (!geo?.attributes?.position?.count) throw new Error('Empty STL')
+          if (!geo?.attributes?.position?.count) throw new Error('Empty STL file')
           geo.computeVertexNormals()
-          const mesh = new THREE.Mesh(geo, makeMat())
-          mesh.castShadow = true; mesh.receiveShadow = true
+          const mesh = new THREE.Mesh(geo, makeFilamentMat())
+          mesh.castShadow = true
+          mesh.receiveShadow = true
+
+          // Standard STL files from CAD/Slicers are Z-up; orient upright in Three.js Y-up world
+          group.rotation.x = -Math.PI / 2
           group.add(mesh)
-          fitCamera(group); setLoading(false)
+
+          fitCameraToObject(group, camera, controls)
+          setLoading(false)
 
         } else if (fmt === '3mf') {
           const buf = (await fetchModelData(modelUrl)) as ArrayBuffer
           if (disposed) return
           const parsed = new ThreeMFLoader().parse(buf)
-          if (!parsed?.children?.length) throw new Error('Empty 3MF')
+          if (!parsed?.children?.length) throw new Error('Empty 3MF file')
           styleMeshes(parsed)
+
+          // Standard 3MF files are Z-up; orient upright in Three.js Y-up world
+          group.rotation.x = -Math.PI / 2
           group.add(parsed)
-          fitCamera(group); setLoading(false)
+
+          fitCameraToObject(group, camera, controls)
+          setLoading(false)
 
         } else if (fmt === 'obj') {
           const txt = (await fetchModelData(modelUrl, true)) as string
           if (disposed) return
           const parsed = new OBJLoader().parse(txt)
-          if (!parsed?.children?.length) throw new Error('Empty OBJ')
+          if (!parsed?.children?.length) throw new Error('Empty OBJ file')
           styleMeshes(parsed)
           group.add(parsed)
-          fitCamera(group); setLoading(false)
+
+          fitCameraToObject(group, camera, controls)
+          setLoading(false)
 
         } else if (fmt === 'glb' || fmt === 'gltf') {
-          new GLTFLoader().load(modelUrl,
+          new GLTFLoader().load(
+            modelUrl,
             (gltf) => {
               if (disposed) return
               const s = gltf.scene || gltf.scenes[0]
               if (!s) {
-                setError('Empty GLTF')
+                setError('Empty GLTF file')
                 setLoading(false)
                 return
               }
               styleMeshes(s)
               group.add(s)
-              fitCamera(group); setLoading(false)
+              fitCameraToObject(group, camera, controls)
+              setLoading(false)
             },
             undefined,
-            (e: any) => { if (!disposed) { setError(e?.message || 'GLTF error'); setLoading(false) } }
+            (e: any) => {
+              if (!disposed) {
+                setError(e?.message || 'GLTF loader error')
+                setLoading(false)
+              }
+            }
           )
         } else {
-          setUnsupported(fmt.toUpperCase()); setLoading(false)
+          setUnsupported(fmt.toUpperCase())
+          setLoading(false)
         }
       } catch (err: any) {
         console.error('Model load error:', err)
-        if (!disposed) { setError(err.message || 'Load failed'); setLoading(false) }
+        if (!disposed) {
+          setError(err.message || 'Model rendering failed')
+          setLoading(false)
+        }
       }
     }
     load()
 
-    // ─── Interaction Listeners ──────────────────────────
+    // ─── Interaction Listeners ───────────────────────────
     const onMouseDown = () => {
       setIsGrabbing(true)
       setShowHint(false)
@@ -406,7 +506,7 @@ function ThreeViewerInner({
     const onDblClick = () => {
       if (controlsRef.current && cameraRef.current) {
         cameraRef.current.position.copy(initialCamPos.current)
-        controlsRef.current.target.set(0, 0, 0)
+        controlsRef.current.target.copy(initialTarget.current)
         controlsRef.current.update()
       }
     }
@@ -425,7 +525,7 @@ function ThreeViewerInner({
     }
     tick()
 
-    // Resize
+    // Resize handler
     const onResize = () => {
       if (!container) return
       const nw = isFullscreen ? window.innerWidth : container.clientWidth || 600
@@ -446,42 +546,64 @@ function ThreeViewerInner({
       controls.dispose()
       scene.clear()
       renderer.dispose()
-      matsRef.current.forEach(m => m.dispose())
+      matsRef.current.forEach((m) => m.dispose())
     }
   }, [modelUrl, fmt, height, isFullscreen])
 
   const handleResetView = () => {
     if (controlsRef.current && cameraRef.current) {
       cameraRef.current.position.copy(initialCamPos.current)
-      controlsRef.current.target.set(0, 0, 0)
+      controlsRef.current.target.copy(initialTarget.current)
       controlsRef.current.update()
     }
   }
 
   const cycleTheme = () => {
-    setTheme(prev => prev === 'dark' ? 'slate' : prev === 'slate' ? 'pearl' : 'dark')
+    setTheme((prev) => (prev === 'dark' ? 'slate' : prev === 'slate' ? 'pearl' : 'dark'))
   }
 
-  // ─── Error / unsupported fallback ─────────────────────
+  // ─── Error / unsupported fallback ──────────────────────
   if (unsupported || error) {
     return (
-      <div style={{
-        height, background: '#0F172A', borderRadius: 20,
-        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-        padding: 32, textAlign: 'center', color: '#F8FAFC', border: '1px solid #334155',
-      }}>
+      <div
+        style={{
+          height,
+          background: '#0F172A',
+          borderRadius: 20,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: 32,
+          textAlign: 'center',
+          color: '#F8FAFC',
+          border: '1px solid #334155',
+        }}
+      >
         <div style={{ fontSize: 40, marginBottom: 10 }}>🧊</div>
-        <h3 style={{ fontSize: 16, fontWeight: 800, margin: '0 0 6px' }}>Unable to preview</h3>
+        <h3 style={{ fontSize: 16, fontWeight: 800, margin: '0 0 6px' }}>Unable to preview model</h3>
         <p style={{ fontSize: 13, color: '#94A3B8', maxWidth: 340, margin: '0 0 18px' }}>
-          {unsupported ? `${unsupported} preview is not supported. Download the file to view.` : error}
+          {unsupported ? `${unsupported} format preview is not supported. Download the file to view.` : error}
         </p>
         {modelUrl && (
-          <a href={modelUrl} download={fileName || `model.${fmt}`} target="_blank" rel="noopener noreferrer"
+          <a
+            href={modelUrl}
+            download={fileName || `model.${fmt}`}
+            target="_blank"
+            rel="noopener noreferrer"
             style={{
-              background: '#FF6B35', color: '#fff', padding: '8px 20px', borderRadius: 99,
-              fontSize: 13, fontWeight: 800, textDecoration: 'none',
-              display: 'inline-flex', alignItems: 'center', gap: 6,
-            }}>
+              background: '#ea580c',
+              color: '#fff',
+              padding: '8px 20px',
+              borderRadius: 99,
+              fontSize: 13,
+              fontWeight: 800,
+              textDecoration: 'none',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6,
+            }}
+          >
             📥 Download {fmt.toUpperCase()}
           </a>
         )}
@@ -491,7 +613,7 @@ function ThreeViewerInner({
 
   const isLightMode = theme === 'pearl'
 
-  // ─── Main Viewer ──────────────────────────────────────
+  // ─── Main Viewer ───────────────────────────────────────
   return (
     <div
       ref={containerRef}
@@ -501,11 +623,12 @@ function ThreeViewerInner({
         zIndex: isFullscreen ? 99999 : 1,
         width: '100%',
         height: isFullscreen ? '100vh' : height,
-        background: theme === 'dark'
-          ? 'radial-gradient(circle at 50% 40%, #1E293B 0%, #0F172A 100%)'
-          : theme === 'slate'
-            ? '#1E293B'
-            : '#E2E8F0',
+        background:
+          theme === 'dark'
+            ? 'radial-gradient(circle at 50% 35%, #1E293B 0%, #0F172A 100%)'
+            : theme === 'slate'
+              ? 'radial-gradient(circle at 50% 35%, #334155 0%, #1E293B 100%)'
+              : '#F1F5F9',
         borderRadius: isFullscreen ? 0 : 20,
         overflow: 'hidden',
         border: isFullscreen ? 'none' : theme === 'pearl' ? '1px solid #CBD5E1' : '1px solid #334155',
@@ -523,68 +646,112 @@ function ThreeViewerInner({
 
       {/* Loading Overlay */}
       {loading && (
-        <div style={{
-          position: 'absolute', inset: 0,
-          background: isLightMode ? 'rgba(226, 232, 240, 0.92)' : 'rgba(15, 23, 42, 0.92)',
-          backdropFilter: 'blur(6px)',
-          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', zIndex: 10,
-        }}>
+        <div
+          style={{
+            position: 'absolute',
+            inset: 0,
+            background: isLightMode ? 'rgba(241, 245, 249, 0.92)' : 'rgba(15, 23, 42, 0.92)',
+            backdropFilter: 'blur(6px)',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 10,
+          }}
+        >
           <div style={{ fontSize: 32, marginBottom: 8, animation: 'spin 1.5s linear infinite' }}>⏳</div>
           <div style={{ color: isLightMode ? '#0F172A' : '#F8FAFC', fontWeight: 800, fontSize: 14 }}>
-            Loading {fmt.toUpperCase()} Model…
+            Preparing {fmt.toUpperCase()} Studio Preview…
           </div>
         </div>
       )}
 
       {/* Top-left: Minimal Specs Badge */}
-      <div style={{
-        position: 'absolute', top: 12, left: 12, zIndex: 5,
-        background: isLightMode ? 'rgba(255,255,255,0.9)' : 'rgba(15,23,42,0.75)',
-        backdropFilter: 'blur(10px)',
-        border: isLightMode ? '1px solid rgba(0,0,0,0.08)' : '1px solid rgba(255,255,255,0.08)',
-        borderRadius: 10,
-        padding: '5px 12px', display: 'flex', alignItems: 'center', gap: 8,
-        boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
-      }}>
+      <div
+        style={{
+          position: 'absolute',
+          top: 12,
+          left: 12,
+          zIndex: 5,
+          background: isLightMode ? 'rgba(255,255,255,0.92)' : 'rgba(15,23,42,0.8)',
+          backdropFilter: 'blur(10px)',
+          border: isLightMode ? '1px solid rgba(0,0,0,0.08)' : '1px solid rgba(255,255,255,0.08)',
+          borderRadius: 10,
+          padding: '5px 12px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 8,
+          boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+        }}
+      >
         <span style={{ fontSize: 11, fontWeight: 700, color: isLightMode ? '#334155' : '#CBD5E1' }}>
           {bounds.x} × {bounds.y} × {bounds.z} mm
         </span>
-        <span style={{
-          background: '#8B5CF6', color: '#fff', fontSize: 9, fontWeight: 900,
-          padding: '2px 7px', borderRadius: 5, textTransform: 'uppercase', letterSpacing: 0.5,
-        }}>
+        <span
+          style={{
+            background: '#8B5CF6',
+            color: '#fff',
+            fontSize: 9,
+            fontWeight: 900,
+            padding: '2px 7px',
+            borderRadius: 5,
+            textTransform: 'uppercase',
+            letterSpacing: 0.5,
+          }}
+        >
           {fmt}
         </span>
       </div>
 
-      {/* Center Subtle Gesture Hint (fades away automatically) */}
+      {/* Center Gesture Hint (fades away automatically) */}
       {showHint && !loading && (
-        <div style={{
-          position: 'absolute', top: 12, right: 12, zIndex: 4,
-          background: isLightMode ? 'rgba(255,255,255,0.85)' : 'rgba(15,23,42,0.6)',
-          backdropFilter: 'blur(8px)',
-          border: isLightMode ? '1px solid rgba(0,0,0,0.06)' : '1px solid rgba(255,255,255,0.06)',
-          borderRadius: 8,
-          padding: '4px 10px',
-          color: isLightMode ? '#475569' : '#94A3B8',
-          fontSize: 11, fontWeight: 600,
-          pointerEvents: 'none', transition: 'opacity 0.5s ease',
-          boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
-        }}>
-          🖱️ Drag to rotate • Double-click to center
+        <div
+          style={{
+            position: 'absolute',
+            top: 12,
+            right: 12,
+            zIndex: 4,
+            background: isLightMode ? 'rgba(255,255,255,0.85)' : 'rgba(15,23,42,0.65)',
+            backdropFilter: 'blur(8px)',
+            border: isLightMode ? '1px solid rgba(0,0,0,0.06)' : '1px solid rgba(255,255,255,0.06)',
+            borderRadius: 8,
+            padding: '4px 10px',
+            color: isLightMode ? '#475569' : '#94A3B8',
+            fontSize: 11,
+            fontWeight: 600,
+            pointerEvents: 'none',
+            transition: 'opacity 0.5s ease',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
+          }}
+        >
+          🖱️ Drag to orbit • Double-click to center
         </div>
       )}
 
-      {/* Bottom-right: Clean Minimal Control Pills */}
-      <div style={{
-        position: 'absolute', bottom: 12, right: 12, zIndex: 5,
-        display: 'flex', gap: 6,
-      }}>
+      {/* Bottom-right: Control Pills */}
+      <div
+        style={{
+          position: 'absolute',
+          bottom: 12,
+          right: 12,
+          zIndex: 5,
+          display: 'flex',
+          gap: 6,
+          flexWrap: 'wrap',
+        }}
+      >
         <ViewerBtn
           active={false}
           onClick={handleResetView}
           label="🎯 Center"
           title="Reset camera angle (or double-click)"
+          isLightMode={isLightMode}
+        />
+        <ViewerBtn
+          active={false}
+          onClick={handleRotateOrientation}
+          label="🔄 Orient"
+          title="Rotate model orientation 90°"
           isLightMode={isLightMode}
         />
         <ViewerBtn
@@ -605,11 +772,10 @@ function ThreeViewerInner({
           active={rotating}
           onClick={() => setRotating(!rotating)}
           label={rotating ? '⏸ Pause' : '🔄 Rotate'}
-          activeColor="#FF6B35"
+          activeColor="#ea580c"
           title="Toggle auto rotation"
           isLightMode={isLightMode}
         />
-
         <ViewerBtn
           active={isFullscreen}
           onClick={() => setIsFullscreen(!isFullscreen)}
@@ -647,7 +813,7 @@ function ViewerBtn({
           ? activeColor
           : isLightMode
             ? 'rgba(255,255,255,0.92)'
-            : 'rgba(15,23,42,0.75)',
+            : 'rgba(15,23,42,0.8)',
         color: active
           ? '#FFFFFF'
           : isLightMode
