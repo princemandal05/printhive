@@ -169,16 +169,15 @@ function ThreeViewerInner({
     }
   }, [color])
 
-  // Sync floating state
+  // Sync floating state and orientation
   useEffect(() => {
     isFloatingRef.current = isFloating
     if (groupRef.current) {
-      const baseRotX = fmt === 'stl' || fmt === '3mf' ? -Math.PI / 2 : 0
-      const tiltX = isFloating ? Math.PI / 5.5 : 0
-      groupRef.current.rotation.x = baseRotX + (rotationStep % 2 === 1 ? Math.PI / 2 : 0) + tiltX
+      const tiltX = isFloating ? Math.PI / 6.5 : 0
+      groupRef.current.rotation.x = (rotationStep % 2 === 1 ? Math.PI / 2 : 0) + tiltX
       groupRef.current.rotation.y = rotationStep >= 2 ? Math.PI : 0
     }
-  }, [isFloating, rotationStep, fmt])
+  }, [isFloating, rotationStep])
 
   // Hide gesture hint after 4 seconds
   useEffect(() => {
@@ -289,13 +288,6 @@ function ThreeViewerInner({
     if (box.isEmpty()) return
 
     const size = box.getSize(new THREE.Vector3())
-    const center = box.getCenter(new THREE.Vector3())
-
-    // Center model in X and Z, and place base on Y = 0 (build plate)
-    obj.position.x -= center.x
-    obj.position.z -= center.z
-    obj.position.y -= box.min.y
-
     setBounds({ x: Math.round(size.x), y: Math.round(size.y), z: Math.round(size.z) })
 
     // Auto-detect flat relief designs (e.g. pins, badges, keychains, coins) and enable floating showcase
@@ -314,13 +306,13 @@ function ThreeViewerInner({
       }
 
       if (bedGridRef.current) {
-        const bedSize = Math.max(Math.ceil(maxDim * 1.5 / 10) * 10, 100)
+        const bedSize = Math.max(Math.ceil((maxDim * 1.5) / 10) * 10, 100)
         bedGridRef.current.scale.set(bedSize / 100, 1, bedSize / 100)
       }
 
       const fov = camera.fov * (Math.PI / 180)
-      let dist = (maxDim / 2 / Math.tan(fov / 2)) * 1.45
-      dist = Math.max(dist, 8)
+      let dist = (maxDim / 2 / Math.tan(fov / 2)) * 1.55
+      dist = Math.max(dist, 10)
 
       const targetY = size.y * 0.45
       controls.target.set(0, targetY, 0)
@@ -375,13 +367,6 @@ function ThreeViewerInner({
     if (!groupRef.current || !cameraRef.current || !controlsRef.current) return
     const nextStep = (rotationStep + 1) % 4
     setRotationStep(nextStep)
-
-    const baseRotX = fmt === 'stl' || fmt === '3mf' ? -Math.PI / 2 : 0
-    groupRef.current.rotation.x = baseRotX + (nextStep % 2 === 1 ? Math.PI / 2 : 0)
-    groupRef.current.rotation.y = nextStep >= 2 ? Math.PI : 0
-    groupRef.current.position.set(0, 0, 0)
-
-    fitCameraToObject(groupRef.current, cameraRef.current, controlsRef.current)
   }
 
   // High-Resolution Snapshot Capture & Download
@@ -598,6 +583,22 @@ function ThreeViewerInner({
       }
     }
 
+    // Helper to center child objects inside group with base on Y=0
+    const centerChildInGroup = (child: THREE.Object3D, isZUp = false) => {
+      if (isZUp) {
+        child.rotation.x = -Math.PI / 2
+      }
+      child.updateMatrixWorld(true)
+      const box = new THREE.Box3().setFromObject(child)
+      if (box.isEmpty()) return
+
+      const center = box.getCenter(new THREE.Vector3())
+      child.position.x = -center.x
+      child.position.z = -center.z
+      child.position.y = -box.min.y
+      child.updateMatrixWorld(true)
+    }
+
     // ─── Load Model ──────────────────────────────────────
     const load = async () => {
       if (!modelUrl) {
@@ -613,6 +614,13 @@ function ThreeViewerInner({
           const geo = new STLLoader().parse(buf)
           if (!geo?.attributes?.position?.count) throw new Error('Empty STL file')
           geo.computeVertexNormals()
+          geo.rotateX(-Math.PI / 2)
+          geo.computeBoundingBox()
+          const geoBox = geo.boundingBox!
+          const geoCenter = new THREE.Vector3()
+          geoBox.getCenter(geoCenter)
+          geo.translate(-geoCenter.x, -geoBox.min.y, -geoCenter.z)
+
           const mesh = new THREE.Mesh(geo, makeFilamentMat())
           mesh.castShadow = true
           mesh.receiveShadow = true
@@ -620,10 +628,7 @@ function ThreeViewerInner({
           const tris = Math.round(geo.attributes.position.count / 3)
           setPolyCount(tris)
 
-          // Standard STL files from CAD/Slicers are Z-up; orient upright in Three.js Y-up world
-          group.rotation.x = -Math.PI / 2
           group.add(mesh)
-
           fitCameraToObject(group, camera, controls)
           setLoading(false)
 
@@ -633,11 +638,9 @@ function ThreeViewerInner({
           const parsed = new ThreeMFLoader().parse(buf)
           if (!parsed?.children?.length) throw new Error('Empty 3MF file')
           styleMeshes(parsed)
+          centerChildInGroup(parsed, true)
 
-          // Standard 3MF files are Z-up; orient upright in Three.js Y-up world
-          group.rotation.x = -Math.PI / 2
           group.add(parsed)
-
           fitCameraToObject(group, camera, controls)
           setLoading(false)
 
@@ -647,8 +650,9 @@ function ThreeViewerInner({
           const parsed = new OBJLoader().parse(txt)
           if (!parsed?.children?.length) throw new Error('Empty OBJ file')
           styleMeshes(parsed)
-          group.add(parsed)
+          centerChildInGroup(parsed, false)
 
+          group.add(parsed)
           fitCameraToObject(group, camera, controls)
           setLoading(false)
 
@@ -664,6 +668,8 @@ function ThreeViewerInner({
                 return
               }
               styleMeshes(s)
+              centerChildInGroup(s, false)
+
               group.add(s)
               fitCameraToObject(group, camera, controls)
               setLoading(false)
@@ -717,18 +723,22 @@ function ThreeViewerInner({
     const tick = () => {
       animId = requestAnimationFrame(tick)
       const time = clock.getElapsedTime()
+      const maxDim = maxModelDim.current || 50
 
-      if (groupRef.current && isFloatingRef.current) {
-        const floatOffset = Math.sin(time * 2.2) * (maxModelDim.current * 0.025)
-        groupRef.current.position.y = (maxModelDim.current * 0.15) + floatOffset
-        if (shadowPlaneRef.current) {
-          shadowPlaneRef.current.position.y = -0.05
-          shadowPlaneRef.current.scale.setScalar((maxModelDim.current / 22) * (1 + Math.sin(time * 2.2) * 0.06))
-        }
-      } else if (groupRef.current) {
-        groupRef.current.position.y = 0
-        if (shadowPlaneRef.current) {
-          shadowPlaneRef.current.scale.set(maxModelDim.current / 25, maxModelDim.current / 25, 1)
+      if (groupRef.current) {
+        if (isFloatingRef.current) {
+          const floatOffset = Math.sin(time * 2.0) * (maxDim * 0.015)
+          groupRef.current.position.y = (maxDim * 0.06) + floatOffset
+          if (shadowPlaneRef.current) {
+            shadowPlaneRef.current.position.y = -0.05
+            shadowPlaneRef.current.scale.setScalar((maxDim / 22) * (1 + Math.sin(time * 2.0) * 0.04))
+          }
+        } else {
+          groupRef.current.position.y = 0
+          if (shadowPlaneRef.current) {
+            shadowPlaneRef.current.position.y = -0.1
+            shadowPlaneRef.current.scale.set(maxDim / 25, maxDim / 25, 1)
+          }
         }
       }
 
