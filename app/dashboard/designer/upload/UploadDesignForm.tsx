@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/utils/supabase/client'
 import CloudinaryUploader, { type CloudinaryMetadata } from '@/components/CloudinaryUploader'
+import ThreeViewer from '@/components/ThreeViewer'
 
 const CATEGORIES = ['Toys & Games', 'Home & Office', 'Home & Decor', 'Personalized', 'Repair Parts']
 const MATERIALS = ['PLA', 'PETG', 'ABS', 'TPU (Flexible)', 'Resin']
@@ -373,33 +374,54 @@ export default function UploadDesignForm() {
             </button>
           </div>
 
-          <div style={{ position: 'sticky', top: 24 }}>
+          <div style={{ position: 'sticky', top: 24, display: 'flex', flexDirection: 'column', gap: 18 }}>
+            {cloudinaryFileUrl && (
+              <div style={s.card}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                  <div style={{ fontSize: 13, fontWeight: 800, color: '#8B5CF6', textTransform: 'uppercase' }}>
+                    🧊 3D Pre-Flight Inspection
+                  </div>
+                  <span style={{ fontSize: 10, fontWeight: 900, background: 'rgba(16, 185, 129, 0.1)', color: '#10B981', padding: '2px 8px', borderRadius: 99 }}>
+                    Ready
+                  </span>
+                </div>
+                <ThreeViewer
+                  title={title || 'Pre-Flight 3D Check'}
+                  modelUrl={cloudinaryFileUrl}
+                  fileName={fileName}
+                  format={fileFormat}
+                  mimeType={fileMimeType}
+                  height={240}
+                />
+              </div>
+            )}
+
             <div style={s.card}>
               <div style={{ fontSize: 13, fontWeight: 800, color: '#8B5CF6', textTransform: 'uppercase', marginBottom: 12 }}>
-                Live Model Preview
+                Live Marketplace Card Preview
               </div>
 
               <div style={{ background: '#F8FAFC', borderRadius: 16, border: '1px solid #E2E8F0', overflow: 'hidden' }}>
                 <img
                   src={previewImageUrl || 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=600&q=80'}
                   alt="3D Preview"
-                  style={{ width: '100%', height: 180, objectFit: 'cover' }}
+                  style={{ width: '100%', height: 160, objectFit: 'cover' }}
                 />
-                <div style={{ padding: 18 }}>
+                <div style={{ padding: 16 }}>
                   <div style={{ fontSize: 11, color: '#8B5CF6', fontWeight: 800, textTransform: 'uppercase', marginBottom: 4 }}>{category}</div>
-                  <div style={{ fontSize: 16, fontWeight: 900, color: '#0F172A', marginBottom: 6 }}>{title || 'Model Title Preview'}</div>
+                  <div style={{ fontSize: 15, fontWeight: 900, color: '#0F172A', marginBottom: 6 }}>{title || 'Model Title Preview'}</div>
                   <div style={{ fontSize: 12, color: '#64748B', marginBottom: 12 }}>Materials: {materials.join(', ')}</div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div style={{ fontSize: 18, fontWeight: 900, color: pricingType === 'free' ? '#10B981' : '#0F172A' }}>
+                    <div style={{ fontSize: 17, fontWeight: 900, color: pricingType === 'free' ? '#10B981' : '#0F172A' }}>
                       {pricingType === 'free' ? 'Free (₹0)' : `₹${price || '0'}`}
                     </div>
                     <span
                       style={{
                         background: pricingType === 'free' ? '#10B981' : pricingType === 'one_time' ? '#0284C7' : '#8B5CF6',
                         color: '#fff',
-                        padding: '4px 12px',
+                        padding: '4px 10px',
                         borderRadius: 8,
-                        fontSize: 12,
+                        fontSize: 11,
                         fontWeight: 800,
                       }}
                     >

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
+import ThreeViewer from '@/components/ThreeViewer'
 import { useStore } from '@/lib/cart-context'
 import {
   UploadCloud,
@@ -33,6 +34,14 @@ const MATERIALS = [
 ]
 
 const COLORS = ['Obsidian Black', 'Pure White', 'Terracotta Orange', 'Crimson Red', 'Signal Blue', 'Emerald Green']
+const COLOR_HEX_MAP: Record<string, string> = {
+  'Obsidian Black': '#1e293b',
+  'Pure White': '#f8fafc',
+  'Terracotta Orange': '#ea580c',
+  'Crimson Red': '#ef4444',
+  'Signal Blue': '#3b82f6',
+  'Emerald Green': '#10b981',
+}
 const QUALITY_PRESETS = [
   { id: 'standard', name: 'Standard (0.20 mm)', layerTime: 1.0 },
   { id: 'fine', name: 'Fine (0.12 mm)', layerTime: 1.4 },
@@ -59,39 +68,39 @@ const NEARBY_HUBS: PrinterHub[] = [
     model: 'Bambu Lab X1-Carbon Dual-Nozzle',
     distance: '1.4 km away',
     rating: 4.9,
-    completedOrders: 184,
+    completedOrders: 312,
     materials: ['PLA', 'PETG', 'ABS', 'TPU'],
     buildVolume: '256 × 256 × 256 mm',
-    completionEstimate: 'Today • 6:30 PM',
-    price: 380,
+    completionEstimate: 'Ready in ~4h 30m',
+    price: 350,
   },
   {
     id: 'hub-2',
-    name: 'RapidLayer 3D Studio (Indiranagar)',
-    model: 'Prusa MK4 with Enclosure',
-    distance: '2.8 km away',
+    name: 'Apex Rapid Fab (Indiranagar)',
+    model: 'Prusa MK4 Enclosed System',
+    distance: '3.2 km away',
     rating: 4.8,
-    completedOrders: 142,
+    completedOrders: 189,
     materials: ['PLA', 'PETG', 'ABS'],
     buildVolume: '250 × 210 × 220 mm',
-    completionEstimate: 'Tomorrow • 11:00 AM',
-    price: 340,
+    completionEstimate: 'Ready in ~6h 00m',
+    price: 320,
   },
   {
     id: 'hub-3',
-    name: 'Elegoo SLA Micro-Manufacturing (HSR)',
-    model: 'Elegoo Saturn 4 Ultra 12K Resin',
-    distance: '3.6 km away',
+    name: 'Zenith Micro SLA Center (HSR Layout)',
+    model: 'Formlabs Form 3+ SLA Laser',
+    distance: '4.8 km away',
     rating: 5.0,
-    completedOrders: 96,
+    completedOrders: 420,
     materials: ['Resin', 'PLA'],
-    buildVolume: '218 × 122 × 220 mm',
-    completionEstimate: 'Tomorrow • 3:00 PM',
-    price: 450,
+    buildVolume: '145 × 145 × 185 mm',
+    completionEstimate: 'Ready in ~8h 15m',
+    price: 480,
   },
 ]
 
-export default function PrintOnDemandUploadPage() {
+export default function PrintOnDemandPage() {
   const router = useRouter()
   const { addToCart } = useStore()
 
@@ -103,6 +112,7 @@ export default function PrintOnDemandUploadPage() {
   const [file, setFile] = useState<File | null>(null)
   const [fileName, setFileName] = useState('')
   const [fileSizeMb, setFileSizeMb] = useState(0)
+  const [modelBlobUrl, setModelBlobUrl] = useState<string | null>(null)
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [analysisDone, setAnalysisDone] = useState(false)
 
@@ -129,8 +139,11 @@ export default function PrintOnDemandUploadPage() {
       if (analysisTimerRef.current) {
         clearTimeout(analysisTimerRef.current)
       }
+      if (modelBlobUrl) {
+        URL.revokeObjectURL(modelBlobUrl)
+      }
     }
-  }, [])
+  }, [modelBlobUrl])
 
   const handleFileUpload = (uploadedFile: File | null) => {
     if (!uploadedFile) return
@@ -138,6 +151,12 @@ export default function PrintOnDemandUploadPage() {
       clearTimeout(analysisTimerRef.current)
     }
     const currentRev = ++analysisRevisionRef.current
+
+    if (modelBlobUrl) {
+      URL.revokeObjectURL(modelBlobUrl)
+    }
+    const blobUrl = URL.createObjectURL(uploadedFile)
+    setModelBlobUrl(blobUrl)
 
     setFile(uploadedFile)
     setFileName(uploadedFile.name)
@@ -293,6 +312,28 @@ export default function PrintOnDemandUploadPage() {
                 />
               </label>
             </div>
+
+            {/* LIVE 3D SLICER VIEWPORT */}
+            {modelBlobUrl && (
+              <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 20, padding: 18, boxShadow: '0 4px 20px rgba(0,0,0,0.02)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <div style={{ width: 24, height: 24, borderRadius: '50%', background: '#8B5CF6', color: '#fff', fontSize: 11, fontWeight: 900, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>3D</div>
+                    <h3 style={{ fontSize: 15, fontWeight: 800, margin: 0 }}>Interactive Slicer Viewport</h3>
+                  </div>
+                  <span style={{ fontSize: 11, color: '#8B5CF6', fontWeight: 800, background: 'rgba(139, 92, 246, 0.1)', padding: '2px 8px', borderRadius: 99 }}>
+                    Live Filament: {color}
+                  </span>
+                </div>
+                <ThreeViewer
+                  title={fileName || 'Uploaded CAD File'}
+                  modelUrl={modelBlobUrl}
+                  fileName={fileName}
+                  color={COLOR_HEX_MAP[color] || '#ea580c'}
+                  height={360}
+                />
+              </div>
+            )}
 
             {/* STEP 2: AUTOMATIC MESH & GEOMETRY DIAGNOSTICS */}
             {(isAnalyzing || analysisDone) && (

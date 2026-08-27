@@ -131,6 +131,8 @@ function ThreeViewerInner({
   const [isFloating, setIsFloating] = useState(false)
   const isFloatingRef = useRef(isFloating)
   const [showColorPicker, setShowColorPicker] = useState(false)
+  const [slicePercent, setSlicePercent] = useState<number>(100)
+  const [showSliceSlider, setShowSliceSlider] = useState(false)
 
   const sceneRef = useRef<THREE.Scene | null>(null)
   const controlsRef = useRef<OrbitControls | null>(null)
@@ -140,6 +142,7 @@ function ThreeViewerInner({
   const shadowPlaneRef = useRef<THREE.Mesh | null>(null)
   const bedGridRef = useRef<THREE.GridHelper | null>(null)
   const matsRef = useRef<(THREE.MeshPhysicalMaterial | THREE.MeshStandardMaterial)[]>([])
+  const clipPlaneRef = useRef<THREE.Plane>(new THREE.Plane(new THREE.Vector3(0, -1, 0), 99999))
   const initialCamPos = useRef<THREE.Vector3>(new THREE.Vector3())
   const initialTarget = useRef<THREE.Vector3>(new THREE.Vector3())
   const maxModelDim = useRef<number>(50)
@@ -147,6 +150,24 @@ function ThreeViewerInner({
   const detected = detectModelFormat({ format, fileName, mimeType, url: modelUrl })
   const fmt: ModelFormat = detected.format
   const safeColor = /^#[0-9A-Fa-f]{6}$/.test(activeColor || '') ? activeColor : '#ea580c'
+
+  // Update clipping plane height
+  useEffect(() => {
+    const maxY = bounds.y || maxModelDim.current || 50
+    if (slicePercent >= 100) {
+      clipPlaneRef.current.constant = 99999
+    } else {
+      const clipY = Math.max((slicePercent / 100) * maxY, 0.2)
+      clipPlaneRef.current.constant = clipY
+    }
+  }, [slicePercent, bounds.y])
+
+  // Sync color prop updates if provided
+  useEffect(() => {
+    if (color && /^#[0-9A-Fa-f]{6}$/.test(color)) {
+      setActiveColor(color)
+    }
+  }, [color])
 
   // Sync floating state
   useEffect(() => {
@@ -409,6 +430,7 @@ function ThreeViewerInner({
     renderer.toneMappingExposure = 1.3
     renderer.shadowMap.enabled = true
     renderer.shadowMap.type = THREE.PCFSoftShadowMap
+    renderer.localClippingEnabled = true
     rendererRef.current = renderer
     container.innerHTML = ''
     container.appendChild(renderer.domElement)
@@ -500,6 +522,8 @@ function ThreeViewerInner({
         reflectivity: 0.6,
         wireframe,
         side: THREE.DoubleSide,
+        clippingPlanes: [clipPlaneRef.current],
+        clipShadows: true,
       })
       ;(mat as any)._isFilamentMat = true
       matsRef.current.push(mat)
@@ -532,6 +556,8 @@ function ThreeViewerInner({
               origMat.metalness = Math.min(origMat.metalness ?? 0.1, 0.2)
               origMat.wireframe = wireframe
               origMat.side = THREE.DoubleSide
+              origMat.clippingPlanes = [clipPlaneRef.current]
+              origMat.clipShadows = true
               origMat.needsUpdate = true
               matsRef.current.push(origMat)
             } else if (origMat) {
@@ -543,6 +569,8 @@ function ThreeViewerInner({
                 metalness: 0.08,
                 wireframe,
                 side: THREE.DoubleSide,
+                clippingPlanes: [clipPlaneRef.current],
+                clipShadows: true,
               })
               child.material = enhancedMat
               matsRef.current.push(enhancedMat)
@@ -890,6 +918,21 @@ function ThreeViewerInner({
         >
           {fmt}
         </span>
+        {Math.max(bounds.x, bounds.y, bounds.z) > 256 && (
+          <span
+            style={{
+              background: 'rgba(239, 68, 68, 0.15)',
+              color: '#ef4444',
+              border: '1px solid rgba(239, 68, 68, 0.3)',
+              fontSize: 9.5,
+              fontWeight: 800,
+              padding: '2px 6px',
+              borderRadius: 5,
+            }}
+          >
+            ⚠️ &gt;256mm Bed
+          </span>
+        )}
       </div>
 
       {/* Top-right: Snap View Angles & Snapshot Button */}
@@ -970,6 +1013,50 @@ function ThreeViewerInner({
           }}
         >
           🖱️ Drag to orbit • Double-click to center
+        </div>
+      )}
+
+      {/* Live Slicing Layer Inspector Overlay */}
+      {showSliceSlider && (
+        <div
+          style={{
+            position: 'absolute',
+            bottom: 54,
+            left: 12,
+            right: 12,
+            maxWidth: 380,
+            zIndex: 6,
+            background: isLightMode ? 'rgba(255,255,255,0.95)' : 'rgba(15,23,42,0.95)',
+            backdropFilter: 'blur(12px)',
+            border: isLightMode ? '1px solid rgba(0,0,0,0.1)' : '1px solid rgba(255,255,255,0.12)',
+            borderRadius: 12,
+            padding: '10px 14px',
+            boxShadow: '0 8px 24px rgba(0,0,0,0.2)',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 6,
+          }}
+        >
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ fontSize: 11, fontWeight: 800, color: isLightMode ? '#1E293B' : '#F8FAFC' }}>
+              🥪 Layer Height Slicer: {slicePercent}%
+            </span>
+            <span style={{ fontSize: 10.5, fontWeight: 700, color: '#ea580c' }}>
+              {((slicePercent / 100) * (bounds.y || 50)).toFixed(1)} mm
+            </span>
+          </div>
+          <input
+            type="range"
+            min={5}
+            max={100}
+            value={slicePercent}
+            onChange={(e) => setSlicePercent(Number(e.target.value))}
+            style={{
+              width: '100%',
+              accentColor: '#ea580c',
+              cursor: 'pointer',
+            }}
+          />
         </div>
       )}
 
@@ -1056,6 +1143,14 @@ function ThreeViewerInner({
           onClick={() => setShowColorPicker(!showColorPicker)}
           label="🎨 Color"
           title="Pick Filament Color"
+          isLightMode={isLightMode}
+        />
+
+        <ViewerBtn
+          active={showSliceSlider}
+          onClick={() => setShowSliceSlider(!showSliceSlider)}
+          label={showSliceSlider ? '🥪 Slice ON' : '🥪 Slice'}
+          title="Inspect Layer Cross-Section Height"
           isLightMode={isLightMode}
         />
 
