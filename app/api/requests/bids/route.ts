@@ -35,17 +35,18 @@ export async function POST(request: Request) {
 
     const { data: profile } = await supabase
       .from('profiles')
-      .select('full_name, role')
+      .select('full_name, role, rating')
       .eq('id', user.id)
       .maybeSingle()
 
     const designerName = profile?.full_name || user.email?.split('@')[0] || 'Designer'
+    const designerRating = Number(profile?.rating || 0)
 
     const noteText = note ? String(note) : ''
     const candidatePayloads = [
-      { request_id, designer_id: user.id, designer_name: designerName, price: parsedPrice, days: parsedDays, note: noteText, rating: 4.9 },
-      { request_id, designer_id: user.id, designer_name: designerName, price: parsedPrice, turnaround_days: parsedDays, note: noteText, rating: 4.9 },
-      { request_id, designer_id: user.id, designer_name: designerName, price: parsedPrice, delivery_days: parsedDays, note: noteText, rating: 4.9 },
+      { request_id, designer_id: user.id, designer_name: designerName, price: parsedPrice, days: parsedDays, note: noteText, rating: designerRating },
+      { request_id, designer_id: user.id, designer_name: designerName, price: parsedPrice, turnaround_days: parsedDays, note: noteText, rating: designerRating },
+      { request_id, designer_id: user.id, designer_name: designerName, price: parsedPrice, delivery_days: parsedDays, note: noteText, rating: designerRating },
       { request_id, designer_id: user.id, designer_name: designerName, price: parsedPrice, note: noteText },
       { request_id, designer_id: user.id, price: parsedPrice, note: noteText },
       { request_id, designer_id: user.id, price: parsedPrice },

@@ -13,6 +13,7 @@ interface PrinterHub {
   name: string
   distance?: string
   rating?: number
+  completedOrders?: number
   price: number
 }
 
@@ -74,8 +75,9 @@ function OrderPageContent() {
           const mapped = dbPrinters.map((p: any) => ({
             id: p.id,
             name: p.name || p.printer_model || 'PrintHub',
-            distance: 'Nearby',
-            rating: p.rating !== null && p.rating !== undefined ? Number(p.rating) : 0,
+            distance: p.address ? p.address.split(',')[0]?.trim() || 'Nearby' : 'Nearby',
+            rating: (Number(p.completed_orders || 0) > 0 && p.rating) ? Number(p.rating) : 0,
+            completedOrders: Number(p.completed_orders || 0),
             price: Number(p.base_price || p.price || 350),
           }))
           setPrinters(mapped)
@@ -102,21 +104,54 @@ function OrderPageContent() {
   const platformFee = Math.round(subtotal * 0.05)
   const total = subtotal + platformFee
 
-  const handlePlaceOrder = () => {
+  const handlePlaceOrder = async () => {
     if (!address.trim()) {
       alert('Please enter your delivery address to proceed.')
       return
     }
+    if (!activePrinter) {
+      alert('Please select a printer hub to fulfill your request.')
+      return
+    }
+
     setPlacing(true)
-    addToCart({
-      id: `custom-print-${designId || 'print'}`,
-      name: `${designTitle ? `${designTitle} - ` : ''}Custom Print Job (Material: ${material}, Finish: ${surfaceFinish})`,
-      price: unitPrice,
-      seller: activePrinter?.name || 'PrintHive Verified Hub',
-      stock: 10,
-      image: designThumbnail,
-    }, quantity)
-    router.push('/checkout')
+
+    try {
+      const notesSummary = `Design Model #${designId}${designTitle ? ` (${designTitle})` : ''} | Material: ${material} | Color: ${color} | Infill: ${infill}% | Scale: ${scale}% | Finish: ${surfaceFinish} | Layer Height: ${layerHeight} mm`
+
+      const res = await fetch('/api/orders/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          design_id: designId,
+          printer_id: activePrinter.id,
+          quantity,
+          shipping_address: address,
+          custom_total: total,
+          initial_status: 'PRINTER_ASSIGNED',
+          notes: notesSummary,
+        }),
+      })
+
+      const resData = await res.json()
+
+      if (!res.ok || !resData.success) {
+        if (res.status === 401) {
+          alert('Please log in or sign up to dispatch your print request!')
+          router.push(`/login?redirect=/designs/${designId}/order`)
+          return
+        }
+        alert(`Could not dispatch order: ${resData.error || 'Please try again'}`)
+        setPlacing(false)
+        return
+      }
+
+      router.push(`/orders/${resData.order.id}`)
+    } catch (err: any) {
+      console.error('Error dispatching design print job:', err)
+      alert('An unexpected error occurred while placing your request. Please try again.')
+      setPlacing(false)
+    }
   }
 
   return (
@@ -257,7 +292,7 @@ function OrderPageContent() {
                         <div>
                           <div className="text-sm" style={{ fontWeight: 600 }}>{p.name}</div>
                           <div className="text-xs text-muted">
-                            {p.distance || 'Nearby'} · {(p.rating ?? 0) > 0 ? `★ ${(p.rating ?? 0).toFixed(1)}` : '★ 0.0 (New Hub)'}
+                            {p.distance || 'Nearby'} · {((p.completedOrders ?? 0) > 0 && (p.rating ?? 0) > 0) ? `★ ${(p.rating ?? 0).toFixed(1)}` : '★ 0.0 • 🆕 New Hub'}
                           </div>
                         </div>
                       </div>
@@ -293,10 +328,10 @@ function OrderPageContent() {
                 disabled={placing || !address.trim() || !selectedPrinter}
                 onClick={handlePlaceOrder}
               >
-                {placing ? 'Placing order…' : `Pay ₹${total} securely`}
+                {placing ? 'Dispatching Request…' : `🚀 Dispatch Print Request (₹${total})`}
               </button>
               <p className="help-text" style={{ textAlign: 'center', marginTop: 'var(--space-3)' }}>
-                Razorpay test mode · funds released only after you confirm delivery
+                Request is reviewed & accepted by the printer hub before Escrow payment is collected
               </p>
             </div>
           </div>
