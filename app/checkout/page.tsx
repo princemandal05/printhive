@@ -105,6 +105,15 @@ export default function CheckoutPage() {
     })
   }
 
+  const [mockOrderData, setMockOrderData] = useState<any>(null)
+  const [addressData, setAddressData] = useState({
+    firstName: 'Prince',
+    lastName: 'Mandal',
+    fullAddress: '123 Innovation Park, Connaught Place',
+    city: 'New Delhi',
+    pincode: '110001',
+  })
+
   const handleConfirmPayment = async () => {
     if (!cart || cart.length === 0) {
       alert('Your cart is empty. Please add items before checking out.')
@@ -122,43 +131,18 @@ export default function CheckoutPage() {
     }
 
     setPlacing(true)
-    const orderId = crypto.randomUUID()
 
     try {
-      // 1. Insert order into database
-      const { error: insertErr } = await supabase.from('orders').insert({
-        id: orderId,
-        buyer_id: user.id,
-        buyer_email: user.email,
-        status: paymentCategory === 'cod' ? 'processing' : 'PENDING_PAYMENT',
-        payment_status: paymentCategory === 'cod' ? 'cod_pending' : 'pending',
-        payment_method: paymentCategory || 'upi',
-        total_amount: total,
-        total_price: total,
-        items: cart,
-        created_at: new Date().toISOString(),
-      })
-
-      if (insertErr) {
-        console.error('Failed to create order record:', insertErr.message)
-        alert(`Order creation failed: ${insertErr.message}`)
-        setPlacing(false)
-        return
-      }
-
-      // If Cash on Delivery, finalize directly
-      if (paymentCategory === 'cod') {
-        clearCart()
-        setShowModal(false)
-        router.push(`/orders/${orderId}`)
-        return
-      }
-
-      // 2. Call server endpoint to calculate authoritative total & initialize Razorpay payment
+      // 1. Establish order and payment payload server-side
       const createOrderRes = await fetch('/api/payments/create-order', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ orderId }),
+        body: JSON.stringify({
+          items: cart,
+          paymentMethod: paymentCategory || 'upi',
+          isCod: paymentCategory === 'cod',
+          shippingAddress: `${addressData.firstName} ${addressData.lastName}, ${addressData.fullAddress}, ${addressData.city} ${addressData.pincode}`,
+        }),
       })
 
       if (!createOrderRes.ok) {
@@ -170,21 +154,39 @@ export default function CheckoutPage() {
       }
 
       const orderData = await createOrderRes.json()
+      const currentOrderId = orderData.orderId
 
-      // 3. Load Razorpay SDK and open official checkout popup modal
+      // If Cash on Delivery, finalize directly
+      if (orderData.isCod) {
+        clearCart()
+        setShowModal(false)
+        router.push(`/orders/${currentOrderId}`)
+        return
+      }
+
+      // If in Mock / Sandbox simulator mode (no live Razorpay keys configured)
+      if (orderData.isMock) {
+        setMockOrderData(orderData)
+        setShowModal(true)
+        setPlacing(false)
+        return
+      }
+
+      // 2. Load official Razorpay SDK if live keys exist
       const isLoaded = await loadRazorpayScript()
       if (!isLoaded) {
-        alert('Unable to load Razorpay payment gateway. Please check your internet connection.')
+        setMockOrderData(orderData)
+        setShowModal(true)
         setPlacing(false)
         return
       }
 
       const options = {
-        key: orderData.keyId || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || 'rzp_test_TNe3GDBAV8zSFX',
+        key: orderData.keyId,
         amount: orderData.amount,
         currency: orderData.currency || 'INR',
         name: 'PrintHive Marketplace',
-        description: `Order #${orderId.slice(0, 8)} Payment`,
+        description: `Order #${currentOrderId.slice(0, 8)} Payment`,
         order_id: orderData.razorpayOrderId,
         handler: async function (response: any) {
           try {
@@ -192,7 +194,7 @@ export default function CheckoutPage() {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
-                order_id: orderId,
+                order_id: currentOrderId,
                 razorpay_order_id: response.razorpay_order_id,
                 razorpay_payment_id: response.razorpay_payment_id,
                 razorpay_signature: response.razorpay_signature,
@@ -209,10 +211,10 @@ export default function CheckoutPage() {
 
             clearCart()
             setShowModal(false)
-            router.push(`/orders/${orderId}`)
+            router.push(`/orders/${currentOrderId}`)
           } catch (verifyErr) {
             console.error('Verification error:', verifyErr)
-            alert('A network error occurred while verifying your payment. Your order remains pending verification.')
+            alert('A network error occurred while verifying your payment.')
             setPlacing(false)
           }
         },
@@ -222,18 +224,19 @@ export default function CheckoutPage() {
           contact: '',
         },
         theme: {
-          color: '#FF6B35',
+          color: '#ea580c',
         },
         modal: {
           ondismiss: async function () {
             setPlacing(false)
             try {
-              await supabase.from('orders').update({
-                status: 'cancelled',
-                payment_status: 'failed',
-              }).eq('id', orderId).eq('status', 'PENDING_PAYMENT')
+              await fetch('/api/payments/cancel', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ orderId: currentOrderId, reason: 'Modal dismissed by user' }),
+              })
             } catch (err) {
-              console.warn('Failed to update abandoned order:', err)
+              console.warn('Failed to report cancelled order:', err)
             }
           },
         },
@@ -245,12 +248,13 @@ export default function CheckoutPage() {
         alert(`Payment failed: ${response.error?.description || response.error?.reason || 'Transaction declined'}`)
         setPlacing(false)
         try {
-          await supabase.from('orders').update({
-            status: 'cancelled',
-            payment_status: 'failed',
-          }).eq('id', orderId).eq('status', 'PENDING_PAYMENT')
+          await fetch('/api/payments/cancel', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ orderId: currentOrderId, reason: response.error?.description || 'Transaction declined' }),
+          })
         } catch (err) {
-          console.warn('Failed to update failed order:', err)
+          console.warn('Failed to report failed order:', err)
         }
       })
       rzp.open()
@@ -258,6 +262,42 @@ export default function CheckoutPage() {
       const error = orderErr as Error
       console.error('Checkout error:', error)
       alert(`Checkout failed: ${error.message || 'Unknown error'}`)
+      setPlacing(false)
+    }
+  }
+
+  // Simulator confirmation handler for Sandbox / Dev
+  const handleSimulatePaymentSuccess = async () => {
+    if (!mockOrderData) return
+    setPlacing(true)
+
+    try {
+      const mockPayId = `pay_mock_${Math.random().toString(36).substring(2, 12)}`
+      const verifyRes = await fetch('/api/payments/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          order_id: mockOrderData.orderId,
+          razorpay_order_id: mockOrderData.razorpayOrderId,
+          razorpay_payment_id: mockPayId,
+          razorpay_signature: `mock_sig_${Math.random().toString(36).substring(2, 14)}`,
+        }),
+      })
+
+      if (!verifyRes.ok) {
+        const errData = await verifyRes.json().catch(() => ({}))
+        alert(`Verification failed: ${errData.error || 'Server error'}`)
+        setPlacing(false)
+        return
+      }
+
+      clearCart()
+      setShowModal(false)
+      router.push(`/orders/${mockOrderData.orderId}`)
+    } catch (err) {
+      console.error('Simulation verification error:', err)
+      alert('Verification error occurred during simulation.')
+    } finally {
       setPlacing(false)
     }
   }
@@ -737,11 +777,11 @@ export default function CheckoutPage() {
 
             <button
               type="button"
-              onClick={handleConfirmPayment}
+              onClick={mockOrderData ? handleSimulatePaymentSuccess : handleConfirmPayment}
               disabled={placing}
               style={{ width: '100%', background: '#10B981', color: '#0F172A', border: 'none', borderRadius: 99, padding: '14px', fontWeight: 800, fontSize: 15, cursor: 'pointer', boxShadow: '0 0 20px rgba(16,185,129,0.4)' }}
             >
-              {placing ? 'Authorizing Payment...' : 'Confirm Order & Deposit Escrow →'}
+              {placing ? 'Authorizing Payment...' : mockOrderData ? '⚡ Complete Razorpay Escrow Authorization (Demo)' : 'Confirm Order & Deposit Escrow →'}
             </button>
           </div>
         </div>
