@@ -22,28 +22,28 @@ const nextConfig: NextConfig = {
   async redirects() {
     return [
       {
-        source: '/browse',
-        destination: '/models',
+        source: '/models',
+        destination: '/browse',
         permanent: true,
       },
       {
-        source: '/print-on-demand',
-        destination: '/print',
+        source: '/print',
+        destination: '/print-on-demand',
         permanent: true,
       },
       {
-        source: '/requests',
-        destination: '/design',
+        source: '/design',
+        destination: '/requests',
         permanent: true,
       },
       {
-        source: '/dashboard/printer-owner',
-        destination: '/dashboard/printer',
+        source: '/dashboard/printer',
+        destination: '/dashboard/printer-owner',
         permanent: true,
       },
       {
-        source: '/dashboard/seller',
-        destination: '/dashboard/vendor',
+        source: '/dashboard/vendor',
+        destination: '/dashboard/seller',
         permanent: true,
       },
     ]

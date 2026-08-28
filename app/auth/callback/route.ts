@@ -82,14 +82,21 @@ export async function GET(request: NextRequest) {
           })
         }
 
-        // Clear temporary signup role cookie
+        // Read and clear temporary redirect cookies
+        const cookieNext = cookieStore.get('printhive_next_redirect')?.value
+        const decodedNext = cookieNext ? decodeURIComponent(cookieNext) : null
         cookieStore.set('printhive_signup_role', '', { maxAge: 0, path: '/' })
+        cookieStore.set('printhive_next_redirect', '', { maxAge: 0, path: '/' })
 
         // Set active role cookies
         cookieStore.set('printhive_auth_role', userRole, { maxAge: 604800, path: '/' })
         cookieStore.set('printhive_guest_role', userRole, { maxAge: 604800, path: '/' })
 
-        const targetPath = next || (DASHBOARD_PATH[userRole] ?? '/')
+        const rawTarget = next || decodedNext
+        const targetPath = (rawTarget && rawTarget.startsWith('/') && !rawTarget.startsWith('//') && !rawTarget.includes(':'))
+          ? rawTarget
+          : (DASHBOARD_PATH[userRole] ?? '/')
+
         return NextResponse.redirect(`${origin}${targetPath}`)
       }
 

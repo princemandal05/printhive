@@ -89,17 +89,17 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href={ROUTES.models} style={{ color: 'var(--text-sub)', textDecoration: 'none', transition: 'color 0.15s' }}>
+                <Link href={ROUTES.browse} style={{ color: 'var(--text-sub)', textDecoration: 'none', transition: 'color 0.15s' }}>
                   Digital 3D Models
                 </Link>
               </li>
               <li>
-                <Link href={ROUTES.print} style={{ color: 'var(--text-sub)', textDecoration: 'none', transition: 'color 0.15s' }}>
+                <Link href={ROUTES.printOnDemand} style={{ color: 'var(--text-sub)', textDecoration: 'none', transition: 'color 0.15s' }}>
                   Print-on-Demand
                 </Link>
               </li>
               <li>
-                <Link href={ROUTES.design} style={{ color: 'var(--text-sub)', textDecoration: 'none', transition: 'color 0.15s' }}>
+                <Link href={ROUTES.requests} style={{ color: 'var(--text-sub)', textDecoration: 'none', transition: 'color 0.15s' }}>
                   Custom Design Briefs
                 </Link>
               </li>
@@ -116,16 +116,16 @@ export default function Footer() {
             {role === 'seller' && (
               <>
                 <div style={{ fontSize: 11, fontWeight: 800, color: '#ea580c', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 12 }}>
-                  Vendor Portal
+                  Seller Portal
                 </div>
                 <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 8, fontSize: 12.5 }}>
                   <li>
-                    <Link href={ROUTES.vendor.dashboard} style={{ color: 'var(--text-sub)', textDecoration: 'none', transition: 'color 0.15s' }}>
-                      Vendor Dashboard
+                    <Link href={ROUTES.seller.dashboard} style={{ color: 'var(--text-sub)', textDecoration: 'none', transition: 'color 0.15s' }}>
+                      Seller Dashboard
                     </Link>
                   </li>
                   <li>
-                    <Link href="/dashboard/seller/products/new" style={{ color: 'var(--text-sub)', textDecoration: 'none', transition: 'color 0.15s' }}>
+                    <Link href={ROUTES.seller.newProduct} style={{ color: 'var(--text-sub)', textDecoration: 'none', transition: 'color 0.15s' }}>
                       Add New Product
                     </Link>
                   </li>
@@ -175,12 +175,12 @@ export default function Footer() {
                     </Link>
                   </li>
                   <li>
-                    <Link href="/dashboard/designer/upload" style={{ color: 'var(--text-sub)', textDecoration: 'none', transition: 'color 0.15s' }}>
+                    <Link href={ROUTES.designer.upload} style={{ color: 'var(--text-sub)', textDecoration: 'none', transition: 'color 0.15s' }}>
                       Upload 3D CAD Model
                     </Link>
                   </li>
                   <li>
-                    <Link href={ROUTES.design} style={{ color: 'var(--text-sub)', textDecoration: 'none', transition: 'color 0.15s' }}>
+                    <Link href={ROUTES.requests} style={{ color: 'var(--text-sub)', textDecoration: 'none', transition: 'color 0.15s' }}>
                       Open CAD Briefs
                     </Link>
                   </li>

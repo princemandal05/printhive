@@ -306,7 +306,7 @@ function ShopContent() {
 
         <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
           <Link
-            href={ROUTES.print}
+            href={ROUTES.printOnDemand}
             style={{
               background: 'var(--bg-card)',
               color: 'var(--text-main)',
@@ -325,7 +325,7 @@ function ShopContent() {
           </Link>
 
           <Link
-            href={ROUTES.design}
+            href={ROUTES.requests}
             style={{
               background: '#ea580c',
               color: '#FFFFFF',

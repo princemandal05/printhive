@@ -1,19 +1,25 @@
 /**
  * PrintHive Centralized Route Architecture
- * Single Source of Truth for all navigational and protected URLs
+ * Authoritative Single Source of Truth for all canonical and protected routes.
  */
 
 export const ROUTES = {
   home: '/',
   shop: '/shop',
-  models: '/models',
-  print: '/print',
-  design: '/design',
+  browse: '/browse',
+  models: '/browse',
+  printOnDemand: '/print-on-demand',
+  print: '/print-on-demand',
+  requests: '/requests',
+  design: '/requests',
   cart: '/cart',
   checkout: '/checkout',
   orders: '/orders',
+  printers: '/printers',
   designers: '/designers',
+  community: '/community',
   wishlist: '/wishlist',
+  profile: '/profile',
 
   // Informational & Trust Destinations
   trust: '/trust',
@@ -28,9 +34,10 @@ export const ROUTES = {
   // Authentication Routes
   auth: {
     login: '/login',
-    register: '/register',
+    signup: '/signup',
     forgotPassword: '/forgot-password',
     resetPassword: '/reset-password',
+    otpVerification: '/otp-verification',
     callback: '/auth/callback',
   },
 
@@ -39,21 +46,24 @@ export const ROUTES = {
     dashboard: '/dashboard/buyer',
     orders: '/orders',
     wishlist: '/wishlist',
-    requests: '/design',
+    requests: '/requests',
   },
   designer: {
     dashboard: '/dashboard/designer',
-    models: '/dashboard/designer',
-    upload: '/design/upload',
+    upload: '/dashboard/designer/upload',
+    earnings: '/dashboard/designer/earnings',
   },
   printer: {
-    dashboard: '/dashboard/printer',
-    jobs: '/dashboard/printer',
-    inventory: '/dashboard/printer',
+    dashboard: '/dashboard/printer-owner',
+    register: '/dashboard/printer-owner/register',
+  },
+  seller: {
+    dashboard: '/dashboard/seller',
+    newProduct: '/dashboard/seller/products/new',
   },
   vendor: {
-    dashboard: '/dashboard/vendor',
-    products: '/dashboard/vendor',
+    dashboard: '/dashboard/seller',
+    newProduct: '/dashboard/seller/products/new',
   },
   admin: {
     dashboard: '/dashboard/admin',
@@ -63,7 +73,7 @@ export const ROUTES = {
 export type UserRole = 'buyer' | 'designer' | 'printer_owner' | 'seller' | 'admin' | string
 
 /**
- * Resolves the primary dashboard route based on the user's verified database profile role.
+ * Resolves the authoritative dashboard route based on the verified database profile role.
  */
 export function resolveRoleDashboard(role?: string | null): string {
   switch (role) {
@@ -74,7 +84,7 @@ export function resolveRoleDashboard(role?: string | null): string {
       return ROUTES.printer.dashboard
     case 'seller':
     case 'vendor':
-      return ROUTES.vendor.dashboard
+      return ROUTES.seller.dashboard
     case 'admin':
       return ROUTES.admin.dashboard
     case 'buyer':
@@ -84,7 +94,7 @@ export function resolveRoleDashboard(role?: string | null): string {
 }
 
 /**
- * Returns a human-friendly role badge title for the navigation bar.
+ * Returns a human-friendly role badge title for navigation bars.
  */
 export function getRoleDisplayName(role?: string | null): string {
   switch (role) {
@@ -95,7 +105,7 @@ export function getRoleDisplayName(role?: string | null): string {
       return '🖨️ Printer Hub'
     case 'seller':
     case 'vendor':
-      return '🏪 Vendor Dashboard'
+      return '🏪 Seller Portal'
     case 'admin':
       return '⚡ Admin Console'
     case 'buyer':

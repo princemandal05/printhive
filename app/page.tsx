@@ -6,6 +6,7 @@ import dynamic from 'next/dynamic'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 import { createClient } from '@/utils/supabase/client'
+import { ROUTES } from '@/lib/routes'
 import {
   ShoppingBag,
   PenTool,
@@ -205,7 +206,7 @@ export default function Home() {
               {/* Action Buttons Row */}
               <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 28 }}>
                 <Link
-                  href="/models"
+                  href={ROUTES.browse}
                   style={{
                     background: 'linear-gradient(135deg, #ea580c 0%, #c2410c 100%)',
                     color: '#fff',
@@ -224,7 +225,7 @@ export default function Home() {
                 </Link>
 
                 <Link
-                  href="/print"
+                  href={ROUTES.printOnDemand}
                   style={{
                     background: 'var(--bg-card)',
                     color: 'var(--text-main)',
@@ -243,7 +244,7 @@ export default function Home() {
                 </Link>
 
                 <Link
-                  href="/design"
+                  href={ROUTES.requests}
                   style={{
                     background: 'var(--bg-card)',
                     color: 'var(--text-main)',
@@ -273,7 +274,7 @@ export default function Home() {
                   style={{ flex: 1, background: 'transparent', border: 'none', color: 'var(--text-main)', fontSize: 13.5, outline: 'none' }}
                 />
                 <Link
-                  href={aiSearchQuery ? `/models?q=${encodeURIComponent(aiSearchQuery)}` : '/models'}
+                  href={aiSearchQuery ? `${ROUTES.browse}?q=${encodeURIComponent(aiSearchQuery)}` : ROUTES.browse}
                   className="btn btn-primary"
                   style={{ background: '#ea580c', color: '#fff', border: 'none', borderRadius: 99, padding: '10px 20px', fontWeight: 800, fontSize: 12.5, textDecoration: 'none', whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', gap: 6 }}
                 >

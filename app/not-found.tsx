@@ -56,7 +56,7 @@ export default function NotFound() {
               Back to Home
             </Link>
             <Link
-              href={ROUTES.models}
+              href={ROUTES.browse}
               style={{
                 background: 'var(--bg-card)',
                 color: 'var(--text-main)',

@@ -58,19 +58,30 @@ export default function LoginPage() {
 
       const urlParams = new URLSearchParams(window.location.search)
       const targetDashboard = resolveRoleDashboard(role)
-      const redirectUrl = urlParams.get('redirect') || urlParams.get('next') || targetDashboard
+      const rawRedirect = urlParams.get('redirect') || urlParams.get('next')
+      let safeRedirectUrl = targetDashboard
+
+      if (rawRedirect && rawRedirect.startsWith('/') && !rawRedirect.startsWith('//') && !rawRedirect.includes(':')) {
+        safeRedirectUrl = rawRedirect
+      }
       
       // Set active role auth cookie so middleware grants immediate access
       document.cookie = `printhive_auth_role=${role}; path=/; max-age=604800`
       document.cookie = `printhive_guest_role=${role}; path=/; max-age=604800`
 
-      // Direct login redirect to user role dashboard (or explicit next target)
-      window.location.href = redirectUrl
+      // Direct login redirect to user role dashboard (or explicit safe next target)
+      window.location.href = safeRedirectUrl
     }
   }
 
   const handleGoogleSignIn = async () => {
     setError('')
+    const urlParams = new URLSearchParams(window.location.search)
+    const nextParam = urlParams.get('next') || urlParams.get('redirect')
+    if (nextParam && nextParam.startsWith('/') && !nextParam.startsWith('//') && !nextParam.includes(':')) {
+      document.cookie = `printhive_next_redirect=${encodeURIComponent(nextParam)}; path=/; max-age=300`
+    }
+
     const { error: oauthErr } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
