@@ -92,8 +92,33 @@ function OrderTrackingContent() {
 
     loadOrderHistory()
 
+    // Real-time Supabase subscription & dynamic polling for live status changes
+    const channel = supabase
+      .channel(`order-${orderId}-live`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'order_status_history', filter: `order_id=eq.${orderId}` },
+        () => {
+          loadOrderHistory()
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'orders', filter: `id=eq.${orderId}` },
+        () => {
+          loadOrderHistory()
+        }
+      )
+      .subscribe()
+
+    const pollInterval = setInterval(() => {
+      loadOrderHistory()
+    }, 4000)
+
     return () => {
       isCancelled = true
+      clearInterval(pollInterval)
+      supabase.removeChannel(channel)
     }
   }, [orderId])
 
