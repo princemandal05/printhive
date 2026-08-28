@@ -661,7 +661,7 @@ function PrintOnDemandContent() {
 
               {/* Total */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 20 }}>
-                <span style={{ fontSize: 14, fontWeight: 900 }}>Total Escrow Price</span>
+                <span style={{ fontSize: 13.5, fontWeight: 800 }}>Estimated Escrow Cost</span>
                 <span style={{ fontSize: 26, fontWeight: 900, color: '#ea580c' }}>₹{totalPrice}</span>
               </div>
 
@@ -702,7 +702,7 @@ function PrintOnDemandContent() {
                   transition: 'all 0.15s ease',
                 }}
               >
-                <Zap size={16} /> {placing ? 'Submitting Print Job...' : 'DISPATCH PRINT JOB'}
+                <Zap size={16} /> {placing ? 'Submitting Quote Request...' : 'REQUEST PRINT QUOTE'}
               </button>
 
               {!fileName ? (

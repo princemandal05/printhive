@@ -112,6 +112,13 @@ export default function LoginPage() {
         <div style={s.title}>Welcome back</div>
         <div style={s.sub}>Log in with your account credentials</div>
 
+        {typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('next') && (
+          <div style={{ background: 'rgba(234, 88, 12, 0.08)', border: '1px solid rgba(234, 88, 12, 0.25)', color: '#ea580c', borderRadius: 12, padding: '10px 14px', fontSize: 12.5, fontWeight: 700, marginBottom: 16, display: 'flex', alignItems: 'center', gap: 6 }}>
+            <span>🔒</span>
+            <span>Sign in to access your requested workspace.</span>
+          </div>
+        )}
+
         {error && <div style={s.error}>{error}</div>}
         {resetMessage && <div style={{ background: '#ECFDF5', color: '#065F46', padding: '12px 16px', borderRadius: 12, fontSize: 13, marginBottom: 18, fontWeight: 600, border: '1px solid #A7F3D0' }}>{resetMessage}</div>}
 
