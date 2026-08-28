@@ -25,6 +25,7 @@ import {
   HelpCircle,
   FileCheck,
 } from 'lucide-react'
+import { analyze3DModelFile, calculateEstimatedWeight } from '@/utils/mesh-analyzer'
 
 const MATERIALS = [
   { id: 'PLA', name: 'PLA (Standard Prototyping)', baseRate: 1.2, desc: 'Eco-friendly, precise dimensional stability' },
@@ -156,7 +157,7 @@ function PrintOnDemandContent() {
     }
   }, [])
 
-  const handleFileUpload = (uploadedFile: File | null) => {
+  const handleFileUpload = async (uploadedFile: File | null) => {
     if (!uploadedFile) return
     if (analysisTimerRef.current) {
       clearTimeout(analysisTimerRef.current)
@@ -174,15 +175,31 @@ function PrintOnDemandContent() {
     setIsAnalyzing(true)
     setAnalysisDone(false)
 
-    // Run real-time mesh pre-flight analysis
-    analysisTimerRef.current = setTimeout(() => {
+    try {
+      // Run deterministic, mathematical 3D geometry analysis
+      const analysisResult = await analyze3DModelFile(uploadedFile)
+      
+      setMeshDimensions(analysisResult.dimensionsFormatted)
+      setMeshVolumeCm3(analysisResult.volumeCm3)
+      setEstimatedWeightGrams(calculateEstimatedWeight(analysisResult.volumeCm3, material.id, infill))
+      setIncludeSupports(analysisResult.supportsRecommended)
+    } catch (err) {
+      console.warn('Mesh analysis notice:', err)
+      const fallbackVol = Math.max(15, Math.round((uploadedFile.size / 1024) * 0.35))
+      setMeshVolumeCm3(fallbackVol)
+      setEstimatedWeightGrams(calculateEstimatedWeight(fallbackVol, material.id, infill))
+    } finally {
       setIsAnalyzing(false)
       setAnalysisDone(true)
-      const baseVol = Math.floor(80 + Math.random() * 100)
-      setMeshVolumeCm3(baseVol)
-      setEstimatedWeightGrams(Math.round(baseVol * 1.25))
-    }, 500)
+    }
   }
+
+  // Dynamically update estimated weight when material or infill changes
+  useEffect(() => {
+    if (meshVolumeCm3 > 0) {
+      setEstimatedWeightGrams(calculateEstimatedWeight(meshVolumeCm3, material.id, infill))
+    }
+  }, [meshVolumeCm3, material.id, infill])
 
   const handleSelectMaterial = (newMat: typeof MATERIALS[0]) => {
     setMaterial(newMat)
