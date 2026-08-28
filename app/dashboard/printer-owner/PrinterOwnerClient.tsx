@@ -103,21 +103,31 @@ export default function PrinterOwnerClient({ user, initialPrinters, initialOrder
     ? orders
     : orders.filter((o) => (o.material || '').toUpperCase().includes(selectedMaterialFilter))
 
-  // Calculate live metrics
-  const activeJobs = orders.filter((o) => ['accepted', 'in_production'].includes(o.status)).length
-  const pendingJobs = orders.filter((o) => o.status === 'pending').length
-  const completedJobs = orders.filter((o) => o.status === 'completed').length
+  // Calculate live metrics using canonical normalized lifecycle statuses
+  const activeJobs = orders.filter((o) =>
+    ['PRINTER_ACCEPTED', 'PAYMENT_CONFIRMED', 'PRINTING', 'QUALITY_CHECK', 'READY', 'DISPATCHED'].includes(
+      normalizeOrderStatus(o.status)
+    )
+  ).length
+
+  const pendingJobs = orders.filter((o) =>
+    ['PRINTER_ASSIGNED', 'FINDING_PRINTER', 'PENDING_PAYMENT'].includes(normalizeOrderStatus(o.status))
+  ).length
+
+  const completedJobs = orders.filter((o) =>
+    ['DELIVERED', 'COMPLETED'].includes(normalizeOrderStatus(o.status))
+  ).length
 
   const totalEarnings = orders
-    .filter((o) => o.status === 'completed')
+    .filter((o) => ['DELIVERED', 'COMPLETED'].includes(normalizeOrderStatus(o.status)))
     .reduce((sum, o) => sum + (o.payout || Math.round(o.total * 0.7)), 0)
 
   const onlinePrintersCount = printers.filter((p) => p.status === 'online').length
   const utilizationRate = printers.length > 0 ? Math.round((activeJobs / printers.length) * 100) : 0
 
   const avgRating = printers.length > 0
-    ? (printers.reduce((sum, p) => sum + (p.rating || 4.9), 0) / printers.length).toFixed(1)
-    : '4.9'
+    ? (printers.reduce((sum, p) => sum + (typeof p.rating === 'number' ? p.rating : 0), 0) / printers.length).toFixed(1)
+    : '0.0'
 
   const s: Record<string, React.CSSProperties> = {
     page: { minHeight: '100vh', background: 'var(--bg-canvas)', color: 'var(--text-main)', fontFamily: 'inherit' },

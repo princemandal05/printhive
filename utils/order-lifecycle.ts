@@ -216,7 +216,18 @@ export async function updateOrderStatus(
   })
 
   if (historyError) {
-    console.warn('Order status history insertion warning:', historyError.message)
+    console.error('Order status history insertion error:', historyError.message)
+    // Compensating rollback: Revert orders table to previous status so database remains consistent
+    const prevDbStatus = toDbOrderStatus(activeStatus)
+    await supabase
+      .from('orders')
+      .update({ status: prevDbStatus, updated_at: new Date().toISOString() })
+      .eq('id', orderId)
+
+    return {
+      success: false,
+      error: `Failed to record status history audit log: ${historyError.message}`,
+    }
   }
 
   return { success: true, status: newStatus }
