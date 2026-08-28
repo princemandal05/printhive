@@ -52,6 +52,8 @@ export default async function SellerDashboard() {
   // Fetch live products from Supabase with error tracking
   let products: SellerProductCard[] = []
   let loadError: string | null = null
+  let totalRevenue = 0
+  let totalOrders = 0
 
   try {
     const supabase = await createClient()
@@ -90,12 +92,24 @@ export default async function SellerDashboard() {
         }
       })
     }
+
+    // Query seller orders and revenue
+    const { data: sellerOrders } = await supabase
+      .from('orders')
+      .select('total_amount, printer_share, status')
+      .or(`seller_id.eq.${user.id},printer_owner_id.eq.${user.id}`)
+
+    if (sellerOrders && sellerOrders.length > 0) {
+      totalOrders = sellerOrders.length
+      totalRevenue = sellerOrders
+        .filter((o: any) => o.status !== 'CANCELLED' && o.status !== 'REFUNDED')
+        .reduce((sum: number, o: any) => sum + (Number(o.printer_share || o.total_amount || 0)), 0)
+    }
   } catch (err: unknown) {
     const error = err as Error
     loadError = error.message || 'Failed to query product inventory.'
   }
 
-  const totalRevenue = 0
   const activeListings = products.length
 
   const s: Record<string, React.CSSProperties> = {
@@ -172,7 +186,7 @@ export default async function SellerDashboard() {
               <div style={s.metricLabel}>Orders Total</div>
               <span style={{ fontSize: 22 }}>📦</span>
             </div>
-            <div style={s.metricVal}>0 Orders</div>
+            <div style={s.metricVal}>{totalOrders} Orders</div>
             <div style={s.changeTag}>100% Escrow Protected</div>
           </div>
 

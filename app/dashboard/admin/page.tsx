@@ -47,8 +47,44 @@ export default function AdminDashboard() {
   const [toastMsg, setToastMsg] = useState('')
 
   useEffect(() => {
-    async function loadComplaints() {
+    async function loadAdminData() {
       try {
+        // 1. Fetch real profiles
+        const { data: dbProfiles } = await supabase
+          .from('profiles')
+          .select('id, email, role, full_name, created_at, is_verified')
+          .order('created_at', { ascending: false })
+
+        if (dbProfiles && dbProfiles.length > 0) {
+          const formattedUsers: UserRecord[] = dbProfiles.map((p: any) => ({
+            id: p.id,
+            name: p.full_name || p.email?.split('@')[0] || 'PrintHive User',
+            email: p.email || 'user@printhive.com',
+            role: p.role || 'buyer',
+            joined: p.created_at ? new Date(p.created_at).toISOString().split('T')[0] : '2026-08-01',
+            status: p.is_verified ? 'verified' : 'active',
+          }))
+          setUsers(formattedUsers)
+        }
+
+        // 2. Fetch real products
+        const { data: dbProducts } = await supabase
+          .from('products')
+          .select('id, title, name, seller, seller_name, created_at')
+          .order('created_at', { ascending: false })
+
+        if (dbProducts && dbProducts.length > 0) {
+          const formattedProducts: ProductApproval[] = dbProducts.map((prod: any) => ({
+            id: prod.id,
+            name: prod.title || prod.name || '3D Printed Product',
+            seller: prod.seller || prod.seller_name || 'Store Seller',
+            submitted: prod.created_at ? new Date(prod.created_at).toISOString().split('T')[0] : '2026-08-01',
+            status: 'approved',
+          }))
+          setProducts(formattedProducts)
+        }
+
+        // 3. Fetch real complaints
         const res = await fetch('/api/contact')
         const data = await res.json()
         if (data.success && data.complaints) {
@@ -65,10 +101,10 @@ export default function AdminDashboard() {
           setComplaints(formatted)
         }
       } catch (err) {
-        console.error('Failed to load contact support tickets for admin:', err)
+        console.error('Failed to load admin operations hub data:', err)
       }
     }
-    loadComplaints()
+    loadAdminData()
   }, [])
 
   const handleSignOut = async () => {

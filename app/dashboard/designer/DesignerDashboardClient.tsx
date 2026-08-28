@@ -20,10 +20,18 @@ interface DesignItem {
 interface Props {
   userEmail: string
   initialDesigns: DesignItem[]
+  totalRoyalties?: number
+  totalPrints?: number
   signOutAction: () => Promise<void>
 }
 
-export default function DesignerDashboardClient({ userEmail, initialDesigns, signOutAction }: Props) {
+export default function DesignerDashboardClient({
+  userEmail,
+  initialDesigns,
+  totalRoyalties = 0,
+  totalPrints = 0,
+  signOutAction,
+}: Props) {
   const [designs, setDesigns] = useState<DesignItem[]>(initialDesigns)
 
   useEffect(() => {
@@ -69,6 +77,14 @@ export default function DesignerDashboardClient({ userEmail, initialDesigns, sig
     metricLabel: { fontSize: 11, color: 'var(--text-sub)', fontWeight: 800, textTransform: 'uppercase' as const, letterSpacing: 0.5 },
   }
 
+  const displayedRoyalties = totalRoyalties > 0 
+    ? totalRoyalties 
+    : designs.reduce((acc, d) => acc + (d.price ? Math.round(d.price * 0.15 * (d.prints || 0)) : 0), 0)
+
+  const displayedPrints = totalPrints > 0
+    ? totalPrints
+    : designs.reduce((acc, d) => acc + (d.prints || 0), 0)
+
   return (
     <div style={s.page}>
       {/* SITE TOP NAVBAR */}
@@ -100,7 +116,7 @@ export default function DesignerDashboardClient({ userEmail, initialDesigns, sig
               <span style={{ fontSize: 16 }}>💰</span>
             </div>
             <div style={s.metricVal}>
-              ₹{designs.reduce((acc, d) => acc + (d.price ? Math.round(d.price * 0.15 * (d.prints || 0)) : 0), 0)}
+              ₹{displayedRoyalties}
             </div>
             <div style={{ fontSize: 11, color: '#10B981', marginTop: 4, fontWeight: 700 }}>15% Royalty per order payout</div>
           </div>
@@ -127,7 +143,7 @@ export default function DesignerDashboardClient({ userEmail, initialDesigns, sig
               <span style={{ fontSize: 16 }}>🖨️</span>
             </div>
             <div style={s.metricVal}>
-              {designs.reduce((acc, d) => acc + (d.prints || 0), 0)} Prints
+              {displayedPrints} Prints
             </div>
             <div style={{ fontSize: 11, color: '#0284C7', marginTop: 4, fontWeight: 600 }}>Across Verified Hubs</div>
           </Link>
