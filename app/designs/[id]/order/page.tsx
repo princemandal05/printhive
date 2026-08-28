@@ -61,7 +61,7 @@ function OrderPageContent() {
           if (d.title) setDesignTitle(d.title)
           if (d.thumbnail_url || d.preview_url) setDesignThumbnail(d.thumbnail_url || d.preview_url)
         }
-      } catch {}
+      } catch { }
     }
     loadDesign()
   }, [designId])
@@ -311,7 +311,7 @@ function OrderPageContent() {
                 <div className="card-title">Order summary</div>
               </div>
               <div className="flex justify-between text-sm" style={{ marginBottom: 'var(--space-2)' }}>
-                <span className="text-muted">Print ({quantity}×)</span>
+                <span className="text-muted">Print ({quantity})</span>
                 <span>₹{subtotal}</span>
               </div>
               <div className="flex justify-between text-sm" style={{ marginBottom: 'var(--space-4)' }}>

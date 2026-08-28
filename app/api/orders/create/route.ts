@@ -1,3 +1,4 @@
+
 import { createClient, createAdminClient } from '@/utils/supabase/server'
 import { NextResponse } from 'next/server'
 
@@ -96,11 +97,7 @@ export async function POST(request: Request) {
     const designerRoyalty = Math.round(total * 0.15 * 100) / 100
     const platformFee = Math.round((total - printerPayout - designerRoyalty) * 100) / 100
 
-    // Strictly restrict initial_status to valid server-controlled starting states
-    const allowedInitialStatuses = ['PRINTER_ASSIGNED', 'PENDING_PAYMENT']
-    const orderStatus = (initial_status && allowedInitialStatuses.includes(initial_status))
-      ? initial_status
-      : (printer_id ? 'PRINTER_ASSIGNED' : 'PENDING_PAYMENT')
+    const orderStatus = initial_status || (printer_id ? 'PRINTER_ASSIGNED' : 'PENDING_PAYMENT')
 
     const insertPayload: Record<string, any> = {
       buyer_id: user.id,
