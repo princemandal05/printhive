@@ -1,28 +1,17 @@
 import { createClient } from './server'
-import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
+import { resolveRoleDashboard } from '@/lib/routes'
 
 export type Role = 'buyer' | 'seller' | 'designer' | 'printer_owner' | 'admin'
 
-export const DASHBOARD_PATH: Record<Role, string> = {
-  buyer: '/dashboard/buyer',
-  seller: '/dashboard/seller',
-  designer: '/dashboard/designer',
-  printer_owner: '/dashboard/printer-owner',
-  admin: '/dashboard/admin',
-}
-
 export async function requireRole(expectedRole: Role) {
-  const cookieStore = await cookies()
-  const guestDemoRole = cookieStore.get('printhive_guest_role')?.value
-
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
   // Strict Admin Authorization: Requires real authenticated session & database role === 'admin'
   if (expectedRole === 'admin') {
     if (!user) {
-      redirect('/login')
+      redirect('/login?next=/dashboard/admin')
     }
     const { data: adminProfile } = await supabase
       .from('profiles')
@@ -31,8 +20,7 @@ export async function requireRole(expectedRole: Role) {
       .maybeSingle()
 
     if (adminProfile?.role !== 'admin') {
-      const userRole = (adminProfile?.role as Role) || 'buyer'
-      redirect(DASHBOARD_PATH[userRole] || '/dashboard/buyer')
+      redirect('/403')
     }
 
     return {
@@ -80,7 +68,7 @@ export async function requireRole(expectedRole: Role) {
 
     // Strict Role Access Control:
     if (userRole !== expectedRole && userRole !== 'admin' && expectedRole !== 'buyer') {
-      redirect(DASHBOARD_PATH[userRole] || '/dashboard/buyer')
+      redirect('/403')
     }
 
     return {
