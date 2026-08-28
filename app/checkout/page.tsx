@@ -796,48 +796,215 @@ export default function CheckoutPage() {
         </div>
       </section>
 
-      {/* RAZORPAY / AMAZON ESCROW CONFIRMATION MODAL */}
+      {/* RAZORPAY / ESCROW CONFIRMATION MODAL */}
       {showModal && paymentCategory && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(10px)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
-          <div style={{ background: '#0F172A', color: '#fff', borderRadius: 24, padding: 36, maxWidth: 480, width: '100%', border: '1px solid rgba(255,255,255,0.15)', boxShadow: '0 25px 60px rgba(0,0,0,0.8)' }}>
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0, 0, 0, 0.65)',
+            backdropFilter: 'blur(12px)',
+            WebkitBackdropFilter: 'blur(12px)',
+            zIndex: 1000,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: 20,
+          }}
+        >
+          <div
+            style={{
+              background: 'var(--bg-card)',
+              color: 'var(--text-main)',
+              borderRadius: 24,
+              padding: 32,
+              maxWidth: 460,
+              width: '100%',
+              border: '1px solid var(--border-color)',
+              boxShadow: '0 25px 60px rgba(0, 0, 0, 0.35)',
+              position: 'relative',
+            }}
+          >
+            {/* Modal Header */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-              <div style={{ fontSize: 20, fontWeight: 900, color: '#38BDF8' }}>🔒 Authorize Payment</div>
-              <button type="button" onClick={() => { setShowModal(false); setMockOrderData(null); }} style={{ background: 'transparent', border: 'none', color: '#94A3B8', fontSize: 20, cursor: 'pointer' }}>✕</button>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <div
+                  style={{
+                    width: 38,
+                    height: 38,
+                    borderRadius: 12,
+                    background: 'rgba(234, 88, 12, 0.12)',
+                    color: '#ea580c',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: 18,
+                    fontWeight: 900,
+                  }}
+                >
+                  🔒
+                </div>
+                <div>
+                  <h3 style={{ fontSize: 18, fontWeight: 900, color: 'var(--text-main)', margin: 0 }}>
+                    Authorize Escrow Payment
+                  </h3>
+                  <div style={{ fontSize: 12, color: 'var(--text-sub)', marginTop: 2 }}>
+                    Safe &amp; Encrypted Escrow Settlement
+                  </div>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => { setShowModal(false); setMockOrderData(null); }}
+                style={{
+                  background: 'var(--bg-card-hover)',
+                  border: '1px solid var(--border-color)',
+                  color: 'var(--text-sub)',
+                  width: 32,
+                  height: 32,
+                  borderRadius: 10,
+                  fontSize: 14,
+                  fontWeight: 800,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  transition: 'all 0.2s ease',
+                }}
+              >
+                ✕
+              </button>
             </div>
 
-            <div style={{ background: 'rgba(255,255,255,0.05)', padding: 16, borderRadius: 16, marginBottom: 20 }}>
-              <div style={{ fontSize: 12, textTransform: 'uppercase', color: '#94A3B8', fontWeight: 700, marginBottom: 4 }}>Total Payable Amount</div>
-              <div style={{ fontSize: 32, fontWeight: 900, color: '#34D399' }}>₹{total}</div>
-              <div style={{ fontSize: 12, color: '#94A3B8', marginTop: 4 }}>
-                Payment Method: <strong style={{ color: '#fff' }}>{paymentCategory.toUpperCase()}</strong>
+            {/* Total Payable Amount Banner */}
+            <div
+              style={{
+                background: 'var(--bg-card-hover)',
+                padding: 20,
+                borderRadius: 18,
+                border: '1px solid var(--border-color)',
+                marginBottom: 20,
+                textAlign: 'center',
+              }}
+            >
+              <div style={{ fontSize: 11, textTransform: 'uppercase', color: 'var(--text-sub)', fontWeight: 800, letterSpacing: 0.8, marginBottom: 4 }}>
+                Total Payable Amount
+              </div>
+              <div style={{ fontSize: 36, fontWeight: 900, color: '#ea580c', letterSpacing: '-0.5px' }}>
+                ₹{total}
+              </div>
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginTop: 8, background: 'var(--bg-card)', padding: '4px 12px', borderRadius: 99, border: '1px solid var(--border-color)', fontSize: 12, color: 'var(--text-sub)' }}>
+                <span>Method:</span>
+                <strong style={{ color: 'var(--text-main)', textTransform: 'uppercase' }}>
+                  {paymentCategory === 'cod' ? 'Cash on Delivery (Verified)' : paymentCategory.toUpperCase()}
+                </strong>
               </div>
             </div>
 
-            {/* 70/15/15 Allocation Breakdown */}
-            <div style={{ fontSize: 13, fontWeight: 700, color: '#CBD5E1', marginBottom: 10 }}>Automated Escrow Allocation:</div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, fontSize: 13, marginBottom: 24 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', background: 'rgba(16,185,129,0.1)', padding: '8px 12px', borderRadius: 10, color: '#34D399' }}>
-                <span>🖨️ Printer Owner (70%)</span>
-                <span>₹{printerShare}</span>
+            {/* 70/15/15 Automated Escrow Allocation */}
+            <div style={{ fontSize: 12, fontWeight: 800, color: 'var(--text-sub)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 10 }}>
+              Automated Escrow Allocation (70 / 15 / 15):
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 24 }}>
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  background: 'rgba(234, 88, 12, 0.06)',
+                  border: '1px solid rgba(234, 88, 12, 0.2)',
+                  padding: '10px 14px',
+                  borderRadius: 12,
+                  fontSize: 13,
+                  fontWeight: 700,
+                  color: 'var(--text-main)',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span>🖨️</span>
+                  <span>Printer Hub Payout (70%)</span>
+                </div>
+                <span style={{ fontWeight: 900, color: '#ea580c' }}>₹{printerShare}</span>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', background: 'rgba(234,88,12,0.1)', padding: '8px 12px', borderRadius: 10, color: '#FB923C' }}>
-                <span>🎨 3D Designer Royalty (15%)</span>
-                <span>₹{designerShare}</span>
+
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  background: 'rgba(139, 92, 246, 0.06)',
+                  border: '1px solid rgba(139, 92, 246, 0.2)',
+                  padding: '10px 14px',
+                  borderRadius: 12,
+                  fontSize: 13,
+                  fontWeight: 700,
+                  color: 'var(--text-main)',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span>🎨</span>
+                  <span>3D Designer Royalty (15%)</span>
+                </div>
+                <span style={{ fontWeight: 900, color: '#8b5cf6' }}>₹{designerShare}</span>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', background: 'rgba(56,189,248,0.1)', padding: '8px 12px', borderRadius: 10, color: '#38BDF8' }}>
-                <span>🌐 Platform Escrow Fee (15%)</span>
-                <span>₹{platformShare}</span>
+
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  background: 'rgba(59, 130, 246, 0.06)',
+                  border: '1px solid rgba(59, 130, 246, 0.2)',
+                  padding: '10px 14px',
+                  borderRadius: 12,
+                  fontSize: 13,
+                  fontWeight: 700,
+                  color: 'var(--text-main)',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span>🌐</span>
+                  <span>Platform &amp; QA Escrow (15%)</span>
+                </div>
+                <span style={{ fontWeight: 900, color: '#3b82f6' }}>₹{platformShare}</span>
               </div>
             </div>
 
+            {/* Confirm / Action Button */}
             <button
               type="button"
               onClick={mockOrderData ? handleSimulatePaymentSuccess : handleConfirmPayment}
               disabled={placing}
-              style={{ width: '100%', background: '#10B981', color: '#0F172A', border: 'none', borderRadius: 99, padding: '14px', fontWeight: 800, fontSize: 15, cursor: 'pointer', boxShadow: '0 0 20px rgba(16,185,129,0.4)' }}
+              style={{
+                width: '100%',
+                background: 'linear-gradient(135deg, #ea580c 0%, #c2410c 100%)',
+                color: '#fff',
+                border: 'none',
+                borderRadius: 9999,
+                padding: '15px 24px',
+                fontWeight: 900,
+                fontSize: 14.5,
+                cursor: placing ? 'not-allowed' : 'pointer',
+                boxShadow: '0 8px 24px rgba(234, 88, 12, 0.35)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 8,
+                transition: 'all 0.2s ease',
+              }}
             >
-              {placing ? 'Authorizing Payment...' : mockOrderData ? '⚡ Complete Razorpay Escrow Authorization (Demo)' : 'Confirm Order & Deposit Escrow →'}
+              {placing
+                ? '🔒 Securing Escrow Deposit...'
+                : mockOrderData
+                ? '⚡ Confirm Razorpay Escrow Deposit'
+                : 'Confirm Order & Deposit Escrow →'}
             </button>
+
+            <div style={{ textAlign: 'center', marginTop: 12, fontSize: 11.5, color: 'var(--text-sub)' }}>
+              🔒 Protected by PrintHive Escrow. Funds released only upon delivery confirmation.
+            </div>
           </div>
         </div>
       )}
