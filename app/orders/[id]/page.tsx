@@ -33,13 +33,20 @@ function OrderTrackingContent() {
   const [payingEscrow, setPayingEscrow] = useState(false)
 
   const lastStatusRef = useRef<string>('')
-  const lastHistoryCountRef = useRef<number>(-1)
+  const lastHistoryFingerprintRef = useRef<string>('')
 
   // Load live order and status history from Supabase
   useEffect(() => {
     let isCancelled = false
+    let latestGen = 0
+
+    // Reset tracking refs when orderId changes
+    lastStatusRef.current = ''
+    lastHistoryFingerprintRef.current = ''
 
     async function loadOrderHistory(isBackground = false) {
+      const currentGen = ++latestGen
+
       if (!isBackground) {
         setLoading(true)
         setOrderNotFound(false)
@@ -51,7 +58,7 @@ function OrderTrackingContent() {
           supabase.from('order_status_history').select('*').eq('order_id', orderId).order('created_at', { ascending: true }),
         ])
 
-        if (isCancelled) return
+        if (isCancelled || currentGen !== latestGen) return
 
         const orderData = orderRes.data
         const historyData = historyRes.data || []
@@ -71,8 +78,10 @@ function OrderTrackingContent() {
           setCurrentStatus(canonical)
         }
 
-        if (historyData.length !== lastHistoryCountRef.current) {
-          lastHistoryCountRef.current = historyData.length
+        // Detect additions and content changes to existing history logs
+        const historyFingerprint = historyData.map((h: any) => `${h.id}:${h.status}:${h.notes || ''}:${h.created_at}`).join('|')
+        if (historyFingerprint !== lastHistoryFingerprintRef.current) {
+          lastHistoryFingerprintRef.current = historyFingerprint
           setHistory(historyData)
         }
 
@@ -80,9 +89,9 @@ function OrderTrackingContent() {
         setOrderNotFound(false)
       } catch (err) {
         console.warn('Order history query note:', err)
-        if (!isCancelled && !isBackground) setOrderNotFound(true)
+        if (!isCancelled && !isBackground && currentGen === latestGen) setOrderNotFound(true)
       } finally {
-        if (!isCancelled && !isBackground) setLoading(false)
+        if (!isCancelled && !isBackground && currentGen === latestGen) setLoading(false)
       }
     }
 
