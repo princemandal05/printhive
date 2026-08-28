@@ -154,13 +154,13 @@ export async function POST(request: Request) {
     }
 
     // Write initial status record in order_status_history
-    const historyNotes = initial_status === 'PRINTER_ASSIGNED'
+    const historyNotes = orderStatus === 'PRINTER_ASSIGNED'
       ? 'Custom print request dispatched to printer hub. Awaiting operator acceptance before payment.'
       : 'Order created, awaiting Razorpay payment confirmation.'
 
     const { error: historyErr } = await db.from('order_status_history').insert({
       order_id: order.id,
-      status: 'pending',
+      status: orderStatus,
       notes: historyNotes,
       updated_by: user.id,
       created_at: new Date().toISOString(),

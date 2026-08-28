@@ -130,6 +130,40 @@ export function toDbOrderStatus(status: string): string {
 }
 
 /**
+ * Fetches the canonical rich lifecycle status of an order, preferring the latest entry in order_status_history,
+ * and falling back to normalizeOrderStatus(orders.status).
+ */
+export async function getOrderCanonicalStatus(
+  supabase: SupabaseClientLike,
+  orderId: string,
+  fallbackDbStatus?: string
+): Promise<OrderStatus> {
+  const { data: latestHistory } = await supabase
+    .from('order_status_history')
+    .select('status')
+    .eq('order_id', orderId)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
+  if (latestHistory?.status) {
+    return normalizeOrderStatus(latestHistory.status)
+  }
+
+  if (fallbackDbStatus) {
+    return normalizeOrderStatus(fallbackDbStatus)
+  }
+
+  const { data: order } = await supabase
+    .from('orders')
+    .select('status')
+    .eq('id', orderId)
+    .maybeSingle()
+
+  return normalizeOrderStatus(order?.status || 'PENDING_PAYMENT')
+}
+
+/**
  * Updates order status in Supabase database and records an audit log entry in order_status_history atomically.
  */
 export async function updateOrderStatus(
@@ -142,14 +176,7 @@ export async function updateOrderStatus(
 ) {
   let activeStatus = currentStatus
   if (!activeStatus) {
-    const { data: currentOrder } = await supabase
-      .from('orders')
-      .select('status')
-      .eq('id', orderId)
-      .maybeSingle()
-    if (currentOrder?.status) {
-      activeStatus = normalizeOrderStatus(currentOrder.status as string)
-    }
+    activeStatus = await getOrderCanonicalStatus(supabase, orderId)
   }
 
   // Return immediately if status is unchanged

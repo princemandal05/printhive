@@ -76,6 +76,11 @@ function OrderTrackingContent() {
 
         if (historyData && historyData.length > 0) {
           setHistory(historyData)
+          // Derive canonical rich status from latest history record
+          const latestHistoryStatus = historyData[historyData.length - 1]?.status
+          if (latestHistoryStatus) {
+            setCurrentStatus(normalizeOrderStatus(latestHistoryStatus))
+          }
         }
       } catch (err) {
         console.warn('Order history query note:', err)

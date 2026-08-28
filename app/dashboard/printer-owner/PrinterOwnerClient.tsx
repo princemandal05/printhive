@@ -453,7 +453,7 @@ export default function PrinterOwnerClient({ user, initialPrinters, initialOrder
                           )}
                         </td>
                         <td style={s.td}>
-                          {['PRINTER_ASSIGNED', 'FINDING_PRINTER'].includes(normStatus) && (
+                          {normStatus === 'PRINTER_ASSIGNED' && (
                             <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
                               <button
                                 onClick={() => handleNextStep('PRINTER_ACCEPTED', 'Printer hub accepted 3D print request.')}
