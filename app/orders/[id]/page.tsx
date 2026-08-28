@@ -36,9 +36,11 @@ function OrderTrackingContent() {
   useEffect(() => {
     let isCancelled = false
 
-    async function loadOrderHistory() {
-      setLoading(true)
-      setOrderNotFound(false)
+    async function loadOrderHistory(isBackground = false) {
+      if (!isBackground) {
+        setLoading(true)
+        setOrderNotFound(false)
+      }
 
       try {
         // Query order status and details
@@ -57,7 +59,8 @@ function OrderTrackingContent() {
         if (orderData?.status) {
           setCurrentStatus(normalizeOrderStatus(orderData.status))
           setOrderDetails(orderData)
-        } else {
+          setOrderNotFound(false)
+        } else if (!isBackground) {
           setOrderNotFound(true)
         }
 
@@ -84,36 +87,36 @@ function OrderTrackingContent() {
         }
       } catch (err) {
         console.warn('Order history query note:', err)
-        if (!isCancelled) setOrderNotFound(true)
+        if (!isCancelled && !isBackground) setOrderNotFound(true)
       } finally {
-        if (!isCancelled) setLoading(false)
+        if (!isCancelled && !isBackground) setLoading(false)
       }
     }
 
-    loadOrderHistory()
+    loadOrderHistory(false)
 
-    // Real-time Supabase subscription & dynamic polling for live status changes
+    // Real-time Supabase subscription & dynamic background polling for live status changes
     const channel = supabase
       .channel(`order-${orderId}-live`)
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'order_status_history', filter: `order_id=eq.${orderId}` },
         () => {
-          loadOrderHistory()
+          loadOrderHistory(true)
         }
       )
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'orders', filter: `id=eq.${orderId}` },
         () => {
-          loadOrderHistory()
+          loadOrderHistory(true)
         }
       )
       .subscribe()
 
     const pollInterval = setInterval(() => {
-      loadOrderHistory()
-    }, 4000)
+      loadOrderHistory(true)
+    }, 5000)
 
     return () => {
       isCancelled = true
