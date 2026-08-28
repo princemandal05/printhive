@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/utils/supabase/client'
+import { ROUTES } from '@/lib/routes'
 
 export default function Footer() {
   const [role, setRole] = useState<string | null>(null)
@@ -83,27 +84,27 @@ export default function Footer() {
             </div>
             <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 8, fontSize: 12.5 }}>
               <li>
-                <Link href="/shop" style={{ color: 'var(--text-sub)', textDecoration: 'none', transition: 'color 0.15s' }}>
+                <Link href={ROUTES.shop} style={{ color: 'var(--text-sub)', textDecoration: 'none', transition: 'color 0.15s' }}>
                   Ready-Made Products
                 </Link>
               </li>
               <li>
-                <Link href="/browse" style={{ color: 'var(--text-sub)', textDecoration: 'none', transition: 'color 0.15s' }}>
+                <Link href={ROUTES.models} style={{ color: 'var(--text-sub)', textDecoration: 'none', transition: 'color 0.15s' }}>
                   Digital 3D Models
                 </Link>
               </li>
               <li>
-                <Link href="/print-on-demand" style={{ color: 'var(--text-sub)', textDecoration: 'none', transition: 'color 0.15s' }}>
+                <Link href={ROUTES.print} style={{ color: 'var(--text-sub)', textDecoration: 'none', transition: 'color 0.15s' }}>
                   Print-on-Demand
                 </Link>
               </li>
               <li>
-                <Link href="/requests" style={{ color: 'var(--text-sub)', textDecoration: 'none', transition: 'color 0.15s' }}>
+                <Link href={ROUTES.design} style={{ color: 'var(--text-sub)', textDecoration: 'none', transition: 'color 0.15s' }}>
                   Custom Design Briefs
                 </Link>
               </li>
               <li>
-                <Link href="/cart" style={{ color: 'var(--text-sub)', textDecoration: 'none', transition: 'color 0.15s' }}>
+                <Link href={ROUTES.cart} style={{ color: 'var(--text-sub)', textDecoration: 'none', transition: 'color 0.15s' }}>
                   Shopping Cart
                 </Link>
               </li>
@@ -115,12 +116,12 @@ export default function Footer() {
             {role === 'seller' && (
               <>
                 <div style={{ fontSize: 11, fontWeight: 800, color: '#ea580c', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 12 }}>
-                  Seller Portal
+                  Vendor Portal
                 </div>
                 <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 8, fontSize: 12.5 }}>
                   <li>
-                    <Link href="/dashboard/seller" style={{ color: 'var(--text-sub)', textDecoration: 'none', transition: 'color 0.15s' }}>
-                      Seller Dashboard
+                    <Link href={ROUTES.vendor.dashboard} style={{ color: 'var(--text-sub)', textDecoration: 'none', transition: 'color 0.15s' }}>
+                      Vendor Dashboard
                     </Link>
                   </li>
                   <li>
@@ -129,13 +130,8 @@ export default function Footer() {
                     </Link>
                   </li>
                   <li>
-                    <Link href="/shop" style={{ color: 'var(--text-sub)', textDecoration: 'none', transition: 'color 0.15s' }}>
+                    <Link href={ROUTES.shop} style={{ color: 'var(--text-sub)', textDecoration: 'none', transition: 'color 0.15s' }}>
                       My Store Catalog
-                    </Link>
-                  </li>
-                  <li>
-                    <Link href="/dashboard/seller" style={{ color: 'var(--text-sub)', textDecoration: 'none', transition: 'color 0.15s' }}>
-                      Sales & 70% Payouts
                     </Link>
                   </li>
                 </ul>
@@ -149,13 +145,8 @@ export default function Footer() {
                 </div>
                 <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 8, fontSize: 12.5 }}>
                   <li>
-                    <Link href="/dashboard/printer-owner" style={{ color: 'var(--text-sub)', textDecoration: 'none', transition: 'color 0.15s' }}>
+                    <Link href={ROUTES.printer.dashboard} style={{ color: 'var(--text-sub)', textDecoration: 'none', transition: 'color 0.15s' }}>
                       Printer Hub Dashboard
-                    </Link>
-                  </li>
-                  <li>
-                    <Link href="/dashboard/printer-owner/register" style={{ color: 'var(--text-sub)', textDecoration: 'none', transition: 'color 0.15s' }}>
-                      Register 3D Machine
                     </Link>
                   </li>
                   <li>
@@ -164,7 +155,7 @@ export default function Footer() {
                     </Link>
                   </li>
                   <li>
-                    <Link href="/orders" style={{ color: 'var(--text-sub)', textDecoration: 'none', transition: 'color 0.15s' }}>
+                    <Link href={ROUTES.orders} style={{ color: 'var(--text-sub)', textDecoration: 'none', transition: 'color 0.15s' }}>
                       Active Print Job Queue
                     </Link>
                   </li>
@@ -179,7 +170,7 @@ export default function Footer() {
                 </div>
                 <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 8, fontSize: 12.5 }}>
                   <li>
-                    <Link href="/dashboard/designer" style={{ color: 'var(--text-sub)', textDecoration: 'none', transition: 'color 0.15s' }}>
+                    <Link href={ROUTES.designer.dashboard} style={{ color: 'var(--text-sub)', textDecoration: 'none', transition: 'color 0.15s' }}>
                       Designer Dashboard
                     </Link>
                   </li>
@@ -189,12 +180,7 @@ export default function Footer() {
                     </Link>
                   </li>
                   <li>
-                    <Link href="/dashboard/designer/earnings" style={{ color: 'var(--text-sub)', textDecoration: 'none', transition: 'color 0.15s' }}>
-                      15% Royalty Wallet
-                    </Link>
-                  </li>
-                  <li>
-                    <Link href="/requests" style={{ color: 'var(--text-sub)', textDecoration: 'none', transition: 'color 0.15s' }}>
+                    <Link href={ROUTES.design} style={{ color: 'var(--text-sub)', textDecoration: 'none', transition: 'color 0.15s' }}>
                       Open CAD Briefs
                     </Link>
                   </li>
@@ -209,18 +195,13 @@ export default function Footer() {
                 </div>
                 <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 8, fontSize: 12.5 }}>
                   <li>
-                    <Link href="/dashboard/admin" style={{ color: 'var(--text-sub)', textDecoration: 'none', transition: 'color 0.15s' }}>
+                    <Link href={ROUTES.admin.dashboard} style={{ color: 'var(--text-sub)', textDecoration: 'none', transition: 'color 0.15s' }}>
                       Admin Operations
                     </Link>
                   </li>
                   <li>
-                    <Link href="/support-tickets" style={{ color: 'var(--text-sub)', textDecoration: 'none', transition: 'color 0.15s' }}>
+                    <Link href={ROUTES.support} style={{ color: 'var(--text-sub)', textDecoration: 'none', transition: 'color 0.15s' }}>
                       Support Queue
-                    </Link>
-                  </li>
-                  <li>
-                    <Link href="/dashboard/admin" style={{ color: 'var(--text-sub)', textDecoration: 'none', transition: 'color 0.15s' }}>
-                      Dispute Resolution
                     </Link>
                   </li>
                 </ul>
@@ -234,22 +215,22 @@ export default function Footer() {
                 </div>
                 <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 8, fontSize: 12.5 }}>
                   <li>
-                    <Link href="/dashboard/buyer" style={{ color: 'var(--text-sub)', textDecoration: 'none', transition: 'color 0.15s' }}>
+                    <Link href={ROUTES.buyer.dashboard} style={{ color: 'var(--text-sub)', textDecoration: 'none', transition: 'color 0.15s' }}>
                       Buyer Dashboard
                     </Link>
                   </li>
                   <li>
-                    <Link href="/orders" style={{ color: 'var(--text-sub)', textDecoration: 'none', transition: 'color 0.15s' }}>
+                    <Link href={ROUTES.orders} style={{ color: 'var(--text-sub)', textDecoration: 'none', transition: 'color 0.15s' }}>
                       Track Print Orders
                     </Link>
                   </li>
                   <li>
-                    <Link href="/requests/new" style={{ color: 'var(--text-sub)', textDecoration: 'none', transition: 'color 0.15s' }}>
+                    <Link href={ROUTES.design} style={{ color: 'var(--text-sub)', textDecoration: 'none', transition: 'color 0.15s' }}>
                       Post Custom CAD Brief
                     </Link>
                   </li>
                   <li>
-                    <Link href="/wishlist" style={{ color: 'var(--text-sub)', textDecoration: 'none', transition: 'color 0.15s' }}>
+                    <Link href={ROUTES.wishlist} style={{ color: 'var(--text-sub)', textDecoration: 'none', transition: 'color 0.15s' }}>
                       Saved Wishlist
                     </Link>
                   </li>
@@ -261,27 +242,27 @@ export default function Footer() {
           {/* COLUMN 3: PLATFORM & TRUST */}
           <div>
             <div style={{ fontSize: 11, fontWeight: 800, color: 'var(--text-main)', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 12 }}>
-              Trust & Security
+              Trust &amp; Security
             </div>
             <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 8, fontSize: 12.5 }}>
               <li>
-                <Link href="/faq" style={{ color: 'var(--text-sub)', textDecoration: 'none', transition: 'color 0.15s' }}>
+                <Link href={ROUTES.trust} style={{ color: 'var(--text-sub)', textDecoration: 'none', transition: 'color 0.15s' }}>
                   Escrow Protection
                 </Link>
               </li>
               <li>
-                <Link href="/faq" style={{ color: 'var(--text-sub)', textDecoration: 'none', transition: 'color 0.15s' }}>
+                <Link href={ROUTES.payments} style={{ color: 'var(--text-sub)', textDecoration: 'none', transition: 'color 0.15s' }}>
                   70/15/15 Payout Split
                 </Link>
               </li>
               <li>
-                <Link href="/support-tickets" style={{ color: 'var(--text-sub)', textDecoration: 'none', transition: 'color 0.15s' }}>
-                  Help & Support Desk
+                <Link href={ROUTES.support} style={{ color: 'var(--text-sub)', textDecoration: 'none', transition: 'color 0.15s' }}>
+                  Help &amp; Support Desk
                 </Link>
               </li>
               <li>
-                <Link href="/faq" style={{ color: 'var(--text-sub)', textDecoration: 'none', transition: 'color 0.15s' }}>
-                  Knowledge Base & FAQ
+                <Link href={ROUTES.faq} style={{ color: 'var(--text-sub)', textDecoration: 'none', transition: 'color 0.15s' }}>
+                  Knowledge Base &amp; FAQ
                 </Link>
               </li>
             </ul>
@@ -290,7 +271,7 @@ export default function Footer() {
           {/* COLUMN 4: COMPANY & LEGAL */}
           <div>
             <div style={{ fontSize: 11, fontWeight: 800, color: 'var(--text-main)', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 12 }}>
-              Account & Legal
+              Account &amp; Legal
             </div>
             <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 8, fontSize: 12.5 }}>
               <li>
@@ -299,17 +280,17 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/dashboard/buyer" style={{ color: 'var(--text-sub)', textDecoration: 'none', transition: 'color 0.15s' }}>
+                <Link href={ROUTES.orders} style={{ color: 'var(--text-sub)', textDecoration: 'none', transition: 'color 0.15s' }}>
                   Order History
                 </Link>
               </li>
               <li>
-                <Link href="/faq" style={{ color: 'var(--text-sub)', textDecoration: 'none', transition: 'color 0.15s' }}>
+                <Link href={ROUTES.terms} style={{ color: 'var(--text-sub)', textDecoration: 'none', transition: 'color 0.15s' }}>
                   Terms of Service
                 </Link>
               </li>
               <li>
-                <Link href="/faq" style={{ color: 'var(--text-sub)', textDecoration: 'none', transition: 'color 0.15s' }}>
+                <Link href={ROUTES.privacy} style={{ color: 'var(--text-sub)', textDecoration: 'none', transition: 'color 0.15s' }}>
                   Privacy Policy
                 </Link>
               </li>

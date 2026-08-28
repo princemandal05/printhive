@@ -19,6 +19,35 @@ const nextConfig: NextConfig = {
       'leaflet',
     ],
   },
+  async redirects() {
+    return [
+      {
+        source: '/browse',
+        destination: '/models',
+        permanent: true,
+      },
+      {
+        source: '/print-on-demand',
+        destination: '/print',
+        permanent: true,
+      },
+      {
+        source: '/requests',
+        destination: '/design',
+        permanent: true,
+      },
+      {
+        source: '/dashboard/printer-owner',
+        destination: '/dashboard/printer',
+        permanent: true,
+      },
+      {
+        source: '/dashboard/seller',
+        destination: '/dashboard/vendor',
+        permanent: true,
+      },
+    ]
+  },
 }
 
 export default nextConfig

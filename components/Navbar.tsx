@@ -29,62 +29,82 @@ import {
   Check,
 } from 'lucide-react'
 
+import { ROUTES, resolveRoleDashboard, getRoleDisplayName } from '@/lib/routes'
+
 const DASHBOARD_PATH: Record<string, string> = {
-  buyer: '/dashboard/buyer',
-  seller: '/dashboard/seller',
-  designer: '/dashboard/designer',
-  printer_owner: '/dashboard/printer-owner',
-  admin: '/dashboard/admin',
+  buyer: ROUTES.buyer.dashboard,
+  seller: ROUTES.vendor.dashboard,
+  vendor: ROUTES.vendor.dashboard,
+  designer: ROUTES.designer.dashboard,
+  printer_owner: ROUTES.printer.dashboard,
+  printer: ROUTES.printer.dashboard,
+  admin: ROUTES.admin.dashboard,
 }
 
 const ROLE_LABELS: Record<string, string> = {
   buyer: 'Buyer Mode',
-  seller: 'Seller Mode',
+  seller: 'Vendor Mode',
+  vendor: 'Vendor Mode',
   designer: 'Designer Mode',
   printer_owner: 'Printer Hub Mode',
+  printer: 'Printer Hub Mode',
   admin: 'Admin Mode',
 }
 
 const ROLE_NAV_LINKS: Record<string, { href: string; label: string }[]> = {
   public: [
-    { href: '/', label: 'Home' },
-    { href: '/shop', label: 'Shop' },
-    { href: '/browse', label: '3D Models' },
+    { href: ROUTES.home, label: 'Home' },
+    { href: ROUTES.shop, label: 'Shop' },
+    { href: ROUTES.models, label: '3D Models' },
+    { href: ROUTES.print, label: 'Print File' },
+    { href: ROUTES.design, label: 'Custom Design' },
   ],
   buyer: [
-    { href: '/', label: 'Home' },
-    { href: '/shop', label: 'Shop' },
-    { href: '/browse', label: '3D Models' },
-    { href: '/print-on-demand', label: 'Print File' },
-    { href: '/requests/new', label: 'Request Custom 3D' },
+    { href: ROUTES.home, label: 'Home' },
+    { href: ROUTES.shop, label: 'Shop' },
+    { href: ROUTES.models, label: '3D Models' },
+    { href: ROUTES.print, label: 'Print File' },
+    { href: ROUTES.design, label: 'Custom 3D' },
   ],
   seller: [
-    { href: '/', label: 'Home' },
-    { href: '/shop', label: 'Shop' },
-    { href: '/browse', label: '3D Models' },
+    { href: ROUTES.home, label: 'Home' },
+    { href: ROUTES.shop, label: 'Shop' },
+    { href: ROUTES.models, label: '3D Models' },
     { href: '/dashboard/seller/products/new', label: '+ Add Product' },
   ],
+  vendor: [
+    { href: ROUTES.home, label: 'Home' },
+    { href: ROUTES.shop, label: 'Shop' },
+    { href: ROUTES.models, label: '3D Models' },
+    { href: '/dashboard/vendor', label: 'Vendor Store' },
+  ],
   designer: [
-    { href: '/', label: 'Home' },
-    { href: '/shop', label: 'Shop' },
-    { href: '/browse', label: '3D Models' },
-    { href: '/requests', label: 'Client Briefs' },
+    { href: ROUTES.home, label: 'Home' },
+    { href: ROUTES.shop, label: 'Shop' },
+    { href: ROUTES.models, label: '3D Models' },
+    { href: ROUTES.design, label: 'Client Briefs' },
     { href: '/dashboard/designer/upload', label: '+ Upload Model' },
   ],
   printer_owner: [
-    { href: '/', label: 'Home' },
-    { href: '/shop', label: 'Shop' },
-    { href: '/browse', label: '3D Models' },
+    { href: ROUTES.home, label: 'Home' },
+    { href: ROUTES.shop, label: 'Shop' },
+    { href: ROUTES.models, label: '3D Models' },
     { href: '/printers', label: 'Nearby Hubs' },
-    { href: '/printers/register', label: '+ Register Printer' },
-    { href: '/requests', label: 'Print Briefs' },
+    { href: ROUTES.design, label: 'Print Briefs' },
+  ],
+  printer: [
+    { href: ROUTES.home, label: 'Home' },
+    { href: ROUTES.shop, label: 'Shop' },
+    { href: ROUTES.models, label: '3D Models' },
+    { href: '/printers', label: 'Nearby Hubs' },
+    { href: ROUTES.design, label: 'Print Briefs' },
   ],
   admin: [
-    { href: '/', label: 'Home' },
-    { href: '/shop', label: 'Shop' },
-    { href: '/browse', label: '3D Models' },
+    { href: ROUTES.home, label: 'Home' },
+    { href: ROUTES.shop, label: 'Shop' },
+    { href: ROUTES.models, label: '3D Models' },
     { href: '/printers', label: 'Hubs' },
-    { href: '/dashboard/admin', label: 'Admin' },
+    { href: ROUTES.admin.dashboard, label: 'Admin' },
   ],
 }
 

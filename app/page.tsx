@@ -21,6 +21,7 @@ import {
   Search,
   Bot,
   Store,
+  Layers,
 } from 'lucide-react'
 
 const Hero3D = dynamic(() => import('@/components/Hero3D'), {
@@ -186,37 +187,97 @@ export default function Home() {
         <div className="container">
           <div className="hero-grid" style={{ alignItems: 'center' }}>
             <div>
-              <div className="ateion-pill" style={{ marginBottom: 24 }}>
-                ⚡ AI-Powered 4-Sided 3D Commerce Platform
+              <div className="ateion-pill" style={{ marginBottom: 20 }}>
+                🛡️ Distributed Additive Manufacturing Network
               </div>
               
-              <h1 style={{ fontSize: '3.25rem', fontWeight: 900, lineHeight: 1.12, marginBottom: 20, color: 'var(--text-main)', letterSpacing: '-0.02em' }}>
+              <h1 style={{ fontSize: '3.25rem', fontWeight: 900, lineHeight: 1.12, marginBottom: 18, color: 'var(--text-main)', letterSpacing: '-0.02em' }}>
                 Where Ideas Become{' '}
-                <span style={{ color: '#FF6B35', background: 'linear-gradient(135deg, #FF6B35, #EA580C)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+                <span style={{ color: '#ea580c', background: 'linear-gradient(135deg, #FF6B35, #EA580C)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
                   Physical Products
                 </span>
               </h1>
 
-              <p style={{ fontSize: 17, color: 'var(--text-sub)', lineHeight: 1.7, marginBottom: 36, maxWidth: 540 }}>
-                PrintHive connects buyers, 3D designers, local printer hub operators, and material vendors under one unified, escrow-secured additive commerce ecosystem.
+              <p style={{ fontSize: 16.5, color: 'var(--text-sub)', lineHeight: 1.65, marginBottom: 28, maxWidth: 540 }}>
+                Find a design. Upload your CAD model. Or request something custom — and get it printed with precision by a nearby verified printer hub.
               </p>
 
+              {/* Action Buttons Row */}
+              <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 28 }}>
+                <Link
+                  href="/models"
+                  style={{
+                    background: 'linear-gradient(135deg, #ea580c 0%, #c2410c 100%)',
+                    color: '#fff',
+                    padding: '12px 22px',
+                    borderRadius: 99,
+                    fontWeight: 800,
+                    fontSize: 13.5,
+                    textDecoration: 'none',
+                    boxShadow: '0 4px 16px rgba(234, 88, 12, 0.35)',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 6,
+                  }}
+                >
+                  <Box size={16} /> Browse 3D Models
+                </Link>
+
+                <Link
+                  href="/print"
+                  style={{
+                    background: 'var(--bg-card)',
+                    color: 'var(--text-main)',
+                    border: '1px solid var(--border-color)',
+                    padding: '12px 20px',
+                    borderRadius: 99,
+                    fontWeight: 800,
+                    fontSize: 13.5,
+                    textDecoration: 'none',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 6,
+                  }}
+                >
+                  <Layers size={16} color="#ea580c" /> Upload &amp; Print
+                </Link>
+
+                <Link
+                  href="/design"
+                  style={{
+                    background: 'var(--bg-card)',
+                    color: 'var(--text-main)',
+                    border: '1px solid var(--border-color)',
+                    padding: '12px 20px',
+                    borderRadius: 99,
+                    fontWeight: 800,
+                    fontSize: 13.5,
+                    textDecoration: 'none',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 6,
+                  }}
+                >
+                  <Sparkles size={16} color="#8b5cf6" /> Request Custom 3D
+                </Link>
+              </div>
+
               {/* Gemini AI Natural Language Search Bar */}
-              <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 99, padding: '8px 8px 8px 20px', display: 'flex', alignItems: 'center', gap: 12, marginBottom: 40, boxShadow: '0 8px 30px rgba(0,0,0,0.06)' }}>
-                <Search size={18} color="#FF6B35" />
+              <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 99, padding: '6px 6px 6px 18px', display: 'flex', alignItems: 'center', gap: 10, marginBottom: 36, boxShadow: '0 8px 30px rgba(0,0,0,0.06)' }}>
+                <Search size={16} color="#ea580c" />
                 <input
                   type="text"
-                  placeholder="Ask Gemini AI: 'Print a durable phone holder in PLA'..."
+                  placeholder="Ask Gemini AI: 'Print a durable phone stand in PLA'..."
                   value={aiSearchQuery}
                   onChange={(e) => setAiSearchQuery(e.target.value)}
-                  style={{ flex: 1, background: 'transparent', border: 'none', color: 'var(--text-main)', fontSize: 14, outline: 'none' }}
+                  style={{ flex: 1, background: 'transparent', border: 'none', color: 'var(--text-main)', fontSize: 13.5, outline: 'none' }}
                 />
                 <Link
-                  href={aiSearchQuery ? `/browse?q=${encodeURIComponent(aiSearchQuery)}` : '/browse'}
+                  href={aiSearchQuery ? `/models?q=${encodeURIComponent(aiSearchQuery)}` : '/models'}
                   className="btn btn-primary"
-                  style={{ background: '#FF6B35', color: '#fff', border: 'none', borderRadius: 99, padding: '12px 24px', fontWeight: 700, fontSize: 13, textDecoration: 'none', whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', gap: 6 }}
+                  style={{ background: '#ea580c', color: '#fff', border: 'none', borderRadius: 99, padding: '10px 20px', fontWeight: 800, fontSize: 12.5, textDecoration: 'none', whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', gap: 6 }}
                 >
-                  <Bot size={15} /> AI Search
+                  <Bot size={14} /> AI Search
                 </Link>
               </div>
 

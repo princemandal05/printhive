@@ -5,13 +5,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/utils/supabase/client'
 
-const DASHBOARD_PATH: Record<string, string> = {
-  buyer: '/dashboard/buyer',
-  seller: '/dashboard/seller',
-  designer: '/dashboard/designer',
-  printer_owner: '/dashboard/printer-owner',
-  admin: '/dashboard/admin',
-}
+import { ROUTES, resolveRoleDashboard } from '@/lib/routes'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -63,7 +57,7 @@ export default function LoginPage() {
         'buyer'
 
       const urlParams = new URLSearchParams(window.location.search)
-      const targetDashboard = DASHBOARD_PATH[role] || '/dashboard/buyer'
+      const targetDashboard = resolveRoleDashboard(role)
       const redirectUrl = urlParams.get('redirect') || urlParams.get('next') || targetDashboard
       
       // Set active role auth cookie so middleware grants immediate access

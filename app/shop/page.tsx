@@ -7,6 +7,7 @@ import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 import { useStore } from '@/lib/cart-context'
 import { createClient } from '@/utils/supabase/client'
+import { ROUTES } from '@/lib/routes'
 import {
   ShoppingBag,
   Search,
@@ -305,7 +306,7 @@ function ShopContent() {
 
         <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
           <Link
-            href="/print-on-demand"
+            href={ROUTES.print}
             style={{
               background: 'var(--bg-card)',
               color: 'var(--text-main)',
@@ -324,7 +325,7 @@ function ShopContent() {
           </Link>
 
           <Link
-            href="/requests/new"
+            href={ROUTES.design}
             style={{
               background: '#ea580c',
               color: '#FFFFFF',
