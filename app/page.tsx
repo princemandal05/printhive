@@ -20,6 +20,7 @@ import {
   ArrowRight,
   Search,
   Bot,
+  Store,
 } from 'lucide-react'
 
 const Hero3D = dynamic(() => import('@/components/Hero3D'), {
@@ -56,17 +57,22 @@ const PROBLEMS = [
   {
     type: 'buyer',
     title: 'Buyers',
-    text: "Can't access custom 3D printed products without owning a ₹15,000–₹80,000 printer or learning CAD. Existing commercial services are expensive and unverified.",
+    text: "Can't access custom 3D printed products without owning a ₹15,000–₹80,000 printer or learning CAD. Commercial services are expensive with slow lead times.",
   },
   {
     type: 'designer',
-    title: 'Designers',
-    text: 'Publish high-quality models on open platforms for free, with no automatic monetization, copyright protection, or marketplace connecting designs to buyers.',
+    title: '3D Designers',
+    text: 'Publish high-quality models on open platforms for free, with no automatic monetization, licensing protection, or marketplace connecting designs to buyers.',
   },
   {
     type: 'printer',
     title: 'Printer Owners',
     text: 'Own 3D printers that sit idle 18–20 hours a day, with no organized local system to find print jobs, manage orders, or earn consistent income.',
+  },
+  {
+    type: 'seller',
+    title: 'Stores & Vendors',
+    text: 'Lack direct access to active makers and printer hubs in need of bulk filaments, resins, replacement nozzles, and finished physical 3D products.',
   },
 ]
 
@@ -105,7 +111,7 @@ const FEATURES = [
 export default function Home() {
   const supabase = createClient()
   const [aiSearchQuery, setAiSearchQuery] = useState('')
-  const [activeRoleTab, setActiveRoleTab] = useState<'buyer' | 'designer' | 'printer'>('buyer')
+  const [activeRoleTab, setActiveRoleTab] = useState<'buyer' | 'designer' | 'printer' | 'seller'>('buyer')
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [liveStats, setLiveStats] = useState({
     hubs: 0,
@@ -152,6 +158,8 @@ export default function Home() {
         return <PenTool size={22} color="#FF6B35" />
       case 'printer':
         return <Printer size={22} color="#FF6B35" />
+      case 'seller':
+        return <Store size={22} color="#FF6B35" />
       case 'ai':
         return <Bot size={22} color="#FF6B35" />
       case 'viewport':
@@ -179,7 +187,7 @@ export default function Home() {
           <div className="hero-grid" style={{ alignItems: 'center' }}>
             <div>
               <div className="ateion-pill" style={{ marginBottom: 24 }}>
-                ⚡ AI-Powered Hybrid 3D Commerce Platform
+                ⚡ AI-Powered 4-Sided 3D Commerce Platform
               </div>
               
               <h1 style={{ fontSize: '3.25rem', fontWeight: 900, lineHeight: 1.12, marginBottom: 20, color: 'var(--text-main)', letterSpacing: '-0.02em' }}>
@@ -190,7 +198,7 @@ export default function Home() {
               </h1>
 
               <p style={{ fontSize: 17, color: 'var(--text-sub)', lineHeight: 1.7, marginBottom: 36, maxWidth: 540 }}>
-                PrintHive bridges designers, local 3D printer owners, and buyers — order custom 3D prints, sell STL files, or monetize your idle 3D printers with escrow security.
+                PrintHive connects buyers, 3D designers, local printer hub operators, and material vendors under one unified, escrow-secured additive commerce ecosystem.
               </p>
 
               {/* Gemini AI Natural Language Search Bar */}
@@ -249,27 +257,27 @@ export default function Home() {
         <div style={{ textAlign: 'center', marginBottom: 48 }}>
           <div className="ateion-pill" style={{ color: '#FF6B35', background: 'rgba(255,107,53,0.1)', borderColor: 'rgba(255,107,53,0.3)', marginBottom: 12 }}>The Problem</div>
           <h2 style={{ fontSize: 32, fontWeight: 800, marginBottom: 12, color: 'var(--text-main)' }}>
-            Three Gaps. One Ecosystem.
+            Four Gaps. One Ecosystem.
           </h2>
-          <p style={{ color: 'var(--text-sub)', maxWidth: 640, margin: '0 auto', fontSize: 15 }}>
-            No existing service solves all three sides of 3D printing together — PrintHive bridges buyers, designers, and printer owners in one place.
+          <p style={{ color: 'var(--text-sub)', maxWidth: 680, margin: '0 auto', fontSize: 15 }}>
+            No existing service solves all four sides of 3D printing together — PrintHive bridges buyers, designers, printer hub owners, and material sellers in one unified network.
           </p>
         </div>
 
-        <div className="grid grid-cols-3 gap-6">
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: 24 }}>
           {PROBLEMS.map((p) => (
-            <div key={p.title} style={{ background: 'var(--bg-card)', padding: 32, borderRadius: 24, border: '1px solid var(--border-color)', boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
+            <div key={p.title} style={{ background: 'var(--bg-card)', padding: 30, borderRadius: 24, border: '1px solid var(--border-color)', boxShadow: '0 4px 20px rgba(0,0,0,0.03)', display: 'flex', flexDirection: 'column' }}>
               <div style={{ marginBottom: 20 }}>
                 <IconBadge>{renderIcon(p.type)}</IconBadge>
               </div>
               <div style={{ fontSize: 20, fontWeight: 700, color: 'var(--text-main)', marginBottom: 8 }}>{p.title}</div>
-              <div style={{ fontSize: 14, color: 'var(--text-sub)', lineHeight: 1.7 }}>{p.text}</div>
+              <div style={{ fontSize: 14, color: 'var(--text-sub)', lineHeight: 1.7, flex: 1 }}>{p.text}</div>
             </div>
           ))}
         </div>
       </section>
 
-      {/* 3-SIDED ROLE WORKSPACE SWITCHER */}
+      {/* 4-SIDED ROLE WORKSPACE SWITCHER */}
       <section style={{ padding: '40px 0 80px' }}>
         <div className="container">
           <div style={{ textAlign: 'center', marginBottom: 36 }}>
@@ -278,22 +286,22 @@ export default function Home() {
               Choose Your Role in the PrintHive Network
             </h2>
             <p style={{ color: 'var(--text-sub)', fontSize: 15 }}>
-              PrintHive powers buyers, designers, and printer owners under one fair 70/15/15 ecosystem.
+              PrintHive powers buyers, designers, printer owners, and material vendors under one fair 4-sided ecosystem.
             </p>
 
             {/* Role Tab Buttons */}
-            <div style={{ display: 'inline-flex', gap: 8, background: 'var(--bg-card)', padding: 6, borderRadius: 99, border: '1px solid var(--border-color)', marginTop: 20 }}>
+            <div style={{ display: 'inline-flex', gap: 8, background: 'var(--bg-card)', padding: 6, borderRadius: 99, border: '1px solid var(--border-color)', marginTop: 20, flexWrap: 'wrap', justifyContent: 'center' }}>
               <button
                 type="button"
                 onClick={() => setActiveRoleTab('buyer')}
                 style={{
-                  padding: '10px 24px',
+                  padding: '10px 22px',
                   borderRadius: 99,
                   border: 'none',
                   background: activeRoleTab === 'buyer' ? '#FF6B35' : 'transparent',
                   color: activeRoleTab === 'buyer' ? '#fff' : 'var(--text-main)',
                   fontWeight: 700,
-                  fontSize: 14,
+                  fontSize: 13.5,
                   cursor: 'pointer',
                   transition: 'all 0.2s',
                   display: 'inline-flex',
@@ -308,13 +316,13 @@ export default function Home() {
                 type="button"
                 onClick={() => setActiveRoleTab('designer')}
                 style={{
-                  padding: '10px 24px',
+                  padding: '10px 22px',
                   borderRadius: 99,
                   border: 'none',
                   background: activeRoleTab === 'designer' ? '#FF6B35' : 'transparent',
                   color: activeRoleTab === 'designer' ? '#fff' : 'var(--text-main)',
                   fontWeight: 700,
-                  fontSize: 14,
+                  fontSize: 13.5,
                   cursor: 'pointer',
                   transition: 'all 0.2s',
                   display: 'inline-flex',
@@ -329,13 +337,13 @@ export default function Home() {
                 type="button"
                 onClick={() => setActiveRoleTab('printer')}
                 style={{
-                  padding: '10px 24px',
+                  padding: '10px 22px',
                   borderRadius: 99,
                   border: 'none',
                   background: activeRoleTab === 'printer' ? '#FF6B35' : 'transparent',
                   color: activeRoleTab === 'printer' ? '#fff' : 'var(--text-main)',
                   fontWeight: 700,
-                  fontSize: 14,
+                  fontSize: 13.5,
                   cursor: 'pointer',
                   transition: 'all 0.2s',
                   display: 'inline-flex',
@@ -345,6 +353,27 @@ export default function Home() {
               >
                 <Printer size={16} />
                 <span>Printer Hub</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveRoleTab('seller')}
+                style={{
+                  padding: '10px 22px',
+                  borderRadius: 99,
+                  border: 'none',
+                  background: activeRoleTab === 'seller' ? '#FF6B35' : 'transparent',
+                  color: activeRoleTab === 'seller' ? '#fff' : 'var(--text-main)',
+                  fontWeight: 700,
+                  fontSize: 13.5,
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 8,
+                }}
+              >
+                <Store size={16} />
+                <span>Seller &amp; Store</span>
               </button>
             </div>
           </div>
@@ -365,7 +394,7 @@ export default function Home() {
                       <Box size={16} /> Browse Designs
                     </Link>
                     <Link href="/print-on-demand" className="btn btn-outline" style={{ borderColor: 'var(--border-color)', color: 'var(--text-main)', padding: '12px 24px', borderRadius: 99, textDecoration: 'none', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-                      <Zap size={16} /> Slicer & Upload
+                      <Zap size={16} /> Slicer &amp; Upload
                     </Link>
                   </div>
                 </div>
@@ -386,7 +415,7 @@ export default function Home() {
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 32, alignItems: 'center' }}>
                 <div>
                   <h3 style={{ fontSize: 24, fontWeight: 800, color: 'var(--text-main)', marginBottom: 12 }}>
-                    Monetize Your 3D Models & Earn Automatic Royalties
+                    Monetize Your 3D Models &amp; Earn Automatic Royalties
                   </h3>
                   <p style={{ color: 'var(--text-sub)', fontSize: 14, lineHeight: 1.7, marginBottom: 24 }}>
                     Upload STL/3MF files once. Every time a buyer orders a physical print, you earn a 15% royalty automatically paid out to your wallet upon delivery.
@@ -430,6 +459,32 @@ export default function Home() {
                   <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-main)', marginBottom: 8 }}>🖨️ Printer Payout Share:</div>
                   <div style={{ fontSize: 24, fontWeight: 900, color: '#FF6B35', marginBottom: 6 }}>70% Direct Payout</div>
                   <div style={{ fontSize: 13, color: 'var(--text-sub)' }}>Consistent local print job queue sent right to your printer dashboard.</div>
+                </div>
+              </div>
+            )}
+
+            {activeRoleTab === 'seller' && (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 32, alignItems: 'center' }}>
+                <div>
+                  <h3 style={{ fontSize: 24, fontWeight: 800, color: 'var(--text-main)', marginBottom: 12 }}>
+                    Sell Finished 3D Goods, Filaments &amp; Hardware
+                  </h3>
+                  <p style={{ color: 'var(--text-sub)', fontSize: 14, lineHeight: 1.7, marginBottom: 24 }}>
+                    Open your digital storefront to sell ready-made 3D printed products, PLA/PETG/ABS spools, UV resins, and printer accessories directly to India&apos;s maker community.
+                  </p>
+                  <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+                    <Link href="/shop" className="btn btn-primary" style={{ background: '#FF6B35', color: '#fff', padding: '12px 24px', borderRadius: 99, fontWeight: 700, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                      <Store size={16} /> Explore Marketplace Store
+                    </Link>
+                    <Link href="/dashboard/seller" className="btn btn-outline" style={{ borderColor: 'var(--border-color)', color: 'var(--text-main)', padding: '12px 24px', borderRadius: 99, textDecoration: 'none', fontWeight: 600 }}>
+                      Seller Dashboard
+                    </Link>
+                  </div>
+                </div>
+                <div style={{ background: 'var(--bg-card-hover)', padding: 28, borderRadius: 20, border: '1px solid var(--border-color)' }}>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-main)', marginBottom: 8 }}>🏪 Seller Advantages:</div>
+                  <div style={{ fontSize: 24, fontWeight: 900, color: '#FF6B35', marginBottom: 6 }}>Instant Escrow Settlement</div>
+                  <div style={{ fontSize: 13, color: 'var(--text-sub)' }}>Direct sales, automatic inventory management, and zero hidden platform listing fees.</div>
                 </div>
               </div>
             )}
