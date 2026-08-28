@@ -29,14 +29,14 @@ export default function ForgotPasswordPage() {
 
   const s: Record<string, React.CSSProperties> = {
     page: { minHeight: '100vh', background: 'var(--bg-canvas)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '24px 16px', fontFamily: 'inherit' },
-    card: { background: 'var(--bg-card)', borderRadius: 20, padding: '40px 36px', width: '100%', maxWidth: 420, border: '1px solid var(--border-color)', boxShadow: '0 20px 60px rgba(0, 0, 0, 0.06)' },
+    card: { background: 'var(--bg-card)', borderRadius: 20, padding: '40px 36px', width: '100%', maxWidth: 420, border: '1px solid var(--border-color)', boxShadow: '0 20px 60px rgba(0, 0, 0, 0.06)', boxSizing: 'border-box' as const },
     logo: { fontSize: 24, fontWeight: 900, color: 'var(--text-main)', marginBottom: 24, textAlign: 'center' as const, letterSpacing: '-0.5px' },
     logoAccent: { color: '#ea580c' },
     title: { fontSize: 22, fontWeight: 800, color: 'var(--text-main)', marginBottom: 6, textAlign: 'center' as const },
     sub: { fontSize: 13.5, color: 'var(--text-sub)', textAlign: 'center' as const, marginBottom: 24 },
     label: { fontSize: 13, fontWeight: 700, color: 'var(--text-main)', marginBottom: 6, display: 'block' },
-    input: { width: '100%', background: 'var(--bg-card-hover)', border: '1px solid var(--border-color)', borderRadius: 12, padding: '12px 14px', fontSize: 14, color: 'var(--text-main)', outline: 'none', marginBottom: 16, boxSizing: 'border-box' as const },
-    btn: { width: '100%', background: 'linear-gradient(135deg, #ea580c 0%, #c2410c 100%)', color: '#fff', border: 'none', borderRadius: 9999, padding: '13px 0', fontSize: 14.5, fontWeight: 800, cursor: 'pointer', boxShadow: '0 4px 16px rgba(234, 88, 12, 0.3)' },
+    input: { width: '100%', background: 'var(--bg-card-hover)', border: '1px solid var(--border-color)', borderRadius: 12, padding: '12px 14px', fontSize: 14, color: 'var(--text-main)', marginBottom: 16, boxSizing: 'border-box' as const },
+    btn: { width: '100%', background: 'linear-gradient(135deg, #c2410c 0%, #9a3412 100%)', color: '#ffffff', border: 'none', borderRadius: 9999, padding: '13px 0', fontSize: 14.5, fontWeight: 800, cursor: 'pointer', boxShadow: '0 4px 16px rgba(194, 65, 12, 0.35)' },
     btnDisabled: { opacity: 0.5, cursor: 'not-allowed', boxShadow: 'none' },
     error: { background: '#FEF2F2', color: '#991B1B', borderRadius: 10, padding: '10px 14px', fontSize: 13, marginBottom: 14, border: '1px solid #FCA5A5' },
     info: { background: '#ECFDF5', color: '#065F46', borderRadius: 10, padding: '12px 14px', fontSize: 13, marginBottom: 14, border: '1px solid #A7F3D0' },

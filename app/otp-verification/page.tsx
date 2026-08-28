@@ -34,8 +34,8 @@ export default function OTPVerificationPage() {
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--bg-canvas)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24, fontFamily: 'inherit' }}>
-      <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 20, padding: '40px 32px', maxWidth: 440, width: '100%', textAlign: 'center', boxShadow: '0 20px 60px rgba(0, 0, 0, 0.06)' }}>
+    <div style={{ minHeight: '100vh', background: 'var(--bg-canvas)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px 16px', fontFamily: 'inherit' }}>
+      <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 20, padding: '40px 24px', maxWidth: 440, width: '100%', textAlign: 'center', boxShadow: '0 20px 60px rgba(0, 0, 0, 0.06)', boxSizing: 'border-box' }}>
         <div style={{ fontSize: 24, fontWeight: 900, color: 'var(--text-main)', marginBottom: 6, letterSpacing: '-0.5px' }}>
           Print<span style={{ color: '#ea580c' }}>Hive</span>
         </div>
@@ -46,7 +46,7 @@ export default function OTPVerificationPage() {
 
         {error && <div style={{ background: '#FEF2F2', color: '#991B1B', padding: '10px 14px', borderRadius: 10, fontSize: 13, marginBottom: 16, border: '1px solid #FCA5A5' }}>{error}</div>}
 
-        <div style={{ display: 'flex', gap: 8, justifyContent: 'center', marginBottom: 28 }}>
+        <div style={{ display: 'flex', gap: 6, justifyContent: 'center', marginBottom: 28, width: '100%', boxSizing: 'border-box' }}>
           {otp.map((digit, idx) => (
             <input
               key={idx}
@@ -57,16 +57,18 @@ export default function OTPVerificationPage() {
               value={digit}
               onChange={(e) => handleChange(e.target.value, idx)}
               style={{
-                width: 48,
-                height: 54,
+                flex: 1,
+                maxWidth: 48,
+                minWidth: 32,
+                height: 52,
                 borderRadius: 12,
                 background: 'var(--bg-card-hover)',
                 border: '1px solid var(--border-color)',
                 color: 'var(--text-main)',
-                fontSize: 22,
+                fontSize: 20,
                 fontWeight: 800,
                 textAlign: 'center',
-                outline: 'none',
+                boxSizing: 'border-box',
               }}
             />
           ))}
@@ -75,7 +77,7 @@ export default function OTPVerificationPage() {
         <button
           onClick={handleVerify}
           disabled={verifying}
-          style={{ width: '100%', padding: '14px 0', background: 'linear-gradient(135deg, #ea580c 0%, #c2410c 100%)', color: '#fff', border: 'none', borderRadius: 9999, fontSize: 14.5, fontWeight: 800, cursor: 'pointer', marginBottom: 16, boxShadow: '0 4px 16px rgba(234, 88, 12, 0.3)' }}
+          style={{ width: '100%', padding: '14px 0', background: 'linear-gradient(135deg, #c2410c 0%, #9a3412 100%)', color: '#ffffff', border: 'none', borderRadius: 9999, fontSize: 14.5, fontWeight: 800, cursor: 'pointer', marginBottom: 16, boxShadow: '0 4px 16px rgba(194, 65, 12, 0.35)' }}
         >
           {verifying ? 'Verifying...' : 'Verify OTP & Log In →'}
         </button>
