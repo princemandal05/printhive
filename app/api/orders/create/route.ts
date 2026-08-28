@@ -99,8 +99,8 @@ export async function POST(request: Request) {
     const orderStatus = initial_status || (printer_id ? 'PRINTER_ASSIGNED' : 'PENDING_PAYMENT')
 
     const insertPayload: Record<string, any> = {
-      user_id: user.id,
       buyer_id: user.id,
+      user_id: user.id,
       seller_id: derivedSellerId,
       designer_id: derivedDesignerId,
       printer_owner_id: derivedPrinterOwnerId,
@@ -110,14 +110,9 @@ export async function POST(request: Request) {
       total_amount: total,
       total_price: total,
       total: total,
-      price: total,
-      amount: total,
       printer_payout: printerPayout,
-      printer_share: printerPayout,
       designer_royalty: designerRoyalty,
-      designer_share: designerRoyalty,
       platform_fee: platformFee,
-      platform_share: platformFee,
       status: orderStatus,
       payment_status: 'pending',
       shipping_address: typeof shipping_address === 'string' ? shipping_address : JSON.stringify(shipping_address || {}),
@@ -125,15 +120,42 @@ export async function POST(request: Request) {
       created_at: new Date().toISOString(),
     }
 
-    const { data: order, error: insertError } = await db
-      .from('orders')
-      .insert(insertPayload)
-      .select('*')
-      .single()
+    let order: any = null
+    let insertError: any = null
+    const currentPayload = { ...insertPayload }
 
-    if (insertError) {
-      console.error('Error inserting order record:', insertError)
-      return NextResponse.json({ error: insertError.message || 'Failed to create order' }, { status: 500 })
+    // Resilient Schema Adaptation Loop:
+    // If Supabase schema does not have certain optional legacy columns,
+    // automatically strip them and retry without failing the user request.
+    for (let attempt = 0; attempt < 8; attempt++) {
+      const { data, error } = await db
+        .from('orders')
+        .insert(currentPayload)
+        .select('*')
+        .single()
+
+      if (!error && data) {
+        order = data
+        insertError = null
+        break
+      }
+
+      if (error) {
+        insertError = error
+        const missingColMatch = error.message.match(/Could not find the '([^']+)' column of 'orders' in the schema cache/i)
+        if (missingColMatch && missingColMatch[1] && currentPayload[missingColMatch[1]] !== undefined) {
+          console.warn(`Pruning unmapped column '${missingColMatch[1]}' from orders payload and retrying...`)
+          delete currentPayload[missingColMatch[1]]
+          continue
+        } else {
+          break
+        }
+      }
+    }
+
+    if (insertError || !order) {
+      console.error('Error inserting order record after adaptive retries:', insertError)
+      return NextResponse.json({ error: insertError?.message || 'Failed to create order' }, { status: 500 })
     }
 
     // Write initial status record in order_status_history
