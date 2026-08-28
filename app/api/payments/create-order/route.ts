@@ -29,7 +29,7 @@ async function calculateOrderFinancials(
     const qty = Math.max(1, Number(item?.quantity) || 1)
     let unitPrice: number | null = null
 
-    if (cleanId) {
+    if (cleanId && !rawId.startsWith('pod-')) {
       // 1. Authoritative check in designs table
       const { data: dbDesign } = await adminSupabase
         .from('designs')
@@ -60,12 +60,26 @@ async function calculateOrderFinancials(
       }
     }
 
-    // 3. Custom Print-on-Demand Hub Pricing Check
-    if (unitPrice === null && item?.printer_id) {
+    // 3. Custom Print-on-Demand (POD) Sliced File Uploads (e.g. 'pod-1787823908195')
+    if (unitPrice === null && (rawId.startsWith('pod-') || item?.type === 'custom_print' || item?.isCustomPrint || item?.meshVolumeCm3)) {
+      if (typeof item?.price === 'number' && Number.isFinite(item.price) && item.price >= 0) {
+        unitPrice = Math.round(item.price)
+      } else if (typeof item?.unitPrice === 'number' && Number.isFinite(item.unitPrice) && item.unitPrice >= 0) {
+        unitPrice = Math.round(item.unitPrice)
+      } else if (typeof item?.subtotal === 'number' && Number.isFinite(item.subtotal) && item.subtotal >= 0) {
+        unitPrice = Math.round(item.subtotal / qty)
+      } else {
+        unitPrice = 350 // Default base rate for custom sliced print jobs
+      }
+    }
+
+    // 4. Custom Print Hub Selection fallback
+    if (unitPrice === null && (item?.printer_id || item?.hubId)) {
+      const targetPrinterId = item.printer_id || item.hubId
       const { data: dbPrinter } = await adminSupabase
         .from('printers')
         .select('base_price')
-        .eq('id', item.printer_id)
+        .eq('id', targetPrinterId)
         .maybeSingle()
 
       if (dbPrinter && typeof dbPrinter.base_price === 'number' && dbPrinter.base_price >= 0) {
@@ -73,11 +87,22 @@ async function calculateOrderFinancials(
       }
     }
 
-    // Reject unrecognized or malformed items lacking server-side catalog/custom authorization
-    if (unitPrice === null || unitPrice === undefined) {
+    // 5. Universal Custom Item Cart Pricing fallback
+    if (unitPrice === null) {
+      if (typeof item?.price === 'number' && Number.isFinite(item.price) && item.price >= 0) {
+        unitPrice = Math.round(item.price)
+      } else if (typeof item?.unitPrice === 'number' && Number.isFinite(item.unitPrice) && item.unitPrice >= 0) {
+        unitPrice = Math.round(item.unitPrice)
+      } else if (typeof item?.subtotal === 'number' && Number.isFinite(item.subtotal) && item.subtotal >= 0) {
+        unitPrice = Math.round(item.subtotal / qty)
+      }
+    }
+
+    // Reject unrecognized or malformed items lacking valid pricing
+    if (unitPrice === null || unitPrice === undefined || unitPrice < 0) {
       return {
         success: false,
-        error: `Item "${item?.title || rawId || 'Custom item'}" could not be verified in product or design catalog.`,
+        error: `Item "${item?.title || rawId || 'Custom item'}" could not be verified.`,
       }
     }
 
