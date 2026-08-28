@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, Suspense } from 'react'
+import { useState, useEffect, useRef, Suspense } from 'react'
 import { useParams, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import Navbar from '@/components/Navbar'
@@ -32,6 +32,9 @@ function OrderTrackingContent() {
   const [confirmingDelivery, setConfirmingDelivery] = useState(false)
   const [payingEscrow, setPayingEscrow] = useState(false)
 
+  const lastStatusRef = useRef<string>('')
+  const lastHistoryCountRef = useRef<number>(-1)
+
   // Load live order and status history from Supabase
   useEffect(() => {
     let isCancelled = false
@@ -43,48 +46,38 @@ function OrderTrackingContent() {
       }
 
       try {
-        // Query order status and details
-        const { data: orderData, error: orderErr } = await supabase
-          .from('orders')
-          .select('*')
-          .eq('id', orderId)
-          .maybeSingle()
-
-        if (orderErr) {
-          console.error('Failed to query order:', orderErr.message)
-        }
+        const [orderRes, historyRes] = await Promise.all([
+          supabase.from('orders').select('*').eq('id', orderId).maybeSingle(),
+          supabase.from('order_status_history').select('*').eq('order_id', orderId).order('created_at', { ascending: true }),
+        ])
 
         if (isCancelled) return
 
-        if (orderData?.status) {
-          setCurrentStatus(normalizeOrderStatus(orderData.status))
-          setOrderDetails(orderData)
-          setOrderNotFound(false)
-        } else if (!isBackground) {
-          setOrderNotFound(true)
+        const orderData = orderRes.data
+        const historyData = historyRes.data || []
+
+        if (!orderData) {
+          if (!isBackground) setOrderNotFound(true)
+          return
         }
 
-        // Query status history logs
-        const { data: historyData, error: historyErr } = await supabase
-          .from('order_status_history')
-          .select('*')
-          .eq('order_id', orderId)
-          .order('created_at', { ascending: true })
+        // Determine canonical rich status
+        const latestHistoryStatus = historyData.length > 0 ? historyData[historyData.length - 1]?.status : orderData.status
+        const canonical = normalizeOrderStatus(latestHistoryStatus || 'PENDING_PAYMENT')
 
-        if (historyErr) {
-          console.error('Failed to query order status history:', historyErr.message)
+        // Only trigger React state updates if values actually changed to prevent DOM re-renders & scroll jumping
+        if (canonical !== lastStatusRef.current) {
+          lastStatusRef.current = canonical
+          setCurrentStatus(canonical)
         }
 
-        if (isCancelled) return
-
-        if (historyData && historyData.length > 0) {
+        if (historyData.length !== lastHistoryCountRef.current) {
+          lastHistoryCountRef.current = historyData.length
           setHistory(historyData)
-          // Derive canonical rich status from latest history record
-          const latestHistoryStatus = historyData[historyData.length - 1]?.status
-          if (latestHistoryStatus) {
-            setCurrentStatus(normalizeOrderStatus(latestHistoryStatus))
-          }
         }
+
+        setOrderDetails((prev: any) => (prev?.id === orderData.id && prev?.status === orderData.status ? prev : orderData))
+        setOrderNotFound(false)
       } catch (err) {
         console.warn('Order history query note:', err)
         if (!isCancelled && !isBackground) setOrderNotFound(true)
@@ -95,7 +88,7 @@ function OrderTrackingContent() {
 
     loadOrderHistory(false)
 
-    // Real-time Supabase subscription & dynamic background polling for live status changes
+    // Real-time Supabase subscription for live push events
     const channel = supabase
       .channel(`order-${orderId}-live`)
       .on(
@@ -114,13 +107,8 @@ function OrderTrackingContent() {
       )
       .subscribe()
 
-    const pollInterval = setInterval(() => {
-      loadOrderHistory(true)
-    }, 5000)
-
     return () => {
       isCancelled = true
-      clearInterval(pollInterval)
       supabase.removeChannel(channel)
     }
   }, [orderId])
