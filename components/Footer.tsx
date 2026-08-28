@@ -111,9 +111,77 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* COLUMN 2: STRICTLY ROLE-TAILORED PORTAL */}
+          {/* COLUMN 2: STRICTLY ROLE-TAILORED WORKFLOW HUB */}
           <div>
-            {(role === 'seller' || role === 'vendor') && (
+            {/* LOGGED OUT / LOADING STATE */}
+            {(!role || !isLoaded) && (
+              <>
+                <div style={{ fontSize: 11, fontWeight: 800, color: 'var(--text-main)', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 12 }}>
+                  Join PrintHive
+                </div>
+                <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 8, fontSize: 12.5 }}>
+                  <li>
+                    <Link href={ROUTES.shop} style={{ color: 'var(--text-sub)', textDecoration: 'none', transition: 'color 0.15s' }}>
+                      Explore Products
+                    </Link>
+                  </li>
+                  <li>
+                    <Link href={ROUTES.browse} style={{ color: 'var(--text-sub)', textDecoration: 'none', transition: 'color 0.15s' }}>
+                      3D Model Library
+                    </Link>
+                  </li>
+                  <li>
+                    <Link href={ROUTES.auth.login} style={{ color: 'var(--text-sub)', textDecoration: 'none', transition: 'color 0.15s' }}>
+                      Sign In to Account
+                    </Link>
+                  </li>
+                  <li>
+                    <Link href={ROUTES.auth.signup} style={{ color: '#ea580c', textDecoration: 'none', fontWeight: 700, transition: 'color 0.15s' }}>
+                      Create Free Account →
+                    </Link>
+                  </li>
+                </ul>
+              </>
+            )}
+
+            {/* BUYER ROLE */}
+            {isLoaded && role === 'buyer' && (
+              <>
+                <div style={{ fontSize: 11, fontWeight: 800, color: '#ea580c', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 12 }}>
+                  Buyer Studio
+                </div>
+                <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 8, fontSize: 12.5 }}>
+                  <li>
+                    <Link href={ROUTES.buyer.dashboard} style={{ color: 'var(--text-sub)', textDecoration: 'none', transition: 'color 0.15s' }}>
+                      Buyer Dashboard
+                    </Link>
+                  </li>
+                  <li>
+                    <Link href={ROUTES.orders} style={{ color: 'var(--text-sub)', textDecoration: 'none', transition: 'color 0.15s' }}>
+                      Track Print Orders
+                    </Link>
+                  </li>
+                  <li>
+                    <Link href={ROUTES.cart} style={{ color: 'var(--text-sub)', textDecoration: 'none', transition: 'color 0.15s' }}>
+                      Shopping Cart
+                    </Link>
+                  </li>
+                  <li>
+                    <Link href={ROUTES.wishlist} style={{ color: 'var(--text-sub)', textDecoration: 'none', transition: 'color 0.15s' }}>
+                      Saved Wishlist
+                    </Link>
+                  </li>
+                  <li>
+                    <Link href={ROUTES.requests} style={{ color: 'var(--text-sub)', textDecoration: 'none', transition: 'color 0.15s' }}>
+                      Post Custom CAD Brief
+                    </Link>
+                  </li>
+                </ul>
+              </>
+            )}
+
+            {/* SELLER / VENDOR ROLE */}
+            {isLoaded && (role === 'seller' || role === 'vendor') && (
               <>
                 <div style={{ fontSize: 11, fontWeight: 800, color: '#ea580c', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 12 }}>
                   Seller Portal
@@ -134,14 +202,25 @@ export default function Footer() {
                       My Store Catalog
                     </Link>
                   </li>
+                  <li>
+                    <Link href={ROUTES.orders} style={{ color: 'var(--text-sub)', textDecoration: 'none', transition: 'color 0.15s' }}>
+                      Store Orders
+                    </Link>
+                  </li>
+                  <li>
+                    <Link href={ROUTES.support} style={{ color: 'var(--text-sub)', textDecoration: 'none', transition: 'color 0.15s' }}>
+                      Seller Support Desk
+                    </Link>
+                  </li>
                 </ul>
               </>
             )}
 
-            {role === 'printer_owner' && (
+            {/* PRINTER OWNER ROLE */}
+            {isLoaded && (role === 'printer_owner' || role === 'printer') && (
               <>
                 <div style={{ fontSize: 11, fontWeight: 800, color: '#ea580c', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 12 }}>
-                  Printer Hub Portal
+                  Printer Hub
                 </div>
                 <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 8, fontSize: 12.5 }}>
                   <li>
@@ -159,14 +238,20 @@ export default function Footer() {
                       Active Print Job Queue
                     </Link>
                   </li>
+                  <li>
+                    <Link href={ROUTES.support} style={{ color: 'var(--text-sub)', textDecoration: 'none', transition: 'color 0.15s' }}>
+                      Hub Support Desk
+                    </Link>
+                  </li>
                 </ul>
               </>
             )}
 
-            {role === 'designer' && (
+            {/* DESIGNER / CREATOR ROLE */}
+            {isLoaded && role === 'designer' && (
               <>
-                <div style={{ fontSize: 11, fontWeight: 800, color: '#ea580c', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 12 }}>
-                  Designer Studio
+                <div style={{ fontSize: 11, fontWeight: 800, color: '#8B5CF6', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 12 }}>
+                  Creator Studio
                 </div>
                 <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 8, fontSize: 12.5 }}>
                   <li>
@@ -180,15 +265,26 @@ export default function Footer() {
                     </Link>
                   </li>
                   <li>
+                    <Link href={ROUTES.browse} style={{ color: 'var(--text-sub)', textDecoration: 'none', transition: 'color 0.15s' }}>
+                      3D Models Directory
+                    </Link>
+                  </li>
+                  <li>
                     <Link href={ROUTES.requests} style={{ color: 'var(--text-sub)', textDecoration: 'none', transition: 'color 0.15s' }}>
                       Open CAD Briefs
+                    </Link>
+                  </li>
+                  <li>
+                    <Link href={ROUTES.support} style={{ color: 'var(--text-sub)', textDecoration: 'none', transition: 'color 0.15s' }}>
+                      Creator Support Desk
                     </Link>
                   </li>
                 </ul>
               </>
             )}
 
-            {role === 'admin' && (
+            {/* ADMIN ROLE */}
+            {isLoaded && role === 'admin' && (
               <>
                 <div style={{ fontSize: 11, fontWeight: 800, color: '#ea580c', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 12 }}>
                   Admin Center
@@ -196,42 +292,17 @@ export default function Footer() {
                 <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 8, fontSize: 12.5 }}>
                   <li>
                     <Link href={ROUTES.admin.dashboard} style={{ color: 'var(--text-sub)', textDecoration: 'none', transition: 'color 0.15s' }}>
-                      Admin Operations
+                      Admin Operations Hub
                     </Link>
                   </li>
                   <li>
                     <Link href={ROUTES.support} style={{ color: 'var(--text-sub)', textDecoration: 'none', transition: 'color 0.15s' }}>
-                      Support Queue
-                    </Link>
-                  </li>
-                </ul>
-              </>
-            )}
-
-            {(role === 'buyer' || !role) && (
-              <>
-                <div style={{ fontSize: 11, fontWeight: 800, color: 'var(--text-main)', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 12 }}>
-                  Buyer Portal
-                </div>
-                <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 8, fontSize: 12.5 }}>
-                  <li>
-                    <Link href={ROUTES.buyer.dashboard} style={{ color: 'var(--text-sub)', textDecoration: 'none', transition: 'color 0.15s' }}>
-                      Buyer Dashboard
+                      Support Ticket Queue
                     </Link>
                   </li>
                   <li>
-                    <Link href={ROUTES.orders} style={{ color: 'var(--text-sub)', textDecoration: 'none', transition: 'color 0.15s' }}>
-                      Track Print Orders
-                    </Link>
-                  </li>
-                  <li>
-                    <Link href={ROUTES.design} style={{ color: 'var(--text-sub)', textDecoration: 'none', transition: 'color 0.15s' }}>
-                      Post Custom CAD Brief
-                    </Link>
-                  </li>
-                  <li>
-                    <Link href={ROUTES.wishlist} style={{ color: 'var(--text-sub)', textDecoration: 'none', transition: 'color 0.15s' }}>
-                      Saved Wishlist
+                    <Link href={ROUTES.shop} style={{ color: 'var(--text-sub)', textDecoration: 'none', transition: 'color 0.15s' }}>
+                      Marketplace Control
                     </Link>
                   </li>
                 </ul>
