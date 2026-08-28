@@ -1,4 +1,5 @@
 import { updateOrderStatus } from '@/utils/order-lifecycle'
+import { sendNotification } from '@/utils/notifications'
 
 export type SettlePaymentParams = {
   order_id?: string
@@ -151,6 +152,18 @@ export async function settlePayment(adminSupabase: any, params: SettlePaymentPar
         'PAYMENT_CONFIRMED'
       )
     }
+  }
+
+  // 8. Dispatch Authoritative Real-Time Notification to Buyer
+  const buyerId = order.buyer_id || order.user_id
+  if (buyerId) {
+    await sendNotification(adminSupabase, {
+      userId: buyerId,
+      title: `💳 Payment Confirmed for Order #${targetOrderId.slice(0, 8)}`,
+      message: `Your payment of ₹${orderAmount} was verified with Razorpay Escrow. Your 3D print job is being routed.`,
+      type: 'payment',
+      link: `/orders/${targetOrderId}`,
+    })
   }
 
   return {

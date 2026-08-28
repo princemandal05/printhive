@@ -1,5 +1,6 @@
 import { createClient, createAdminClient } from '@/utils/supabase/server'
 import { NextResponse } from 'next/server'
+import { sendNotification } from '@/utils/notifications'
 import {
   ORDER_LIFECYCLE_STEPS,
   isValidStatusTransition,
@@ -139,17 +140,13 @@ export async function PATCH(
 
     // 3. Send real-time notification to buyer
     if (order.buyer_id) {
-      try {
-        await adminDb.from('notifications').insert({
-          user_id: order.buyer_id,
-          title: `📦 Order #${id.slice(0, 8)} ${stepInfo?.label || targetStatus}`,
-          body: notes || defaultNotes,
-          link: `/orders/${id}`,
-          created_at: new Date().toISOString(),
-        })
-      } catch (e) {
-        console.warn('Buyer notification notice:', e)
-      }
+      await sendNotification(adminDb, {
+        userId: order.buyer_id,
+        title: `📦 Order #${id.slice(0, 8)} ${stepInfo?.label || targetStatus}`,
+        message: notes || defaultNotes,
+        type: 'order',
+        link: `/orders/${id}`,
+      })
     }
 
     return NextResponse.json({ success: true, status: targetStatus, order: updatedOrder })

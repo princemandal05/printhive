@@ -61,8 +61,29 @@ export default function NotificationBell() {
 
   useEffect(() => {
     fetchNotifications()
-    const interval = setInterval(fetchNotifications, 25000) // Poll every 25 seconds
-    return () => clearInterval(interval)
+
+    // 1. Listen for instant real-time notification pushes
+    const channel = supabase
+      .channel('realtime_user_notifications')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'notifications' },
+        (payload) => {
+          if (payload.new) {
+            setNotifications((prev) => [payload.new as NotificationItem, ...prev])
+            setUnreadCount((prev) => prev + 1)
+          }
+        }
+      )
+      .subscribe()
+
+    // 2. Backup periodic refresh
+    const interval = setInterval(fetchNotifications, 30000)
+
+    return () => {
+      supabase.removeChannel(channel)
+      clearInterval(interval)
+    }
   }, [])
 
   // Close dropdown on click outside
