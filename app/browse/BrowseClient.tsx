@@ -437,6 +437,7 @@ export default function BrowseClient({ designs = [] }: { designs: DesignRow[] })
         const { data, error } = await supabase
           .from('designs')
           .select('id, title, description, file_url, thumbnail_url, price, tags, is_public, designer_id, created_at, rating, rating_count, materials, estimated_print_time')
+          .or('is_public.is.null,is_public.eq.true')
           .order('created_at', { ascending: false })
 
         if (!error && data && isMounted) {
@@ -469,8 +470,8 @@ export default function BrowseClient({ designs = [] }: { designs: DesignRow[] })
               title: d.title || 'Custom 3D CAD Model',
               price: Number(d.price ?? 0),
               category: tags[0] || d.category || 'Toys & Miniatures',
-              rating: Number(d.rating ?? 4.9),
-              rating_count: Number(d.rating_count ?? 1),
+              rating: d.rating != null ? Number(d.rating) : 0,
+              rating_count: d.rating_count != null ? Number(d.rating_count) : 0,
               thumbnail_url: d.thumbnail_url || 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=600&q=80',
               file_url: d.file_url || '',
               designer: { full_name: profileMap[d.designer_id] || 'PrintHive Creator' },

@@ -69,7 +69,7 @@ export default function DesignDetailClient({ design, reviews }: { design: Design
   }
 
   return (
-    <section className="container section" style={{ padding: '40px 20px', maxWidth: 1200, margin: '0 auto' }}>
+    <section className="container section" style={{ padding: '40px 20px', maxWidth: 1200, margin: '0 auto', color: 'var(--text-main)' }}>
       <div className="grid grid-cols-2 gap-8" style={{ display: 'grid', gridTemplateColumns: '1.1fr 0.9fr', gap: 32 }}>
         {/* Interactive 3D WebGL Viewport */}
         <div>
@@ -85,40 +85,40 @@ export default function DesignDetailClient({ design, reviews }: { design: Design
           </div>
 
           {/* Slicing Estimates Summary Card */}
-          <div style={{ background: '#1e293b', border: '1px solid #334155', borderRadius: 16, padding: 18, marginBottom: 24, display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12, textAlign: 'center' }}>
-            <div style={{ background: 'rgba(255,255,255,0.03)', padding: 12, borderRadius: 12, border: '1px solid rgba(255,255,255,0.06)' }}>
-              <div style={{ fontSize: 11, color: '#94a3b8', textTransform: 'uppercase', fontWeight: 800, marginBottom: 2 }}>⏱️ Est. Print Time</div>
-              <div style={{ fontSize: 16, fontWeight: 900, color: '#f8fafc' }}>{printTime}</div>
+          <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 16, padding: 18, marginBottom: 24, display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12, textAlign: 'center' }}>
+            <div style={{ background: 'var(--bg-card-hover)', padding: 12, borderRadius: 12, border: '1px solid var(--border-color)' }}>
+              <div style={{ fontSize: 11, color: 'var(--text-sub)', textTransform: 'uppercase', fontWeight: 800, marginBottom: 2 }}>⏱️ Est. Print Time</div>
+              <div style={{ fontSize: 16, fontWeight: 900, color: 'var(--text-main)' }}>{printTime}</div>
             </div>
-            <div style={{ background: 'rgba(255,255,255,0.03)', padding: 12, borderRadius: 12, border: '1px solid rgba(255,255,255,0.06)' }}>
-              <div style={{ fontSize: 11, color: '#94a3b8', textTransform: 'uppercase', fontWeight: 800, marginBottom: 2 }}>🧵 Est. Filament</div>
-              <div style={{ fontSize: 16, fontWeight: 900, color: '#f8fafc' }}>{materialUsage}</div>
+            <div style={{ background: 'var(--bg-card-hover)', padding: 12, borderRadius: 12, border: '1px solid var(--border-color)' }}>
+              <div style={{ fontSize: 11, color: 'var(--text-sub)', textTransform: 'uppercase', fontWeight: 800, marginBottom: 2 }}>🧵 Est. Filament</div>
+              <div style={{ fontSize: 16, fontWeight: 900, color: 'var(--text-main)' }}>{materialUsage}</div>
             </div>
-            <div style={{ background: 'rgba(255,255,255,0.03)', padding: 12, borderRadius: 12, border: '1px solid rgba(255,255,255,0.06)' }}>
-              <div style={{ fontSize: 11, color: '#94a3b8', textTransform: 'uppercase', fontWeight: 800, marginBottom: 2 }}>🧊 Recommended</div>
-              <div style={{ fontSize: 16, fontWeight: 900, color: '#ff6b35' }}>{material}</div>
+            <div style={{ background: 'var(--bg-card-hover)', padding: 12, borderRadius: 12, border: '1px solid var(--border-color)' }}>
+              <div style={{ fontSize: 11, color: 'var(--text-sub)', textTransform: 'uppercase', fontWeight: 800, marginBottom: 2 }}>🧊 Recommended</div>
+              <div style={{ fontSize: 16, fontWeight: 900, color: '#ea580c' }}>{material}</div>
             </div>
           </div>
 
-          <p className="text-sm text-muted" style={{ color: '#94a3b8', fontSize: 14, lineHeight: 1.6 }}>
+          <p className="text-sm text-muted" style={{ color: 'var(--text-sub)', fontSize: 14, lineHeight: 1.6 }}>
             {design.description || 'High-precision 3D model designed for zero-tolerance FDM and Resin 3D printing.'}
           </p>
 
           {/* Customer Reviews & Ratings */}
           <div style={{ marginTop: 32 }}>
-            <div className="feature-title" style={{ fontSize: 18, fontWeight: 700, color: '#f8fafc', marginBottom: 16 }}>
+            <div className="feature-title" style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-main)', marginBottom: 16 }}>
               Reviews & Ratings ({reviews.length})
             </div>
             {reviews.length === 0 ? (
-              <p className="text-sm text-muted" style={{ color: '#64748b' }}>No reviews yet — be the first to order and review this design.</p>
+              <p className="text-sm text-muted" style={{ color: 'var(--text-sub)' }}>No reviews yet — be the first to order and review this design.</p>
             ) : (
               reviews.map((r, i) => (
-                <div key={i} className="card" style={{ background: '#1e293b', padding: 16, borderRadius: 12, marginBottom: 12, border: '1px solid #334155' }}>
+                <div key={i} className="card" style={{ background: 'var(--bg-card)', padding: 16, borderRadius: 12, marginBottom: 12, border: '1px solid var(--border-color)' }}>
                   <div className="flex justify-between items-center" style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-                    <span className="text-sm" style={{ fontWeight: 600, color: '#f1f5f9' }}>{r.buyer?.full_name ?? 'PrintHive buyer'}</span>
+                    <span className="text-sm" style={{ fontWeight: 600, color: 'var(--text-main)' }}>{r.buyer?.full_name ?? 'PrintHive buyer'}</span>
                     <span className="rating" style={{ color: '#fbbf24' }}>{'★'.repeat(r.rating)}{'☆'.repeat(5 - r.rating)}</span>
                   </div>
-                  {r.review_text && <p className="text-sm text-muted" style={{ color: '#94a3b8', fontSize: 13 }}>{r.review_text}</p>}
+                  {r.review_text && <p className="text-sm text-muted" style={{ color: 'var(--text-sub)', fontSize: 13 }}>{r.review_text}</p>}
                 </div>
               ))
             )}
@@ -127,37 +127,37 @@ export default function DesignDetailClient({ design, reviews }: { design: Design
 
         {/* RIGHT SIDEBAR: ORDER & ROYALTY ACTION */}
         <div>
-          <div className="card text-left" style={{ background: '#1e293b', border: '1px solid #334155', padding: 24, borderRadius: 20, marginBottom: 24 }}>
+          <div className="card text-left" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', padding: 24, borderRadius: 20, marginBottom: 24 }}>
             <div style={{ fontSize: 12, fontWeight: 800, color: '#8b5cf6', textTransform: 'uppercase', marginBottom: 6 }}>
               {design.category || '3D Printing Model'}
             </div>
-            <h1 style={{ fontSize: 26, fontWeight: 900, color: '#f8fafc', margin: '0 0 12px', letterSpacing: '-0.5px' }}>
+            <h1 style={{ fontSize: 26, fontWeight: 900, color: 'var(--text-main)', margin: '0 0 12px', letterSpacing: '-0.5px' }}>
               {design.title}
             </h1>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
-              <div style={{ fontSize: 28, fontWeight: 900, color: design.price === 0 ? '#10b981' : '#f8fafc' }}>
+              <div style={{ fontSize: 28, fontWeight: 900, color: design.price === 0 ? '#10b981' : 'var(--text-main)' }}>
                 {design.price === 0 ? 'Free (₹0)' : `₹${design.price}`}
               </div>
-              <span style={{ fontSize: 12, background: 'rgba(139,92,246,0.15)', color: '#a78bfa', padding: '4px 12px', borderRadius: 99, fontWeight: 700, border: '1px solid rgba(139,92,246,0.3)' }}>
+              <span style={{ fontSize: 12, background: 'rgba(139,92,246,0.15)', color: '#8b5cf6', padding: '4px 12px', borderRadius: 99, fontWeight: 700, border: '1px solid rgba(139,92,246,0.3)' }}>
                 {design.price === 0 ? 'Open Source' : '15% Royalty Protected'}
               </span>
             </div>
 
             {/* DESIGNER / CREATOR PROFILE */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: 14, background: 'rgba(255,255,255,0.03)', borderRadius: 14, border: '1px solid rgba(255,255,255,0.06)', marginBottom: 20 }}>
-              <div style={{ width: 40, height: 40, borderRadius: '50%', background: '#ff6b35', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: 16 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: 14, background: 'var(--bg-card-hover)', borderRadius: 14, border: '1px solid var(--border-color)', marginBottom: 20 }}>
+              <div style={{ width: 40, height: 40, borderRadius: '50%', background: '#ea580c', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: 16 }}>
                 {design.designer?.full_name?.charAt(0) || 'C'}
               </div>
               <div>
-                <div style={{ fontSize: 11, color: '#94a3b8', fontWeight: 700, textTransform: 'uppercase' }}>Created By</div>
-                <div style={{ fontSize: 14, fontWeight: 800, color: '#f8fafc' }}>{design.designer?.full_name || 'PrintHive Designer'}</div>
+                <div style={{ fontSize: 11, color: 'var(--text-sub)', fontWeight: 700, textTransform: 'uppercase' }}>Created By</div>
+                <div style={{ fontSize: 14, fontWeight: 800, color: 'var(--text-main)' }}>{design.designer?.full_name || 'PrintHive Designer'}</div>
               </div>
             </div>
 
             {/* MATERIAL SELECTION */}
             <div style={{ marginBottom: 18 }}>
-              <label style={{ fontSize: 12, fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase', display: 'block', marginBottom: 8 }}>
+              <label style={{ fontSize: 12, fontWeight: 800, color: 'var(--text-sub)', textTransform: 'uppercase', display: 'block', marginBottom: 8 }}>
                 Select Print Material
               </label>
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
@@ -167,9 +167,9 @@ export default function DesignDetailClient({ design, reviews }: { design: Design
                     type="button"
                     onClick={() => setMaterial(m)}
                     style={{
-                      background: material === m ? '#ff6b35' : 'rgba(255,255,255,0.05)',
-                      color: '#fff',
-                      border: 'none',
+                      background: material === m ? '#ea580c' : 'var(--bg-card-hover)',
+                      color: material === m ? '#fff' : 'var(--text-main)',
+                      border: material === m ? '1px solid #ea580c' : '1px solid var(--border-color)',
                       borderRadius: 10,
                       padding: '8px 16px',
                       fontSize: 13,
@@ -185,7 +185,7 @@ export default function DesignDetailClient({ design, reviews }: { design: Design
 
             {/* COLOR SELECTION */}
             <div style={{ marginBottom: 24 }}>
-              <label style={{ fontSize: 12, fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase', display: 'block', marginBottom: 8 }}>
+              <label style={{ fontSize: 12, fontWeight: 800, color: 'var(--text-sub)', textTransform: 'uppercase', display: 'block', marginBottom: 8 }}>
                 Select Filament Color
               </label>
               <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
@@ -199,9 +199,9 @@ export default function DesignDetailClient({ design, reviews }: { design: Design
                       height: 32,
                       borderRadius: '50%',
                       background: getColorHex(cName),
-                      border: color === cName ? '3px solid #ff6b35' : '1px solid rgba(255,255,255,0.2)',
+                      border: color === cName ? '3px solid #ea580c' : '1px solid var(--border-color)',
                       cursor: 'pointer',
-                      boxShadow: color === cName ? '0 0 10px rgba(255,107,53,0.5)' : 'none',
+                      boxShadow: color === cName ? '0 0 10px rgba(234,88,12,0.4)' : 'none',
                     }}
                     title={cName}
                   />
@@ -216,14 +216,14 @@ export default function DesignDetailClient({ design, reviews }: { design: Design
                 style={{
                   display: 'block',
                   textAlign: 'center',
-                  background: 'linear-gradient(135deg, #ff6b35 0%, #ea580c 100%)',
+                  background: 'linear-gradient(135deg, #c2410c 0%, #9a3412 100%)',
                   color: '#fff',
                   padding: '14px 24px',
                   borderRadius: 14,
                   fontWeight: 900,
                   fontSize: 15,
                   textDecoration: 'none',
-                  boxShadow: '0 8px 24px rgba(255,107,53,0.35)',
+                  boxShadow: '0 8px 24px rgba(194, 65, 12, 0.35)',
                 }}
               >
                 🖨️ Order Physical Print From Hub
@@ -234,9 +234,9 @@ export default function DesignDetailClient({ design, reviews }: { design: Design
                 onClick={handleBuyModel}
                 style={{
                   width: '100%',
-                  background: 'rgba(255,255,255,0.06)',
-                  border: '1px solid rgba(255,255,255,0.15)',
-                  color: '#f8fafc',
+                  background: 'var(--bg-card-hover)',
+                  border: '1px solid var(--border-color)',
+                  color: 'var(--text-main)',
                   padding: '12px 24px',
                   borderRadius: 14,
                   fontWeight: 800,
@@ -254,7 +254,7 @@ export default function DesignDetailClient({ design, reviews }: { design: Design
                   width: '100%',
                   background: 'transparent',
                   border: 'none',
-                  color: wished ? '#ef4444' : '#94a3b8',
+                  color: wished ? '#ef4444' : 'var(--text-sub)',
                   fontSize: 13,
                   fontWeight: 700,
                   cursor: 'pointer',

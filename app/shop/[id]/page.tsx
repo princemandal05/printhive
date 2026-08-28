@@ -125,8 +125,8 @@ export default function ProductDetailsPage() {
           name: dbProduct.title || dbProduct.name || '3D Printed Product',
           price: Number(dbProduct.price ?? 499),
           category: dbProduct.category || 'Home Décor',
-          rating: Number(dbProduct.rating ?? 4.9),
-          reviewsCount: Number(dbProduct.reviews_count ?? 38),
+          rating: dbProduct.rating != null ? Number(dbProduct.rating) : 0,
+          reviewsCount: dbProduct.reviews_count != null ? Number(dbProduct.reviews_count) : 0,
           seller: sellerName,
           stock: Number(dbProduct.stock ?? 10),
           description: dbProduct.description || 'Precision engineered 3D printed model manufactured on-demand using industrial FDM and SLA additive manufacturing printers with guaranteed dimensional accuracy.',
@@ -161,8 +161,8 @@ export default function ProductDetailsPage() {
               name: r.title || r.name || '3D Product',
               price: Number(r.price ?? 499),
               category: r.category || 'Home Décor',
-              rating: Number(r.rating ?? 4.8),
-              reviewsCount: Number(r.reviews_count ?? 12),
+              rating: r.rating != null ? Number(r.rating) : 0,
+              reviewsCount: r.reviews_count != null ? Number(r.reviews_count) : 0,
               seller: 'PrintHive Hub',
               stock: Number(r.stock ?? 10),
               description: r.description || '',
@@ -396,7 +396,8 @@ export default function ProductDetailsPage() {
             {/* Rating & Hub */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 4, color: '#D97706', fontSize: 13, fontWeight: 800 }}>
-                <Star size={14} fill="#D97706" color="#D97706" /> {product.rating} ({product.reviewsCount} verified reviews)
+                <Star size={14} fill={product.rating > 0 ? '#D97706' : 'none'} color="#D97706" />
+                {product.rating > 0 ? `${product.rating} (${product.reviewsCount} verified reviews)` : 'New Listing (No reviews yet)'}
               </div>
               <span style={{ color: 'var(--border-color)' }}>•</span>
               <div style={{ fontSize: 12.5, color: 'var(--text-sub)' }}>
