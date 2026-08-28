@@ -6,7 +6,7 @@ import Link from 'next/link'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 import { createClient } from '@/utils/supabase/client'
-import { ORDER_LIFECYCLE_STEPS, updateOrderStatus, type OrderStatus } from '@/utils/order-lifecycle'
+import { ORDER_LIFECYCLE_STEPS, updateOrderStatus, normalizeOrderStatus, type OrderStatus } from '@/utils/order-lifecycle'
 
 interface HistoryEntry {
   id: string
@@ -55,7 +55,7 @@ function OrderTrackingContent() {
         if (isCancelled) return
 
         if (orderData?.status) {
-          setCurrentStatus(orderData.status as OrderStatus)
+          setCurrentStatus(normalizeOrderStatus(orderData.status))
           setOrderDetails(orderData)
         } else {
           setOrderNotFound(true)

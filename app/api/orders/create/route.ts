@@ -100,7 +100,6 @@ export async function POST(request: Request) {
 
     const insertPayload: Record<string, any> = {
       buyer_id: user.id,
-      user_id: user.id,
       seller_id: derivedSellerId,
       designer_id: derivedDesignerId,
       printer_owner_id: derivedPrinterOwnerId,
@@ -108,15 +107,11 @@ export async function POST(request: Request) {
       design_id: design_id || null,
       printer_id: printer_id || null,
       total_amount: total,
-      total_price: total,
-      total: total,
-      printer_payout: printerPayout,
-      designer_royalty: designerRoyalty,
-      platform_fee: platformFee,
-      status: orderStatus,
-      payment_status: 'pending',
+      printer_share: printerPayout,
+      designer_share: designerRoyalty,
+      platform_share: platformFee,
+      status: 'pending',
       shipping_address: typeof shipping_address === 'string' ? shipping_address : JSON.stringify(shipping_address || {}),
-      notes: notes || '',
       created_at: new Date().toISOString(),
     }
 
@@ -159,13 +154,13 @@ export async function POST(request: Request) {
     }
 
     // Write initial status record in order_status_history
-    const historyNotes = orderStatus === 'PRINTER_ASSIGNED'
+    const historyNotes = initial_status === 'PRINTER_ASSIGNED'
       ? 'Custom print request dispatched to printer hub. Awaiting operator acceptance before payment.'
       : 'Order created, awaiting Razorpay payment confirmation.'
 
     const { error: historyErr } = await db.from('order_status_history').insert({
       order_id: order.id,
-      status: orderStatus,
+      status: 'pending',
       notes: historyNotes,
       updated_by: user.id,
       created_at: new Date().toISOString(),
@@ -177,25 +172,31 @@ export async function POST(request: Request) {
 
     // Send real-time notification to printer owner if assigned
     if (derivedPrinterOwnerId) {
-      await db.from('notifications').insert({
-        user_id: derivedPrinterOwnerId,
-        title: '🖨️ New Print Job Request',
-        message: `New print request #${order.id.slice(0, 8)} for ₹${total} received. Review specs and accept the job.`,
-        type: 'order',
-        link: `/dashboard/printer-owner`,
-        created_at: new Date().toISOString(),
-      })
+      try {
+        await db.from('notifications').insert({
+          user_id: derivedPrinterOwnerId,
+          title: '🖨️ New Print Job Request',
+          body: `New print request #${order.id.slice(0, 8)} for ₹${total} received. Review specs and accept the job.`,
+          link: `/dashboard/printer-owner`,
+          created_at: new Date().toISOString(),
+        })
+      } catch (e) {
+        console.warn('Printer notification notice:', e)
+      }
     }
 
     // Send real-time notification to buyer
-    await db.from('notifications').insert({
-      user_id: user.id,
-      title: '📦 Print Request Dispatched',
-      message: `Your request #${order.id.slice(0, 8)} has been sent to the printer hub for review.`,
-      type: 'order',
-      link: `/orders/${order.id}`,
-      created_at: new Date().toISOString(),
-    })
+    try {
+      await db.from('notifications').insert({
+        user_id: user.id,
+        title: '📦 Print Request Dispatched',
+        body: `Your request #${order.id.slice(0, 8)} has been sent to the printer hub for review.`,
+        link: `/orders/${order.id}`,
+        created_at: new Date().toISOString(),
+      })
+    } catch (e) {
+      console.warn('Buyer notification notice:', e)
+    }
 
     return NextResponse.json({ success: true, order }, { status: 201 })
   } catch (error: any) {

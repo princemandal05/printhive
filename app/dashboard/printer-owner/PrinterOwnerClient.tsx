@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/utils/supabase/client'
-import { updateOrderStatus, type OrderStatus } from '@/utils/order-lifecycle'
+import { updateOrderStatus, normalizeOrderStatus, type OrderStatus } from '@/utils/order-lifecycle'
 import Navbar from '@/components/Navbar'
 
 export type PrinterHub = {
@@ -418,6 +418,8 @@ export default function PrinterOwnerClient({ user, initialPrinters, initialOrder
                       setUpdatingId(null)
                     }
 
+                    const normStatus = normalizeOrderStatus(o.status)
+
                     return (
                       <tr key={o.id}>
                         <td style={{ ...s.td, fontWeight: 800 }}>
@@ -429,29 +431,29 @@ export default function PrinterOwnerClient({ user, initialPrinters, initialOrder
                         <td style={s.td}>{o.quantity}×</td>
                         <td style={{ ...s.td, fontWeight: 800, color: '#10B981' }}>₹{o.payout || Math.round(o.total * 0.7)}</td>
                         <td style={s.td}>
-                          {o.status === 'PRINTER_ASSIGNED' && (
+                          {normStatus === 'PRINTER_ASSIGNED' && (
                             <span style={{ background: '#FEF3C7', color: '#B45309', padding: '4px 10px', borderRadius: 6, fontWeight: 800, fontSize: 12 }}>
                               ⏳ New Request
                             </span>
                           )}
-                          {o.status === 'PRINTER_ACCEPTED' && (
+                          {normStatus === 'PRINTER_ACCEPTED' && (
                             <span style={{ background: '#EFF6FF', color: '#2563EB', padding: '4px 10px', borderRadius: 6, fontWeight: 800, fontSize: 12 }}>
                               💳 Awaiting Payment
                             </span>
                           )}
-                          {o.status === 'PAYMENT_CONFIRMED' && (
+                          {normStatus === 'PAYMENT_CONFIRMED' && (
                             <span style={{ background: '#ECFDF5', color: '#059669', padding: '4px 10px', borderRadius: 6, fontWeight: 800, fontSize: 12 }}>
                               💰 Escrow Paid
                             </span>
                           )}
-                          {!['PRINTER_ASSIGNED', 'PRINTER_ACCEPTED', 'PAYMENT_CONFIRMED'].includes(o.status) && (
+                          {!['PRINTER_ASSIGNED', 'PRINTER_ACCEPTED', 'PAYMENT_CONFIRMED'].includes(normStatus) && (
                             <span style={{ background: '#F1F5F9', color: '#475569', padding: '4px 10px', borderRadius: 6, fontWeight: 800, fontSize: 12 }}>
-                              {o.status}
+                              {normStatus}
                             </span>
                           )}
                         </td>
                         <td style={s.td}>
-                          {['PRINTER_ASSIGNED', 'FINDING_PRINTER', 'pending'].includes(o.status) && (
+                          {['PRINTER_ASSIGNED', 'FINDING_PRINTER'].includes(normStatus) && (
                             <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
                               <button
                                 onClick={() => handleNextStep('PRINTER_ACCEPTED', 'Printer hub accepted 3D print request.')}
@@ -473,52 +475,53 @@ export default function PrinterOwnerClient({ user, initialPrinters, initialOrder
                               </button>
                             </div>
                           )}
-                          {['PRINTER_ACCEPTED', 'accepted'].includes(o.status) && (
-                            <span style={{ fontSize: 12, color: '#64748B', fontWeight: 700 }}>
-                              ⏳ Waiting for buyer payment
-                            </span>
+                          {normStatus === 'PRINTER_ACCEPTED' && (
+                            <span style={{ fontSize: 12, color: 'var(--text-sub)', fontWeight: 600 }}>Awaiting Buyer Escrow</span>
                           )}
-                          {o.status === 'PAYMENT_CONFIRMED' && (
+                          {normStatus === 'PAYMENT_CONFIRMED' && (
                             <button
-                              onClick={() => handleNextStep('PRINTING', '3D printing started on machine.')}
+                              onClick={() => handleNextStep('PRINTING', 'Printer operator started 3D print run.')}
                               disabled={updatingId === o.id}
-                              style={{ background: '#ea580c', color: '#fff', border: 'none', padding: '5px 12px', borderRadius: 6, fontSize: 12, fontWeight: 800, cursor: 'pointer' }}
+                              style={{ background: '#FF6B35', color: '#fff', border: 'none', padding: '5px 12px', borderRadius: 6, fontSize: 12, fontWeight: 800, cursor: 'pointer' }}
                             >
                               ⚡ Start Printing
                             </button>
                           )}
-                          {['PRINTING', 'in_production'].includes(o.status) && (
+                          {normStatus === 'PRINTING' && (
                             <button
-                              onClick={() => handleNextStep('QUALITY_CHECK', 'Print finished, starting quality inspection.')}
+                              onClick={() => handleNextStep('QUALITY_CHECK', 'Print finished, starting dimensional inspection.')}
                               disabled={updatingId === o.id}
-                              style={{ background: '#8B5CF6', color: '#fff', border: 'none', padding: '5px 12px', borderRadius: 6, fontSize: 12, fontWeight: 800, cursor: 'pointer' }}
+                              style={{ background: '#2563EB', color: '#fff', border: 'none', padding: '5px 12px', borderRadius: 6, fontSize: 12, fontWeight: 800, cursor: 'pointer' }}
                             >
                               🔍 Quality Check
                             </button>
                           )}
-                          {o.status === 'QUALITY_CHECK' && (
+                          {normStatus === 'QUALITY_CHECK' && (
                             <button
-                              onClick={() => handleNextStep('READY', 'Quality check passed, packaged for courier.')}
+                              onClick={() => handleNextStep('READY', 'QA passed, package boxed for courier.')}
                               disabled={updatingId === o.id}
-                              style={{ background: '#10B981', color: '#fff', border: 'none', padding: '5px 12px', borderRadius: 6, fontSize: 12, fontWeight: 800, cursor: 'pointer' }}
+                              style={{ background: '#8B5CF6', color: '#fff', border: 'none', padding: '5px 12px', borderRadius: 6, fontSize: 12, fontWeight: 800, cursor: 'pointer' }}
                             >
                               📦 Mark Ready
                             </button>
                           )}
-                          {o.status === 'READY' && (
+                          {normStatus === 'READY' && (
                             <button
-                              onClick={() => handleNextStep('DISPATCHED', 'Package dispatched with courier.')}
+                              onClick={() => handleNextStep('DISPATCHED', 'Courier handed over package for delivery.')}
                               disabled={updatingId === o.id}
-                              style={{ background: '#0284C7', color: '#fff', border: 'none', padding: '5px 12px', borderRadius: 6, fontSize: 12, fontWeight: 800, cursor: 'pointer' }}
+                              style={{ background: '#059669', color: '#fff', border: 'none', padding: '5px 12px', borderRadius: 6, fontSize: 12, fontWeight: 800, cursor: 'pointer' }}
                             >
-                              🚚 Dispatch Courier
+                              🚚 Hand to Courier
                             </button>
                           )}
-                          {['DISPATCHED', 'DELIVERED', 'COMPLETED'].includes(o.status) && (
-                            <span style={{ fontSize: 12, color: '#10B981', fontWeight: 800 }}>✓ Dispatched</span>
+                          {normStatus === 'DISPATCHED' && (
+                            <span style={{ fontSize: 12, color: '#10B981', fontWeight: 700 }}>In Transit (Courier)</span>
                           )}
-                          {o.status === 'CANCELLED' && (
-                            <span style={{ fontSize: 12, color: '#EF4444', fontWeight: 800 }}>Declined</span>
+                          {normStatus === 'DELIVERED' && (
+                            <span style={{ fontSize: 12, color: '#10B981', fontWeight: 800 }}>✅ Delivered</span>
+                          )}
+                          {normStatus === 'CANCELLED' && (
+                            <span style={{ fontSize: 12, color: '#EF4444', fontWeight: 800 }}>✕ Cancelled</span>
                           )}
                         </td>
                       </tr>
