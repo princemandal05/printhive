@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient, createAdminClient } from '@/utils/supabase/server'
-import { updateOrderStatus } from '@/utils/order-lifecycle'
+import { updateOrderStatus, toDbOrderStatus } from '@/utils/order-lifecycle'
 
 interface FinancialCalculationResult {
   subtotal: number
@@ -27,9 +27,10 @@ async function calculateOrderFinancials(
     const rawId = String(item?.id || '').trim()
     const cleanId = rawId.startsWith('design-') ? rawId.slice(7) : rawId
     const qty = Math.max(1, Number(item?.quantity) || 1)
-    let catalogPrice: number | null = null
+    let unitPrice: number | null = null
 
     if (cleanId) {
+      // 1. Authoritative check in designs table
       const { data: dbDesign } = await adminSupabase
         .from('designs')
         .select('price')
@@ -37,8 +38,16 @@ async function calculateOrderFinancials(
         .maybeSingle()
 
       if (dbDesign && typeof dbDesign.price === 'number' && dbDesign.price >= 0) {
-        catalogPrice = dbDesign.price
+        const infill = Math.max(10, Math.min(100, Number(item?.infill) || 20))
+        const scale = Math.max(10, Math.min(500, Number(item?.scale) || 100))
+        const finish = String(item?.surfaceFinish || '')
+        const finishSurcharge = finish === 'Smoothed (vapor/sanded)' ? 80 : finish === 'Painted' ? 180 : 0
+        const infillMultiplier = 1 + (infill - 20) / 100
+        const scaleMultiplier = Math.pow(scale / 100, 2)
+
+        unitPrice = Math.max(50, Math.round(dbDesign.price * infillMultiplier * scaleMultiplier) + finishSurcharge)
       } else {
+        // 2. Authoritative check in products table
         const { data: dbProduct } = await adminSupabase
           .from('products')
           .select('price')
@@ -46,29 +55,35 @@ async function calculateOrderFinancials(
           .maybeSingle()
 
         if (dbProduct && typeof dbProduct.price === 'number' && dbProduct.price >= 0) {
-          catalogPrice = dbProduct.price
+          unitPrice = dbProduct.price
         }
       }
     }
 
-    // Support customized designs, custom sliced parts, and cart pricing overrides
-    if (catalogPrice === null || catalogPrice === undefined) {
-      if (typeof item?.price === 'number' && Number.isFinite(item.price) && item.price >= 0) {
-        catalogPrice = item.price
-      } else if (typeof item?.unitPrice === 'number' && Number.isFinite(item.unitPrice) && item.unitPrice >= 0) {
-        catalogPrice = item.unitPrice
-      } else if (typeof item?.subtotal === 'number' && Number.isFinite(item.subtotal) && item.subtotal >= 0) {
-        catalogPrice = Math.round(item.subtotal / qty)
-      } else {
-        catalogPrice = 150 // Standard fallback base price for custom prints
+    // 3. Custom Print-on-Demand Hub Pricing Check
+    if (unitPrice === null && item?.printer_id) {
+      const { data: dbPrinter } = await adminSupabase
+        .from('printers')
+        .select('base_price')
+        .eq('id', item.printer_id)
+        .maybeSingle()
+
+      if (dbPrinter && typeof dbPrinter.base_price === 'number' && dbPrinter.base_price >= 0) {
+        unitPrice = dbPrinter.base_price
       }
     }
 
-    let finalPrice = typeof catalogPrice === 'number' && Number.isFinite(catalogPrice) && catalogPrice >= 0
-      ? catalogPrice
-      : 150
+    // Reject unrecognized or malformed items lacking server-side catalog/custom authorization
+    if (unitPrice === null || unitPrice === undefined) {
+      return {
+        success: false,
+        error: `Item "${item?.title || rawId || 'Custom item'}" could not be verified in product or design catalog.`,
+      }
+    }
 
-    subtotal += finalPrice * qty
+    // Exact line item total without lossy intermediate integer division
+    const lineTotal = unitPrice * qty
+    subtotal += lineTotal
   }
 
   const shippingFee = subtotal === 0 || subtotal > 1500 ? 0 : 99
@@ -132,7 +147,7 @@ export async function POST(request: Request) {
         id: targetOrderId,
         buyer_id: user.id,
         buyer_email: user.email,
-        status: 'pending',
+        status: toDbOrderStatus(initialStatus),
         payment_method: paymentMethod || (isCod ? 'cod' : 'upi'),
         total_amount: orderAmount,
         items,
@@ -148,14 +163,21 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: 'Failed to create order record' }, { status: 500 })
       }
 
-      // Record rich initial status in order_status_history
-      await adminSupabase.from('order_status_history').insert({
+      // Record rich initial status in order_status_history with atomic compensating rollback
+      const { error: historyErr } = await adminSupabase.from('order_status_history').insert({
         order_id: targetOrderId,
         status: initialStatus,
         notes: isCod ? 'Order placed with Pay on Delivery. Routing to nearby verified 3D printer hub.' : 'Order established, awaiting payment confirmation.',
         updated_by: user.id,
         created_at: new Date().toISOString(),
       })
+
+      if (historyErr) {
+        console.error('Failed to create order status history record:', historyErr)
+        // Compensating rollback: Delete orphaned order record
+        await adminSupabase.from('orders').delete().eq('id', targetOrderId)
+        return NextResponse.json({ error: 'Failed to record initial order status history' }, { status: 500 })
+      }
 
       // If Cash on Delivery, return early
       if (isCod) {
