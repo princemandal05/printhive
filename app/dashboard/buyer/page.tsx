@@ -48,7 +48,7 @@ export default async function BuyerDashboard() {
   }
 
   return (
-    <main style={{ minHeight: '100vh', background: '#FAF8F5', color: '#0F172A' }}>
+    <main style={{ minHeight: '100vh', background: 'var(--bg-canvas)', color: 'var(--text-main)', transition: 'background 0.3s ease' }}>
       <Navbar />
       <BuyerDashboardClient user={userData} myRequests={myRequests} myOrders={myOrders} />
       <Footer />
