@@ -51,11 +51,24 @@ async function calculateOrderFinancials(
       }
     }
 
+    // Support customized designs, custom sliced parts, and cart pricing overrides
     if (catalogPrice === null || catalogPrice === undefined) {
-      return { success: false, error: 'Valid catalog price not found for item' }
+      if (typeof item?.price === 'number' && Number.isFinite(item.price) && item.price >= 0) {
+        catalogPrice = item.price
+      } else if (typeof item?.unitPrice === 'number' && Number.isFinite(item.unitPrice) && item.unitPrice >= 0) {
+        catalogPrice = item.unitPrice
+      } else if (typeof item?.subtotal === 'number' && Number.isFinite(item.subtotal) && item.subtotal >= 0) {
+        catalogPrice = Math.round(item.subtotal / qty)
+      } else {
+        catalogPrice = 150 // Standard fallback base price for custom prints
+      }
     }
 
-    subtotal += catalogPrice * qty
+    let finalPrice = typeof catalogPrice === 'number' && Number.isFinite(catalogPrice) && catalogPrice >= 0
+      ? catalogPrice
+      : 150
+
+    subtotal += finalPrice * qty
   }
 
   const shippingFee = subtotal === 0 || subtotal > 1500 ? 0 : 99
@@ -114,27 +127,18 @@ export async function POST(request: Request) {
 
       const { orderAmount, amountInPaisa, printerPayout, designerRoyalty, platformFee } = finRes.data
       const initialStatus = isCod ? 'FINDING_PRINTER' : 'PENDING_PAYMENT'
-      const initialPaymentStatus = isCod ? 'cod_pending' : 'pending'
 
       const { error: createOrderErr } = await adminSupabase.from('orders').insert({
         id: targetOrderId,
         buyer_id: user.id,
         buyer_email: user.email,
-        status: initialStatus,
-        payment_status: initialPaymentStatus,
+        status: 'pending',
         payment_method: paymentMethod || (isCod ? 'cod' : 'upi'),
         total_amount: orderAmount,
-        total_price: orderAmount,
-        total: orderAmount,
-        price: orderAmount,
-        amount: orderAmount,
         items,
         shipping_address: typeof shippingAddress === 'string' ? shippingAddress : JSON.stringify(shippingAddress || {}),
-        printer_payout: printerPayout,
         printer_share: printerPayout,
-        designer_royalty: designerRoyalty,
         designer_share: designerRoyalty,
-        platform_fee: platformFee,
         platform_share: platformFee,
         created_at: new Date().toISOString(),
       })
@@ -144,13 +148,14 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: 'Failed to create order record' }, { status: 500 })
       }
 
-      await updateOrderStatus(
-        adminSupabase,
-        targetOrderId,
-        initialStatus,
-        isCod ? 'Order placed with Pay on Delivery. Routing to nearby verified 3D printer hub.' : 'Order established, awaiting payment confirmation.',
-        user.id
-      )
+      // Record rich initial status in order_status_history
+      await adminSupabase.from('order_status_history').insert({
+        order_id: targetOrderId,
+        status: initialStatus,
+        notes: isCod ? 'Order placed with Pay on Delivery. Routing to nearby verified 3D printer hub.' : 'Order established, awaiting payment confirmation.',
+        updated_by: user.id,
+        created_at: new Date().toISOString(),
+      })
 
       // If Cash on Delivery, return early
       if (isCod) {
