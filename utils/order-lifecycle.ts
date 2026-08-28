@@ -174,6 +174,26 @@ export async function updateOrderStatus(
   updatedByUserId?: string,
   currentStatus?: OrderStatus
 ) {
+  // If running in browser, delegate to secure server API endpoint to bypass client RLS restrictions
+  if (typeof window !== 'undefined') {
+    try {
+      const res = await fetch(`/api/orders/${orderId}/status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus, notes }),
+      })
+      const data = await res.json()
+      if (res.ok && data.success) {
+        return { success: true, status: newStatus }
+      }
+      return { success: false, error: data.error || 'Failed to update order status' }
+    } catch (err: any) {
+      console.error('Client order status update API error:', err)
+      return { success: false, error: err.message || 'Network error updating order status' }
+    }
+  }
+
+  // Server-side fallback: execute directly against database
   let activeStatus = currentStatus
   if (!activeStatus) {
     activeStatus = await getOrderCanonicalStatus(supabase, orderId)

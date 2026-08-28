@@ -1,24 +1,12 @@
-import { createClient } from '@/utils/supabase/server'
+import { createClient, createAdminClient } from '@/utils/supabase/server'
 import { NextResponse } from 'next/server'
-
-const VALID_STATUSES = ['PENDING_PAYMENT', 'PAID', 'PRINTING', 'SHIPPED', 'DELIVERED', 'CANCELLED', 'REFUNDED']
-
-const ALLOWED_TRANSITIONS: Record<string, string[]> = {
-  PENDING_PAYMENT: ['PAID', 'CANCELLED'],
-  PAID: ['PRINTING', 'CANCELLED', 'REFUNDED'],
-  PRINTING: ['SHIPPED', 'CANCELLED', 'REFUNDED'],
-  SHIPPED: ['DELIVERED'],
-  DELIVERED: [],
-  CANCELLED: [],
-  REFUNDED: [],
-}
-
-const PAYMENT_STATUS_MAP: Record<string, string> = {
-  PAID: 'paid',
-  REFUNDED: 'refunded',
-  CANCELLED: 'cancelled',
-  PENDING_PAYMENT: 'pending',
-}
+import {
+  ORDER_LIFECYCLE_STEPS,
+  isValidStatusTransition,
+  normalizeOrderStatus,
+  toDbOrderStatus,
+  type OrderStatus,
+} from '@/utils/order-lifecycle'
 
 export async function PATCH(
   request: Request,
@@ -27,20 +15,24 @@ export async function PATCH(
   try {
     const { id } = await params
     const supabase = await createClient()
+    const adminDb = await createAdminClient()
     const { data: { user }, error: authError } = await supabase.auth.getUser()
 
     if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return NextResponse.json({ error: 'Unauthorized: Please log in to update order status' }, { status: 401 })
     }
 
-    const body = await request.json()
+    const body = await request.json().catch(() => ({}))
     const { status, notes } = body
 
-    if (!status || !VALID_STATUSES.includes(status)) {
-      return NextResponse.json({ error: `Invalid status. Allowed values: ${VALID_STATUSES.join(', ')}` }, { status: 400 })
+    if (!status) {
+      return NextResponse.json({ error: 'Missing required status parameter' }, { status: 400 })
     }
 
-    const { data: order, error: orderError } = await supabase
+    const targetStatus = normalizeOrderStatus(status)
+
+    // Query order using admin client to read authoritative state
+    const { data: order, error: orderError } = await adminDb
       .from('orders')
       .select('*')
       .eq('id', id)
@@ -50,91 +42,119 @@ export async function PATCH(
       return NextResponse.json({ error: 'Order not found' }, { status: 404 })
     }
 
-    const currentStatus = order.status || 'PENDING_PAYMENT'
+    // Query latest canonical status from order_status_history
+    const { data: latestHistory } = await adminDb
+      .from('order_status_history')
+      .select('status')
+      .eq('order_id', id)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle()
 
-    if (currentStatus === status) {
-      return NextResponse.json({ success: true, order })
+    const currentCanonicalStatus = latestHistory?.status
+      ? normalizeOrderStatus(latestHistory.status)
+      : normalizeOrderStatus(order.status || 'PENDING_PAYMENT')
+
+    if (currentCanonicalStatus === targetStatus) {
+      return NextResponse.json({ success: true, status: targetStatus, order })
     }
 
-    const allowedNext = ALLOWED_TRANSITIONS[currentStatus] || []
-    if (!allowedNext.includes(status)) {
-      return NextResponse.json(
-        { error: `Invalid state transition: Cannot transition order from ${currentStatus} to ${status}` },
-        { status: 400 }
-      )
-    }
-
-    const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).maybeSingle()
+    // Authorize caller based on order participant roles
+    const { data: profile } = await adminDb.from('profiles').select('role').eq('id', user.id).maybeSingle()
     const isAdmin = profile?.role === 'admin'
     const isSeller = order.seller_id === user.id
     const isPrinterOwner = order.printer_owner_id === user.id
     const isDesigner = order.designer_id === user.id
     const isBuyer = order.buyer_id === user.id
 
-    if (!isSeller && !isPrinterOwner && !isDesigner && !isBuyer && !isAdmin) {
-      return NextResponse.json({ error: 'Forbidden: You cannot update status for this order' }, { status: 403 })
-    }
-
-    // Role-specific status restrictions:
-    // Buyers can ONLY cancel pending payment orders; fulfillment/payment updates must come from webhook, seller, printer owner, or admin.
-    if (isBuyer && !isAdmin && !isSeller && !isPrinterOwner) {
-      if (status !== 'CANCELLED' || currentStatus !== 'PENDING_PAYMENT') {
-        return NextResponse.json({ error: 'Forbidden: Buyers cannot set fulfillment or payment statuses directly' }, { status: 403 })
+    // Check if user owns the printer assigned to this order
+    let isAssignedPrinter = false
+    if (order.printer_id) {
+      const { data: printer } = await adminDb.from('printers').select('owner_id').eq('id', order.printer_id).maybeSingle()
+      if (printer?.owner_id === user.id) {
+        isAssignedPrinter = true
       }
     }
 
-    const updateFields: Record<string, any> = { status }
-    if (PAYMENT_STATUS_MAP[status]) {
-      updateFields.payment_status = PAYMENT_STATUS_MAP[status]
+    const isAuthorizedParticipant = isAdmin || isSeller || isPrinterOwner || isAssignedPrinter || isDesigner || isBuyer
+
+    if (!isAuthorizedParticipant) {
+      return NextResponse.json({ error: 'Forbidden: You are not authorized to update this order' }, { status: 403 })
     }
 
-    const { data: updatedOrder, error: updateError } = await supabase
+    // Role-specific action validation:
+    // Printer owners can accept/decline assigned jobs, or progress active prints (PRINTING, QUALITY_CHECK, READY, DISPATCHED)
+    // Buyers can pay escrow (PAYMENT_CONFIRMED), confirm delivery (DELIVERED), or cancel pending payment orders
+    if (isBuyer && !isAdmin && !isPrinterOwner && !isAssignedPrinter) {
+      const allowedBuyerTransitions = ['PAYMENT_CONFIRMED', 'DELIVERED', 'CANCELLED']
+      if (!allowedBuyerTransitions.includes(targetStatus)) {
+        return NextResponse.json({ error: 'Forbidden: Buyers cannot set fulfillment manufacturing statuses directly' }, { status: 403 })
+      }
+    }
+
+    // Validate lifecycle transition
+    if (!isValidStatusTransition(currentCanonicalStatus, targetStatus)) {
+      console.warn(`Invalid state transition: ${currentCanonicalStatus} -> ${targetStatus}`)
+      return NextResponse.json(
+        { error: `Invalid transition from ${currentCanonicalStatus} to ${targetStatus}` },
+        { status: 400 }
+      )
+    }
+
+    const stepInfo = ORDER_LIFECYCLE_STEPS.find((s) => s.key === targetStatus)
+    const defaultNotes = stepInfo ? stepInfo.description : `Order status updated to ${targetStatus}`
+    const dbStatus = toDbOrderStatus(targetStatus)
+
+    // 1. Update status in orders table using admin database client
+    const { data: updatedOrder, error: updateError } = await adminDb
       .from('orders')
-      .update(updateFields)
+      .update({
+        status: dbStatus,
+        updated_at: new Date().toISOString(),
+      })
       .eq('id', id)
-      .eq('status', currentStatus)
       .select('*')
       .maybeSingle()
 
     if (updateError) {
-      console.error('Error updating order status:', updateError)
+      console.error('Error updating order status in database:', updateError)
       return NextResponse.json({ error: 'Failed to update order status' }, { status: 500 })
     }
 
-    if (!updatedOrder) {
-      return NextResponse.json(
-        { error: 'Conflict: Order status was updated by another request. Please refresh and try again.' },
-        { status: 409 }
-      )
-    }
-
-    // Write audit record to order_status_history
-    const { error: historyErr } = await supabase.from('order_status_history').insert({
+    // 2. Insert audit entry into order_status_history
+    const { error: historyErr } = await adminDb.from('order_status_history').insert({
       order_id: id,
-      status,
-      notes: notes || `Order status updated to ${status}`,
+      status: targetStatus,
+      notes: notes || defaultNotes,
       updated_by: user.id,
+      created_at: new Date().toISOString(),
     })
 
     if (historyErr) {
       console.error('Error recording order status history:', historyErr)
-      return NextResponse.json({ error: 'Status updated, but failed to record audit trail' }, { status: 500 })
+      // Compensate orders status on history failure
+      await adminDb.from('orders').update({ status: toDbOrderStatus(currentCanonicalStatus) }).eq('id', id)
+      return NextResponse.json({ error: 'Status update failed to record audit trail' }, { status: 500 })
     }
 
-    // Send real-time notification to buyer about order status change
+    // 3. Send real-time notification to buyer
     if (order.buyer_id) {
-      await supabase.from('notifications').insert({
-        user_id: order.buyer_id,
-        title: `📦 Order ${status}`,
-        message: `Your order #${id.slice(0, 8)} status was updated to ${status}.`,
-        type: 'order',
-        link: `/orders/${id}`,
-      })
+      try {
+        await adminDb.from('notifications').insert({
+          user_id: order.buyer_id,
+          title: `📦 Order #${id.slice(0, 8)} ${stepInfo?.label || targetStatus}`,
+          body: notes || defaultNotes,
+          link: `/orders/${id}`,
+          created_at: new Date().toISOString(),
+        })
+      } catch (e) {
+        console.warn('Buyer notification notice:', e)
+      }
     }
 
-    return NextResponse.json({ success: true, order: updatedOrder })
+    return NextResponse.json({ success: true, status: targetStatus, order: updatedOrder })
   } catch (error: any) {
     console.error('Unexpected error in order status PATCH handler:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 })
   }
 }
