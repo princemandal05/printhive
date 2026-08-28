@@ -113,7 +113,7 @@ export default function Footer() {
 
           {/* COLUMN 2: STRICTLY ROLE-TAILORED PORTAL */}
           <div>
-            {role === 'seller' && (
+            {(role === 'seller' || role === 'vendor') && (
               <>
                 <div style={{ fontSize: 11, fontWeight: 800, color: '#ea580c', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 12 }}>
                   Seller Portal

@@ -2,14 +2,7 @@ import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-
-const DASHBOARD_PATH: Record<string, string> = {
-  buyer: '/dashboard/buyer',
-  seller: '/dashboard/seller',
-  designer: '/dashboard/designer',
-  printer_owner: '/dashboard/printer-owner',
-  admin: '/dashboard/admin',
-}
+import { resolveRoleDashboard } from '@/lib/routes'
 
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url)
@@ -95,7 +88,7 @@ export async function GET(request: NextRequest) {
         const rawTarget = next || decodedNext
         const targetPath = (rawTarget && rawTarget.startsWith('/') && !rawTarget.startsWith('//') && !rawTarget.includes(':'))
           ? rawTarget
-          : (DASHBOARD_PATH[userRole] ?? '/')
+          : resolveRoleDashboard(userRole)
 
         return NextResponse.redirect(`${origin}${targetPath}`)
       }

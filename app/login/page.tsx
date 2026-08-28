@@ -61,8 +61,15 @@ export default function LoginPage() {
       const rawRedirect = urlParams.get('redirect') || urlParams.get('next')
       let safeRedirectUrl = targetDashboard
 
-      if (rawRedirect && rawRedirect.startsWith('/') && !rawRedirect.startsWith('//') && !rawRedirect.includes(':')) {
-        safeRedirectUrl = rawRedirect
+      if (rawRedirect && !rawRedirect.includes('\\')) {
+        try {
+          const parsed = new URL(rawRedirect, window.location.origin)
+          if (parsed.origin === window.location.origin) {
+            safeRedirectUrl = parsed.pathname + parsed.search + parsed.hash
+          }
+        } catch {
+          // fallback to targetDashboard
+        }
       }
       
       // Set active role auth cookie so middleware grants immediate access
@@ -77,9 +84,17 @@ export default function LoginPage() {
   const handleGoogleSignIn = async () => {
     setError('')
     const urlParams = new URLSearchParams(window.location.search)
-    const nextParam = urlParams.get('next') || urlParams.get('redirect')
-    if (nextParam && nextParam.startsWith('/') && !nextParam.startsWith('//') && !nextParam.includes(':')) {
-      document.cookie = `printhive_next_redirect=${encodeURIComponent(nextParam)}; path=/; max-age=300`
+    const rawNext = urlParams.get('next') || urlParams.get('redirect')
+    if (rawNext && !rawNext.includes('\\')) {
+      try {
+        const parsed = new URL(rawNext, window.location.origin)
+        if (parsed.origin === window.location.origin) {
+          const sanitized = parsed.pathname + parsed.search + parsed.hash
+          document.cookie = `printhive_next_redirect=${encodeURIComponent(sanitized)}; path=/; max-age=300`
+        }
+      } catch {
+        // ignore
+      }
     }
 
     const { error: oauthErr } = await supabase.auth.signInWithOAuth({
