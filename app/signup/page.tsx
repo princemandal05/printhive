@@ -105,8 +105,14 @@ export default function SignupPage() {
 
     const urlParams = new URLSearchParams(window.location.search)
     const targetDashboard = DASHBOARD_PATH[registeredRole] || '/dashboard/buyer'
-    const redirectUrl = urlParams.get('redirect') || urlParams.get('next') || targetDashboard
-    window.location.href = redirectUrl
+    const rawRedirect = urlParams.get('redirect') || urlParams.get('next')
+    let safeRedirectUrl = targetDashboard
+
+    if (rawRedirect && rawRedirect.startsWith('/') && !rawRedirect.startsWith('//') && !rawRedirect.includes(':')) {
+      safeRedirectUrl = rawRedirect
+    }
+
+    window.location.href = safeRedirectUrl
   }
 
   const handleGoogleSignIn = async () => {

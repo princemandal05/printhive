@@ -34,17 +34,17 @@ export default function OTPVerificationPage() {
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: '#0f172a', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
-      <div style={{ background: '#1e293b', border: '1px solid #334155', borderRadius: 16, padding: '40px 32px', maxWidth: 440, width: '100%', textAlign: 'center' }}>
-        <div style={{ fontSize: 24, fontWeight: 800, color: '#fff', marginBottom: 6 }}>
-          Print<span style={{ color: '#ff6b35' }}>Hive</span>
+    <div style={{ minHeight: '100vh', background: 'var(--bg-canvas)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24, fontFamily: 'inherit' }}>
+      <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 20, padding: '40px 32px', maxWidth: 440, width: '100%', textAlign: 'center', boxShadow: '0 20px 60px rgba(0, 0, 0, 0.06)' }}>
+        <div style={{ fontSize: 24, fontWeight: 900, color: 'var(--text-main)', marginBottom: 6, letterSpacing: '-0.5px' }}>
+          Print<span style={{ color: '#ea580c' }}>Hive</span>
         </div>
-        <h1 style={{ fontSize: 20, fontWeight: 700, color: '#fff', marginBottom: 6 }}>OTP Verification</h1>
-        <p style={{ fontSize: 13, color: '#94a3b8', marginBottom: 28 }}>
+        <h1 style={{ fontSize: 20, fontWeight: 800, color: 'var(--text-main)', marginBottom: 6 }}>OTP Verification</h1>
+        <p style={{ fontSize: 13, color: 'var(--text-sub)', marginBottom: 28 }}>
           We sent a 6-digit verification code to your registered mobile / email.
         </p>
 
-        {error && <div style={{ background: '#FEF2F2', color: '#991B1B', padding: '10px 14px', borderRadius: 8, fontSize: 13, marginBottom: 16 }}>{error}</div>}
+        {error && <div style={{ background: '#FEF2F2', color: '#991B1B', padding: '10px 14px', borderRadius: 10, fontSize: 13, marginBottom: 16, border: '1px solid #FCA5A5' }}>{error}</div>}
 
         <div style={{ display: 'flex', gap: 8, justifyContent: 'center', marginBottom: 28 }}>
           {otp.map((digit, idx) => (
@@ -59,12 +59,12 @@ export default function OTPVerificationPage() {
               style={{
                 width: 48,
                 height: 54,
-                borderRadius: 10,
-                background: '#0f172a',
-                border: '1px solid #334155',
-                color: '#fff',
+                borderRadius: 12,
+                background: 'var(--bg-card-hover)',
+                border: '1px solid var(--border-color)',
+                color: 'var(--text-main)',
                 fontSize: 22,
-                fontWeight: 700,
+                fontWeight: 800,
                 textAlign: 'center',
                 outline: 'none',
               }}
@@ -75,13 +75,13 @@ export default function OTPVerificationPage() {
         <button
           onClick={handleVerify}
           disabled={verifying}
-          style={{ width: '100%', padding: '14px 0', background: '#ff6b35', color: '#fff', border: 'none', borderRadius: 8, fontSize: 15, fontWeight: 600, cursor: 'pointer', marginBottom: 16 }}
+          style={{ width: '100%', padding: '14px 0', background: 'linear-gradient(135deg, #ea580c 0%, #c2410c 100%)', color: '#fff', border: 'none', borderRadius: 9999, fontSize: 14.5, fontWeight: 800, cursor: 'pointer', marginBottom: 16, boxShadow: '0 4px 16px rgba(234, 88, 12, 0.3)' }}
         >
-          {verifying ? 'Verifying...' : 'Verify OTP & Log In'}
+          {verifying ? 'Verifying...' : 'Verify OTP & Log In →'}
         </button>
 
-        <div style={{ fontSize: 13, color: '#94a3b8' }}>
-          Didn't receive code? <button type="button" style={{ background: 'none', border: 'none', color: '#ff6b35', cursor: 'pointer', fontWeight: 600 }}>Resend OTP</button>
+        <div style={{ fontSize: 13, color: 'var(--text-sub)' }}>
+          Didn't receive code? <button type="button" style={{ background: 'none', border: 'none', color: '#ea580c', cursor: 'pointer', fontWeight: 800 }}>Resend OTP</button>
         </div>
       </div>
     </div>
