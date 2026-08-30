@@ -24,6 +24,7 @@ import {
   Layers,
   Zap,
   CheckCircle2,
+  Sparkles,
 } from 'lucide-react'
 
 // Wireframe Geodesic Geometric Sphere SVG
@@ -39,20 +40,20 @@ function WireframeSphere({ color }: { color: string }) {
         height: '100%',
         top: 0,
         left: 0,
-        opacity: 0.75,
+        opacity: 0.65,
         pointerEvents: 'none',
       }}
     >
       <circle cx="120" cy="120" r="96" stroke={color} strokeWidth="1" strokeDasharray="3 3" opacity="0.35" />
-      <ellipse cx="120" cy="120" rx="96" ry="42" stroke={color} strokeWidth="1.2" opacity="0.45" />
-      <ellipse cx="120" cy="120" rx="42" ry="96" stroke={color} strokeWidth="1.2" opacity="0.45" />
+      <ellipse cx="120" cy="120" rx="96" ry="42" stroke={color} strokeWidth="1.2" opacity="0.4" />
+      <ellipse cx="120" cy="120" rx="42" ry="96" stroke={color} strokeWidth="1.2" opacity="0.4" />
       
       {/* Polygonal Wireframe facets */}
-      <polygon points="120,24 188,68 188,172 120,216 52,172 52,68" stroke={color} strokeWidth="1" opacity="0.55" />
-      <polygon points="120,48 168,84 168,156 120,192 72,156 72,84" stroke={color} strokeWidth="1" opacity="0.4" />
-      <line x1="120" y1="24" x2="120" y2="216" stroke={color} strokeWidth="1" opacity="0.3" />
-      <line x1="52" y1="68" x2="188" y2="172" stroke={color} strokeWidth="1" opacity="0.25" />
-      <line x1="52" y1="172" x2="188" y2="68" stroke={color} strokeWidth="1" opacity="0.25" />
+      <polygon points="120,24 188,68 188,172 120,216 52,172 52,68" stroke={color} strokeWidth="1" opacity="0.5" />
+      <polygon points="120,48 168,84 168,156 120,192 72,156 72,84" stroke={color} strokeWidth="1" opacity="0.35" />
+      <line x1="120" y1="24" x2="120" y2="216" stroke={color} strokeWidth="1" opacity="0.25" />
+      <line x1="52" y1="68" x2="188" y2="172" stroke={color} strokeWidth="1" opacity="0.2" />
+      <line x1="52" y1="172" x2="188" y2="68" stroke={color} strokeWidth="1" opacity="0.2" />
       
       {/* Node Vertices */}
       <circle cx="52" cy="68" r="3.5" fill={color} opacity="0.8" />
@@ -101,7 +102,7 @@ const ROLES_DATA: RoleCardData[] = [
     badgeLabel: 'BUYER PORTAL',
     badgeIcon: <Box size={14} />,
     themeColor: '#ea580c',
-    bgLight: 'rgba(234, 88, 12, 0.1)',
+    bgLight: 'rgba(234, 88, 12, 0.12)',
     bgSoft: 'rgba(234, 88, 12, 0.04)',
     nodeLeftColor: '#059669',
     nodeRightColor: '#ea580c',
@@ -113,7 +114,7 @@ const ROLES_DATA: RoleCardData[] = [
         title: '2.4 km Away',
         subtitle: 'Nearest Printer',
         extraTag: (
-          <span style={{ fontSize: 9.5, fontWeight: 700, color: '#10b981', background: 'rgba(16, 185, 129, 0.12)', padding: '1px 6px', borderRadius: 99 }}>
+          <span style={{ fontSize: 10, fontWeight: 700, color: '#10b981', background: 'rgba(16, 185, 129, 0.14)', padding: '2px 7px', borderRadius: 99 }}>
             Available
           </span>
         ),
@@ -123,7 +124,7 @@ const ROLES_DATA: RoleCardData[] = [
         title: '3D Preview',
         subtitle: 'Inspect model in real-time',
         extraTag: (
-          <span style={{ fontSize: 9.5, fontWeight: 700, color: '#ea580c', background: 'rgba(234, 88, 12, 0.12)', padding: '1px 6px', borderRadius: 99 }}>
+          <span style={{ fontSize: 10, fontWeight: 700, color: '#ea580c', background: 'rgba(234, 88, 12, 0.14)', padding: '2px 7px', borderRadius: 99 }}>
             360°
           </span>
         ),
@@ -140,7 +141,7 @@ const ROLES_DATA: RoleCardData[] = [
         title: 'Fast Delivery',
         subtitle: 'Track your order till delivery',
         extraTag: (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 3, marginTop: 2 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 3, marginTop: 3 }}>
             <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#ea580c' }} />
             <span style={{ width: 14, height: 2, background: '#ea580c' }} />
             <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#ea580c' }} />
@@ -164,7 +165,7 @@ const ROLES_DATA: RoleCardData[] = [
     badgeLabel: 'CREATOR STUDIO',
     badgeIcon: <PenTool size={14} />,
     themeColor: '#8b5cf6',
-    bgLight: 'rgba(139, 92, 246, 0.1)',
+    bgLight: 'rgba(139, 92, 246, 0.12)',
     bgSoft: 'rgba(139, 92, 246, 0.04)',
     nodeLeftColor: '#7c3aed',
     nodeRightColor: '#6d28d9',
@@ -181,7 +182,7 @@ const ROLES_DATA: RoleCardData[] = [
         title: 'Custom Requests',
         subtitle: 'Get design requests from buyers',
         extraTag: (
-          <span style={{ width: 16, height: 16, borderRadius: '50%', background: '#8b5cf6', color: '#fff', fontSize: 10, fontWeight: 800, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+          <span style={{ width: 17, height: 17, borderRadius: '50%', background: '#8b5cf6', color: '#fff', fontSize: 10, fontWeight: 800, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
             3
           </span>
         ),
@@ -196,7 +197,7 @@ const ROLES_DATA: RoleCardData[] = [
       {
         icon: <TrendingUp size={15} color="#8b5cf6" />,
         title: 'Earn & Grow',
-        subtitle: 'Earn from sales and custom projects',
+        subtitle: 'Earn from sales & custom projects',
       },
     ],
     bottomLinks: [
@@ -213,7 +214,7 @@ const ROLES_DATA: RoleCardData[] = [
     badgeLabel: 'PRINTER HUB',
     badgeIcon: <Printer size={14} />,
     themeColor: '#10b981',
-    bgLight: 'rgba(16, 185, 129, 0.1)',
+    bgLight: 'rgba(16, 185, 129, 0.12)',
     bgSoft: 'rgba(16, 185, 129, 0.04)',
     nodeLeftColor: '#059669',
     nodeRightColor: '#047857',
@@ -225,7 +226,7 @@ const ROLES_DATA: RoleCardData[] = [
         title: 'Printer Location',
         subtitle: 'You are visible to nearby buyers',
         extraTag: (
-          <div style={{ width: 44, height: 18, borderRadius: 4, background: 'rgba(16,185,129,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(16,185,129,0.2)' }}>
+          <div style={{ width: 44, height: 18, borderRadius: 4, background: 'rgba(16,185,129,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(16,185,129,0.25)' }}>
             <MapPin size={10} color="#10b981" />
           </div>
         ),
@@ -235,7 +236,7 @@ const ROLES_DATA: RoleCardData[] = [
         title: 'Job Requests',
         subtitle: 'New print jobs near you',
         extraTag: (
-          <span style={{ width: 16, height: 16, borderRadius: '50%', background: '#10b981', color: '#fff', fontSize: 10, fontWeight: 800, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+          <span style={{ width: 17, height: 17, borderRadius: '50%', background: '#10b981', color: '#fff', fontSize: 10, fontWeight: 800, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
             2
           </span>
         ),
@@ -247,7 +248,7 @@ const ROLES_DATA: RoleCardData[] = [
         title: 'Printer Status',
         subtitle: '● Online',
         extraTag: (
-          <span style={{ fontSize: 9.5, fontWeight: 700, color: '#10b981', background: 'rgba(16, 185, 129, 0.12)', padding: '1px 6px', borderRadius: 99 }}>
+          <span style={{ fontSize: 10, fontWeight: 700, color: '#10b981', background: 'rgba(16, 185, 129, 0.14)', padding: '2px 7px', borderRadius: 99 }}>
             Available
           </span>
         ),
@@ -257,7 +258,7 @@ const ROLES_DATA: RoleCardData[] = [
         title: 'Supported Materials',
         subtitle: 'PLA   PETG   ABS',
         extraTag: (
-          <div style={{ display: 'flex', gap: 4, marginTop: 2 }}>
+          <div style={{ display: 'flex', gap: 4, marginTop: 3 }}>
             <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#10b981' }} />
             <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#0284c7' }} />
             <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#d97706' }} />
@@ -279,7 +280,7 @@ const ROLES_DATA: RoleCardData[] = [
     badgeLabel: 'SELLER & STORE',
     badgeIcon: <Store size={14} />,
     themeColor: '#2563eb',
-    bgLight: 'rgba(37, 99, 235, 0.1)',
+    bgLight: 'rgba(37, 99, 235, 0.12)',
     bgSoft: 'rgba(37, 99, 235, 0.04)',
     nodeLeftColor: '#1d4ed8',
     nodeRightColor: '#2563eb',
@@ -289,7 +290,7 @@ const ROLES_DATA: RoleCardData[] = [
       {
         icon: <Package size={15} color="#2563eb" />,
         title: 'List Products',
-        subtitle: 'Add 3D printed products to your store',
+        subtitle: 'Add 3D printed products to store',
       },
       {
         icon: <Store size={15} color="#2563eb" />,
@@ -303,7 +304,7 @@ const ROLES_DATA: RoleCardData[] = [
         title: 'Incoming Orders',
         subtitle: 'New order received',
         extraTag: (
-          <span style={{ width: 16, height: 16, borderRadius: '50%', background: '#2563eb', color: '#fff', fontSize: 10, fontWeight: 800, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+          <span style={{ width: 17, height: 17, borderRadius: '50%', background: '#2563eb', color: '#fff', fontSize: 10, fontWeight: 800, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
             1
           </span>
         ),
@@ -330,14 +331,14 @@ function RoleCard({ role }: { role: RoleCardData }) {
         background: 'var(--bg-card)',
         borderRadius: 24,
         border: '1px solid var(--border-color)',
-        padding: '20px 20px 16px',
+        padding: '24px 22px 18px',
         boxShadow: '0 8px 30px rgba(0,0,0,0.03)',
         position: 'relative',
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'space-between',
-        gap: 14,
-        transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
+        gap: 16,
+        transition: 'transform 0.25s ease, box-shadow 0.25s ease',
       }}
     >
       {/* Top Header: Role Pill Badge */}
@@ -347,11 +348,11 @@ function RoleCard({ role }: { role: RoleCardData }) {
             display: 'inline-flex',
             alignItems: 'center',
             gap: 7,
-            padding: '5px 14px',
+            padding: '6px 15px',
             borderRadius: 99,
             background: role.bgLight,
             color: role.themeColor,
-            fontSize: 11.5,
+            fontSize: 12,
             fontWeight: 800,
             letterSpacing: '0.04em',
             border: `1px solid ${role.themeColor}33`,
@@ -366,10 +367,11 @@ function RoleCard({ role }: { role: RoleCardData }) {
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: 'minmax(110px, 1fr) auto minmax(110px, 1fr)',
+          gridTemplateColumns: 'minmax(120px, 1.1fr) auto minmax(120px, 1.1fr)',
           alignItems: 'center',
-          gap: 8,
+          gap: 10,
           position: 'relative',
+          padding: '4px 0',
         }}
       >
         {/* Left Sub-Column Callouts */}
@@ -381,17 +383,17 @@ function RoleCard({ role }: { role: RoleCardData }) {
                 background: 'var(--bg-card-sub)',
                 border: '1px solid var(--border-color)',
                 borderRadius: 14,
-                padding: '8px 10px',
+                padding: '9px 11px',
                 display: 'flex',
                 alignItems: 'center',
-                gap: 8,
+                gap: 9,
                 boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
               }}
             >
               <div
                 style={{
-                  width: 28,
-                  height: 28,
+                  width: 30,
+                  height: 30,
                   borderRadius: 8,
                   background: role.bgLight,
                   display: 'flex',
@@ -403,10 +405,10 @@ function RoleCard({ role }: { role: RoleCardData }) {
                 {item.icon}
               </div>
               <div style={{ minWidth: 0, flex: 1 }}>
-                <div style={{ fontSize: 11, fontWeight: 800, color: 'var(--text-main)', lineHeight: 1.2 }}>
+                <div style={{ fontSize: 11.5, fontWeight: 800, color: 'var(--text-main)', lineHeight: 1.2 }}>
                   {item.title}
                 </div>
-                <div style={{ fontSize: 9.5, color: 'var(--text-sub)', marginTop: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                <div style={{ fontSize: 10, color: 'var(--text-sub)', marginTop: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                   {item.subtitle}
                 </div>
                 {item.extraTag && <div style={{ marginTop: 3 }}>{item.extraTag}</div>}
@@ -418,8 +420,8 @@ function RoleCard({ role }: { role: RoleCardData }) {
         {/* Center Visual + Wireframe Geodesic Sphere */}
         <div
           style={{
-            width: 175,
-            height: 175,
+            width: 190,
+            height: 190,
             position: 'relative',
             display: 'flex',
             alignItems: 'center',
@@ -437,8 +439,8 @@ function RoleCard({ role }: { role: RoleCardData }) {
               left: 4,
               top: '50%',
               transform: 'translateY(-50%)',
-              width: 11,
-              height: 11,
+              width: 12,
+              height: 12,
               borderRadius: '50%',
               background: role.nodeLeftColor,
               border: '2px solid var(--bg-card)',
@@ -454,8 +456,8 @@ function RoleCard({ role }: { role: RoleCardData }) {
               right: 4,
               top: '50%',
               transform: 'translateY(-50%)',
-              width: 11,
-              height: 11,
+              width: 12,
+              height: 12,
               borderRadius: '50%',
               background: role.nodeRightColor,
               border: '2px solid var(--bg-card)',
@@ -488,17 +490,17 @@ function RoleCard({ role }: { role: RoleCardData }) {
                 background: 'var(--bg-card-sub)',
                 border: '1px solid var(--border-color)',
                 borderRadius: 14,
-                padding: '8px 10px',
+                padding: '9px 11px',
                 display: 'flex',
                 alignItems: 'center',
-                gap: 8,
+                gap: 9,
                 boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
               }}
             >
               <div
                 style={{
-                  width: 28,
-                  height: 28,
+                  width: 30,
+                  height: 30,
                   borderRadius: 8,
                   background: role.bgLight,
                   display: 'flex',
@@ -510,10 +512,10 @@ function RoleCard({ role }: { role: RoleCardData }) {
                 {item.icon}
               </div>
               <div style={{ minWidth: 0, flex: 1 }}>
-                <div style={{ fontSize: 11, fontWeight: 800, color: 'var(--text-main)', lineHeight: 1.2 }}>
+                <div style={{ fontSize: 11.5, fontWeight: 800, color: 'var(--text-main)', lineHeight: 1.2 }}>
                   {item.title}
                 </div>
-                <div style={{ fontSize: 9.5, color: 'var(--text-sub)', marginTop: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                <div style={{ fontSize: 10, color: 'var(--text-sub)', marginTop: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                   {item.subtitle}
                 </div>
                 {item.extraTag && <div style={{ marginTop: 3 }}>{item.extraTag}</div>}
@@ -529,7 +531,7 @@ function RoleCard({ role }: { role: RoleCardData }) {
           background: 'var(--bg-card-sub)',
           border: '1px solid var(--border-color)',
           borderRadius: 14,
-          padding: '8px 12px',
+          padding: '10px 14px',
           display: 'grid',
           gridTemplateColumns: 'repeat(4, 1fr)',
           gap: 6,
@@ -544,7 +546,7 @@ function RoleCard({ role }: { role: RoleCardData }) {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              gap: 5,
+              gap: 6,
               textDecoration: 'none',
               color: 'inherit',
               padding: '4px',
@@ -554,8 +556,8 @@ function RoleCard({ role }: { role: RoleCardData }) {
           >
             <div
               style={{
-                width: 20,
-                height: 20,
+                width: 22,
+                height: 22,
                 borderRadius: 6,
                 background: role.bgLight,
                 display: 'flex',
@@ -566,7 +568,7 @@ function RoleCard({ role }: { role: RoleCardData }) {
             >
               {link.icon}
             </div>
-            <span style={{ fontSize: 10.5, fontWeight: 700, color: 'var(--text-main)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-main)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
               {link.title}
             </span>
           </Link>
@@ -581,7 +583,7 @@ export default function RoleEcosystemShowcase() {
     <div
       style={{
         display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(480px, 1fr))',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(520px, 1fr))',
         gap: 24,
         width: '100%',
         maxWidth: 1200,
