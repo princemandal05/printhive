@@ -83,14 +83,54 @@ export async function PATCH(
       return NextResponse.json({ error: 'Forbidden: You are not authorized to update this order' }, { status: 403 })
     }
 
-    // Role-specific action validation:
-    // Printer owners can accept/decline assigned jobs, or progress active prints (PRINTING, QUALITY_CHECK, READY, DISPATCHED)
-    // Buyers can pay escrow (PAYMENT_CONFIRMED), confirm delivery (DELIVERED), or cancel pending payment orders
-    if (isBuyer && !isAdmin && !isPrinterOwner && !isAssignedPrinter) {
-      const allowedBuyerTransitions = ['PAYMENT_CONFIRMED', 'DELIVERED', 'CANCELLED']
+    // Granular Role-Specific Action Validation Matrix:
+    // 1. PAYMENT_CONFIRMED can ONLY be initiated by verified Razorpay webhooks/settlement handler, never via PATCH status endpoint!
+    if (targetStatus === 'PAYMENT_CONFIRMED' && !isAdmin) {
+      return NextResponse.json(
+        { error: 'Forbidden: Payment confirmation is automated via Razorpay cryptographic verification only.' },
+        { status: 403 }
+      )
+    }
+
+    // 2. Buyer Permissions: Can only cancel pending orders or confirm receipt of package (DELIVERED / COMPLETED)
+    if (isBuyer && !isAdmin && !isPrinterOwner && !isAssignedPrinter && !isSeller) {
+      const allowedBuyerTransitions = ['CANCELLED', 'DELIVERED', 'COMPLETED']
       if (!allowedBuyerTransitions.includes(targetStatus)) {
-        return NextResponse.json({ error: 'Forbidden: Buyers cannot set fulfillment manufacturing statuses directly' }, { status: 403 })
+        return NextResponse.json(
+          { error: 'Forbidden: Buyers cannot directly advance fulfillment or manufacturing steps.' },
+          { status: 403 }
+        )
       }
+    }
+
+    // 3. Printer Hub Permissions: Manufacturing & fulfillment states
+    if ((isPrinterOwner || isAssignedPrinter) && !isAdmin) {
+      const allowedPrinterTransitions = ['PRINTER_ACCEPTED', 'PRINTING', 'QUALITY_CHECK', 'READY', 'DISPATCHED', 'CANCELLED']
+      if (!allowedPrinterTransitions.includes(targetStatus)) {
+        return NextResponse.json(
+          { error: `Forbidden: Printer Hubs cannot transition orders to ${targetStatus}` },
+          { status: 403 }
+        )
+      }
+    }
+
+    // 4. Seller Permissions: Physical store product dispatch
+    if (isSeller && !isPrinterOwner && !isAssignedPrinter && !isAdmin) {
+      const allowedSellerTransitions = ['READY', 'DISPATCHED', 'CANCELLED']
+      if (!allowedSellerTransitions.includes(targetStatus)) {
+        return NextResponse.json(
+          { error: `Forbidden: Sellers cannot transition orders to ${targetStatus}` },
+          { status: 403 }
+        )
+      }
+    }
+
+    // 5. Designer Permissions: Designers cannot transition physical manufacturing states
+    if (isDesigner && !isSeller && !isPrinterOwner && !isAssignedPrinter && !isAdmin && !isBuyer) {
+      return NextResponse.json(
+        { error: 'Forbidden: 3D CAD Designers cannot directly modify physical order fulfillment states.' },
+        { status: 403 }
+      )
     }
 
     // Validate lifecycle transition

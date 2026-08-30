@@ -58,9 +58,27 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Forbidden: Admin authorization is required to refund dispatched, delivered, or completed orders' }, { status: 403 })
     }
 
-    // 4. Reject already refunded orders or invalid transitions
+    // 4. Reject already refunded orders or invalid transitions (Idempotency check)
     if (order.status === 'REFUNDED') {
-      return NextResponse.json({ error: 'Order has already been refunded' }, { status: 400 })
+      return NextResponse.json({ error: 'Order has already been refunded', order_id: targetOrderId }, { status: 409 })
+    }
+
+    const { data: existingRefundTxn } = await adminSupabase
+      .from('transactions')
+      .select('*')
+      .eq('order_id', targetOrderId)
+      .eq('status', 'refunded')
+      .maybeSingle()
+
+    if (existingRefundTxn) {
+      return NextResponse.json({
+        success: true,
+        refunded: true,
+        order_id: targetOrderId,
+        amount: existingRefundTxn.amount,
+        status: 'REFUNDED',
+        message: 'Refund has already been recorded for this order',
+      })
     }
 
     if (!isValidStatusTransition(order.status, 'REFUNDED')) {
@@ -88,7 +106,8 @@ export async function POST(request: Request) {
 
     const keyId = process.env.RAZORPAY_KEY_ID || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID
     const keySecret = process.env.RAZORPAY_KEY_SECRET
-    const allowMock = process.env.ALLOW_MOCK_PAYMENTS === 'true' || process.env.NODE_ENV === 'development'
+    const isProduction = process.env.NODE_ENV === 'production'
+    const allowMock = !isProduction && (process.env.ALLOW_MOCK_PAYMENTS === 'true' || process.env.NODE_ENV === 'development')
 
     let razorpayRefundId: string | null = null
 
@@ -121,7 +140,7 @@ export async function POST(request: Request) {
       const rzpData = await rzpResponse.json()
       razorpayRefundId = rzpData.id
     } else if (allowMock) {
-      // Sandbox mode when credentials are unconfigured
+      // Sandbox development mode only
       razorpayRefundId = `rfnd_${Math.random().toString(36).substring(2, 14)}`
     } else {
       return NextResponse.json({ error: 'Razorpay Gateway secret credentials not configured for refund' }, { status: 500 })

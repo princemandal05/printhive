@@ -31,11 +31,11 @@ export async function requireRole(expectedRole: Role) {
     }
   }
 
-  // Real, authenticated session always wins
+  // Real, authenticated session
   if (user) {
     let { data: profile, error: profileError } = await supabase
       .from('profiles')
-      .select('*')
+      .select('id, email, role, full_name, is_verified')
       .eq('id', user.id)
       .maybeSingle()
 
@@ -43,30 +43,10 @@ export async function requireRole(expectedRole: Role) {
       console.error('requireRole profile lookup error:', profileError)
     }
 
-    const dbRole = profile?.role as Role | undefined
-    const metaRole = user.user_metadata?.role as Role | undefined
+    // Authoritative Single Source of Truth: profiles.role in PostgreSQL
+    const userRole: Role = (profile?.role as Role) || 'buyer'
 
-    let userRole: Role = dbRole || metaRole || 'buyer'
-
-    // If DB profile is missing or recorded as buyer, but metadata specifies seller/designer/printer_owner, auto-heal DB profile
-    if (metaRole && ['seller', 'designer', 'printer_owner'].includes(metaRole) && (!dbRole || dbRole === 'buyer')) {
-      userRole = metaRole
-      try {
-        const { createAdminClient } = await import('./server')
-        const adminSupabase = await createAdminClient()
-        await adminSupabase.from('profiles').upsert({
-          id: user.id,
-          email: user.email,
-          role: userRole,
-          full_name: user.user_metadata?.full_name || user.email?.split('@')[0]
-        }, { onConflict: 'id' })
-        if (profile) profile.role = userRole
-      } catch (e) {
-        console.error('Failed to auto-heal profile role in requireRole:', e)
-      }
-    }
-
-    // Strict Role Access Control:
+    // Strict Role Access Control: Users can only access their authorized role or admin overrides
     if (userRole !== expectedRole && userRole !== 'admin' && expectedRole !== 'buyer') {
       redirect('/403')
     }

@@ -39,6 +39,44 @@ export async function POST(request: Request) {
       .eq('id', user.id)
       .maybeSingle()
 
+    if (profile?.role !== 'designer' && profile?.role !== 'admin') {
+      return NextResponse.json(
+        { error: 'Forbidden: Only verified 3D CAD Designers can submit proposal bids for custom briefs.' },
+        { status: 403 }
+      )
+    }
+
+    // Verify target design request exists and is currently open
+    const { data: designReq } = await supabase
+      .from('design_requests')
+      .select('id, status, user_id')
+      .eq('id', request_id)
+      .maybeSingle()
+
+    if (!designReq) {
+      return NextResponse.json({ error: 'Design brief request not found' }, { status: 404 })
+    }
+
+    if (designReq.status && designReq.status !== 'open' && designReq.status !== 'active') {
+      return NextResponse.json({ error: 'This custom design brief is no longer accepting bids' }, { status: 400 })
+    }
+
+    if (designReq.user_id === user.id) {
+      return NextResponse.json({ error: 'Cannot place a bid on your own design brief request' }, { status: 400 })
+    }
+
+    // Check for duplicate bids from this designer
+    const { data: existingBid } = await supabase
+      .from('design_request_bids')
+      .select('id')
+      .eq('request_id', request_id)
+      .eq('designer_id', user.id)
+      .maybeSingle()
+
+    if (existingBid) {
+      return NextResponse.json({ error: 'You have already submitted an active bid for this brief' }, { status: 409 })
+    }
+
     const designerName = profile?.full_name || user.email?.split('@')[0] || 'Designer'
     const designerRating = Number(profile?.rating || 0)
 

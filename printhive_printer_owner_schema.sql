@@ -23,7 +23,7 @@ CREATE TABLE IF NOT EXISTS public.printers (
   cloudinary_public_id TEXT,
   status TEXT DEFAULT 'online',
   is_active BOOLEAN DEFAULT true,
-  rating NUMERIC DEFAULT 4.9,
+  rating NUMERIC DEFAULT 0.0,
   completed_orders INTEGER DEFAULT 0,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -46,7 +46,7 @@ ALTER TABLE public.printers ADD COLUMN IF NOT EXISTS image_url TEXT;
 ALTER TABLE public.printers ADD COLUMN IF NOT EXISTS cloudinary_public_id TEXT;
 ALTER TABLE public.printers ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'online';
 ALTER TABLE public.printers ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT true;
-ALTER TABLE public.printers ADD COLUMN IF NOT EXISTS rating NUMERIC DEFAULT 4.9;
+ALTER TABLE public.printers ADD COLUMN IF NOT EXISTS rating NUMERIC DEFAULT 0.0;
 ALTER TABLE public.printers ADD COLUMN IF NOT EXISTS completed_orders INTEGER DEFAULT 0;
 ALTER TABLE public.printers ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT NOW();
 

@@ -5,33 +5,16 @@ import { cookies } from 'next/headers'
 export async function POST(request: Request) {
   try {
     const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
 
-    let designerId = user?.id
-
-    if (!designerId) {
-      const cookieStore = await cookies()
-      const guestRole = cookieStore.get('printhive_guest_role')?.value
-      if (guestRole) {
-        // Fetch a valid fallback profile ID for guest mode if user session is omitted
-        try {
-          const adminSupabase = await createAdminClient()
-          const { data: profile } = await adminSupabase.from('profiles').select('id').limit(1).single()
-          if (profile?.id) {
-            designerId = profile.id
-          }
-        } catch {
-          // Fallback if needed
-        }
-      }
-    }
-
-    if (!designerId) {
+    if (authError || !user) {
       return NextResponse.json(
-        { error: 'Unauthorized: You must be logged in to upload 3D models.' },
+        { error: 'Unauthorized: You must be logged in as an authenticated creator/designer to upload 3D models.' },
         { status: 401 }
       )
     }
+
+    const designerId = user.id
 
     let body: unknown
     try {

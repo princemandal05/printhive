@@ -10,9 +10,16 @@ export async function GET(request: Request) {
   try {
     const { createClient } = await import('@/utils/supabase/server')
     const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
 
-    const userId = user?.id || 'guest-demo'
+    if (authError || !user) {
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized: Authentication required to generate upload signature' },
+        { status: 401 }
+      )
+    }
+
+    const userId = user.id
 
     const { searchParams } = new URL(request.url)
     const isModel = searchParams.get('isModel') === 'true'
@@ -42,14 +49,21 @@ export async function GET(request: Request) {
       }
     }
 
-    const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || 'r8wjszjm'
-    const apiKey = process.env.CLOUDINARY_API_KEY || '769894611263915'
-    const apiSecret = process.env.CLOUDINARY_API_SECRET || 'x1_w3QLL94hJFrt8xVkjJgMBuEs'
+    const cloudName = process.env.CLOUDINARY_CLOUD_NAME || process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME
+    const apiKey = process.env.CLOUDINARY_API_KEY
+    const apiSecret = process.env.CLOUDINARY_API_SECRET
+
+    if (!cloudName || !apiKey || !apiSecret) {
+      return NextResponse.json(
+        { success: false, error: 'Cloudinary storage service is not configured on server' },
+        { status: 500 }
+      )
+    }
 
     const timestamp = Math.round(new Date().getTime() / 1000)
     const folder = isModel ? `printhive/${userId}/models` : `printhive/${userId}/images`
     const assetFolder = folder
-    const publicId = `${Date.now()}-${crypto.randomUUID().slice(0, 8)}`
+    const publicId = `${userId.slice(0, 8)}-${Date.now()}-${crypto.randomUUID().slice(0, 8)}`
     const resourceType = isModel ? 'raw' : 'image'
 
     // Signed parameters for raw and image Cloudinary uploads

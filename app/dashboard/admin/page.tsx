@@ -119,25 +119,43 @@ export default function AdminDashboard() {
     setTimeout(() => setToastMsg(''), 3000)
   }
 
-  const handleVerifyUser = (userId: string, userName: string) => {
-    setUsers((prev) =>
-      prev.map((u) => (u.id === userId ? { ...u, status: 'verified' } : u))
-    )
-    showToast(`✅ ${userName} verified and approved on PrintHive network!`)
+  const handleVerifyUser = async (userId: string, userName: string) => {
+    try {
+      const { error } = await supabase.from('profiles').update({ is_verified: true }).eq('id', userId)
+      if (error) throw error
+      setUsers((prev) =>
+        prev.map((u) => (u.id === userId ? { ...u, status: 'verified' } : u))
+      )
+      showToast(`✅ ${userName} verified and approved on PrintHive network!`)
+    } catch (err: any) {
+      showToast(`❌ Verification failed: ${err.message || 'Database update error'}`)
+    }
   }
 
-  const handleApproveProduct = (prodId: string, prodName: string) => {
-    setProducts((prev) =>
-      prev.map((p) => (p.id === prodId ? { ...p, status: 'approved' } : p))
-    )
-    showToast(`✅ ${prodName} approved and published to live marketplace!`)
+  const handleApproveProduct = async (prodId: string, prodName: string) => {
+    try {
+      const { error } = await supabase.from('products').update({ status: 'approved' }).eq('id', prodId)
+      if (error) throw error
+      setProducts((prev) =>
+        prev.map((p) => (p.id === prodId ? { ...p, status: 'approved' } : p))
+      )
+      showToast(`✅ ${prodName} approved and published to live marketplace!`)
+    } catch (err: any) {
+      showToast(`❌ Approval failed: ${err.message || 'Database update error'}`)
+    }
   }
 
-  const handleRejectProduct = (prodId: string, prodName: string) => {
-    setProducts((prev) =>
-      prev.map((p) => (p.id === prodId ? { ...p, status: 'rejected' } : p))
-    )
-    showToast(`❌ ${prodName} returned for modification.`)
+  const handleRejectProduct = async (prodId: string, prodName: string) => {
+    try {
+      const { error } = await supabase.from('products').update({ status: 'rejected' }).eq('id', prodId)
+      if (error) throw error
+      setProducts((prev) =>
+        prev.map((p) => (p.id === prodId ? { ...p, status: 'rejected' } : p))
+      )
+      showToast(`❌ ${prodName} returned for modification.`)
+    } catch (err: any) {
+      showToast(`❌ Rejection failed: ${err.message || 'Database update error'}`)
+    }
   }
 
   const handleResolveComplaint = async (compId: string) => {

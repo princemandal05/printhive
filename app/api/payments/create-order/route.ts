@@ -62,15 +62,27 @@ async function calculateOrderFinancials(
 
     // 3. Custom Print-on-Demand (POD) Sliced File Uploads (e.g. 'pod-1787823908195')
     if (unitPrice === null && (rawId.startsWith('pod-') || item?.type === 'custom_print' || item?.isCustomPrint || item?.meshVolumeCm3)) {
-      if (typeof item?.price === 'number' && Number.isFinite(item.price) && item.price >= 0) {
-        unitPrice = Math.round(item.price)
-      } else if (typeof item?.unitPrice === 'number' && Number.isFinite(item.unitPrice) && item.unitPrice >= 0) {
-        unitPrice = Math.round(item.unitPrice)
-      } else if (typeof item?.subtotal === 'number' && Number.isFinite(item.subtotal) && item.subtotal >= 0) {
-        unitPrice = Math.round(item.subtotal / qty)
-      } else {
-        unitPrice = 350 // Default base rate for custom sliced print jobs
+      const volumeCm3 = Math.max(1, Number(item?.meshVolumeCm3 || item?.volumeCm3) || 20)
+      const material = String(item?.material || 'PLA').toUpperCase()
+      const materialRatePerCm3 = material === 'RESIN' ? 8.5 : material === 'PETG' ? 4.5 : material === 'ABS' ? 5.0 : material === 'TPU' ? 6.0 : 3.5 // PLA base
+      const infill = Math.max(10, Math.min(100, Number(item?.infill) || 20))
+      const infillFactor = 0.3 + (infill / 100) * 0.7
+
+      let basePrinterRate = 150
+      const targetPrinterId = item?.printer_id || item?.hubId
+      if (targetPrinterId) {
+        const { data: dbPrinter } = await adminSupabase
+          .from('printers')
+          .select('base_price')
+          .eq('id', targetPrinterId)
+          .maybeSingle()
+        if (dbPrinter && typeof dbPrinter.base_price === 'number' && dbPrinter.base_price > 0) {
+          basePrinterRate = dbPrinter.base_price
+        }
       }
+
+      const calculatedPodPrice = Math.round(basePrinterRate + (volumeCm3 * materialRatePerCm3 * infillFactor))
+      unitPrice = Math.max(150, calculatedPodPrice)
     }
 
     // 4. Custom Print Hub Selection fallback
@@ -84,17 +96,6 @@ async function calculateOrderFinancials(
 
       if (dbPrinter && typeof dbPrinter.base_price === 'number' && dbPrinter.base_price >= 0) {
         unitPrice = dbPrinter.base_price
-      }
-    }
-
-    // 5. Universal Custom Item Cart Pricing fallback
-    if (unitPrice === null) {
-      if (typeof item?.price === 'number' && Number.isFinite(item.price) && item.price >= 0) {
-        unitPrice = Math.round(item.price)
-      } else if (typeof item?.unitPrice === 'number' && Number.isFinite(item.unitPrice) && item.unitPrice >= 0) {
-        unitPrice = Math.round(item.unitPrice)
-      } else if (typeof item?.subtotal === 'number' && Number.isFinite(item.subtotal) && item.subtotal >= 0) {
-        unitPrice = Math.round(item.subtotal / qty)
       }
     }
 

@@ -37,13 +37,26 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Order not found' }, { status: 404 })
     }
 
-    // 3. Verify user authorization (Admin or Printer Owner assigned to the order)
+    // 3. Verify user authorization (Admin, Printer Owner assigned to the order, or Buyer confirming completion)
     const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).maybeSingle()
     const isAdmin = profile?.role === 'admin'
-    const isAssignedPrinter = order.printer_id === user.id
+    
+    let isAssignedPrinter = order.printer_owner_id === user.id
+    if (!isAssignedPrinter && order.printer_id) {
+      const { data: printer } = await adminSupabase
+        .from('printers')
+        .select('owner_id')
+        .eq('id', order.printer_id)
+        .maybeSingle()
+      if (printer?.owner_id === user.id) {
+        isAssignedPrinter = true
+      }
+    }
 
-    if (!isAdmin && !isAssignedPrinter) {
-      return NextResponse.json({ error: 'Forbidden: Only the assigned printer or an admin can release escrow funds' }, { status: 403 })
+    const isBuyer = order.buyer_id === user.id
+
+    if (!isAdmin && !isAssignedPrinter && !isBuyer) {
+      return NextResponse.json({ error: 'Forbidden: Only the assigned printer hub, buyer, or an admin can release escrow funds' }, { status: 403 })
     }
 
     // 4. Conflict Check: Check if order escrow is already released
@@ -74,8 +87,10 @@ export async function POST(request: Request) {
     }
 
     const releaseTimestamp = new Date().toISOString()
+    const previousEscrowStatus = order.escrow_status || 'held_in_escrow'
+    const previousOrderStatus = order.status || 'DELIVERED'
 
-    // 6. Atomic State-Guarded Order Update (Propagate errors if order status update fails)
+    // 6. State-Guarded Order Update
     const { error: orderUpdateErr } = await adminSupabase
       .from('orders')
       .update({
@@ -90,7 +105,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: `Order update failed: ${orderUpdateErr.message}` }, { status: 500 })
     }
 
-    // 7. Atomic State-Guarded Escrow Payouts Update (Only update held payouts; preserve original released_at if present)
+    // 7. Atomic Escrow Payouts Release (with compensation rollback if payout update fails)
     const { data: updatedPayouts, error: payoutErr } = await adminSupabase
       .from('escrow_payouts')
       .update({
@@ -102,7 +117,14 @@ export async function POST(request: Request) {
       .select()
 
     if (payoutErr) {
-      console.error('Failed to release escrow payouts:', payoutErr.message)
+      console.error('Failed to release escrow payouts, rolling back order update:', payoutErr.message)
+      // Roll back orders table state to prevent financial inconsistency
+      await adminSupabase.from('orders').update({
+        escrow_status: previousEscrowStatus,
+        status: previousOrderStatus,
+        updated_at: new Date().toISOString(),
+      }).eq('id', targetOrderId)
+
       return NextResponse.json({ error: `Escrow payouts update failed: ${payoutErr.message}` }, { status: 500 })
     }
 

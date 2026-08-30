@@ -49,7 +49,7 @@ CREATE TABLE IF NOT EXISTS public.design_request_bids (
   price NUMERIC NOT NULL CHECK (price >= 0),
   days INTEGER NOT NULL CHECK (days >= 1),
   note TEXT,
-  rating NUMERIC DEFAULT 4.9,
+  rating NUMERIC DEFAULT 0.0,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -57,10 +57,22 @@ CREATE TABLE IF NOT EXISTS public.design_request_bids (
 ALTER TABLE public.design_request_bids ADD COLUMN IF NOT EXISTS days INTEGER DEFAULT 2;
 ALTER TABLE public.design_request_bids ADD COLUMN IF NOT EXISTS designer_name TEXT;
 ALTER TABLE public.design_request_bids ADD COLUMN IF NOT EXISTS note TEXT;
-ALTER TABLE public.design_request_bids ADD COLUMN IF NOT EXISTS rating NUMERIC DEFAULT 4.9;
+ALTER TABLE public.design_request_bids ADD COLUMN IF NOT EXISTS rating NUMERIC DEFAULT 0.0;
 
 ALTER TABLE public.design_request_bids ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Public read design_request_bids" ON public.design_request_bids;
-CREATE POLICY "Public read design_request_bids" ON public.design_request_bids FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Designers or request owners read bids" ON public.design_request_bids;
+CREATE POLICY "Designers or request owners read bids" ON public.design_request_bids 
+FOR SELECT USING (
+  auth.uid() = designer_id 
+  OR auth.uid() IN (SELECT user_id FROM public.design_requests WHERE id = request_id)
+  OR auth.uid() IN (SELECT id FROM public.profiles WHERE role = 'admin')
+);
+
 DROP POLICY IF EXISTS "Authenticated users insert design_request_bids" ON public.design_request_bids;
-CREATE POLICY "Authenticated users insert design_request_bids" ON public.design_request_bids FOR INSERT WITH CHECK (auth.uid() IS NOT NULL);
+DROP POLICY IF EXISTS "Designers insert design_request_bids" ON public.design_request_bids;
+CREATE POLICY "Designers insert design_request_bids" ON public.design_request_bids 
+FOR INSERT WITH CHECK (
+  auth.uid() = designer_id
+  AND EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role IN ('designer', 'admin'))
+);

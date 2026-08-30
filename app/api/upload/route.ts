@@ -42,6 +42,17 @@ async function validateModelContent(file: File, ext: string): Promise<boolean> {
 
 export async function POST(request: Request) {
   try {
+    const { createClient } = await import('@/utils/supabase/server')
+    const supabase = await createClient()
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+
+    if (authError || !user) {
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized: Authentication required to upload files' },
+        { status: 401 }
+      )
+    }
+
     const formData = await request.formData()
     const entry = formData.get('file')
 
@@ -89,20 +100,20 @@ export async function POST(request: Request) {
       }
     }
 
-    const publicId = `${Date.now()}-${crypto.randomUUID().slice(0, 8)}`
+    const publicId = `${user.id.slice(0, 8)}-${Date.now()}-${crypto.randomUUID().slice(0, 8)}`
     const isDev = process.env.NODE_ENV === 'development'
 
-    // Validate Cloudinary environment credentials
-    const cloudName = process.env.CLOUDINARY_CLOUD_NAME || process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || 'r8wjszjm'
-    const apiKey = process.env.CLOUDINARY_API_KEY || '769894611263915'
-    const apiSecret = process.env.CLOUDINARY_API_SECRET || 'x1_w3QLL94hJFrt8xVkjJgMBuEs'
+    // Validate Cloudinary environment credentials (FAIL-CLOSED: NO HARDCODED SECRETS)
+    const cloudName = process.env.CLOUDINARY_CLOUD_NAME || process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME
+    const apiKey = process.env.CLOUDINARY_API_KEY
+    const apiSecret = process.env.CLOUDINARY_API_SECRET
 
     if (!cloudName || !apiKey || !apiSecret) {
       if (isDev) {
         console.warn('Cloudinary credentials missing in development; falling back to local /uploads storage.')
       } else {
         return NextResponse.json(
-          { success: false, error: 'Cloudinary credentials are not configured on server' },
+          { success: false, error: 'Cloudinary storage service credentials are not configured on server' },
           { status: 500 }
         )
       }

@@ -59,7 +59,8 @@ export async function POST(request: Request) {
 
     // 4. HMAC-SHA256 Constant-Time Signature Verification (Fail-Closed in production)
     const keySecret = process.env.RAZORPAY_KEY_SECRET
-    const allowMock = process.env.ALLOW_MOCK_PAYMENTS === 'true' || process.env.NODE_ENV === 'development'
+    const isProduction = process.env.NODE_ENV === 'production'
+    const allowMock = !isProduction && (process.env.ALLOW_MOCK_PAYMENTS === 'true' || process.env.NODE_ENV === 'development')
 
     if (!keySecret && !allowMock) {
       return NextResponse.json({ error: 'Razorpay secret key not configured on server' }, { status: 500 })

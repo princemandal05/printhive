@@ -84,9 +84,20 @@ export async function POST(request: Request) {
       derivedPrinterOwnerId = printer.owner_id
     }
 
-    // Determine total amount (using custom_total if passed from instant slicer calculations)
-    const computedTotal = Math.round(calculatedUnitPrice * qty * 100) / 100
-    const total = (Number(custom_total) > 0) ? Math.round(Number(custom_total) * 100) / 100 : computedTotal
+    // Determine total amount authoritatively:
+    // Catalog items (products, designs, printers) MUST strictly use server-calculated database totals.
+    let total = Math.round(calculatedUnitPrice * qty * 100) / 100
+
+    // For pure custom STL file uploads (no catalog product or design), calculate from printer base rate or validated custom amount
+    if (!product_id && !design_id) {
+      if (printer_id && calculatedUnitPrice > 0) {
+        total = Math.round(calculatedUnitPrice * qty * 100) / 100
+      } else if (Number(custom_total) > 0) {
+        const validatedCustom = Math.round(Number(custom_total) * 100) / 100
+        // Enforce strict minimum floor for custom manufacturing jobs
+        total = Math.max(150, validatedCustom)
+      }
+    }
 
     if (!Number.isFinite(total) || total <= 0) {
       return NextResponse.json({ error: 'Order total amount must be a finite, positive number' }, { status: 400 })
