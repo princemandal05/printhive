@@ -14,13 +14,21 @@ export async function POST(request: Request) {
       )
     }
 
-    const { data: profile } = await supabase
+    const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('role')
       .eq('id', user.id)
       .maybeSingle()
 
-    if (profile?.role !== 'designer' && profile?.role !== 'admin') {
+    if (profileError) {
+      console.error('Profile lookup failure in design upload:', profileError.message)
+      return NextResponse.json(
+        { error: 'Internal server error: Failed to verify user profile credentials.' },
+        { status: 500 }
+      )
+    }
+
+    if (!profile || (profile.role !== 'designer' && profile.role !== 'admin')) {
       return NextResponse.json(
         { error: 'Forbidden: Only registered 3D CAD designers and administrators can publish designs.' },
         { status: 403 }

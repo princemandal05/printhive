@@ -81,16 +81,11 @@ async function calculateOrderFinancials(
         }
       }
 
-      // Check server-bound slicing verification metadata
+      // Reject when server-generated slicing/upload metadata is missing (never trust client volume properties)
       if (verifiedVolumeCm3 === null) {
-        const boundVolume = Number(item?.serverMeshVolumeCm3 || item?.verifiedVolumeCm3 || item?.meshVolumeCm3 || item?.volumeCm3)
-        if (Number.isFinite(boundVolume) && boundVolume > 0) {
-          verifiedVolumeCm3 = boundVolume
-        } else {
-          return {
-            success: false,
-            error: `Custom print item "${item?.title || rawId}" lacks verified server volume metadata. Please re-slice the model in Print Studio before checkout.`,
-          }
+        return {
+          success: false,
+          error: `Custom print item "${item?.title || rawId}" lacks verified server volume metadata. Please re-slice the model in Print Studio before checkout.`,
         }
       }
 
