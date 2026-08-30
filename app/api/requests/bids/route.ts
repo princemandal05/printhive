@@ -49,7 +49,7 @@ export async function POST(request: Request) {
     // Verify target design request exists and is currently open
     const { data: designReq } = await supabase
       .from('design_requests')
-      .select('id, status, user_id')
+      .select('id, status, buyer_id')
       .eq('id', request_id)
       .maybeSingle()
 
@@ -61,7 +61,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'This custom design brief is no longer accepting bids' }, { status: 400 })
     }
 
-    if (designReq.user_id === user.id) {
+    if (designReq.buyer_id === user.id) {
       return NextResponse.json({ error: 'Cannot place a bid on your own design brief request' }, { status: 400 })
     }
 

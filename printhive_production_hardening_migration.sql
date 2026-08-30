@@ -26,7 +26,7 @@ DROP POLICY IF EXISTS "Designers or request owners read bids" ON public.design_r
 CREATE POLICY "Designers or request owners read bids" ON public.design_request_bids 
 FOR SELECT USING (
   auth.uid() = designer_id 
-  OR auth.uid() IN (SELECT user_id FROM public.design_requests WHERE id = request_id)
+  OR auth.uid() IN (SELECT buyer_id FROM public.design_requests WHERE id = request_id)
   OR auth.uid() IN (SELECT id FROM public.profiles WHERE role = 'admin')
 );
 
