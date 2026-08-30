@@ -91,7 +91,7 @@ export async function POST(request: Request) {
     // For pure custom STL file uploads (no catalog product or design), calculate from printer base rate or validated custom amount
     if (!product_id && !design_id) {
       if (printer_id && calculatedUnitPrice > 0) {
-        total = Math.round(calculatedUnitPrice * qty * 100) / 100
+        total = Math.max(150, Math.round(calculatedUnitPrice * qty * 100) / 100)
       } else if (Number(custom_total) > 0) {
         const validatedCustom = Math.round(Number(custom_total) * 100) / 100
         // Enforce strict minimum floor for custom manufacturing jobs

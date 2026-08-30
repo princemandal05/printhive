@@ -61,8 +61,40 @@ async function calculateOrderFinancials(
     }
 
     // 3. Custom Print-on-Demand (POD) Sliced File Uploads (e.g. 'pod-1787823908195')
-    if (unitPrice === null && (rawId.startsWith('pod-') || item?.type === 'custom_print' || item?.isCustomPrint || item?.meshVolumeCm3)) {
-      const volumeCm3 = Math.max(1, Number(item?.meshVolumeCm3 || item?.volumeCm3) || 20)
+    if (unitPrice === null && (rawId.startsWith('pod-') || item?.type === 'custom_print' || item?.isCustomPrint)) {
+      let verifiedVolumeCm3: number | null = null
+
+      // Look up design/asset metadata if persisted design_id exists
+      const assetId = item?.design_id || (cleanId && !cleanId.startsWith('pod-') ? cleanId : null)
+      if (assetId) {
+        const { data: dbAsset } = await adminSupabase
+          .from('designs')
+          .select('id, price, tags')
+          .eq('id', assetId)
+          .maybeSingle()
+        if (dbAsset) {
+          const volTag = Array.isArray(dbAsset.tags) ? dbAsset.tags.find((t: string) => typeof t === 'string' && t.startsWith('vol_cm3:')) : null
+          if (volTag) {
+            const parsed = Number(volTag.split(':')[1])
+            if (Number.isFinite(parsed) && parsed > 0) verifiedVolumeCm3 = parsed
+          }
+        }
+      }
+
+      // Check server-bound slicing verification metadata
+      if (verifiedVolumeCm3 === null) {
+        const boundVolume = Number(item?.serverMeshVolumeCm3 || item?.verifiedVolumeCm3 || item?.meshVolumeCm3 || item?.volumeCm3)
+        if (Number.isFinite(boundVolume) && boundVolume > 0) {
+          verifiedVolumeCm3 = boundVolume
+        } else {
+          return {
+            success: false,
+            error: `Custom print item "${item?.title || rawId}" lacks verified server volume metadata. Please re-slice the model in Print Studio before checkout.`,
+          }
+        }
+      }
+
+      const volumeCm3 = Math.max(1, verifiedVolumeCm3)
       const material = String(item?.material || 'PLA').toUpperCase()
       const materialRatePerCm3 = material === 'RESIN' ? 8.5 : material === 'PETG' ? 4.5 : material === 'ABS' ? 5.0 : material === 'TPU' ? 6.0 : 3.5 // PLA base
       const infill = Math.max(10, Math.min(100, Number(item?.infill) || 20))

@@ -14,6 +14,19 @@ export async function POST(request: Request) {
       )
     }
 
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .maybeSingle()
+
+    if (profile?.role !== 'designer' && profile?.role !== 'admin') {
+      return NextResponse.json(
+        { error: 'Forbidden: Only registered 3D CAD designers and administrators can publish designs.' },
+        { status: 403 }
+      )
+    }
+
     const designerId = user.id
 
     let body: unknown

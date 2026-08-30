@@ -53,7 +53,8 @@ export async function POST(request: Request) {
       }
     }
 
-    const isBuyer = order.buyer_id === user.id
+    const orderBuyerId = order.buyer_id || order.user_id
+    const isBuyer = orderBuyerId === user.id
 
     if (!isAdmin && !isAssignedPrinter && !isBuyer) {
       return NextResponse.json({ error: 'Forbidden: Only the assigned printer hub, buyer, or an admin can release escrow funds' }, { status: 403 })
@@ -119,11 +120,20 @@ export async function POST(request: Request) {
     if (payoutErr) {
       console.error('Failed to release escrow payouts, rolling back order update:', payoutErr.message)
       // Roll back orders table state to prevent financial inconsistency
-      await adminSupabase.from('orders').update({
+      const { error: rollbackErr } = await adminSupabase.from('orders').update({
         escrow_status: previousEscrowStatus,
         status: previousOrderStatus,
         updated_at: new Date().toISOString(),
       }).eq('id', targetOrderId)
+
+      if (rollbackErr) {
+        console.error('CRITICAL: Financial state reconciliation needed for order:', targetOrderId, rollbackErr.message)
+        return NextResponse.json({
+          error: `Escrow payouts release failed and order rollback encountered an error. Financial reconciliation required for order ${targetOrderId}.`,
+          order_id: targetOrderId,
+          status: 'UNRESOLVED_RECONCILIATION_REQUIRED',
+        }, { status: 500 })
+      }
 
       return NextResponse.json({ error: `Escrow payouts update failed: ${payoutErr.message}` }, { status: 500 })
     }

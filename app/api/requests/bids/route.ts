@@ -113,6 +113,9 @@ export async function POST(request: Request) {
 
     if (insertError) {
       console.error('Error submitting bid record:', insertError)
+      if (insertError.code === '23505' || insertError.message?.includes('duplicate key') || insertError.message?.includes('unique constraint')) {
+        return NextResponse.json({ error: 'You have already submitted an active bid for this brief' }, { status: 409 })
+      }
       return NextResponse.json({ error: insertError.message || 'Failed to submit bid' }, { status: 500 })
     }
 

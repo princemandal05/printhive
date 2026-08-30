@@ -38,6 +38,10 @@ FOR INSERT WITH CHECK (
   AND EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role IN ('designer', 'admin'))
 );
 
+-- Unique index to prevent duplicate bids concurrently
+CREATE UNIQUE INDEX IF NOT EXISTS idx_design_request_bids_unique 
+  ON public.design_request_bids (request_id, designer_id);
+
 -- 5. Helper function for admin verification
 CREATE OR REPLACE FUNCTION public.is_admin()
 RETURNS BOOLEAN AS $$

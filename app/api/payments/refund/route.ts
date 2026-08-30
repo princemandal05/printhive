@@ -63,12 +63,17 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Order has already been refunded', order_id: targetOrderId }, { status: 409 })
     }
 
-    const { data: existingRefundTxn } = await adminSupabase
+    const { data: existingRefundTxn, error: existingRefundErr } = await adminSupabase
       .from('transactions')
       .select('*')
       .eq('order_id', targetOrderId)
       .eq('status', 'refunded')
       .maybeSingle()
+
+    if (existingRefundErr) {
+      console.error('Failed to verify existing refund transactions:', existingRefundErr.message)
+      return NextResponse.json({ error: 'Failed to verify transaction refund state' }, { status: 500 })
+    }
 
     if (existingRefundTxn) {
       return NextResponse.json({
