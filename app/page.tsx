@@ -5,6 +5,7 @@ import Link from 'next/link'
 import dynamic from 'next/dynamic'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
+import RoleEcosystemShowcase from '@/components/RoleEcosystemShowcase'
 import { createClient } from '@/utils/supabase/client'
 import { ROUTES } from '@/lib/routes'
 import {
@@ -339,218 +340,21 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 4-SIDED ROLE WORKSPACE SWITCHER */}
+      {/* 4-SIDED ROLE WORKSPACE SHOWCASE */}
       <section style={{ padding: '40px 0 80px' }}>
         <div className="container">
-          <div style={{ textAlign: 'center', marginBottom: 36 }}>
+          <div style={{ textAlign: 'center', marginBottom: 44 }}>
             <div className="ateion-pill" style={{ marginBottom: 12 }}>🤝 Built For Everyone</div>
-            <h2 style={{ fontSize: 32, fontWeight: 800, color: 'var(--text-main)', marginBottom: 8 }}>
+            <h2 style={{ fontSize: 34, fontWeight: 800, color: 'var(--text-main)', marginBottom: 10 }}>
               Choose Your Role in the PrintHive Network
             </h2>
-            <p style={{ color: 'var(--text-sub)', fontSize: 15 }}>
-              PrintHive powers buyers, designers, printer owners, and material vendors under one fair 4-sided ecosystem.
+            <p style={{ color: 'var(--text-sub)', fontSize: 15, maxWidth: 680, margin: '0 auto' }}>
+              PrintHive seamlessly bridges buyers, 3D creators, printer hub owners, and digital material vendors across India under one unified 4-sided ecosystem.
             </p>
-
-            {/* Role Tab Buttons */}
-            <div style={{ display: 'inline-flex', gap: 8, background: 'var(--bg-card)', padding: 6, borderRadius: 99, border: '1px solid var(--border-color)', marginTop: 20, flexWrap: 'wrap', justifyContent: 'center' }}>
-              <button
-                type="button"
-                onClick={() => setActiveRoleTab('buyer')}
-                style={{
-                  padding: '10px 22px',
-                  borderRadius: 99,
-                  border: 'none',
-                  background: activeRoleTab === 'buyer' ? '#FF6B35' : 'transparent',
-                  color: activeRoleTab === 'buyer' ? '#fff' : 'var(--text-main)',
-                  fontWeight: 700,
-                  fontSize: 13.5,
-                  cursor: 'pointer',
-                  transition: 'all 0.2s',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 8,
-                }}
-              >
-                <ShoppingBag size={16} />
-                <span>Buyer Portal</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveRoleTab('designer')}
-                style={{
-                  padding: '10px 22px',
-                  borderRadius: 99,
-                  border: 'none',
-                  background: activeRoleTab === 'designer' ? '#FF6B35' : 'transparent',
-                  color: activeRoleTab === 'designer' ? '#fff' : 'var(--text-main)',
-                  fontWeight: 700,
-                  fontSize: 13.5,
-                  cursor: 'pointer',
-                  transition: 'all 0.2s',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 8,
-                }}
-              >
-                <PenTool size={16} />
-                <span>Creator Studio</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveRoleTab('printer')}
-                style={{
-                  padding: '10px 22px',
-                  borderRadius: 99,
-                  border: 'none',
-                  background: activeRoleTab === 'printer' ? '#FF6B35' : 'transparent',
-                  color: activeRoleTab === 'printer' ? '#fff' : 'var(--text-main)',
-                  fontWeight: 700,
-                  fontSize: 13.5,
-                  cursor: 'pointer',
-                  transition: 'all 0.2s',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 8,
-                }}
-              >
-                <Printer size={16} />
-                <span>Printer Hub</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveRoleTab('seller')}
-                style={{
-                  padding: '10px 22px',
-                  borderRadius: 99,
-                  border: 'none',
-                  background: activeRoleTab === 'seller' ? '#FF6B35' : 'transparent',
-                  color: activeRoleTab === 'seller' ? '#fff' : 'var(--text-main)',
-                  fontWeight: 700,
-                  fontSize: 13.5,
-                  cursor: 'pointer',
-                  transition: 'all 0.2s',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 8,
-                }}
-              >
-                <Store size={16} />
-                <span>Seller &amp; Store</span>
-              </button>
-            </div>
           </div>
 
-          {/* Active Role Details Box */}
-          <div style={{ background: 'var(--bg-card)', borderRadius: 28, border: '1px solid var(--border-color)', padding: 40, boxShadow: '0 8px 30px rgba(0,0,0,0.04)' }}>
-            {activeRoleTab === 'buyer' && (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 32, alignItems: 'center' }}>
-                <div>
-                  <h3 style={{ fontSize: 24, fontWeight: 800, color: 'var(--text-main)', marginBottom: 12 }}>
-                    Get Anything 3D Printed Without Owning a Printer
-                  </h3>
-                  <p style={{ color: 'var(--text-sub)', fontSize: 14, lineHeight: 1.7, marginBottom: 24 }}>
-                    Browse ready-made products, order custom CAD briefs, or upload your own 3D file on our Slicer page. Payments are held safely in Razorpay escrow until delivery.
-                  </p>
-                  <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-                    <Link href="/browse" className="btn btn-primary" style={{ background: '#FF6B35', color: '#fff', padding: '12px 24px', borderRadius: 99, fontWeight: 700, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-                      <Box size={16} /> Browse Designs
-                    </Link>
-                    <Link href="/print-on-demand" className="btn btn-outline" style={{ borderColor: 'var(--border-color)', color: 'var(--text-main)', padding: '12px 24px', borderRadius: 99, textDecoration: 'none', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-                      <Zap size={16} /> Slicer &amp; Upload
-                    </Link>
-                  </div>
-                </div>
-                <div style={{ background: 'var(--bg-card-hover)', padding: 28, borderRadius: 20, border: '1px solid var(--border-color)' }}>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-main)', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <CheckCircle2 size={16} color="#10B981" /> Buyer Guarantees:
-                  </div>
-                  <ul style={{ fontSize: 14, color: 'var(--text-sub)', lineHeight: 1.9, paddingLeft: 16, margin: 0 }}>
-                    <li>100% Escrow Protected Payments</li>
-                    <li>Leaflet GPS Nearby Printer Matching</li>
-                    <li>3D WebGL Inspection Before Purchase</li>
-                  </ul>
-                </div>
-              </div>
-            )}
-
-            {activeRoleTab === 'designer' && (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 32, alignItems: 'center' }}>
-                <div>
-                  <h3 style={{ fontSize: 24, fontWeight: 800, color: 'var(--text-main)', marginBottom: 12 }}>
-                    Monetize Your 3D Models &amp; Earn Automatic Royalties
-                  </h3>
-                  <p style={{ color: 'var(--text-sub)', fontSize: 14, lineHeight: 1.7, marginBottom: 24 }}>
-                    Upload STL/3MF files once. Every time a buyer orders a physical print, you earn a 15% royalty automatically paid out to your wallet upon delivery.
-                  </p>
-                  <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-                    <Link href="/dashboard/designer/upload" className="btn btn-primary" style={{ background: '#FF6B35', color: '#fff', padding: '12px 24px', borderRadius: 99, fontWeight: 700, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-                      <PenTool size={16} /> Upload 3D Model
-                    </Link>
-                    <Link href="/dashboard/designer" className="btn btn-outline" style={{ borderColor: 'var(--border-color)', color: 'var(--text-main)', padding: '12px 24px', borderRadius: 99, textDecoration: 'none', fontWeight: 600 }}>
-                      Designer Dashboard
-                    </Link>
-                  </div>
-                </div>
-                <div style={{ background: 'var(--bg-card-hover)', padding: 28, borderRadius: 20, border: '1px solid var(--border-color)' }}>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-main)', marginBottom: 8 }}>💰 Creator Payout Share:</div>
-                  <div style={{ fontSize: 24, fontWeight: 900, color: '#FF6B35', marginBottom: 6 }}>15% Royalty on Every Order</div>
-                  <div style={{ fontSize: 13, color: 'var(--text-sub)' }}>Earn passive income from your designs without handling shipping or hardware.</div>
-                </div>
-              </div>
-            )}
-
-            {activeRoleTab === 'printer' && (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 32, alignItems: 'center' }}>
-                <div>
-                  <h3 style={{ fontSize: 24, fontWeight: 800, color: 'var(--text-main)', marginBottom: 12 }}>
-                    Turn Idle Printer Hours Into High-Margin Income
-                  </h3>
-                  <p style={{ color: 'var(--text-sub)', fontSize: 14, lineHeight: 1.7, marginBottom: 24 }}>
-                    List your Bambu Lab, Prusa, or Resin machines. Accept nearby orders matched via Leaflet GPS, print, deliver, and earn 70% per job.
-                  </p>
-                  <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-                    <Link href="/printers" className="btn btn-primary" style={{ background: '#FF6B35', color: '#fff', padding: '12px 24px', borderRadius: 99, fontWeight: 700, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-                      <MapPin size={16} /> View Printer Hubs Map
-                    </Link>
-                    <Link href="/dashboard/printer-owner" className="btn btn-outline" style={{ borderColor: 'var(--border-color)', color: 'var(--text-main)', padding: '12px 24px', borderRadius: 99, textDecoration: 'none', fontWeight: 600 }}>
-                      Printer Dashboard
-                    </Link>
-                  </div>
-                </div>
-                <div style={{ background: 'var(--bg-card-hover)', padding: 28, borderRadius: 20, border: '1px solid var(--border-color)' }}>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-main)', marginBottom: 8 }}>🖨️ Printer Payout Share:</div>
-                  <div style={{ fontSize: 24, fontWeight: 900, color: '#FF6B35', marginBottom: 6 }}>70% Direct Payout</div>
-                  <div style={{ fontSize: 13, color: 'var(--text-sub)' }}>Consistent local print job queue sent right to your printer dashboard.</div>
-                </div>
-              </div>
-            )}
-
-            {activeRoleTab === 'seller' && (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 32, alignItems: 'center' }}>
-                <div>
-                  <h3 style={{ fontSize: 24, fontWeight: 800, color: 'var(--text-main)', marginBottom: 12 }}>
-                    Sell Finished 3D Goods, Filaments &amp; Hardware
-                  </h3>
-                  <p style={{ color: 'var(--text-sub)', fontSize: 14, lineHeight: 1.7, marginBottom: 24 }}>
-                    Open your digital storefront to sell ready-made 3D printed products, PLA/PETG/ABS spools, UV resins, and printer accessories directly to India&apos;s maker community.
-                  </p>
-                  <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-                    <Link href="/shop" className="btn btn-primary" style={{ background: '#FF6B35', color: '#fff', padding: '12px 24px', borderRadius: 99, fontWeight: 700, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-                      <Store size={16} /> Explore Marketplace Store
-                    </Link>
-                    <Link href="/dashboard/seller" className="btn btn-outline" style={{ borderColor: 'var(--border-color)', color: 'var(--text-main)', padding: '12px 24px', borderRadius: 99, textDecoration: 'none', fontWeight: 600 }}>
-                      Seller Dashboard
-                    </Link>
-                  </div>
-                </div>
-                <div style={{ background: 'var(--bg-card-hover)', padding: 28, borderRadius: 20, border: '1px solid var(--border-color)' }}>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-main)', marginBottom: 8 }}>🏪 Seller Advantages:</div>
-                  <div style={{ fontSize: 24, fontWeight: 900, color: '#FF6B35', marginBottom: 6 }}>Instant Escrow Settlement</div>
-                  <div style={{ fontSize: 13, color: 'var(--text-sub)' }}>Direct sales, automatic inventory management, and zero hidden platform listing fees.</div>
-                </div>
-              </div>
-            )}
-          </div>
+          {/* 4-Card Role Ecosystem Grid matching reference design */}
+          <RoleEcosystemShowcase />
         </div>
       </section>
 
