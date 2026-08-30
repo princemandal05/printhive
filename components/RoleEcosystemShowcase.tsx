@@ -466,11 +466,11 @@ export default function RoleEcosystemShowcase() {
       {/* 2. Main Role Card: Left Content + Right 3D Diagram */}
       <div
         style={{
-          background: 'var(--bg-card, #ffffff)',
+          background: 'var(--bg-card)',
           borderRadius: 28,
-          border: '1px solid var(--border-color, rgba(0,0,0,0.08))',
+          border: '1px solid var(--border-color)',
           padding: '36px 36px 28px',
-          boxShadow: '0 12px 40px rgba(0,0,0,0.04)',
+          boxShadow: '0 12px 40px rgba(0,0,0,0.06)',
           position: 'relative',
           overflow: 'hidden',
         }}
@@ -512,7 +512,7 @@ export default function RoleEcosystemShowcase() {
               style={{
                 fontSize: 26,
                 fontWeight: 800,
-                color: 'var(--text-main, #0f172a)',
+                color: 'var(--text-main)',
                 lineHeight: 1.25,
                 marginBottom: 14,
               }}
@@ -522,7 +522,7 @@ export default function RoleEcosystemShowcase() {
 
             <p
               style={{
-                color: 'var(--text-sub, #64748b)',
+                color: 'var(--text-sub)',
                 fontSize: 14,
                 lineHeight: 1.7,
                 marginBottom: 24,
@@ -555,8 +555,8 @@ export default function RoleEcosystemShowcase() {
                 href={currentRole.secondaryBtnHref}
                 style={{
                   background: 'transparent',
-                  color: 'var(--text-main, #0f172a)',
-                  border: '1px solid var(--border-color, rgba(0,0,0,0.12))',
+                  color: 'var(--text-main)',
+                  border: '1px solid var(--border-color)',
                   padding: '12px 20px',
                   borderRadius: 99,
                   fontWeight: 600,
@@ -575,16 +575,16 @@ export default function RoleEcosystemShowcase() {
           {/* Right Column: Interactive 3D Diagram with Left Callouts, Wireframe Sphere, and Right Callouts */}
           <div
             style={{
-              background: 'var(--bg-card-sub, #f8fafc)',
+              background: 'var(--bg-card-sub)',
               borderRadius: 22,
-              border: '1px solid var(--border-color, rgba(0,0,0,0.06))',
+              border: '1px solid var(--border-color)',
               padding: '24px 20px',
               display: 'grid',
               gridTemplateColumns: 'minmax(120px, 1fr) auto minmax(120px, 1fr)',
               alignItems: 'center',
               gap: 12,
               position: 'relative',
-              boxShadow: '0 4px 20px rgba(0,0,0,0.02)',
+              boxShadow: '0 4px 20px rgba(0,0,0,0.04)',
             }}
           >
             {/* Left Sub-Column Callouts */}
@@ -593,14 +593,14 @@ export default function RoleEcosystemShowcase() {
                 <div
                   key={idx}
                   style={{
-                    background: 'var(--bg-card, #ffffff)',
-                    border: '1px solid var(--border-color, rgba(0,0,0,0.08))',
+                    background: 'var(--bg-card)',
+                    border: '1px solid var(--border-color)',
                     borderRadius: 14,
                     padding: '10px 12px',
                     display: 'flex',
                     alignItems: 'center',
                     gap: 10,
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
                   }}
                 >
                   <div
@@ -618,10 +618,10 @@ export default function RoleEcosystemShowcase() {
                     {item.icon}
                   </div>
                   <div style={{ minWidth: 0 }}>
-                    <div style={{ fontSize: 12, fontWeight: 800, color: 'var(--text-main, #0f172a)', lineHeight: 1.2 }}>
+                    <div style={{ fontSize: 12, fontWeight: 800, color: 'var(--text-main)', lineHeight: 1.2 }}>
                       {item.title}
                     </div>
-                    <div style={{ fontSize: 10, color: 'var(--text-sub, #64748b)', marginTop: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    <div style={{ fontSize: 10, color: 'var(--text-sub)', marginTop: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                       {item.subtitle}
                     </div>
                   </div>
@@ -652,7 +652,7 @@ export default function RoleEcosystemShowcase() {
                   height: 14,
                   borderRadius: '50%',
                   background: currentRole.nodeLeftColor,
-                  border: '2.5px solid #ffffff',
+                  border: '2.5px solid var(--bg-card)',
                   boxShadow: `0 0 12px ${currentRole.nodeLeftColor}`,
                   zIndex: 4,
                 }}
@@ -669,7 +669,7 @@ export default function RoleEcosystemShowcase() {
                   height: 14,
                   borderRadius: '50%',
                   background: currentRole.nodeRightColor,
-                  border: '2.5px solid #ffffff',
+                  border: '2.5px solid var(--bg-card)',
                   boxShadow: `0 0 12px ${currentRole.nodeRightColor}`,
                   zIndex: 4,
                 }}
@@ -685,14 +685,14 @@ export default function RoleEcosystemShowcase() {
                 <div
                   key={idx}
                   style={{
-                    background: 'var(--bg-card, #ffffff)',
-                    border: '1px solid var(--border-color, rgba(0,0,0,0.08))',
+                    background: 'var(--bg-card)',
+                    border: '1px solid var(--border-color)',
                     borderRadius: 14,
                     padding: '10px 12px',
                     display: 'flex',
                     alignItems: 'center',
                     gap: 10,
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
                   }}
                 >
                   <div
@@ -710,10 +710,10 @@ export default function RoleEcosystemShowcase() {
                     {item.icon}
                   </div>
                   <div style={{ minWidth: 0 }}>
-                    <div style={{ fontSize: 12, fontWeight: 800, color: 'var(--text-main, #0f172a)', lineHeight: 1.2 }}>
+                    <div style={{ fontSize: 12, fontWeight: 800, color: 'var(--text-main)', lineHeight: 1.2 }}>
                       {item.title}
                     </div>
-                    <div style={{ fontSize: 10, color: 'var(--text-sub, #64748b)', marginTop: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    <div style={{ fontSize: 10, color: 'var(--text-sub)', marginTop: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                       {item.subtitle}
                     </div>
                   </div>
@@ -726,8 +726,8 @@ export default function RoleEcosystemShowcase() {
         {/* Bottom 4-Column Capability Bar */}
         <div
           style={{
-            background: currentRole.bgSoft,
-            border: `1px solid ${currentRole.themeColor}22`,
+            background: 'var(--bg-card-sub)',
+            border: '1px solid var(--border-color)',
             borderRadius: 16,
             padding: '12px 18px',
             display: 'grid',
@@ -763,7 +763,7 @@ export default function RoleEcosystemShowcase() {
                 {link.icon}
               </div>
               <div style={{ minWidth: 0 }}>
-                <div style={{ fontSize: 11.5, fontWeight: 800, color: 'var(--text-main, #0f172a)', lineHeight: 1.2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                <div style={{ fontSize: 11.5, fontWeight: 800, color: 'var(--text-main)', lineHeight: 1.2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                   {link.title}
                 </div>
                 <div style={{ fontSize: 10, color: currentRole.themeColor, fontWeight: 700, marginTop: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
@@ -777,3 +777,4 @@ export default function RoleEcosystemShowcase() {
     </div>
   )
 }
+

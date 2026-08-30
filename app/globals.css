@@ -93,6 +93,7 @@
   --bg-canvas: #f7f3eb;
   --bg-card: #ffffff;
   --bg-card-hover: #f2ece1;
+  --bg-card-sub: #f5efe6;
   --text-main: #18181b;
   --text-sub: #52525b;
   --border-color: #e4ded4;
@@ -120,6 +121,7 @@ html.dark,
   --bg-canvas: #0f0f11;
   --bg-card: #18181b;
   --bg-card-hover: #222227;
+  --bg-card-sub: #131316;
   --text-main: #f4f4f5;
   --text-sub: #a1a1aa;
   --border-color: rgba(234, 88, 12, 0.4);
