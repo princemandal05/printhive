@@ -21,56 +21,8 @@ import {
   FolderKanban,
   Clock,
   Coins,
-  Layers,
-  Zap,
   CheckCircle2,
 } from 'lucide-react'
-
-// Wireframe Geodesic Geometric Sphere SVG
-function WireframeSphere({ color }: { color: string }) {
-  return (
-    <svg
-      viewBox="0 0 240 240"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      style={{
-        position: 'absolute',
-        width: '100%',
-        height: '100%',
-        top: 0,
-        left: 0,
-        opacity: 0.65,
-        pointerEvents: 'none',
-      }}
-    >
-      <circle cx="120" cy="120" r="96" stroke={color} strokeWidth="1" strokeDasharray="3 3" opacity="0.35" />
-      <ellipse cx="120" cy="120" rx="96" ry="42" stroke={color} strokeWidth="1.2" opacity="0.4" />
-      <ellipse cx="120" cy="120" rx="42" ry="96" stroke={color} strokeWidth="1.2" opacity="0.4" />
-      
-      {/* Polygonal Wireframe facets */}
-      <polygon points="120,24 188,68 188,172 120,216 52,172 52,68" stroke={color} strokeWidth="1" opacity="0.5" />
-      <polygon points="120,48 168,84 168,156 120,192 72,156 72,84" stroke={color} strokeWidth="1" opacity="0.35" />
-      <line x1="120" y1="24" x2="120" y2="216" stroke={color} strokeWidth="1" opacity="0.25" />
-      <line x1="52" y1="68" x2="188" y2="172" stroke={color} strokeWidth="1" opacity="0.2" />
-      <line x1="52" y1="172" x2="188" y2="68" stroke={color} strokeWidth="1" opacity="0.2" />
-      
-      {/* Node Vertices */}
-      <circle cx="52" cy="68" r="3.5" fill={color} opacity="0.8" />
-      <circle cx="188" cy="68" r="3.5" fill={color} opacity="0.8" />
-      <circle cx="188" cy="172" r="3.5" fill={color} opacity="0.8" />
-      <circle cx="52" cy="172" r="3.5" fill={color} opacity="0.8" />
-      <circle cx="120" cy="24" r="3.5" fill={color} opacity="0.8" />
-      <circle cx="120" cy="216" r="3.5" fill={color} opacity="0.8" />
-    </svg>
-  )
-}
-
-interface CalloutItem {
-  icon: React.ReactNode
-  title: string
-  subtitle: string
-  extraTag?: React.ReactNode
-}
 
 interface QuickLinkItem {
   icon: React.ReactNode
@@ -87,8 +39,6 @@ interface RoleConfig {
   themeColor: string
   bgLight: string
   bgSoft: string
-  nodeLeftColor: string
-  nodeRightColor: string
   headline: string
   description: string
   primaryBtnText: string
@@ -96,10 +46,8 @@ interface RoleConfig {
   primaryBtnIcon: React.ReactNode
   secondaryBtnText: string
   secondaryBtnHref: string
-  centerImageUrl: string
-  centerAlt: string
-  leftCallouts: CalloutItem[]
-  rightCallouts: CalloutItem[]
+  cardImageUrl: string
+  cardAlt: string
   bottomLinks: QuickLinkItem[]
 }
 
@@ -113,8 +61,6 @@ const ROLES: RoleConfig[] = [
     themeColor: '#ea580c',
     bgLight: 'rgba(234, 88, 12, 0.12)',
     bgSoft: 'rgba(234, 88, 12, 0.04)',
-    nodeLeftColor: '#059669',
-    nodeRightColor: '#ea580c',
     headline: 'Get Anything 3D Printed Without Owning a Printer',
     description: 'Browse ready-made products, order custom CAD briefs, or upload your own 3D file on our Slicer page. Payments are held safely in Razorpay escrow until delivery.',
     primaryBtnText: 'Browse Designs',
@@ -122,51 +68,8 @@ const ROLES: RoleConfig[] = [
     primaryBtnIcon: <Box size={15} />,
     secondaryBtnText: 'Slicer & Upload',
     secondaryBtnHref: '/print-on-demand',
-    centerImageUrl: '/images/roles/buyer_visual.png',
-    centerAlt: 'Buyer Portal 3D Character',
-    leftCallouts: [
-      {
-        icon: <MapPin size={16} color="#ea580c" />,
-        title: '2.4 km Away',
-        subtitle: 'Nearest Printer',
-        extraTag: (
-          <span style={{ fontSize: 10, fontWeight: 700, color: '#10b981', background: 'rgba(16, 185, 129, 0.14)', padding: '2px 7px', borderRadius: 99 }}>
-            Available
-          </span>
-        ),
-      },
-      {
-        icon: <Box size={16} color="#ea580c" />,
-        title: '3D Preview',
-        subtitle: 'Inspect model in real-time',
-        extraTag: (
-          <span style={{ fontSize: 10, fontWeight: 700, color: '#ea580c', background: 'rgba(234, 88, 12, 0.14)', padding: '2px 7px', borderRadius: 99 }}>
-            360°
-          </span>
-        ),
-      },
-    ],
-    rightCallouts: [
-      {
-        icon: <ShieldCheck size={16} color="#10b981" />,
-        title: 'Escrow Protected',
-        subtitle: '100% Secure Payments',
-      },
-      {
-        icon: <Truck size={16} color="#ea580c" />,
-        title: 'Fast Delivery',
-        subtitle: 'Track your order till delivery',
-        extraTag: (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 3, marginTop: 3 }}>
-            <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#ea580c' }} />
-            <span style={{ width: 14, height: 2, background: '#ea580c' }} />
-            <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#ea580c' }} />
-            <span style={{ width: 14, height: 2, background: 'rgba(234,88,12,0.3)' }} />
-            <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'rgba(234,88,12,0.3)' }} />
-          </div>
-        ),
-      },
-    ],
+    cardImageUrl: '/images/roles/buyer_card_full.png',
+    cardAlt: 'Buyer Portal 3D Ecosystem Card',
     bottomLinks: [
       {
         icon: <Box size={14} color="#ea580c" />,
@@ -204,8 +107,6 @@ const ROLES: RoleConfig[] = [
     themeColor: '#8b5cf6',
     bgLight: 'rgba(139, 92, 246, 0.12)',
     bgSoft: 'rgba(139, 92, 246, 0.04)',
-    nodeLeftColor: '#7c3aed',
-    nodeRightColor: '#6d28d9',
     headline: 'Monetize Your 3D Models & Earn Automatic Royalties',
     description: 'Upload STL/3MF files once. Every time a buyer orders a physical print, you earn a 15% royalty automatically paid out to your wallet upon delivery.',
     primaryBtnText: 'Upload 3D Model',
@@ -213,37 +114,8 @@ const ROLES: RoleConfig[] = [
     primaryBtnIcon: <UploadCloud size={15} />,
     secondaryBtnText: 'Designer Dashboard',
     secondaryBtnHref: '/dashboard/designer',
-    centerImageUrl: '/images/roles/creator_visual.png',
-    centerAlt: 'Creator Studio 3D Designer',
-    leftCallouts: [
-      {
-        icon: <UploadCloud size={16} color="#8b5cf6" />,
-        title: 'Upload Model',
-        subtitle: 'STL, 3MF, OBJ and more',
-      },
-      {
-        icon: <MessageSquare size={16} color="#8b5cf6" />,
-        title: 'Custom Requests',
-        subtitle: 'Get design requests from buyers',
-        extraTag: (
-          <span style={{ width: 17, height: 17, borderRadius: '50%', background: '#8b5cf6', color: '#fff', fontSize: 10, fontWeight: 800, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
-            3
-          </span>
-        ),
-      },
-    ],
-    rightCallouts: [
-      {
-        icon: <Gavel size={16} color="#8b5cf6" />,
-        title: 'Active Bids',
-        subtitle: 'Bid on custom projects',
-      },
-      {
-        icon: <TrendingUp size={16} color="#8b5cf6" />,
-        title: 'Earn & Grow',
-        subtitle: 'Earn from sales & custom projects',
-      },
-    ],
+    cardImageUrl: '/images/roles/creator_card_full.png',
+    cardAlt: 'Creator Studio 3D Designer Card',
     bottomLinks: [
       {
         icon: <FolderKanban size={14} color="#8b5cf6" />,
@@ -281,8 +153,6 @@ const ROLES: RoleConfig[] = [
     themeColor: '#10b981',
     bgLight: 'rgba(16, 185, 129, 0.12)',
     bgSoft: 'rgba(16, 185, 129, 0.04)',
-    nodeLeftColor: '#059669',
-    nodeRightColor: '#047857',
     headline: 'Turn Idle Printer Hours Into High-Margin Income',
     description: 'List your Bambu Lab, Prusa, or Resin machines. Accept nearby orders matched via Leaflet GPS, print, deliver, and earn 70% per job.',
     primaryBtnText: 'View Printer Hubs Map',
@@ -290,54 +160,8 @@ const ROLES: RoleConfig[] = [
     primaryBtnIcon: <MapPin size={15} />,
     secondaryBtnText: 'Printer Dashboard',
     secondaryBtnHref: '/dashboard/printer-owner',
-    centerImageUrl: '/images/roles/printer_visual.png',
-    centerAlt: 'Printer Hub 3D Operator',
-    leftCallouts: [
-      {
-        icon: <MapPin size={16} color="#10b981" />,
-        title: 'Printer Location',
-        subtitle: 'You are visible to nearby buyers',
-        extraTag: (
-          <div style={{ width: 44, height: 18, borderRadius: 4, background: 'rgba(16,185,129,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(16,185,129,0.25)' }}>
-            <MapPin size={10} color="#10b981" />
-          </div>
-        ),
-      },
-      {
-        icon: <Layers size={16} color="#10b981" />,
-        title: 'Job Requests',
-        subtitle: 'New print jobs near you',
-        extraTag: (
-          <span style={{ width: 17, height: 17, borderRadius: '50%', background: '#10b981', color: '#fff', fontSize: 10, fontWeight: 800, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
-            2
-          </span>
-        ),
-      },
-    ],
-    rightCallouts: [
-      {
-        icon: <Zap size={16} color="#10b981" />,
-        title: 'Printer Status',
-        subtitle: '● Online',
-        extraTag: (
-          <span style={{ fontSize: 10, fontWeight: 700, color: '#10b981', background: 'rgba(16, 185, 129, 0.14)', padding: '2px 7px', borderRadius: 99 }}>
-            Available
-          </span>
-        ),
-      },
-      {
-        icon: <Box size={16} color="#10b981" />,
-        title: 'Supported Materials',
-        subtitle: 'PLA   PETG   ABS',
-        extraTag: (
-          <div style={{ display: 'flex', gap: 4, marginTop: 3 }}>
-            <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#10b981' }} />
-            <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#0284c7' }} />
-            <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#d97706' }} />
-          </div>
-        ),
-      },
-    ],
+    cardImageUrl: '/images/roles/printer_card_full.png',
+    cardAlt: 'Printer Hub 3D Operator Card',
     bottomLinks: [
       {
         icon: <MapPin size={14} color="#10b981" />,
@@ -375,8 +199,6 @@ const ROLES: RoleConfig[] = [
     themeColor: '#2563eb',
     bgLight: 'rgba(37, 99, 235, 0.12)',
     bgSoft: 'rgba(37, 99, 235, 0.04)',
-    nodeLeftColor: '#1d4ed8',
-    nodeRightColor: '#2563eb',
     headline: 'Sell Finished 3D Goods, Filaments & Hardware',
     description: 'Open your digital storefront to sell ready-made 3D printed products, PLA/PETG/ABS spools, UV resins, and printer accessories directly to India\'s maker community.',
     primaryBtnText: 'Explore Marketplace Store',
@@ -384,37 +206,8 @@ const ROLES: RoleConfig[] = [
     primaryBtnIcon: <Store size={15} />,
     secondaryBtnText: 'Seller Dashboard',
     secondaryBtnHref: '/dashboard/seller',
-    centerImageUrl: '/images/roles/seller_visual.png',
-    centerAlt: 'Seller & Store 3D Merchant',
-    leftCallouts: [
-      {
-        icon: <Package size={16} color="#2563eb" />,
-        title: 'List Products',
-        subtitle: 'Add 3D printed products to store',
-      },
-      {
-        icon: <Store size={16} color="#2563eb" />,
-        title: 'Store Management',
-        subtitle: 'Manage your store and profile',
-      },
-    ],
-    rightCallouts: [
-      {
-        icon: <ShoppingCart size={16} color="#2563eb" />,
-        title: 'Incoming Orders',
-        subtitle: 'New order received',
-        extraTag: (
-          <span style={{ width: 17, height: 17, borderRadius: '50%', background: '#2563eb', color: '#fff', fontSize: 10, fontWeight: 800, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
-            1
-          </span>
-        ),
-      },
-      {
-        icon: <TrendingUp size={16} color="#2563eb" />,
-        title: 'Grow Business',
-        subtitle: 'Reach more customers',
-      },
-    ],
+    cardImageUrl: '/images/roles/seller_card_full.png',
+    cardAlt: 'Seller & Store 3D Merchant Card',
     bottomLinks: [
       {
         icon: <Package size={14} color="#2563eb" />,
@@ -496,10 +289,18 @@ export default function RoleEcosystemShowcase() {
         </div>
       </div>
 
-      {/* 2. Main Role Card: Left Details & CTAs + Right Diagram with Character Illustration */}
+      {/* 2. Main Role Card: Left Details & CTAs + Right Card Visual Image */}
       <div className="role-showcase-card">
         {/* Main Grid */}
-        <div className="role-showcase-main-grid">
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'minmax(300px, 1fr) minmax(380px, 1.2fr)',
+            gap: 36,
+            alignItems: 'center',
+            marginBottom: 32,
+          }}
+        >
           {/* Left Column: Heading, Description, Action Buttons */}
           <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
             <div style={{ marginBottom: 12 }}>
@@ -589,157 +390,32 @@ export default function RoleEcosystemShowcase() {
             </div>
           </div>
 
-          {/* Right Column: Interactive Diagram with Left Callouts, Wireframe Sphere + Character Image, and Right Callouts */}
-          <div className="role-showcase-viewer-grid">
-            {/* Left Sub-Column Callouts */}
-            <div className="role-showcase-callouts-col">
-              {currentRole.leftCallouts.map((item, idx) => (
-                <div
-                  key={idx}
-                  style={{
-                    background: 'var(--bg-card)',
-                    border: '1px solid var(--border-color)',
-                    borderRadius: 14,
-                    padding: '10px 12px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 10,
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
-                  }}
-                >
-                  <div
-                    style={{
-                      width: 32,
-                      height: 32,
-                      borderRadius: 9,
-                      background: currentRole.bgLight,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      flexShrink: 0,
-                    }}
-                  >
-                    {item.icon}
-                  </div>
-                  <div style={{ minWidth: 0, flex: 1 }}>
-                    <div style={{ fontSize: 12, fontWeight: 800, color: 'var(--text-main)', lineHeight: 1.2 }}>
-                      {item.title}
-                    </div>
-                    <div style={{ fontSize: 10, color: 'var(--text-sub)', marginTop: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                      {item.subtitle}
-                    </div>
-                    {item.extraTag && <div style={{ marginTop: 3 }}>{item.extraTag}</div>}
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Center Live Visual Scene Viewport */}
-            <div
+          {/* Right Column: Full Crisp High-Resolution Role Card Graphic */}
+          <div
+            style={{
+              position: 'relative',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              borderRadius: 22,
+              overflow: 'hidden',
+              border: '1px solid var(--border-color)',
+              boxShadow: '0 8px 30px rgba(0,0,0,0.04)',
+              background: 'var(--bg-card-sub)',
+              padding: 0,
+            }}
+          >
+            <img
+              src={currentRole.cardImageUrl}
+              alt={currentRole.cardAlt}
               style={{
-                width: 220,
-                height: 220,
-                position: 'relative',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                flexShrink: 0,
+                width: '100%',
+                height: 'auto',
+                display: 'block',
+                borderRadius: 20,
+                objectFit: 'contain',
               }}
-            >
-              {/* Wireframe Geodesic Geometric Sphere SVG */}
-              <WireframeSphere color={currentRole.themeColor} />
-
-              {/* Left Connector Node Indicator */}
-              <div
-                style={{
-                  position: 'absolute',
-                  left: 4,
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  width: 13,
-                  height: 13,
-                  borderRadius: '50%',
-                  background: currentRole.nodeLeftColor,
-                  border: '2.5px solid var(--bg-card)',
-                  boxShadow: `0 0 12px ${currentRole.nodeLeftColor}`,
-                  zIndex: 4,
-                }}
-              />
-
-              {/* Right Connector Node Indicator */}
-              <div
-                style={{
-                  position: 'absolute',
-                  right: 4,
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  width: 13,
-                  height: 13,
-                  borderRadius: '50%',
-                  background: currentRole.nodeRightColor,
-                  border: '2.5px solid var(--bg-card)',
-                  boxShadow: `0 0 12px ${currentRole.nodeRightColor}`,
-                  zIndex: 4,
-                }}
-              />
-
-              {/* 3D Character Illustration Scene Image */}
-              <img
-                src={currentRole.centerImageUrl}
-                alt={currentRole.centerAlt}
-                style={{
-                  width: '100%',
-                  height: '100%',
-                  objectFit: 'contain',
-                  position: 'relative',
-                  zIndex: 2,
-                  filter: 'drop-shadow(0 6px 16px rgba(0,0,0,0.12))',
-                }}
-              />
-            </div>
-
-            {/* Right Sub-Column Callouts */}
-            <div className="role-showcase-callouts-col">
-              {currentRole.rightCallouts.map((item, idx) => (
-                <div
-                  key={idx}
-                  style={{
-                    background: 'var(--bg-card)',
-                    border: '1px solid var(--border-color)',
-                    borderRadius: 14,
-                    padding: '10px 12px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 10,
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
-                  }}
-                >
-                  <div
-                    style={{
-                      width: 32,
-                      height: 32,
-                      borderRadius: 9,
-                      background: currentRole.bgLight,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      flexShrink: 0,
-                    }}
-                  >
-                    {item.icon}
-                  </div>
-                  <div style={{ minWidth: 0, flex: 1 }}>
-                    <div style={{ fontSize: 12, fontWeight: 800, color: 'var(--text-main)', lineHeight: 1.2 }}>
-                      {item.title}
-                    </div>
-                    <div style={{ fontSize: 10, color: 'var(--text-sub)', marginTop: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                      {item.subtitle}
-                    </div>
-                    {item.extraTag && <div style={{ marginTop: 3 }}>{item.extraTag}</div>}
-                  </div>
-                </div>
-              ))}
-            </div>
+            />
           </div>
         </div>
 
