@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react'
 import Link from 'next/link'
+import dynamic from 'next/dynamic'
 import {
   ShoppingBag,
   PenTool,
@@ -28,8 +29,16 @@ import {
   Share2,
   Layers,
   Zap,
-  ArrowRight,
 } from 'lucide-react'
+
+const RoleLive3DViewer = dynamic(() => import('@/components/RoleLive3DViewer'), {
+  ssr: false,
+  loading: () => (
+    <div style={{ width: 170, height: 170, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, color: 'var(--text-sub)' }}>
+      ⚡ Slicing 3D Model...
+    </div>
+  ),
+})
 
 // Wireframe Geodesic Geometric Sphere SVG
 function WireframeSphere({ color }: { color: string }) {
@@ -44,7 +53,7 @@ function WireframeSphere({ color }: { color: string }) {
         height: '100%',
         top: 0,
         left: 0,
-        opacity: 0.75,
+        opacity: 0.8,
         pointerEvents: 'none',
       }}
     >
@@ -128,28 +137,28 @@ const ROLES: RoleConfig[] = [
     primaryBtnIcon: <Box size={15} />,
     secondaryBtnText: 'Slicer & Upload',
     secondaryBtnHref: '/print-on-demand',
-    centerImageUrl: 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?auto=format&fit=crop&w=500&q=80',
+    centerImageUrl: 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?auto=format&fit=crop&w=400&q=80',
     centerAlt: 'Modern 3D Printed Armchair Prototype',
     leftCallouts: [
       {
-        icon: <MapPin size={17} color="#ea580c" />,
+        icon: <MapPin size={16} color="#ea580c" />,
         title: '2.4 km Away',
         subtitle: 'Nearest Printer Available',
       },
       {
-        icon: <Box size={17} color="#ea580c" />,
+        icon: <Box size={16} color="#ea580c" />,
         title: '3D Preview',
         subtitle: 'Inspect model in real-time',
       },
     ],
     rightCallouts: [
       {
-        icon: <ShieldCheck size={17} color="#10b981" />,
+        icon: <ShieldCheck size={16} color="#10b981" />,
         title: 'Escrow Protected',
         subtitle: '100% secure payments',
       },
       {
-        icon: <Truck size={17} color="#f59e0b" />,
+        icon: <Truck size={16} color="#f59e0b" />,
         title: 'Fast Delivery',
         subtitle: 'Track your order till delivery',
       },
@@ -201,28 +210,28 @@ const ROLES: RoleConfig[] = [
     primaryBtnIcon: <UploadCloud size={15} />,
     secondaryBtnText: 'Designer Dashboard',
     secondaryBtnHref: '/dashboard/designer',
-    centerImageUrl: 'https://images.unsplash.com/photo-1616046229478-9901c5536a45?auto=format&fit=crop&w=500&q=80',
+    centerImageUrl: 'https://images.unsplash.com/photo-1616046229478-9901c5536a45?auto=format&fit=crop&w=400&q=80',
     centerAlt: 'Parametric Spiral 3D Model Vase',
     leftCallouts: [
       {
-        icon: <UploadCloud size={17} color="#8b5cf6" />,
+        icon: <UploadCloud size={16} color="#8b5cf6" />,
         title: 'Upload & Showcase',
         subtitle: 'Upload your 3D models',
       },
       {
-        icon: <MessageSquare size={17} color="#8b5cf6" />,
+        icon: <MessageSquare size={16} color="#8b5cf6" />,
         title: 'Custom Requests',
         subtitle: 'Get design requests from buyers',
       },
     ],
     rightCallouts: [
       {
-        icon: <Gavel size={17} color="#8b5cf6" />,
+        icon: <Gavel size={16} color="#8b5cf6" />,
         title: 'Submit Bids',
         subtitle: 'Bid on custom projects',
       },
       {
-        icon: <TrendingUp size={17} color="#8b5cf6" />,
+        icon: <TrendingUp size={16} color="#8b5cf6" />,
         title: 'Earn & Grow',
         subtitle: 'Earn from sales and projects',
       },
@@ -274,28 +283,28 @@ const ROLES: RoleConfig[] = [
     primaryBtnIcon: <MapPin size={15} />,
     secondaryBtnText: 'Printer Dashboard',
     secondaryBtnHref: '/dashboard/printer-owner',
-    centerImageUrl: 'https://images.unsplash.com/photo-1631541909061-71e349d1f203?auto=format&fit=crop&w=500&q=80',
+    centerImageUrl: 'https://images.unsplash.com/photo-1631541909061-71e349d1f203?auto=format&fit=crop&w=400&q=80',
     centerAlt: 'Dual-Color Precision 3D Printer Hub Unit',
     leftCallouts: [
       {
-        icon: <MapPin size={17} color="#10b981" />,
+        icon: <MapPin size={16} color="#10b981" />,
         title: 'Printer Location',
         subtitle: 'You are visible to nearby buyers',
       },
       {
-        icon: <Layers size={17} color="#10b981" />,
+        icon: <Layers size={16} color="#10b981" />,
         title: 'Job Requests',
         subtitle: 'New print jobs near you',
       },
     ],
     rightCallouts: [
       {
-        icon: <Settings size={17} color="#10b981" />,
+        icon: <Settings size={16} color="#10b981" />,
         title: 'Your Printers',
         subtitle: 'Manage printers & materials',
       },
       {
-        icon: <CheckCircle2 size={17} color="#10b981" />,
+        icon: <CheckCircle2 size={16} color="#10b981" />,
         title: 'Earn & Withdraw',
         subtitle: 'Get paid for completed jobs',
       },
@@ -347,28 +356,28 @@ const ROLES: RoleConfig[] = [
     primaryBtnIcon: <Store size={15} />,
     secondaryBtnText: 'Seller Dashboard',
     secondaryBtnHref: '/dashboard/seller',
-    centerImageUrl: 'https://images.unsplash.com/photo-1578749556568-bc2c40e68b61?auto=format&fit=crop&w=500&q=80',
+    centerImageUrl: 'https://images.unsplash.com/photo-1578749556568-bc2c40e68b61?auto=format&fit=crop&w=400&q=80',
     centerAlt: 'Voronoi Blue Honeycomb 3D Printed Vessel',
     leftCallouts: [
       {
-        icon: <Package size={17} color="#2563eb" />,
+        icon: <Package size={16} color="#2563eb" />,
         title: 'List Products',
         subtitle: 'Add 3D printed products',
       },
       {
-        icon: <Store size={17} color="#2563eb" />,
+        icon: <Store size={16} color="#2563eb" />,
         title: 'Store Management',
         subtitle: 'Manage your store and profile',
       },
     ],
     rightCallouts: [
       {
-        icon: <ShoppingCart size={17} color="#2563eb" />,
+        icon: <ShoppingCart size={16} color="#2563eb" />,
         title: 'Incoming Orders',
         subtitle: 'Manage orders easily',
       },
       {
-        icon: <BarChart3 size={17} color="#2563eb" />,
+        icon: <BarChart3 size={16} color="#2563eb" />,
         title: 'Grow Business',
         subtitle: 'Reach more customers',
       },
@@ -407,7 +416,7 @@ export default function RoleEcosystemShowcase() {
   const currentRole = ROLES.find((r) => r.id === activeTab) || ROLES[0]
 
   return (
-    <div style={{ width: '100%', maxWidth: 1180, margin: '0 auto' }}>
+    <div style={{ width: '100%', maxWidth: 1200, margin: '0 auto' }}>
       {/* 1. Top Pill Tab Switcher */}
       <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 28 }}>
         <div
@@ -431,7 +440,7 @@ export default function RoleEcosystemShowcase() {
                 type="button"
                 onClick={() => setActiveTab(role.id)}
                 style={{
-                  padding: '9px 20px',
+                  padding: '10px 22px',
                   borderRadius: 99,
                   border: 'none',
                   background: isActive ? role.themeColor : 'transparent',
@@ -454,244 +463,263 @@ export default function RoleEcosystemShowcase() {
         </div>
       </div>
 
-      {/* 2. Interactive Role Card Showcase matching exact reference */}
+      {/* 2. Main Role Card: Left Content + Right 3D Diagram */}
       <div
         style={{
           background: 'var(--bg-card, #ffffff)',
           borderRadius: 28,
           border: '1px solid var(--border-color, rgba(0,0,0,0.08))',
-          padding: '32px 32px 24px',
+          padding: '36px 36px 28px',
           boxShadow: '0 12px 40px rgba(0,0,0,0.04)',
           position: 'relative',
           overflow: 'hidden',
-          transition: 'all 0.3s ease',
         }}
       >
-        {/* Top Header Row with Badge & Headline */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24, flexWrap: 'wrap', gap: 12 }}>
-          <span
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 8,
-              padding: '6px 14px',
-              borderRadius: 99,
-              background: currentRole.bgLight,
-              color: currentRole.themeColor,
-              fontSize: 12,
-              fontWeight: 800,
-              letterSpacing: '0.04em',
-              border: `1px solid ${currentRole.themeColor}33`,
-            }}
-          >
-            <Box size={14} color={currentRole.themeColor} />
-            {currentRole.badgeLabel}
-          </span>
-
-          {/* Quick Action Links */}
-          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-            <Link
-              href={currentRole.primaryBtnHref}
-              style={{
-                background: currentRole.themeColor,
-                color: '#ffffff',
-                padding: '8px 18px',
-                borderRadius: 99,
-                fontWeight: 700,
-                fontSize: 12.5,
-                textDecoration: 'none',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 6,
-                boxShadow: `0 4px 12px ${currentRole.themeColor}33`,
-              }}
-            >
-              {currentRole.primaryBtnIcon}
-              <span>{currentRole.primaryBtnText}</span>
-            </Link>
-            <Link
-              href={currentRole.secondaryBtnHref}
-              style={{
-                background: 'transparent',
-                color: 'var(--text-main, #0f172a)',
-                border: '1px solid var(--border-color, rgba(0,0,0,0.12))',
-                padding: '8px 16px',
-                borderRadius: 99,
-                fontWeight: 600,
-                fontSize: 12.5,
-                textDecoration: 'none',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 6,
-              }}
-            >
-              <span>{currentRole.secondaryBtnText}</span>
-            </Link>
-          </div>
-        </div>
-
-        {/* Central 3D Diagram Grid: Left Callouts | Wireframe Center Orb | Right Callouts */}
+        {/* Main Grid: Left Details | Right 3D Interactive Diagram */}
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: 'minmax(200px, 1fr) auto minmax(200px, 1fr)',
+            gridTemplateColumns: 'minmax(300px, 1fr) minmax(380px, 1.3fr)',
+            gap: 36,
             alignItems: 'center',
-            gap: 20,
-            minHeight: 250,
-            marginBottom: 24,
+            marginBottom: 32,
           }}
         >
-          {/* Left Column Callouts */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 18, zIndex: 3 }}>
-            {currentRole.leftCallouts.map((item, idx) => (
-              <div
-                key={idx}
+          {/* Left Column: Heading, Description, Action Buttons */}
+          <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+            <div style={{ marginBottom: 12 }}>
+              <span
                 style={{
-                  background: 'var(--bg-card-sub, #f8fafc)',
-                  border: '1px solid var(--border-color, rgba(0,0,0,0.06))',
-                  borderRadius: 16,
-                  padding: '12px 16px',
-                  display: 'flex',
+                  display: 'inline-flex',
                   alignItems: 'center',
-                  gap: 12,
-                  boxShadow: '0 2px 10px rgba(0,0,0,0.03)',
-                  transition: 'transform 0.2s ease',
+                  gap: 6,
+                  padding: '4px 12px',
+                  borderRadius: 99,
+                  background: currentRole.bgLight,
+                  color: currentRole.themeColor,
+                  fontSize: 11.5,
+                  fontWeight: 800,
+                  letterSpacing: '0.03em',
+                  border: `1px solid ${currentRole.themeColor}33`,
                 }}
               >
-                <div
-                  style={{
-                    width: 36,
-                    height: 36,
-                    borderRadius: 10,
-                    background: 'var(--bg-card, #ffffff)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    flexShrink: 0,
-                    boxShadow: '0 2px 6px rgba(0,0,0,0.05)',
-                  }}
-                >
-                  {item.icon}
-                </div>
-                <div style={{ minWidth: 0 }}>
-                  <div style={{ fontSize: 13.5, fontWeight: 800, color: 'var(--text-main, #0f172a)', lineHeight: 1.2 }}>
-                    {item.title}
-                  </div>
-                  <div style={{ fontSize: 11, color: 'var(--text-sub, #64748b)', marginTop: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                    {item.subtitle}
-                  </div>
-                </div>
-              </div>
-            ))}
+                <Box size={13} color={currentRole.themeColor} />
+                {currentRole.badgeLabel}
+              </span>
+            </div>
+
+            <h3
+              style={{
+                fontSize: 26,
+                fontWeight: 800,
+                color: 'var(--text-main, #0f172a)',
+                lineHeight: 1.25,
+                marginBottom: 14,
+              }}
+            >
+              {currentRole.headline}
+            </h3>
+
+            <p
+              style={{
+                color: 'var(--text-sub, #64748b)',
+                fontSize: 14,
+                lineHeight: 1.7,
+                marginBottom: 24,
+              }}
+            >
+              {currentRole.description}
+            </p>
+
+            <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+              <Link
+                href={currentRole.primaryBtnHref}
+                style={{
+                  background: currentRole.themeColor,
+                  color: '#ffffff',
+                  padding: '12px 22px',
+                  borderRadius: 99,
+                  fontWeight: 700,
+                  fontSize: 13.5,
+                  textDecoration: 'none',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  boxShadow: `0 4px 14px ${currentRole.themeColor}33`,
+                }}
+              >
+                {currentRole.primaryBtnIcon}
+                <span>{currentRole.primaryBtnText}</span>
+              </Link>
+              <Link
+                href={currentRole.secondaryBtnHref}
+                style={{
+                  background: 'transparent',
+                  color: 'var(--text-main, #0f172a)',
+                  border: '1px solid var(--border-color, rgba(0,0,0,0.12))',
+                  padding: '12px 20px',
+                  borderRadius: 99,
+                  fontWeight: 600,
+                  fontSize: 13.5,
+                  textDecoration: 'none',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 6,
+                }}
+              >
+                <span>{currentRole.secondaryBtnText}</span>
+              </Link>
+            </div>
           </div>
 
-          {/* Center 3D Object with Geometric Wireframe Mesh Sphere & Nodes */}
+          {/* Right Column: Interactive 3D Diagram with Left Callouts, Wireframe Sphere, and Right Callouts */}
           <div
             style={{
-              width: 220,
-              height: 220,
-              position: 'relative',
-              display: 'flex',
+              background: 'var(--bg-card-sub, #f8fafc)',
+              borderRadius: 22,
+              border: '1px solid var(--border-color, rgba(0,0,0,0.06))',
+              padding: '24px 20px',
+              display: 'grid',
+              gridTemplateColumns: 'minmax(120px, 1fr) auto minmax(120px, 1fr)',
               alignItems: 'center',
-              justifyContent: 'center',
-              flexShrink: 0,
+              gap: 12,
+              position: 'relative',
+              boxShadow: '0 4px 20px rgba(0,0,0,0.02)',
             }}
           >
-            {/* Wireframe Mesh */}
-            <WireframeSphere color={currentRole.meshColor} />
-
-            {/* Left Connector Node */}
-            <div
-              style={{
-                position: 'absolute',
-                left: -6,
-                top: '50%',
-                transform: 'translateY(-50%)',
-                width: 16,
-                height: 16,
-                borderRadius: '50%',
-                background: currentRole.nodeLeftColor,
-                border: '3px solid #ffffff',
-                boxShadow: `0 0 12px ${currentRole.nodeLeftColor}`,
-                zIndex: 4,
-              }}
-            />
-
-            {/* Right Connector Node */}
-            <div
-              style={{
-                position: 'absolute',
-                right: -6,
-                top: '50%',
-                transform: 'translateY(-50%)',
-                width: 16,
-                height: 16,
-                borderRadius: '50%',
-                background: currentRole.nodeRightColor,
-                border: '3px solid #ffffff',
-                boxShadow: `0 0 12px ${currentRole.nodeRightColor}`,
-                zIndex: 4,
-              }}
-            />
-
-            {/* Center 3D Product Image */}
-            <img
-              src={currentRole.centerImageUrl}
-              alt={currentRole.centerAlt}
-              style={{
-                width: 135,
-                height: 135,
-                objectFit: 'cover',
-                borderRadius: 20,
-                boxShadow: '0 14px 32px rgba(0,0,0,0.18)',
-                zIndex: 2,
-                filter: 'drop-shadow(0 8px 16px rgba(0,0,0,0.12))',
-              }}
-            />
-          </div>
-
-          {/* Right Column Callouts */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 18, zIndex: 3 }}>
-            {currentRole.rightCallouts.map((item, idx) => (
-              <div
-                key={idx}
-                style={{
-                  background: 'var(--bg-card-sub, #f8fafc)',
-                  border: '1px solid var(--border-color, rgba(0,0,0,0.06))',
-                  borderRadius: 16,
-                  padding: '12px 16px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 12,
-                  boxShadow: '0 2px 10px rgba(0,0,0,0.03)',
-                  transition: 'transform 0.2s ease',
-                }}
-              >
+            {/* Left Sub-Column Callouts */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 14, zIndex: 3 }}>
+              {currentRole.leftCallouts.map((item, idx) => (
                 <div
+                  key={idx}
                   style={{
-                    width: 36,
-                    height: 36,
-                    borderRadius: 10,
                     background: 'var(--bg-card, #ffffff)',
+                    border: '1px solid var(--border-color, rgba(0,0,0,0.08))',
+                    borderRadius: 14,
+                    padding: '10px 12px',
                     display: 'flex',
                     alignItems: 'center',
-                    justifyContent: 'center',
-                    flexShrink: 0,
-                    boxShadow: '0 2px 6px rgba(0,0,0,0.05)',
+                    gap: 10,
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
                   }}
                 >
-                  {item.icon}
-                </div>
-                <div style={{ minWidth: 0 }}>
-                  <div style={{ fontSize: 13.5, fontWeight: 800, color: 'var(--text-main, #0f172a)', lineHeight: 1.2 }}>
-                    {item.title}
+                  <div
+                    style={{
+                      width: 32,
+                      height: 32,
+                      borderRadius: 9,
+                      background: currentRole.bgLight,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      flexShrink: 0,
+                    }}
+                  >
+                    {item.icon}
                   </div>
-                  <div style={{ fontSize: 11, color: 'var(--text-sub, #64748b)', marginTop: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                    {item.subtitle}
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ fontSize: 12, fontWeight: 800, color: 'var(--text-main, #0f172a)', lineHeight: 1.2 }}>
+                      {item.title}
+                    </div>
+                    <div style={{ fontSize: 10, color: 'var(--text-sub, #64748b)', marginTop: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      {item.subtitle}
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
+
+            {/* Center Live 3D WebGL Viewport */}
+            <div
+              style={{
+                width: 200,
+                height: 200,
+                position: 'relative',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0,
+              }}
+            >
+              {/* Left Connector Node Indicator */}
+              <div
+                style={{
+                  position: 'absolute',
+                  left: 4,
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  width: 14,
+                  height: 14,
+                  borderRadius: '50%',
+                  background: currentRole.nodeLeftColor,
+                  border: '2.5px solid #ffffff',
+                  boxShadow: `0 0 12px ${currentRole.nodeLeftColor}`,
+                  zIndex: 4,
+                }}
+              />
+
+              {/* Right Connector Node Indicator */}
+              <div
+                style={{
+                  position: 'absolute',
+                  right: 4,
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  width: 14,
+                  height: 14,
+                  borderRadius: '50%',
+                  background: currentRole.nodeRightColor,
+                  border: '2.5px solid #ffffff',
+                  boxShadow: `0 0 12px ${currentRole.nodeRightColor}`,
+                  zIndex: 4,
+                }}
+              />
+
+              {/* Real-Time Three.js WebGL Geometry + Wireframe + Orbiting Nodes */}
+              <RoleLive3DViewer role={currentRole.id} />
+            </div>
+
+            {/* Right Sub-Column Callouts */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 14, zIndex: 3 }}>
+              {currentRole.rightCallouts.map((item, idx) => (
+                <div
+                  key={idx}
+                  style={{
+                    background: 'var(--bg-card, #ffffff)',
+                    border: '1px solid var(--border-color, rgba(0,0,0,0.08))',
+                    borderRadius: 14,
+                    padding: '10px 12px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 10,
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
+                  }}
+                >
+                  <div
+                    style={{
+                      width: 32,
+                      height: 32,
+                      borderRadius: 9,
+                      background: currentRole.bgLight,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      flexShrink: 0,
+                    }}
+                  >
+                    {item.icon}
+                  </div>
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ fontSize: 12, fontWeight: 800, color: 'var(--text-main, #0f172a)', lineHeight: 1.2 }}>
+                      {item.title}
+                    </div>
+                    <div style={{ fontSize: 10, color: 'var(--text-sub, #64748b)', marginTop: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      {item.subtitle}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
 
@@ -700,11 +728,11 @@ export default function RoleEcosystemShowcase() {
           style={{
             background: currentRole.bgSoft,
             border: `1px solid ${currentRole.themeColor}22`,
-            borderRadius: 18,
-            padding: '14px 20px',
+            borderRadius: 16,
+            padding: '12px 18px',
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
-            gap: 14,
+            gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+            gap: 12,
             alignItems: 'center',
           }}
         >
@@ -715,17 +743,16 @@ export default function RoleEcosystemShowcase() {
               style={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: 10,
+                gap: 9,
                 textDecoration: 'none',
                 color: 'inherit',
-                transition: 'opacity 0.15s ease',
               }}
             >
               <div
                 style={{
-                  width: 30,
-                  height: 30,
-                  borderRadius: 9,
+                  width: 28,
+                  height: 28,
+                  borderRadius: 8,
                   background: currentRole.bgLight,
                   display: 'flex',
                   alignItems: 'center',
@@ -736,10 +763,10 @@ export default function RoleEcosystemShowcase() {
                 {link.icon}
               </div>
               <div style={{ minWidth: 0 }}>
-                <div style={{ fontSize: 12, fontWeight: 800, color: 'var(--text-main, #0f172a)', lineHeight: 1.2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                <div style={{ fontSize: 11.5, fontWeight: 800, color: 'var(--text-main, #0f172a)', lineHeight: 1.2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                   {link.title}
                 </div>
-                <div style={{ fontSize: 10.5, color: currentRole.themeColor, fontWeight: 700, marginTop: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                <div style={{ fontSize: 10, color: currentRole.themeColor, fontWeight: 700, marginTop: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                   {link.subtitle}
                 </div>
               </div>
