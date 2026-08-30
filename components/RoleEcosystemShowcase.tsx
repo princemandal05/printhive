@@ -2,7 +2,6 @@
 
 import React, { useState } from 'react'
 import Link from 'next/link'
-import dynamic from 'next/dynamic'
 import {
   ShoppingBag,
   PenTool,
@@ -30,15 +29,6 @@ import {
   Layers,
   Zap,
 } from 'lucide-react'
-
-const RoleLive3DViewer = dynamic(() => import('@/components/RoleLive3DViewer'), {
-  ssr: false,
-  loading: () => (
-    <div style={{ width: 200, height: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, color: 'var(--text-sub)' }}>
-      ⚡ Slicing 3D Model...
-    </div>
-  ),
-})
 
 // Wireframe Geodesic Geometric Sphere SVG
 function WireframeSphere({ color }: { color: string }) {
@@ -137,8 +127,8 @@ const ROLES: RoleConfig[] = [
     primaryBtnIcon: <Box size={15} />,
     secondaryBtnText: 'Slicer & Upload',
     secondaryBtnHref: '/print-on-demand',
-    centerImageUrl: 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?auto=format&fit=crop&w=400&q=80',
-    centerAlt: 'Modern 3D Printed Armchair Prototype',
+    centerImageUrl: '/images/roles/buyer_visual.png',
+    centerAlt: 'Buyer Portal 3D Character',
     leftCallouts: [
       {
         icon: <MapPin size={16} color="#ea580c" />,
@@ -148,14 +138,14 @@ const ROLES: RoleConfig[] = [
       {
         icon: <Box size={16} color="#ea580c" />,
         title: '3D Preview',
-        subtitle: 'Inspect model in real-time',
+        subtitle: 'Inspect model in real-time 360°',
       },
     ],
     rightCallouts: [
       {
         icon: <ShieldCheck size={16} color="#10b981" />,
         title: 'Escrow Protected',
-        subtitle: '100% secure payments',
+        subtitle: '100% Secure Payments',
       },
       {
         icon: <Truck size={16} color="#f59e0b" />,
@@ -166,26 +156,26 @@ const ROLES: RoleConfig[] = [
     bottomLinks: [
       {
         icon: <Box size={14} color="#ea580c" />,
-        title: '3D WebGL',
-        subtitle: 'Inspection',
+        title: '3D Preview',
+        subtitle: 'Real-time 360°',
         href: '/browse',
       },
       {
         icon: <MapPin size={14} color="#ea580c" />,
         title: 'Nearby Printer',
-        subtitle: 'Matching',
+        subtitle: 'Geo-Matching',
         href: '/printers',
       },
       {
         icon: <ShieldCheck size={14} color="#ea580c" />,
         title: 'Secure Payment',
-        subtitle: '(Escrow)',
+        subtitle: 'Escrow Protected',
         href: '/browse',
       },
       {
-        icon: <Share2 size={14} color="#ea580c" />,
+        icon: <Truck size={14} color="#ea580c" />,
         title: 'Order Tracking',
-        subtitle: 'Real-time',
+        subtitle: 'Live Updates',
         href: '/orders',
       },
     ],
@@ -210,13 +200,13 @@ const ROLES: RoleConfig[] = [
     primaryBtnIcon: <UploadCloud size={15} />,
     secondaryBtnText: 'Designer Dashboard',
     secondaryBtnHref: '/dashboard/designer',
-    centerImageUrl: 'https://images.unsplash.com/photo-1616046229478-9901c5536a45?auto=format&fit=crop&w=400&q=80',
-    centerAlt: 'Parametric Spiral 3D Model Vase',
+    centerImageUrl: '/images/roles/creator_visual.png',
+    centerAlt: 'Creator Studio 3D Designer',
     leftCallouts: [
       {
         icon: <UploadCloud size={16} color="#8b5cf6" />,
-        title: 'Upload & Showcase',
-        subtitle: 'Upload your 3D models',
+        title: 'Upload Model',
+        subtitle: 'STL, 3MF, OBJ and more',
       },
       {
         icon: <MessageSquare size={16} color="#8b5cf6" />,
@@ -227,38 +217,38 @@ const ROLES: RoleConfig[] = [
     rightCallouts: [
       {
         icon: <Gavel size={16} color="#8b5cf6" />,
-        title: 'Submit Bids',
+        title: 'Active Bids',
         subtitle: 'Bid on custom projects',
       },
       {
         icon: <TrendingUp size={16} color="#8b5cf6" />,
         title: 'Earn & Grow',
-        subtitle: 'Earn from sales and projects',
+        subtitle: 'Earn from sales and custom projects',
       },
     ],
     bottomLinks: [
       {
         icon: <FolderKanban size={14} color="#8b5cf6" />,
         title: 'My Designs',
-        subtitle: 'Manage',
+        subtitle: 'Manage Catalog',
         href: '/dashboard/designer',
       },
       {
         icon: <MessageSquare size={14} color="#8b5cf6" />,
         title: 'Custom Requests',
-        subtitle: 'Dashboard',
+        subtitle: 'Client Briefs',
         href: '/requests',
       },
       {
-        icon: <Activity size={14} color="#8b5cf6" />,
+        icon: <Gavel size={14} color="#8b5cf6" />,
         title: 'My Bids',
-        subtitle: 'Active',
+        subtitle: 'Project Proposals',
         href: '/dashboard/designer',
       },
       {
         icon: <Clock size={14} color="#8b5cf6" />,
-        title: 'Earnings',
-        subtitle: 'Overview',
+        title: 'Earnings Overview',
+        subtitle: 'Royalties & Payouts',
         href: '/dashboard/designer/earnings',
       },
     ],
@@ -283,8 +273,8 @@ const ROLES: RoleConfig[] = [
     primaryBtnIcon: <MapPin size={15} />,
     secondaryBtnText: 'Printer Dashboard',
     secondaryBtnHref: '/dashboard/printer-owner',
-    centerImageUrl: 'https://images.unsplash.com/photo-1631541909061-71e349d1f203?auto=format&fit=crop&w=400&q=80',
-    centerAlt: 'Dual-Color Precision 3D Printer Hub Unit',
+    centerImageUrl: '/images/roles/printer_visual.png',
+    centerAlt: 'Printer Hub 3D Operator',
     leftCallouts: [
       {
         icon: <MapPin size={16} color="#10b981" />,
@@ -299,39 +289,39 @@ const ROLES: RoleConfig[] = [
     ],
     rightCallouts: [
       {
-        icon: <Settings size={16} color="#10b981" />,
-        title: 'Your Printers',
-        subtitle: 'Manage printers & materials',
+        icon: <Zap size={16} color="#10b981" />,
+        title: 'Printer Status',
+        subtitle: 'Online Available',
       },
       {
-        icon: <CheckCircle2 size={16} color="#10b981" />,
-        title: 'Earn & Withdraw',
-        subtitle: 'Get paid for completed jobs',
+        icon: <Box size={16} color="#10b981" />,
+        title: 'Supported Materials',
+        subtitle: 'PLA, PETG, ABS spools',
       },
     ],
     bottomLinks: [
       {
-        icon: <Package size={14} color="#10b981" />,
+        icon: <MapPin size={14} color="#10b981" />,
         title: 'Nearby Jobs',
-        subtitle: 'Matching',
+        subtitle: 'Local Matching',
         href: '/printers',
       },
       {
-        icon: <Cpu size={14} color="#10b981" />,
+        icon: <Printer size={14} color="#10b981" />,
         title: 'Print Management',
-        subtitle: 'Dashboard',
+        subtitle: 'Active Queues',
         href: '/dashboard/printer-owner',
       },
       {
-        icon: <Share2 size={14} color="#10b981" />,
+        icon: <CheckCircle2 size={14} color="#10b981" />,
         title: 'Active Orders',
-        subtitle: 'In Progress',
+        subtitle: 'Job Tracking',
         href: '/dashboard/printer-owner',
       },
       {
         icon: <Coins size={14} color="#10b981" />,
-        title: 'Earnings',
-        subtitle: '& Payouts',
+        title: 'Earnings & Payouts',
+        subtitle: 'Direct Withdrawals',
         href: '/dashboard/printer-owner',
       },
     ],
@@ -356,13 +346,13 @@ const ROLES: RoleConfig[] = [
     primaryBtnIcon: <Store size={15} />,
     secondaryBtnText: 'Seller Dashboard',
     secondaryBtnHref: '/dashboard/seller',
-    centerImageUrl: 'https://images.unsplash.com/photo-1578749556568-bc2c40e68b61?auto=format&fit=crop&w=400&q=80',
-    centerAlt: 'Voronoi Blue Honeycomb 3D Printed Vessel',
+    centerImageUrl: '/images/roles/seller_visual.png',
+    centerAlt: 'Seller & Store 3D Merchant',
     leftCallouts: [
       {
         icon: <Package size={16} color="#2563eb" />,
         title: 'List Products',
-        subtitle: 'Add 3D printed products',
+        subtitle: 'Add 3D printed products to store',
       },
       {
         icon: <Store size={16} color="#2563eb" />,
@@ -374,10 +364,10 @@ const ROLES: RoleConfig[] = [
       {
         icon: <ShoppingCart size={16} color="#2563eb" />,
         title: 'Incoming Orders',
-        subtitle: 'Manage orders easily',
+        subtitle: 'New order received',
       },
       {
-        icon: <BarChart3 size={16} color="#2563eb" />,
+        icon: <TrendingUp size={16} color="#2563eb" />,
         title: 'Grow Business',
         subtitle: 'Reach more customers',
       },
@@ -386,25 +376,25 @@ const ROLES: RoleConfig[] = [
       {
         icon: <Package size={14} color="#2563eb" />,
         title: 'Products',
-        subtitle: 'Manage',
+        subtitle: 'Inventory Catalog',
         href: '/shop',
       },
       {
         icon: <ShoppingCart size={14} color="#2563eb" />,
         title: 'Orders',
-        subtitle: 'Manage',
+        subtitle: 'Customer Orders',
+        href: '/dashboard/seller',
+      },
+      {
+        icon: <Store size={14} color="#2563eb" />,
+        title: 'Store Management',
+        subtitle: 'Profile & Settings',
         href: '/dashboard/seller',
       },
       {
         icon: <BarChart3 size={14} color="#2563eb" />,
-        title: 'Store Analytics',
-        subtitle: 'Overview',
-        href: '/dashboard/seller',
-      },
-      {
-        icon: <TrendingUp size={14} color="#2563eb" />,
-        title: 'Sales',
-        subtitle: 'Overview',
+        title: 'Sales Overview',
+        subtitle: 'Analytics & Revenue',
         href: '/dashboard/seller',
       },
     ],
@@ -448,7 +438,7 @@ export default function RoleEcosystemShowcase() {
                   fontWeight: isActive ? 800 : 600,
                   fontSize: 13.5,
                   cursor: 'pointer',
-                  transition: 'all 0.2s ease',
+                  transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
                   display: 'inline-flex',
                   alignItems: 'center',
                   gap: 8,
@@ -598,11 +588,11 @@ export default function RoleEcosystemShowcase() {
               ))}
             </div>
 
-            {/* Center Live 3D WebGL Viewport */}
+            {/* Center Live Visual Scene Viewport */}
             <div
               style={{
-                width: 200,
-                height: 200,
+                width: 220,
+                height: 220,
                 position: 'relative',
                 display: 'flex',
                 alignItems: 'center',
@@ -610,6 +600,9 @@ export default function RoleEcosystemShowcase() {
                 flexShrink: 0,
               }}
             >
+              {/* Wireframe Geodesic Geometric Sphere SVG */}
+              <WireframeSphere color={currentRole.themeColor} />
+
               {/* Left Connector Node Indicator */}
               <div
                 style={{
@@ -644,8 +637,19 @@ export default function RoleEcosystemShowcase() {
                 }}
               />
 
-              {/* Real-Time Three.js WebGL Geometry + Wireframe + Orbiting Nodes */}
-              <RoleLive3DViewer role={currentRole.id} />
+              {/* 3D Character Illustration Scene */}
+              <img
+                src={currentRole.centerImageUrl}
+                alt={currentRole.centerAlt}
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'contain',
+                  position: 'relative',
+                  zIndex: 2,
+                  filter: 'drop-shadow(0 6px 16px rgba(0,0,0,0.12))',
+                }}
+              />
             </div>
 
             {/* Right Sub-Column Callouts */}
