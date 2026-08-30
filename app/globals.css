@@ -2032,6 +2032,70 @@ p {
   }
 }
 
+/* Role Ecosystem Showcase Responsive Layout */
+.role-showcase-card {
+  background: var(--bg-card);
+  border-radius: 28px;
+  border: 1px solid var(--border-color);
+  padding: 36px 36px 28px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.06);
+  position: relative;
+  overflow: hidden;
+}
+
+.role-showcase-main-grid {
+  display: grid;
+  grid-template-columns: minmax(300px, 1fr) minmax(380px, 1.3fr);
+  gap: 36px;
+  align-items: center;
+  margin-bottom: 32px;
+}
+
+.role-showcase-viewer-grid {
+  background: var(--bg-card-sub);
+  border-radius: 22px;
+  border: 1px solid var(--border-color);
+  padding: 24px 20px;
+  display: grid;
+  grid-template-columns: minmax(120px, 1fr) auto minmax(120px, 1fr);
+  align-items: center;
+  gap: 12px;
+  position: relative;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+}
+
+.role-showcase-callouts-col {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  z-index: 3;
+}
+
+@media (max-width: 900px) {
+  .role-showcase-card {
+    padding: 24px 18px 20px;
+    border-radius: 20px;
+  }
+
+  .role-showcase-main-grid {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+
+  .role-showcase-viewer-grid {
+    grid-template-columns: 1fr;
+    justify-items: center;
+    gap: 16px;
+    padding: 20px 16px;
+  }
+
+  .role-showcase-callouts-col {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 10px;
+  }
+}
 
 /* --------------------------------------------------------------------------
    END OF FILE

@@ -34,7 +34,7 @@ import {
 const RoleLive3DViewer = dynamic(() => import('@/components/RoleLive3DViewer'), {
   ssr: false,
   loading: () => (
-    <div style={{ width: 170, height: 170, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, color: 'var(--text-sub)' }}>
+    <div style={{ width: 200, height: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, color: 'var(--text-sub)' }}>
       ⚡ Slicing 3D Model...
     </div>
   ),
@@ -464,27 +464,9 @@ export default function RoleEcosystemShowcase() {
       </div>
 
       {/* 2. Main Role Card: Left Content + Right 3D Diagram */}
-      <div
-        style={{
-          background: 'var(--bg-card)',
-          borderRadius: 28,
-          border: '1px solid var(--border-color)',
-          padding: '36px 36px 28px',
-          boxShadow: '0 12px 40px rgba(0,0,0,0.06)',
-          position: 'relative',
-          overflow: 'hidden',
-        }}
-      >
+      <div className="role-showcase-card">
         {/* Main Grid: Left Details | Right 3D Interactive Diagram */}
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'minmax(300px, 1fr) minmax(380px, 1.3fr)',
-            gap: 36,
-            alignItems: 'center',
-            marginBottom: 32,
-          }}
-        >
+        <div className="role-showcase-main-grid">
           {/* Left Column: Heading, Description, Action Buttons */}
           <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
             <div style={{ marginBottom: 12 }}>
@@ -573,22 +555,9 @@ export default function RoleEcosystemShowcase() {
           </div>
 
           {/* Right Column: Interactive 3D Diagram with Left Callouts, Wireframe Sphere, and Right Callouts */}
-          <div
-            style={{
-              background: 'var(--bg-card-sub)',
-              borderRadius: 22,
-              border: '1px solid var(--border-color)',
-              padding: '24px 20px',
-              display: 'grid',
-              gridTemplateColumns: 'minmax(120px, 1fr) auto minmax(120px, 1fr)',
-              alignItems: 'center',
-              gap: 12,
-              position: 'relative',
-              boxShadow: '0 4px 20px rgba(0,0,0,0.04)',
-            }}
-          >
+          <div className="role-showcase-viewer-grid">
             {/* Left Sub-Column Callouts */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 14, zIndex: 3 }}>
+            <div className="role-showcase-callouts-col">
               {currentRole.leftCallouts.map((item, idx) => (
                 <div
                   key={idx}
@@ -680,7 +649,7 @@ export default function RoleEcosystemShowcase() {
             </div>
 
             {/* Right Sub-Column Callouts */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 14, zIndex: 3 }}>
+            <div className="role-showcase-callouts-col">
               {currentRole.rightCallouts.map((item, idx) => (
                 <div
                   key={idx}
