@@ -1,6 +1,5 @@
 import { createClient } from './server'
 import { redirect } from 'next/navigation'
-import { resolveRoleDashboard } from '@/lib/routes'
 
 export type Role = 'buyer' | 'seller' | 'designer' | 'printer_owner' | 'admin'
 
@@ -33,7 +32,7 @@ export async function requireRole(expectedRole: Role) {
 
   // Real, authenticated session
   if (user) {
-    let { data: profile, error: profileError } = await supabase
+    const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('id, email, role, full_name, is_verified')
       .eq('id', user.id)
