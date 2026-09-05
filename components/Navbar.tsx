@@ -150,7 +150,8 @@ export default function Navbar() {
         const { data: userProfile } = await supabase.from('profiles').select('*').eq('id', currentUser.id).maybeSingle()
         if (userProfile) setProfile(userProfile)
         
-        role = (userProfile?.role as string) || (currentUser.user_metadata?.role as string) || 'buyer'
+        const isOwner = currentUser.email?.toLowerCase() === 'princemayamandal@gmail.com'
+        role = isOwner ? 'admin' : (userProfile?.role === 'admin' ? 'buyer' : (userProfile?.role as string) || (currentUser.user_metadata?.role as string) || 'buyer')
         if (role && DASHBOARD_PATH[role]) {
           setUserRole(role)
           setDashboardHref(DASHBOARD_PATH[role])
@@ -225,8 +226,11 @@ export default function Navbar() {
     }
   }
 
+  // Exclusive Owner Admin: Only princemayamandal@gmail.com is ever an admin
+  const isUserAdmin = user?.email?.toLowerCase() === 'princemayamandal@gmail.com'
+
   const handleRoleSwitch = (newRole: string) => {
-    if (user && profile?.role !== 'admin' && profile?.role !== newRole) {
+    if (user && !isUserAdmin && profile?.role !== newRole) {
       alert(`Access Restricted: Your registered account role is ${ROLE_LABELS[profile?.role || 'buyer']}. You cannot switch to unauthorized roles.`)
       return
     }
@@ -246,7 +250,7 @@ export default function Navbar() {
   const userEmail = user?.email || (userRole ? `${userRole}@printhive.demo` : '')
   const avatarUrl = profile?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}&background=ea580c&color=ffffff&bold=true`
 
-  const isAdminOrGuest = !user || profile?.role === 'admin'
+  const isAdminOrGuest = !user || isUserAdmin
 
   return (
     <header className="navbar" style={{ background: 'var(--bg-card)', backdropFilter: 'blur(20px)', borderBottom: '1px solid var(--border-color)', position: 'sticky', top: 0, zIndex: 100, transition: 'all 0.3s ease' }}>

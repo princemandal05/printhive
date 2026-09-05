@@ -21,8 +21,10 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
     }
 
-    if (profile?.role !== 'admin') {
-      return NextResponse.json({ error: 'Forbidden: Admin privilege required' }, { status: 403 })
+    // Exclusive Owner Access
+    const isOwner = user.email?.toLowerCase() === 'princemayamandal@gmail.com'
+    if (!isOwner) {
+      return NextResponse.json({ error: 'Forbidden: Owner privilege required' }, { status: 403 })
     }
 
     const { searchParams } = new URL(request.url)

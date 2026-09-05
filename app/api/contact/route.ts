@@ -13,8 +13,7 @@ export async function GET(request: Request) {
     let isAdmin = false
 
     if (user) {
-      const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).maybeSingle()
-      isAdmin = profile?.role === 'admin'
+      isAdmin = user.email?.toLowerCase() === 'princemayamandal@gmail.com'
     }
 
     try {
