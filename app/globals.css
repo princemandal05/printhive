@@ -2097,6 +2097,19 @@ p {
   }
 }
 
+/* Admin Command Center Telemetry Responsive Pills */
+.admin-telemetry-pills {
+  display: none;
+  align-items: center;
+  gap: 8px;
+}
+
+@media (min-width: 768px) {
+  .admin-telemetry-pills {
+    display: flex;
+  }
+}
+
 /* --------------------------------------------------------------------------
    END OF FILE
    -------------------------------------------------------------------------- */

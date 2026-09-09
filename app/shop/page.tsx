@@ -73,6 +73,7 @@ type ProductRow = {
   seller?: string
   stock?: number
   image_url?: string
+
   image?: string
   featured?: boolean
   trending?: boolean
@@ -611,11 +612,13 @@ function ShopContent() {
               >
                 {/* 3D PREVIEW / RENDER IMAGE */}
                 <div style={{ height: 210, width: '100%', position: 'relative', background: 'var(--bg-card-hover)', overflow: 'hidden' }}>
-                  <img
-                    src={product.image}
-                    alt={product.name}
-                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                  />
+                  <Link href={`/shop/${product.id}`} style={{ display: 'block', width: '100%', height: '100%' }}>
+                    <img
+                      src={product.image}
+                      alt={product.name}
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    />
+                  </Link>
 
                   {/* Category Pill */}
                   <div style={{ position: 'absolute', top: 12, left: 12, background: 'rgba(15, 23, 42, 0.85)', color: '#fff', fontSize: 10.5, fontWeight: 800, padding: '3px 9px', borderRadius: 99, backdropFilter: 'blur(6px)' }}>

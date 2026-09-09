@@ -1,4 +1,4 @@
-import { updateOrderStatus } from '@/utils/order-lifecycle'
+import { updateOrderStatus, getOrderCanonicalStatus, normalizeOrderStatus } from '@/utils/order-lifecycle'
 import { sendNotification } from '@/utils/notifications'
 
 export type SettlePaymentParams = {
@@ -120,34 +120,52 @@ export async function settlePayment(adminSupabase: any, params: SettlePaymentPar
 
   // 7. Transition order lifecycle safely (PENDING_PAYMENT -> PAYMENT_CONFIRMED -> FINDING_PRINTER)
   // Preserve advanced status if order is already IN_PRODUCTION, SHIPPED, or COMPLETED
-  const nonRegressableStatuses = ['IN_PRODUCTION', 'SLICING', 'READY_FOR_PRINT', 'PRINTING', 'QUALITY_CHECK', 'SHIPPED', 'DELIVERED', 'COMPLETED']
+  const nonRegressableStatuses = ['PRINTING', 'QUALITY_CHECK', 'READY', 'DISPATCHED', 'DELIVERED', 'COMPLETED']
+  const canonicalStatus = await getOrderCanonicalStatus(adminSupabase, targetOrderId, order.status)
   
-  if (!nonRegressableStatuses.includes(order.status)) {
-    if (order.status === 'PENDING_PAYMENT') {
+  if (!nonRegressableStatuses.includes(canonicalStatus)) {
+    const eligibleStatuses = ['PENDING_PAYMENT', 'FINDING_PRINTER', 'PRINTER_ASSIGNED', 'PRINTER_ACCEPTED']
+    if (eligibleStatuses.includes(canonicalStatus)) {
       const step1 = await updateOrderStatus(
         adminSupabase,
         targetOrderId,
         'PAYMENT_CONFIRMED',
         'Payment verified server-side with HMAC SHA-256.',
         actor_id || 'system',
-        'PENDING_PAYMENT'
+        canonicalStatus
       )
-      if (step1.success) {
-        await updateOrderStatus(
-          adminSupabase,
-          targetOrderId,
-          'FINDING_PRINTER',
-          'Searching Leaflet OpenStreetMap for nearby printer hub.',
-          actor_id || 'system',
-          'PAYMENT_CONFIRMED'
-        )
+      if (!step1.success) {
+        console.error('Failed to transition order status to PAYMENT_CONFIRMED:', step1.error)
+        return {
+          success: false,
+          error: `Payment recorded, but status transition to PAYMENT_CONFIRMED failed: ${step1.error}`,
+          status: 500,
+        }
       }
-    } else if (order.status === 'PAYMENT_CONFIRMED') {
+
+      const nextStatus = (order.printer_id || canonicalStatus === 'PRINTER_ASSIGNED' || canonicalStatus === 'PRINTER_ACCEPTED')
+        ? 'PRINTER_ASSIGNED'
+        : 'FINDING_PRINTER'
+
       await updateOrderStatus(
         adminSupabase,
         targetOrderId,
-        'FINDING_PRINTER',
-        'Searching Leaflet OpenStreetMap for nearby printer hub.',
+        nextStatus,
+        nextStatus === 'PRINTER_ASSIGNED'
+          ? 'Printer hub assigned, ready for slicing & production.'
+          : 'Searching Leaflet OpenStreetMap for nearby printer hub.',
+        actor_id || 'system',
+        'PAYMENT_CONFIRMED'
+      )
+    } else if (canonicalStatus === 'PAYMENT_CONFIRMED') {
+      const nextStatus = order.printer_id ? 'PRINTER_ASSIGNED' : 'FINDING_PRINTER'
+      await updateOrderStatus(
+        adminSupabase,
+        targetOrderId,
+        nextStatus,
+        nextStatus === 'PRINTER_ASSIGNED'
+          ? 'Printer hub assigned, ready for slicing & production.'
+          : 'Searching Leaflet OpenStreetMap for nearby printer hub.',
         actor_id || 'system',
         'PAYMENT_CONFIRMED'
       )

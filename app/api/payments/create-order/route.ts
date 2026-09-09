@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient, createAdminClient } from '@/utils/supabase/server'
-import { updateOrderStatus, toDbOrderStatus } from '@/utils/order-lifecycle'
+import { updateOrderStatus, toDbOrderStatus, normalizeOrderStatus } from '@/utils/order-lifecycle'
 
 interface FinancialCalculationResult {
   subtotal: number
@@ -23,18 +23,22 @@ async function calculateOrderFinancials(
 
   let subtotal = 0
 
+
   for (const item of items) {
     const rawId = String(item?.id || '').trim()
     const cleanId = rawId.startsWith('design-') ? rawId.slice(7) : rawId
     const qty = Math.max(1, Number(item?.quantity) || 1)
     let unitPrice: number | null = null
 
-    if (cleanId && !rawId.startsWith('pod-')) {
-      // 1. Authoritative check in designs table
+    // Extract valid UUID from compound cart IDs (e.g. design-UUID-timestamp or UUID-material-color)
+    const targetUuid = rawId.match(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i)?.[0] || null
+
+    if (targetUuid && !rawId.startsWith('pod-')) {
+      // 1. Authoritative check in designs table using validated UUID
       const { data: dbDesign } = await adminSupabase
         .from('designs')
         .select('price')
-        .eq('id', cleanId)
+        .eq('id', targetUuid)
         .maybeSingle()
 
       if (dbDesign && typeof dbDesign.price === 'number' && dbDesign.price >= 0) {
@@ -45,17 +49,40 @@ async function calculateOrderFinancials(
         const infillMultiplier = 1 + (infill - 20) / 100
         const scaleMultiplier = Math.pow(scale / 100, 2)
 
-        unitPrice = Math.max(50, Math.round(dbDesign.price * infillMultiplier * scaleMultiplier) + finishSurcharge)
+        // For open-source free models (price === 0), physical printing starts at 250 base + 180 manufacturing
+        const effectiveBase = dbDesign.price === 0 ? 250 : dbDesign.price + 180
+        const serverDerivedPrice = Math.max(50, Math.round(effectiveBase * infillMultiplier * scaleMultiplier) + finishSurcharge)
+
+        // Validate client value only as a lower-bound check
+        if (typeof item?.price === 'number' && item.price < serverDerivedPrice) {
+          return {
+            success: false,
+            error: `Item "${item?.title || item?.name || rawId}" price cannot be lower than server-derived cost (₹${serverDerivedPrice}).`,
+          }
+        }
+        unitPrice = serverDerivedPrice
       } else {
-        // 2. Authoritative check in products table
+        // 2. Authoritative check in products table using validated UUID
         const { data: dbProduct } = await adminSupabase
           .from('products')
           .select('price')
-          .eq('id', cleanId)
+          .eq('id', targetUuid)
           .maybeSingle()
 
         if (dbProduct && typeof dbProduct.price === 'number' && dbProduct.price >= 0) {
-          unitPrice = dbProduct.price
+          let serverDerivedPrice = dbProduct.price
+          const matName = String(item?.material || item?.name || '').toUpperCase()
+          const matMult = matName.includes('RESIN') ? 1.4 : matName.includes('PETG') ? 1.15 : 1.0
+          serverDerivedPrice = Math.max(50, Math.round(serverDerivedPrice * matMult))
+
+          // Validate client value only as a lower-bound check
+          if (typeof item?.price === 'number' && item.price < serverDerivedPrice) {
+            return {
+              success: false,
+              error: `Product "${item?.title || item?.name || rawId}" price cannot be lower than catalog price (₹${serverDerivedPrice}).`,
+            }
+          }
+          unitPrice = serverDerivedPrice
         }
       }
     }
@@ -65,12 +92,14 @@ async function calculateOrderFinancials(
       let verifiedVolumeCm3: number | null = null
 
       // Look up design/asset metadata if persisted design_id exists
-      const assetId = item?.design_id || (cleanId && !cleanId.startsWith('pod-') ? cleanId : null)
-      if (assetId) {
+      const assetId = item?.design_id || targetUuid || (cleanId && !cleanId.startsWith('pod-') ? cleanId : null)
+      const assetUuid = String(assetId).match(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i)?.[0] || null
+
+      if (assetUuid) {
         const { data: dbAsset } = await adminSupabase
           .from('designs')
           .select('id, price, tags')
-          .eq('id', assetId)
+          .eq('id', assetUuid)
           .maybeSingle()
         if (dbAsset) {
           const volTag = Array.isArray(dbAsset.tags) ? dbAsset.tags.find((t: string) => typeof t === 'string' && t.startsWith('vol_cm3:')) : null
@@ -85,52 +114,64 @@ async function calculateOrderFinancials(
       if (verifiedVolumeCm3 === null) {
         return {
           success: false,
-          error: `Custom print item "${item?.title || rawId}" lacks verified server volume metadata. Please re-slice the model in Print Studio before checkout.`,
+          error: `Custom print item "${item?.title || item?.name || rawId}" lacks verified server volume metadata. Please re-slice the model in Print Studio before checkout.`,
         }
       }
 
       const volumeCm3 = Math.max(1, verifiedVolumeCm3)
       const material = String(item?.material || 'PLA').toUpperCase()
-      const materialRatePerCm3 = material === 'RESIN' ? 8.5 : material === 'PETG' ? 4.5 : material === 'ABS' ? 5.0 : material === 'TPU' ? 6.0 : 3.5 // PLA base
+      const materialRatePerCm3 = material === 'RESIN' ? 8.5 : material === 'PETG' ? 4.5 : material === 'ABS' ? 5.0 : material === 'TPU' ? 6.0 : 3.5
       const infill = Math.max(10, Math.min(100, Number(item?.infill) || 20))
       const infillFactor = 0.3 + (infill / 100) * 0.7
 
       let basePrinterRate = 150
       const targetPrinterId = item?.printer_id || item?.hubId
       if (targetPrinterId) {
-        const { data: dbPrinter } = await adminSupabase
-          .from('printers')
-          .select('base_price')
-          .eq('id', targetPrinterId)
-          .maybeSingle()
-        if (dbPrinter && typeof dbPrinter.base_price === 'number' && dbPrinter.base_price > 0) {
-          basePrinterRate = dbPrinter.base_price
+        const printerUuid = String(targetPrinterId).match(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i)?.[0]
+        if (printerUuid) {
+          const { data: dbPrinter } = await adminSupabase
+            .from('printers')
+            .select('base_price')
+            .eq('id', printerUuid)
+            .maybeSingle()
+          if (dbPrinter && typeof dbPrinter.base_price === 'number' && dbPrinter.base_price > 0) {
+            basePrinterRate = dbPrinter.base_price
+          }
         }
       }
 
-      const calculatedPodPrice = Math.round(basePrinterRate + (volumeCm3 * materialRatePerCm3 * infillFactor))
-      unitPrice = Math.max(150, calculatedPodPrice)
+      const serverDerivedPodPrice = Math.max(150, Math.round(basePrinterRate + (volumeCm3 * materialRatePerCm3 * infillFactor)))
+      if (typeof item?.price === 'number' && item.price < serverDerivedPodPrice) {
+        return {
+          success: false,
+          error: `Custom print item "${item?.title || item?.name || rawId}" price cannot be lower than server-derived rate (₹${serverDerivedPodPrice}).`,
+        }
+      }
+      unitPrice = serverDerivedPodPrice
     }
 
     // 4. Custom Print Hub Selection fallback
     if (unitPrice === null && (item?.printer_id || item?.hubId)) {
       const targetPrinterId = item.printer_id || item.hubId
-      const { data: dbPrinter } = await adminSupabase
-        .from('printers')
-        .select('base_price')
-        .eq('id', targetPrinterId)
-        .maybeSingle()
+      const printerUuid = String(targetPrinterId).match(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i)?.[0]
+      if (printerUuid) {
+        const { data: dbPrinter } = await adminSupabase
+          .from('printers')
+          .select('base_price')
+          .eq('id', printerUuid)
+          .maybeSingle()
 
-      if (dbPrinter && typeof dbPrinter.base_price === 'number' && dbPrinter.base_price >= 0) {
-        unitPrice = dbPrinter.base_price
+        if (dbPrinter && typeof dbPrinter.base_price === 'number' && dbPrinter.base_price >= 0) {
+          unitPrice = dbPrinter.base_price
+        }
       }
     }
 
-    // Reject unrecognized or malformed items lacking valid pricing
+    // Reject unrecognized or malformed items lacking valid pricing derivation
     if (unitPrice === null || unitPrice === undefined || unitPrice < 0) {
       return {
         success: false,
-        error: `Item "${item?.title || rawId || 'Custom item'}" could not be verified.`,
+        error: `Item "${item?.title || item?.name || rawId || 'Custom item'}" could not be verified.`,
       }
     }
 
@@ -268,13 +309,38 @@ export async function POST(request: Request) {
     }
 
     // 5. Calculate authoritative order amount server-side from database records & items
-    const orderItems = Array.isArray(order.items) ? order.items : []
-    const finRes = await calculateOrderFinancials(adminSupabase, orderItems)
-    if (!finRes.success) {
-      return NextResponse.json({ error: finRes.error }, { status: 400 })
-    }
+    let orderAmount = 0
+    let amountInPaisa = 0
+    let printerPayout = 0
+    let designerRoyalty = 0
+    let platformFee = 0
 
-    const { orderAmount, amountInPaisa, printerPayout, designerRoyalty, platformFee } = finRes.data
+    const orderItems = Array.isArray(order.items) ? order.items : []
+    if (orderItems.length > 0) {
+      const finRes = await calculateOrderFinancials(adminSupabase, orderItems)
+      if (!finRes.success) {
+        return NextResponse.json({ error: finRes.error }, { status: 400 })
+      }
+      orderAmount = finRes.data.orderAmount
+      amountInPaisa = finRes.data.amountInPaisa
+      printerPayout = finRes.data.printerPayout
+      designerRoyalty = finRes.data.designerRoyalty
+      platformFee = finRes.data.platformFee
+    } else {
+      // For orders without items array (e.g. print-on-demand or direct dispatch orders)
+      const existingTotal = Number(order.total_amount || order.total_price || order.total || order.price || 0)
+      if (existingTotal <= 0) {
+        return NextResponse.json({ error: 'Order total is invalid or zero in database' }, { status: 400 })
+      }
+      orderAmount = existingTotal
+      amountInPaisa = Math.round(orderAmount * 100)
+      const printerPayoutPaisa = Math.floor(amountInPaisa * 0.70)
+      const designerRoyaltyPaisa = Math.floor(amountInPaisa * 0.15)
+      const platformFeePaisa = amountInPaisa - (printerPayoutPaisa + designerRoyaltyPaisa)
+      printerPayout = Number(order.printer_share) || (printerPayoutPaisa / 100)
+      designerRoyalty = Number(order.designer_share) || (designerRoyaltyPaisa / 100)
+      platformFee = Number(order.platform_share) || (platformFeePaisa / 100)
+    }
 
     const keyId = process.env.RAZORPAY_KEY_ID || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID
     const keySecret = process.env.RAZORPAY_KEY_SECRET
@@ -322,7 +388,7 @@ export async function POST(request: Request) {
       }
     } else if (allowMock) {
       isMock = true
-      razorpayOrderId = `order_${Math.random().toString(36).substring(2, 14)}`
+      razorpayOrderId = `mock_order_${Math.random().toString(36).substring(2, 14)}`
     } else {
       return NextResponse.json(
         { error: 'Payment gateway credentials not configured' },
@@ -335,6 +401,7 @@ export async function POST(request: Request) {
       order_id: targetOrderId,
       razorpay_order_id: razorpayOrderId,
       amount: orderAmount,
+      
       currency: 'INR',
       status: 'created',
       printer_payout: printerPayout,
@@ -343,23 +410,24 @@ export async function POST(request: Request) {
       created_at: new Date().toISOString(),
     })
 
+    const orderUpdatePayload: Record<string, any> = {
+      razorpay_order_id: razorpayOrderId,
+      total_amount: orderAmount,
+      printer_share: printerPayout,
+      designer_share: designerRoyalty,
+      platform_share: platformFee,
+      updated_at: new Date().toISOString(),
+    }
+
+    // Do not overwrite an advanced order's status (e.g. PRINTER_ACCEPTED, PRINTER_ASSIGNED)
+    const currentCanonical = normalizeOrderStatus(order.status)
+    if (currentCanonical === 'PENDING_PAYMENT') {
+      orderUpdatePayload.status = toDbOrderStatus('PENDING_PAYMENT')
+    }
+
     await adminSupabase
       .from('orders')
-      .update({
-        razorpay_order_id: razorpayOrderId,
-        status: 'PENDING_PAYMENT',
-        total_amount: orderAmount,
-        total_price: orderAmount,
-        total: orderAmount,
-        price: orderAmount,
-        amount: orderAmount,
-        printer_payout: printerPayout,
-        printer_share: printerPayout,
-        designer_royalty: designerRoyalty,
-        designer_share: designerRoyalty,
-        platform_fee: platformFee,
-        platform_share: platformFee,
-      })
+      .update(orderUpdatePayload)
       .eq('id', targetOrderId)
 
     return NextResponse.json({

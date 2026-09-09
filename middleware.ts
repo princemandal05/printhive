@@ -26,6 +26,8 @@ const PUBLIC_ROUTES = [
   '/about',
   '/contact',
   '/403',
+  '/admin',
+  '/admin/login',
   '/login',
   '/signup',
   '/otp-verification',
@@ -92,8 +94,8 @@ export async function middleware(request: NextRequest) {
     return response
   }
 
-  // Bypasses login page loop if user is already on /login
-  if (pathname === '/login' || pathname === '/signup') {
+  // Bypasses login page loop if user is already on a login page
+  if (pathname === '/login' || pathname === '/signup' || pathname === '/admin/login') {
     return response
   }
 
@@ -131,6 +133,12 @@ export async function middleware(request: NextRequest) {
 
   if (hasValidSession) {
     return response
+  }
+
+  // Direct unauthenticated users targeting the Admin Console to /admin/login
+  if (pathname.startsWith('/dashboard/admin')) {
+    const adminLoginUrl = new URL('/admin/login', request.url)
+    return NextResponse.redirect(adminLoginUrl)
   }
 
   // Redirect unauthenticated / invalid / expired users attempting to access protected routes to /login

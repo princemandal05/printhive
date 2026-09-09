@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient, createAdminClient } from '@/utils/supabase/server'
+import { toDbOrderStatus } from '@/utils/order-lifecycle'
 
 export async function POST(request: Request) {
   try {
@@ -96,7 +97,7 @@ export async function POST(request: Request) {
       .from('orders')
       .update({
         escrow_status: 'released',
-        status: 'COMPLETED',
+        status: toDbOrderStatus('COMPLETED'),
         updated_at: releaseTimestamp,
       })
       .eq('id', targetOrderId)

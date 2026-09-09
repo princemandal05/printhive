@@ -87,7 +87,7 @@ const ROLES: RoleConfig[] = [
         icon: <ShieldCheck size={14} color="#ea580c" />,
         title: 'Secure Payment',
         subtitle: 'Escrow Protected',
-        href: '/browse',
+        href: '/trust',
       },
       {
         icon: <Truck size={14} color="#ea580c" />,
@@ -133,7 +133,7 @@ const ROLES: RoleConfig[] = [
         icon: <Gavel size={14} color="#8b5cf6" />,
         title: 'My Bids',
         subtitle: 'Project Proposals',
-        href: '/dashboard/designer',
+        href: '/requests',
       },
       {
         icon: <Clock size={14} color="#8b5cf6" />,
@@ -179,7 +179,7 @@ const ROLES: RoleConfig[] = [
         icon: <CheckCircle2 size={14} color="#10b981" />,
         title: 'Active Orders',
         subtitle: 'Job Tracking',
-        href: '/dashboard/printer-owner',
+        href: '/orders',
       },
       {
         icon: <Coins size={14} color="#10b981" />,
@@ -219,7 +219,7 @@ const ROLES: RoleConfig[] = [
         icon: <ShoppingCart size={14} color="#2563eb" />,
         title: 'Orders',
         subtitle: 'Customer Orders',
-        href: '/dashboard/seller',
+        href: '/orders',
       },
       {
         icon: <Store size={14} color="#2563eb" />,

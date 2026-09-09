@@ -749,11 +749,17 @@ export default function BrowseClient({ designs = [] }: { designs: DesignRow[] })
                 >
                   {/* 3D PREVIEW THUMBNAIL WITH QUICK ORBIT VIEWER */}
                   <div style={{ height: 210, width: '100%', position: 'relative', background: 'var(--bg-card-hover)', overflow: 'hidden' }}>
-                    <img
-                      src={design.thumbnail_url || 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=600&q=80'}
-                      alt={design.title}
-                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                    />
+                    <Link
+                      href={`/designs/${design.id}`}
+                      onClick={() => recordRecentView(design)}
+                      style={{ display: 'block', width: '100%', height: '100%' }}
+                    >
+                      <img
+                        src={design.thumbnail_url || 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=600&q=80'}
+                        alt={design.title}
+                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                      />
+                    </Link>
 
                     {/* Category & Smart Tags */}
                     <div style={{ position: 'absolute', top: 12, left: 12, display: 'flex', flexDirection: 'column', gap: 4, alignItems: 'flex-start' }}>

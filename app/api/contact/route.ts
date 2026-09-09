@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@/utils/supabase/server'
+import { createClient, createAdminClient } from '@/utils/supabase/server'
+import { isPlatformOwner } from '@/utils/supabase/require-role'
 
 export async function GET(request: Request) {
   try {
@@ -13,7 +14,7 @@ export async function GET(request: Request) {
     let isAdmin = false
 
     if (user) {
-      isAdmin = user.email?.toLowerCase() === 'princemayamandal@gmail.com'
+      isAdmin = isPlatformOwner(user.email)
     }
 
     try {
@@ -83,7 +84,7 @@ export async function POST(request: Request) {
       )
     }
 
-    const ticketId = `ticket-${Date.now()}`
+    const ticketId = crypto.randomUUID()
     const trimmedSubject = subject.trim()
     const trimmedMessage = message.trim()
     const ticketName = typeof name === 'string' && name.trim() ? name.trim() : userEmail.split('@')[0]
@@ -98,8 +99,9 @@ export async function POST(request: Request) {
       created_at: new Date().toISOString(),
     }
 
-    // Insert directly into Supabase complaints table
-    const { error: dbErr } = await supabase.from('complaints').insert({
+    // Insert directly into Supabase complaints table using admin client to bypass guest RLS restriction
+    const adminSupabase = await createAdminClient()
+    const { error: dbErr } = await adminSupabase.from('complaints').insert({
       id: newTicket.id,
       name: newTicket.name,
       email: newTicket.email,
@@ -117,6 +119,7 @@ export async function POST(request: Request) {
       success: true,
       message: 'Your support message has been sent directly to Support Desk!',
       ticket: newTicket,
+      complaint: newTicket,
     })
   } catch (err: unknown) {
     const error = err as Error

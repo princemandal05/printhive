@@ -1,4 +1,5 @@
 import { createClient, createAdminClient } from '@/utils/supabase/server'
+import { isPlatformOwner } from '@/utils/supabase/require-role'
 import { NextResponse } from 'next/server'
 
 export async function GET(request: Request) {
@@ -22,7 +23,7 @@ export async function GET(request: Request) {
     }
 
     // Exclusive Owner Access
-    const isOwner = user.email?.toLowerCase() === 'princemayamandal@gmail.com'
+    const isOwner = isPlatformOwner(user.email)
     if (!isOwner) {
       return NextResponse.json({ error: 'Forbidden: Owner privilege required' }, { status: 403 })
     }

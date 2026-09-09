@@ -296,13 +296,18 @@ export default function Footer() {
                     </Link>
                   </li>
                   <li>
-                    <Link href={ROUTES.support} style={{ color: 'var(--text-sub)', textDecoration: 'none', transition: 'color 0.15s' }}>
-                      Support Ticket Queue
+                    <Link href="/dashboard/admin#users" style={{ color: 'var(--text-sub)', textDecoration: 'none', transition: 'color 0.15s' }}>
+                      User Control &amp; Verifications
                     </Link>
                   </li>
                   <li>
-                    <Link href={ROUTES.shop} style={{ color: 'var(--text-sub)', textDecoration: 'none', transition: 'color 0.15s' }}>
-                      Marketplace Control
+                    <Link href="/dashboard/admin#approvals" style={{ color: 'var(--text-sub)', textDecoration: 'none', transition: 'color 0.15s' }}>
+                      Product Approval Queue
+                    </Link>
+                  </li>
+                  <li>
+                    <Link href="/dashboard/admin#tickets" style={{ color: 'var(--text-sub)', textDecoration: 'none', transition: 'color 0.15s' }}>
+                      Support Ticket Queue
                     </Link>
                   </li>
                 </ul>
@@ -332,6 +337,11 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
+                <Link href="/support-tickets" style={{ color: 'var(--text-sub)', textDecoration: 'none', transition: 'color 0.15s' }}>
+                  Track Ticket Status
+                </Link>
+              </li>
+              <li>
                 <Link href={ROUTES.faq} style={{ color: 'var(--text-sub)', textDecoration: 'none', transition: 'color 0.15s' }}>
                   Knowledge Base &amp; FAQ
                 </Link>
@@ -342,9 +352,19 @@ export default function Footer() {
           {/* COLUMN 4: COMPANY & LEGAL */}
           <div>
             <div style={{ fontSize: 11, fontWeight: 800, color: 'var(--text-main)', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 12 }}>
-              Account &amp; Legal
+              Company &amp; Legal
             </div>
             <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 8, fontSize: 12.5 }}>
+              <li>
+                <Link href={ROUTES.about} style={{ color: 'var(--text-sub)', textDecoration: 'none', transition: 'color 0.15s' }}>
+                  About PrintHive
+                </Link>
+              </li>
+              <li>
+                <Link href={ROUTES.contact} style={{ color: 'var(--text-sub)', textDecoration: 'none', transition: 'color 0.15s' }}>
+                  Contact Us
+                </Link>
+              </li>
               <li>
                 <Link href="/profile" style={{ color: 'var(--text-sub)', textDecoration: 'none', transition: 'color 0.15s' }}>
                   Account Settings

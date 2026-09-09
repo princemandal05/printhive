@@ -7,7 +7,8 @@ import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 import RoleEcosystemShowcase from '@/components/RoleEcosystemShowcase'
 import { createClient } from '@/utils/supabase/client'
-import { ROUTES } from '@/lib/routes'
+import { ROUTES, resolveRoleDashboard } from '@/lib/routes'
+import { isPlatformOwner } from '@/lib/admin-owner'
 import {
   ShoppingBag,
   PenTool,
@@ -116,6 +117,7 @@ export default function Home() {
   const [aiSearchQuery, setAiSearchQuery] = useState('')
   const [activeRoleTab, setActiveRoleTab] = useState<'buyer' | 'designer' | 'printer' | 'seller'>('buyer')
   const [isLoggedIn, setIsLoggedIn] = useState(false)
+  const [dashboardHref, setDashboardHref] = useState<string | null>(null)
   const [liveStats, setLiveStats] = useState({
     hubs: 0,
     designs: 0,
@@ -127,6 +129,15 @@ export default function Home() {
       try {
         const { data: { user } } = await supabase.auth.getUser()
         if (user) {
+          let resolvedRoute: string = ROUTES.buyer.dashboard
+          const isOwner = isPlatformOwner(user.email)
+          if (isOwner) {
+            resolvedRoute = ROUTES.admin.dashboard
+          } else {
+            const { data: prof } = await supabase.from('profiles').select('role').eq('id', user.id).maybeSingle()
+            resolvedRoute = resolveRoleDashboard(prof?.role)
+          }
+          setDashboardHref(resolvedRoute)
           setIsLoggedIn(true)
         }
 
@@ -416,7 +427,24 @@ export default function Home() {
           <div style={{ display: 'flex', gap: 16, justifyContent: 'center', flexWrap: 'wrap' }}>
             {isLoggedIn ? (
               <>
-                <Link href="/dashboard/buyer" className="btn btn-primary btn-lg" style={{ background: '#FF6B35', color: '#fff', padding: '14px 36px', borderRadius: 99, fontWeight: 800, textDecoration: 'none', boxShadow: '0 4px 16px rgba(255,107,53,0.35)', display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                <Link
+                  href={dashboardHref || ROUTES.buyer.dashboard}
+                  className="btn btn-primary btn-lg"
+                  style={{
+                    background: '#FF6B35',
+                    color: '#fff',
+                    padding: '14px 36px',
+                    borderRadius: 99,
+                    fontWeight: 800,
+                    textDecoration: 'none',
+                    boxShadow: '0 4px 16px rgba(255,107,53,0.35)',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 8,
+                    pointerEvents: dashboardHref ? 'auto' : 'none',
+                    opacity: dashboardHref ? 1 : 0.7,
+                  }}
+                >
                   <ShoppingBag size={18} /> Go to My Dashboard
                 </Link>
                 <Link href="/shop" className="btn btn-outline btn-lg" style={{ borderColor: 'var(--border-color)', color: 'var(--text-main)', padding: '14px 32px', borderRadius: 99, background: 'var(--bg-card-hover)', textDecoration: 'none', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 8 }}>

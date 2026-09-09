@@ -126,31 +126,132 @@ function OrderTrackingContent() {
   const activeStepIndex = currentStatus ? ORDER_LIFECYCLE_STEPS.findIndex((s) => s.key === currentStatus) : -1
   const safeStepIndex = activeStepIndex >= 0 ? activeStepIndex : 0
 
+  function loadRazorpayScript(): Promise<boolean> {
+    return new Promise((resolve) => {
+      if (typeof window === 'undefined') return resolve(false)
+      if ((window as any).Razorpay) return resolve(true)
+      const script = document.createElement('script')
+      script.src = 'https://checkout.razorpay.com/v1/checkout.js'
+      script.onload = () => resolve(true)
+      script.onerror = () => resolve(false)
+      document.body.appendChild(script)
+    })
+  }
+
   const handlePayEscrow = async () => {
     if (payingEscrow || !currentStatus) return
     setPayingEscrow(true)
     setActionMsg('🔒 Connecting to Razorpay Escrow Protection...')
 
     try {
-      const res = await updateOrderStatus(
-        supabase,
-        orderId,
-        'PAYMENT_CONFIRMED',
-        'Payment verified and secured in Escrow protection.',
-        undefined,
-        currentStatus
-      )
+      const createOrderRes = await fetch('/api/payments/create-order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderId }),
+      })
 
-      if (res.success) {
+      if (!createOrderRes.ok) {
+        const errorData = await createOrderRes.json().catch(() => ({}))
+        setActionMsg(`❌ Payment initialization failed: ${errorData.error || 'Server error'}`)
+        setPayingEscrow(false)
+        return
+      }
+
+      const orderData = await createOrderRes.json()
+
+      // If in Mock / Sandbox simulator mode
+      if (orderData.isMock) {
+        const mockPayId = `pay_mock_${Math.random().toString(36).substring(2, 12)}`
+        const verifyRes = await fetch('/api/payments/verify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            order_id: orderId,
+            razorpay_order_id: orderData.razorpayOrderId,
+            razorpay_payment_id: mockPayId,
+            razorpay_signature: `mock_sig_${Math.random().toString(36).substring(2, 14)}`,
+          }),
+        })
+
+        if (!verifyRes.ok) {
+          const errData = await verifyRes.json().catch(() => ({}))
+          setActionMsg(`❌ Verification failed: ${errData.error || 'Server error'}`)
+          setPayingEscrow(false)
+          return
+        }
+
         setCurrentStatus('PAYMENT_CONFIRMED')
         setActionMsg('✅ Payment Confirmed! Funds locked in Escrow. Manufacturing starting soon.')
-      } else {
-        setActionMsg(`❌ Payment verification failed: ${res.error || 'Please try again'}`)
+        setPayingEscrow(false)
+        return
       }
+
+      // Load Razorpay SDK
+      const isLoaded = await loadRazorpayScript()
+      if (!isLoaded) {
+        setActionMsg('❌ Unable to load Razorpay payment gateway. Please check your internet connection.')
+        setPayingEscrow(false)
+        return
+      }
+
+      const options = {
+        key: orderData.keyId,
+        amount: orderData.amount,
+        currency: orderData.currency || 'INR',
+        name: 'PrintHive Marketplace',
+        description: `Order #${orderId.slice(0, 8)} Escrow Payment`,
+        order_id: orderData.razorpayOrderId,
+        handler: async function (response: any) {
+          try {
+            setActionMsg('⚡ Verifying Razorpay payment signature...')
+            const verifyRes = await fetch('/api/payments/verify', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                order_id: orderId,
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+              }),
+            })
+
+            if (!verifyRes.ok) {
+              const errData = await verifyRes.json().catch(() => ({}))
+              setActionMsg(`❌ Payment verification failed: ${errData.error || 'Please contact support.'}`)
+              setPayingEscrow(false)
+              return
+            }
+
+            setCurrentStatus('PAYMENT_CONFIRMED')
+            setActionMsg('✅ Payment Confirmed! Funds locked in Escrow. Manufacturing starting soon.')
+          } catch (verifyErr) {
+            console.error('Verification error:', verifyErr)
+            setActionMsg('❌ Network error during payment verification.')
+          } finally {
+            setPayingEscrow(false)
+          }
+        },
+        theme: {
+          color: '#ea580c',
+        },
+        modal: {
+          ondismiss: function () {
+            setPayingEscrow(false)
+            setActionMsg('')
+          },
+        },
+      }
+
+      const rzp = new (window as any).Razorpay(options)
+      rzp.on('payment.failed', function (response: any) {
+        console.error('Razorpay payment failed:', response.error)
+        setActionMsg(`❌ Payment declined: ${response.error?.description || 'Transaction declined'}`)
+        setPayingEscrow(false)
+      })
+      rzp.open()
     } catch (err: any) {
       console.error('Error completing escrow payment:', err)
       setActionMsg('❌ Payment processing error. Please try again.')
-    } finally {
       setPayingEscrow(false)
     }
   }

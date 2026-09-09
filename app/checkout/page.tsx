@@ -195,6 +195,8 @@ export default function CheckoutPage() {
         return
       }
 
+      setShowModal(false)
+
       const options = {
         key: orderData.keyId,
         amount: orderData.amount,
@@ -241,35 +243,17 @@ export default function CheckoutPage() {
           color: '#ea580c',
         },
         modal: {
-          ondismiss: async function () {
+          ondismiss: function () {
             setPlacing(false)
-            try {
-              await fetch('/api/payments/cancel', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ orderId: currentOrderId, reason: 'Modal dismissed by user' }),
-              })
-            } catch (err) {
-              console.warn('Failed to report cancelled order:', err)
-            }
           },
         },
       }
 
       const rzp = new (window as any).Razorpay(options)
-      rzp.on('payment.failed', async function (response: any) {
+      rzp.on('payment.failed', function (response: any) {
         console.error('Razorpay payment failed:', response.error)
         alert(`Payment failed: ${response.error?.description || response.error?.reason || 'Transaction declined'}`)
         setPlacing(false)
-        try {
-          await fetch('/api/payments/cancel', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ orderId: currentOrderId, reason: response.error?.description || 'Transaction declined' }),
-          })
-        } catch (err) {
-          console.warn('Failed to report failed order:', err)
-        }
       })
       rzp.open()
     } catch (orderErr: unknown) {

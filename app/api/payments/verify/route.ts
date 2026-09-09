@@ -34,8 +34,8 @@ export async function POST(request: Request) {
 
     const targetOrderId = order_id.trim()
 
-    // 3. Query order details from database & verify ownership
-    const { data: order, error: orderFetchErr } = await supabase
+    // 3. Query order details from database & verify ownership using adminSupabase
+    const { data: order, error: orderFetchErr } = await adminSupabase
       .from('orders')
       .select('*')
       .eq('id', targetOrderId)
@@ -66,7 +66,12 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Razorpay secret key not configured on server' }, { status: 500 })
     }
 
-    if (keySecret) {
+    const isMockSignature = allowMock && (
+      (typeof razorpay_order_id === 'string' && (razorpay_order_id.startsWith('mock_order_') || razorpay_order_id.startsWith('order_mock_'))) ||
+      (typeof razorpay_signature === 'string' && razorpay_signature.startsWith('mock_sig_'))
+    )
+
+    if (keySecret && !isMockSignature) {
       if (!razorpay_signature || typeof razorpay_signature !== 'string') {
         return NextResponse.json({ error: 'Missing payment verification signature' }, { status: 400 })
       }
