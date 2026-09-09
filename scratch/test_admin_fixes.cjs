@@ -35,8 +35,10 @@ assert(navbarContent.includes('title="Preview Role Portals"'), 'Navbar must prov
 assert(navbarContent.includes('Log in'), 'Log In link must remain available');
 assert(navbarContent.includes('printhive_guest_role'), 'Navbar must read printhive_guest_role in loadSession');
 assert(navbarContent.includes('validGuestRoles'), 'Navbar must validate allowed guest roles');
+assert(/try\s*\{\s*rawRole\s*=\s*decodeURIComponent/.test(navbarContent), 'Navbar must catch URIError from malformed guest role cookie');
+assert(navbarContent.includes('setRoleLoading(false)') && navbarContent.includes('finally'), 'Navbar loadSession must clear roleLoading in finally block');
 assert(!navbarContent.includes('{!user && (\n                      <div style={{ padding: \'8px 0\', borderBottom: \'1px solid var(--border-color)\' }}>\n                        <div style={{ padding: \'4px 18px\', fontSize: 11, fontWeight: 800, color: \'var(--text-sub)\', textTransform: \'uppercase\', letterSpacing: 0.5 }}>\n                          Preview Role Portals'), 'No dead !user block inside user dropdown');
-console.log('✅ Navbar guest preview role portals and cookie restoration verified.');
+console.log('✅ Navbar guest preview role portals, safe cookie decoding, and roleLoading cleanup verified.');
 
 // 4. Check app/dashboard/admin/page.tsx & app/globals.css
 console.log('\n--- 4. Checking Admin Dashboard Error Handling, Rollback & Telemetry ---');

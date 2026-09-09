@@ -146,45 +146,57 @@ export default function Navbar() {
 
     async function loadSession() {
       setRoleLoading(true)
-      const { data: { user: currentUser } } = await supabase.auth.getUser()
-      let role: string | null = null
+      try {
+        const { data: { user: currentUser } } = await supabase.auth.getUser()
+        let role: string | null = null
 
-      if (currentUser) {
-        setUser(currentUser)
-        const { data: userProfile } = await supabase.from('profiles').select('*').eq('id', currentUser.id).maybeSingle()
-        if (userProfile) setProfile(userProfile)
-        
-        const isOwner = isPlatformOwner(currentUser.email)
-        role = isOwner ? 'admin' : (userProfile?.role === 'admin' ? 'buyer' : (userProfile?.role as string) || (currentUser.user_metadata?.role as string) || 'buyer')
-        if (role && DASHBOARD_PATH[role]) {
-          setUserRole(role)
-          setDashboardHref(DASHBOARD_PATH[role])
+        if (currentUser) {
+          setUser(currentUser)
+          const { data: userProfile } = await supabase.from('profiles').select('*').eq('id', currentUser.id).maybeSingle()
+          if (userProfile) setProfile(userProfile)
+          
+          const isOwner = isPlatformOwner(currentUser.email)
+          role = isOwner ? 'admin' : (userProfile?.role === 'admin' ? 'buyer' : (userProfile?.role as string) || (currentUser.user_metadata?.role as string) || 'buyer')
+          if (role && DASHBOARD_PATH[role]) {
+            setUserRole(role)
+            setDashboardHref(DASHBOARD_PATH[role])
+          } else {
+            setUserRole('buyer')
+            setDashboardHref('/dashboard/buyer')
+          }
         } else {
-          setUserRole('buyer')
-          setDashboardHref('/dashboard/buyer')
+          setUser(null)
+          setProfile(null)
+
+          // Read and validate guest role cookie before resetting/restoring navigation state
+          const guestCookieMatch = typeof document !== 'undefined'
+            ? document.cookie.match(/(?:^|;\s*)printhive_guest_role=([^;]+)/)
+            : null
+          let rawRole: string | null = null
+          if (guestCookieMatch) {
+            try {
+              rawRole = decodeURIComponent(guestCookieMatch[1]).trim().toLowerCase()
+            } catch {
+              rawRole = null
+            }
+          }
+          const validGuestRoles = ['buyer', 'seller', 'designer', 'printer_owner', 'printer', 'vendor']
+
+          if (rawRole && validGuestRoles.includes(rawRole) && DASHBOARD_PATH[rawRole]) {
+            setUserRole(rawRole)
+            setDashboardHref(DASHBOARD_PATH[rawRole])
+          } else {
+            setUserRole(null)
+            setDashboardHref(null)
+          }
         }
-      } else {
-        setUser(null)
-        setProfile(null)
-
-        // Read and validate guest role cookie before resetting/restoring navigation state
-        const guestCookieMatch = typeof document !== 'undefined'
-          ? document.cookie.match(/(?:^|;\s*)printhive_guest_role=([^;]+)/)
-          : null
-        const rawRole = guestCookieMatch ? decodeURIComponent(guestCookieMatch[1]).trim().toLowerCase() : null
-        const validGuestRoles = ['buyer', 'seller', 'designer', 'printer_owner', 'printer', 'vendor']
-
-        if (rawRole && validGuestRoles.includes(rawRole) && DASHBOARD_PATH[rawRole]) {
-          setUserRole(rawRole)
-          setDashboardHref(DASHBOARD_PATH[rawRole])
-        } else {
-          setUserRole(null)
-          setDashboardHref(null)
+      } catch (sessionErr) {
+        console.error('Navbar loadSession error:', sessionErr)
+      } finally {
+        if (active) {
+          setRoleLoading(false)
         }
       }
-
-      if (!active) return
-      setRoleLoading(false)
     }
 
     loadSession()
