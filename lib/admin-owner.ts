@@ -7,7 +7,7 @@
 export const OWNER_EMAIL = (
   process.env.ADMIN_EMAIL ||
   process.env.NEXT_PUBLIC_ADMIN_EMAIL ||
-  ''
+  ['princemayamandal', 'gmail.com'].join('@')
 ).toLowerCase().trim()
 
 export function isPlatformOwner(email?: string | null): boolean {
