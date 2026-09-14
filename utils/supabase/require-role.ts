@@ -43,15 +43,16 @@ export async function requireRole(expectedRole: Role) {
       console.error('requireRole profile lookup error:', profileError)
     }
 
-    // Only the owner can ever have the 'admin' role; all others are demoted if they attempt admin
+    // Real role from database or metadata; non-owners cannot hold admin role
     const isOwner = isPlatformOwner(user.email)
-    const userRole: Role = isOwner
-      ? 'admin'
-      : profile?.role === 'admin'
-      ? 'buyer'
-      : (profile?.role as Role) || 'buyer'
+    let rawRole = (profile?.role as Role) || (user.user_metadata?.role as Role) || 'buyer'
+    if (rawRole === 'admin' && !isOwner) {
+      rawRole = 'buyer'
+    }
+    const userRole: Role = rawRole
 
-    // Strict Role Access Control: Non-owners cannot access admin routes or unauthorized dashboards
+    // Strict Role Access Control: Non-owners cannot access unauthorized dashboards.
+    // Platform owner has universal access to all dashboards (including seller)
     if (userRole !== expectedRole && !isOwner && expectedRole !== 'buyer') {
       redirect('/403')
     }

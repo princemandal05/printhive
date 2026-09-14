@@ -401,7 +401,6 @@ export async function POST(request: Request) {
       order_id: targetOrderId,
       razorpay_order_id: razorpayOrderId,
       amount: orderAmount,
-      
       currency: 'INR',
       status: 'created',
       printer_payout: printerPayout,

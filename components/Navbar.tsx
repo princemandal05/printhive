@@ -156,13 +156,17 @@ export default function Navbar() {
           if (userProfile) setProfile(userProfile)
           
           const isOwner = isPlatformOwner(currentUser.email)
-          role = isOwner ? 'admin' : (userProfile?.role === 'admin' ? 'buyer' : (userProfile?.role as string) || (currentUser.user_metadata?.role as string) || 'buyer')
+          let resolvedRole = (userProfile?.role as string) || (currentUser.user_metadata?.role as string) || (isOwner ? 'seller' : 'buyer')
+          if (resolvedRole === 'admin' && !isOwner) {
+            resolvedRole = 'buyer'
+          }
+          role = resolvedRole
           if (role && DASHBOARD_PATH[role]) {
             setUserRole(role)
             setDashboardHref(DASHBOARD_PATH[role])
           } else {
-            setUserRole('buyer')
-            setDashboardHref('/dashboard/buyer')
+            setUserRole('seller')
+            setDashboardHref('/dashboard/seller')
           }
         } else {
           setUser(null)
@@ -379,13 +383,41 @@ export default function Navbar() {
           {/* Logged In Controls: Dashboard Button + Round Avatar Circle Dropdown */}
           {user ? (
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              {/* Dashboard Button */}
+              {/* Dedicated Separate Button for Platform Owner Admin Access */}
+              {isUserAdmin && (
+                <Link
+                  href="/dashboard/admin"
+                  id="admin-access-btn"
+                  title="Admin Command Center"
+                  style={{
+                    background: 'linear-gradient(135deg, #18181b 0%, #09090b 100%)',
+                    color: '#ea580c',
+                    border: '1px solid rgba(234, 88, 12, 0.5)',
+                    padding: '7px 14px',
+                    borderRadius: 99,
+                    fontSize: 13,
+                    fontWeight: 800,
+                    textDecoration: 'none',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    boxShadow: '0 2px 10px rgba(0, 0, 0, 0.3)',
+                    transition: 'all 0.2s ease',
+                  }}
+                >
+                  <Shield size={14} color="#ea580c" />
+                  <span>Admin Access</span>
+                </Link>
+              )}
+
+              {/* Primary User Role Dashboard Button (e.g. Seller Dashboard) */}
               {dashboardHref && (
                 <Link
                   href={dashboardHref}
+                  id="user-dashboard-btn"
                   style={{ background: '#ea580c', color: '#fff', padding: '8px 16px', borderRadius: 99, fontSize: 13, fontWeight: 800, textDecoration: 'none', boxShadow: '0 4px 14px rgba(234, 88, 12, 0.3)' }}
                 >
-                  Dashboard
+                  {userRole === 'seller' ? 'Seller Dashboard' : 'Dashboard'}
                 </Link>
               )}
 
@@ -459,11 +491,11 @@ export default function Navbar() {
                         <User size={16} color="#64748B" /> Your Profile
                       </Link>
                       <Link
-                        href={dashboardHref || '/dashboard/buyer'}
+                        href={dashboardHref || '/dashboard/seller'}
                         onClick={() => setDropdownOpen(false)}
                         style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 18px', fontSize: 13, fontWeight: 700, color: 'var(--text-main)', textDecoration: 'none', transition: 'background 0.2s' }}
                       >
-                        <Sparkles size={16} color="#FF6B35" /> My Authorized Dashboard
+                        <Sparkles size={16} color="#FF6B35" /> My {userRole ? ROLE_LABELS[userRole] || 'Dashboard' : 'Dashboard'}
                       </Link>
                       <Link
                         href="/orders"

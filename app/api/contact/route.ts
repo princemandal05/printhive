@@ -15,10 +15,15 @@ export async function GET(request: Request) {
 
     if (user) {
       isAdmin = isPlatformOwner(user.email)
+      if (!isAdmin) {
+        const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).maybeSingle()
+        if (profile?.role === 'admin') isAdmin = true
+      }
     }
 
     try {
-      let query = supabase.from('complaints').select('*').order('created_at', { ascending: false })
+      const dbClient = isAdmin ? await createAdminClient() : supabase
+      let query = dbClient.from('complaints').select('*').order('created_at', { ascending: false })
       
       if (!isAdmin && targetEmail) {
         query = query.ilike('email', targetEmail)
@@ -145,7 +150,8 @@ export async function PATCH(request: Request) {
       .eq('id', user.id)
       .maybeSingle()
 
-    if (profile?.role !== 'admin') {
+    const isOwner = isPlatformOwner(user.email)
+    if (!isOwner && profile?.role !== 'admin') {
       return NextResponse.json({ error: 'Forbidden: Only administrators can update ticket status' }, { status: 403 })
     }
 
@@ -176,8 +182,9 @@ export async function PATCH(request: Request) {
       targetStatus = rawStatus
     }
 
-    // Perform database update
-    const { error: updateErr } = await supabase
+    // Perform database update using admin client to guarantee execution
+    const adminSupabase = await createAdminClient()
+    const { error: updateErr } = await adminSupabase
       .from('complaints')
       .update({ status: targetStatus })
       .eq('id', id)

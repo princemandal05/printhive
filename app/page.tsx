@@ -25,6 +25,7 @@ import {
   Bot,
   Store,
   Layers,
+  Shield,
 } from 'lucide-react'
 
 const Hero3D = dynamic(() => import('@/components/Hero3D'), {
@@ -117,6 +118,7 @@ export default function Home() {
   const [aiSearchQuery, setAiSearchQuery] = useState('')
   const [activeRoleTab, setActiveRoleTab] = useState<'buyer' | 'designer' | 'printer' | 'seller'>('buyer')
   const [isLoggedIn, setIsLoggedIn] = useState(false)
+  const [isOwnerUser, setIsOwnerUser] = useState(false)
   const [dashboardHref, setDashboardHref] = useState<string | null>(null)
   const [liveStats, setLiveStats] = useState({
     hubs: 0,
@@ -129,14 +131,11 @@ export default function Home() {
       try {
         const { data: { user } } = await supabase.auth.getUser()
         if (user) {
-          let resolvedRoute: string = ROUTES.buyer.dashboard
           const isOwner = isPlatformOwner(user.email)
-          if (isOwner) {
-            resolvedRoute = ROUTES.admin.dashboard
-          } else {
-            const { data: prof } = await supabase.from('profiles').select('role').eq('id', user.id).maybeSingle()
-            resolvedRoute = resolveRoleDashboard(prof?.role)
-          }
+          setIsOwnerUser(isOwner)
+          const { data: prof } = await supabase.from('profiles').select('role').eq('id', user.id).maybeSingle()
+          const userRole = (prof?.role as string) || (user.user_metadata?.role as string) || (isOwner ? 'seller' : 'buyer')
+          const resolvedRoute = resolveRoleDashboard(userRole)
           setDashboardHref(resolvedRoute)
           setIsLoggedIn(true)
         }
@@ -447,6 +446,26 @@ export default function Home() {
                 >
                   <ShoppingBag size={18} /> Go to My Dashboard
                 </Link>
+                {isOwnerUser && (
+                  <Link
+                    href={ROUTES.admin.dashboard}
+                    className="btn btn-outline btn-lg"
+                    style={{
+                      borderColor: 'rgba(234, 88, 12, 0.6)',
+                      color: '#ea580c',
+                      padding: '14px 32px',
+                      borderRadius: 99,
+                      background: 'rgba(234, 88, 12, 0.08)',
+                      textDecoration: 'none',
+                      fontWeight: 800,
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 8,
+                    }}
+                  >
+                    <Shield size={18} color="#ea580c" /> Admin Console
+                  </Link>
+                )}
                 <Link href="/shop" className="btn btn-outline btn-lg" style={{ borderColor: 'var(--border-color)', color: 'var(--text-main)', padding: '14px 32px', borderRadius: 99, background: 'var(--bg-card-hover)', textDecoration: 'none', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 8 }}>
                   <Box size={18} /> Explore 3D Marketplace
                 </Link>
