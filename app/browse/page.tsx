@@ -7,28 +7,6 @@ export const dynamic = 'force-dynamic'
 export const revalidate = 0
 
 export default async function BrowsePage() {
-  // Check user role: Sellers do not have access to 3D CAD models
-  try {
-    const userClient = await createClient()
-    const { data: { user } } = await userClient.auth.getUser()
-    let role = null
-
-    if (user?.id) {
-      const { data: profile } = await userClient.from('profiles').select('role').eq('id', user.id).maybeSingle()
-      role = profile?.role
-    } else {
-      const cookieStore = await cookies()
-      role = cookieStore.get('printhive_auth_role')?.value
-    }
-
-    if (role === 'seller') {
-      redirect('/shop')
-    }
-  } catch (authErr: any) {
-    if (authErr?.digest?.startsWith('NEXT_REDIRECT')) {
-      throw authErr
-    }
-  }
 
   let loadedDesigns: DesignRow[] = []
 
