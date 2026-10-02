@@ -123,6 +123,7 @@ export default function DesignDetailClient({ design, reviews }: { design: Design
                 modelUrl={design.file_url}
                 format={design.file_format}
                 fileName={design.file_name}
+                previewImageUrl={previewImg}
               />
             ) : (
               <div

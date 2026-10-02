@@ -25,6 +25,7 @@ interface ThreeViewerProps {
   dimensions?: { x: number; y: number; z: number }
   autoRotateDefault?: boolean
   initialTheme?: CanvasTheme
+  previewImageUrl?: string
 }
 
 const SWATCH_COLORS = [
@@ -41,6 +42,7 @@ const SWATCH_COLORS = [
 interface ErrorBoundaryProps {
   children: ReactNode
   fallbackTitle?: string
+  previewImageUrl?: string
 }
 
 interface ErrorBoundaryState {
@@ -63,6 +65,30 @@ class ThreeViewerErrorBoundary extends Component<ErrorBoundaryProps, ErrorBounda
 
   render() {
     if (this.state.hasError) {
+      if (this.props.previewImageUrl) {
+        return (
+          <div
+            style={{
+              position: 'relative',
+              width: '100%',
+              height: 440,
+              borderRadius: 20,
+              overflow: 'hidden',
+              background: '#0F172A',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              border: '1px solid rgba(255,255,255,0.08)',
+            }}
+          >
+            <img
+              src={this.props.previewImageUrl}
+              alt={this.props.fallbackTitle || 'Product Preview'}
+              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+            />
+          </div>
+        )
+      }
       return (
         <div
           style={{
@@ -88,7 +114,7 @@ class ThreeViewerErrorBoundary extends Component<ErrorBoundaryProps, ErrorBounda
 
 export default function ThreeViewer(props: ThreeViewerProps) {
   return (
-    <ThreeViewerErrorBoundary fallbackTitle={props.title}>
+    <ThreeViewerErrorBoundary fallbackTitle={props.title} previewImageUrl={props.previewImageUrl}>
       <ThreeViewerInner {...props} />
     </ThreeViewerErrorBoundary>
   )
@@ -106,6 +132,7 @@ function ThreeViewerInner({
   fileName,
   mimeType,
   dimensions = { x: 50, y: 50, z: 50 },
+  previewImageUrl,
 }: ThreeViewerProps) {
   const mountRef = useRef<HTMLDivElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
@@ -786,6 +813,51 @@ function ThreeViewerInner({
 
   // ─── Error / unsupported fallback ──────────────────────
   if (unsupported || error) {
+    if (previewImageUrl) {
+      return (
+        <div
+          style={{
+            position: 'relative',
+            width: '100%',
+            height,
+            borderRadius: 20,
+            overflow: 'hidden',
+            background: '#0F172A',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            border: '1px solid rgba(255,255,255,0.08)',
+          }}
+        >
+          <img
+            src={previewImageUrl}
+            alt={title}
+            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+          />
+          <div
+            style={{
+              position: 'absolute',
+              bottom: 14,
+              left: 14,
+              background: 'rgba(15, 23, 42, 0.8)',
+              backdropFilter: 'blur(8px)',
+              color: '#fff',
+              padding: '6px 14px',
+              borderRadius: 99,
+              fontSize: 12,
+              fontWeight: 700,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+              border: '1px solid rgba(255,255,255,0.1)',
+            }}
+          >
+            <span>📷</span> Product Photo Preview
+          </div>
+        </div>
+      )
+    }
+
     return (
       <div
         style={{

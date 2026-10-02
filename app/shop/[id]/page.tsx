@@ -372,6 +372,7 @@ export default function ProductDetailsPage() {
                   color={selectedColor.hex}
                   height={460}
                   modelUrl={product.file_url}
+                  previewImageUrl={product.image}
                 />
               ) : (
                 <div style={{ width: '100%', height: 460, borderRadius: 16, overflow: 'hidden', background: 'var(--bg-card-hover)', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
