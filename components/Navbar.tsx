@@ -123,8 +123,6 @@ export default function Navbar() {
   const [profile, setProfile] = useState<any>(null)
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
-  const [guestDropdownOpen, setGuestDropdownOpen] = useState(false)
-  const guestDropdownRef = useRef<HTMLDivElement>(null)
 
   const [roleLoading, setRoleLoading] = useState(true)
 
@@ -171,28 +169,8 @@ export default function Navbar() {
         } else {
           setUser(null)
           setProfile(null)
-
-          // Read and validate guest role cookie before resetting/restoring navigation state
-          const guestCookieMatch = typeof document !== 'undefined'
-            ? document.cookie.match(/(?:^|;\s*)printhive_guest_role=([^;]+)/)
-            : null
-          let rawRole: string | null = null
-          if (guestCookieMatch) {
-            try {
-              rawRole = decodeURIComponent(guestCookieMatch[1]).trim().toLowerCase()
-            } catch {
-              rawRole = null
-            }
-          }
-          const validGuestRoles = ['buyer', 'seller', 'designer', 'printer_owner', 'printer', 'vendor']
-
-          if (rawRole && validGuestRoles.includes(rawRole) && DASHBOARD_PATH[rawRole]) {
-            setUserRole(rawRole)
-            setDashboardHref(DASHBOARD_PATH[rawRole])
-          } else {
-            setUserRole(null)
-            setDashboardHref(null)
-          }
+          setUserRole(null)
+          setDashboardHref(null)
         }
       } catch (sessionErr) {
         console.error('Navbar loadSession error:', sessionErr)
@@ -221,9 +199,6 @@ export default function Navbar() {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setDropdownOpen(false)
       }
-      if (guestDropdownRef.current && !guestDropdownRef.current.contains(event.target as Node)) {
-        setGuestDropdownOpen(false)
-      }
     }
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
@@ -249,7 +224,6 @@ export default function Navbar() {
         console.error('Sign out error:', error)
         return
       }
-      document.cookie = 'printhive_guest_role=; path=/; max-age=0; expires=Thu, 01 Jan 1970 00:00:01 GMT'
       document.cookie = 'printhive_auth_role=; path=/; max-age=0; expires=Thu, 01 Jan 1970 00:00:01 GMT'
       setUserRole(null)
       setDashboardHref(null)
@@ -276,7 +250,6 @@ export default function Navbar() {
       return
     }
 
-    document.cookie = `printhive_guest_role=${newRole}; path=/; max-age=604800`
     document.cookie = `printhive_auth_role=${newRole}; path=/; max-age=604800`
     setUserRole(newRole)
     const targetHref = DASHBOARD_PATH[newRole] || '/dashboard/buyer'
@@ -288,7 +261,7 @@ export default function Navbar() {
   const activeNavLinks = userRole && ROLE_NAV_LINKS[userRole] ? ROLE_NAV_LINKS[userRole] : ROLE_NAV_LINKS.public
 
   const userName = profile?.full_name || user?.user_metadata?.full_name || user?.email?.split('@')[0] || (userRole ? `Guest ${userRole}` : 'User')
-  const userEmail = user?.email || (userRole ? `${userRole}@printhive.demo` : '')
+  const userEmail = user?.email || ''
   const avatarUrl = profile?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}&background=ea580c&color=ffffff&bold=true`
 
   const isAdminOrGuest = !user || isUserAdmin
@@ -549,89 +522,6 @@ export default function Navbar() {
             </div>
           ) : (
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              {/* PREVIEW ROLE PORTALS FOR GUESTS */}
-              <div style={{ position: 'relative' }} ref={guestDropdownRef}>
-                <button
-                  type="button"
-                  onClick={() => setGuestDropdownOpen(!guestDropdownOpen)}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 6,
-                    padding: '6px 12px',
-                    borderRadius: 99,
-                    border: '1px solid var(--border-color)',
-                    background: 'var(--bg-card)',
-                    color: 'var(--text-main)',
-                    fontSize: 12,
-                    fontWeight: 700,
-                    cursor: 'pointer',
-                  }}
-                  title="Preview Role Portals"
-                >
-                  <Sparkles size={14} color="#ea580c" />
-                  <span>{userRole ? (ROLE_LABELS[userRole] || 'Preview Portals') : 'Preview Portals'}</span>
-                  <ChevronDown size={12} style={{ transform: guestDropdownOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
-                </button>
-
-                {guestDropdownOpen && (
-                  <div
-                    style={{
-                      position: 'absolute',
-                      top: 40,
-                      right: 0,
-                      width: 220,
-                      background: 'var(--bg-card)',
-                      border: '1px solid var(--border-color)',
-                      borderRadius: 14,
-                      boxShadow: '0 16px 36px rgba(0,0,0,0.2)',
-                      zIndex: 1000,
-                      overflow: 'hidden',
-                      padding: '8px 0',
-                    }}
-                  >
-                    <div style={{ padding: '4px 14px', fontSize: 10, fontWeight: 800, color: 'var(--text-sub)', textTransform: 'uppercase', letterSpacing: 0.5 }}>
-                      Preview Role Portals
-                    </div>
-                    {[
-                      { key: 'buyer', label: 'Buyer Mode', Icon: ShoppingBag },
-                      { key: 'seller', label: 'Seller Portal', Icon: Store },
-                      { key: 'designer', label: 'Designer Studio', Icon: PenTool },
-                      { key: 'printer_owner', label: 'Printer Hub Mode', Icon: Printer },
-                    ].map(({ key: rKey, label, Icon }) => (
-                      <button
-                        key={rKey}
-                        type="button"
-                        onClick={() => {
-                          handleRoleSwitch(rKey)
-                          setGuestDropdownOpen(false)
-                        }}
-                        style={{
-                          width: '100%',
-                          textAlign: 'left',
-                          background: userRole === rKey ? 'rgba(234,88,12,0.1)' : 'transparent',
-                          border: 'none',
-                          padding: '8px 14px',
-                          fontSize: 12,
-                          fontWeight: userRole === rKey ? 800 : 600,
-                          color: userRole === rKey ? '#ea580c' : 'var(--text-main)',
-                          cursor: 'pointer',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                        }}
-                      >
-                        <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                          <Icon size={14} />
-                          {label}
-                        </span>
-                        {userRole === rKey && <Check size={14} color="#ea580c" />}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-
               <Link href="/login" style={{ color: 'var(--text-main)', fontSize: 14, fontWeight: 700, textDecoration: 'none', padding: '8px 14px' }}>
                 Log in
               </Link>

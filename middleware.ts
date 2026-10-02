@@ -23,6 +23,7 @@ const PUBLIC_ROUTES = [
   '/terms',
   '/privacy',
   '/support',
+  '/support-tickets',
   '/about',
   '/contact',
   '/403',
@@ -35,25 +36,6 @@ const PUBLIC_ROUTES = [
   '/reset-password',
   '/auth/callback',
   '/api/auth/callback',
-]
-
-// Explicitly allowed guest demo portal routes
-const GUEST_ALLOWED_PORTALS = [
-  '/dashboard/buyer',
-  '/dashboard/designer',
-  '/dashboard/printer-owner',
-  '/dashboard/seller',
-  '/dashboard/designer/upload',
-  '/dashboard/seller/products/new',
-  '/requests',
-  '/requests/new',
-  '/print-on-demand',
-  '/checkout',
-  '/orders',
-  '/profile',
-  '/support-tickets',
-  '/cart',
-  '/wishlist',
 ]
 
 export async function middleware(request: NextRequest) {

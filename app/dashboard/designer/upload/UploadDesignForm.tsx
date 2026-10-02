@@ -396,41 +396,6 @@ export default function UploadDesignForm() {
               </div>
             )}
 
-            <div style={s.card}>
-              <div style={{ fontSize: 13, fontWeight: 800, color: '#ea580c', textTransform: 'uppercase', marginBottom: 12 }}>
-                Live Marketplace Card Preview
-              </div>
-
-              <div style={{ background: 'var(--bg-card-hover)', borderRadius: 16, border: '1px solid var(--border-color)', overflow: 'hidden' }}>
-                <img
-                  src={previewImageUrl || 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=600&q=80'}
-                  alt="3D Preview"
-                  style={{ width: '100%', height: 160, objectFit: 'cover' }}
-                />
-                <div style={{ padding: 16 }}>
-                  <div style={{ fontSize: 11, color: '#ea580c', fontWeight: 800, textTransform: 'uppercase', marginBottom: 4 }}>{category}</div>
-                  <div style={{ fontSize: 15, fontWeight: 900, color: 'var(--text-main)', marginBottom: 6 }}>{title || 'Model Title Preview'}</div>
-                  <div style={{ fontSize: 12, color: 'var(--text-sub)', marginBottom: 12 }}>Materials: {materials.join(', ')}</div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div style={{ fontSize: 17, fontWeight: 900, color: pricingType === 'free' ? '#10B981' : 'var(--text-main)' }}>
-                      {pricingType === 'free' ? 'Free (₹0)' : `₹${price || '0'}`}
-                    </div>
-                    <span
-                      style={{
-                        background: pricingType === 'free' ? '#10B981' : pricingType === 'one_time' ? '#0284C7' : '#ea580c',
-                        color: '#fff',
-                        padding: '4px 10px',
-                        borderRadius: 8,
-                        fontSize: 11,
-                        fontWeight: 800,
-                      }}
-                    >
-                      {pricingType === 'free' ? 'Open Source' : pricingType === 'one_time' ? 'Flat Price' : '15% Royalty'}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
       </div>

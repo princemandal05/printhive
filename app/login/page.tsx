@@ -1,9 +1,10 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/utils/supabase/client'
+import { isPlatformOwner } from '@/lib/admin-owner'
 
 import { ROUTES, resolveRoleDashboard } from '@/lib/routes'
 
@@ -19,6 +20,22 @@ export default function LoginPage() {
   const [showResetOption, setShowResetOption] = useState(false)
   const [resetMessage, setResetMessage] = useState('')
 
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search)
+      const errParam = params.get('error')
+      if (errParam) {
+        if (errParam === 'auth_failed') {
+          setError('Authentication failed. Please check your credentials or try again.')
+        } else if (errParam === 'access_denied') {
+          setError('Access was denied. Please log in with an authorized account.')
+        } else {
+          setError(`Login notice: ${errParam.replace(/_/g, ' ')}`)
+        }
+      }
+    }
+  }, [])
+
   const handleCredentialsSubmit = async () => {
     if (!email || !password) return setError('Please enter your email and password')
     setError('')
@@ -26,58 +43,60 @@ export default function LoginPage() {
     setResetMessage('')
     setLoading(true)
 
-    document.cookie = 'printhive_guest_role=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT'
-
-    const { data, error: err } = await supabase.auth.signInWithPassword({ email, password })
-    if (err) {
-      setLoading(false)
-      setShowResetOption(true)
-      return setError(err.message === 'Invalid login credentials' ? 'Incorrect email or password for this account.' : err.message)
-    }
-
-    setLoading(false)
-
-    if (data.user) {
-      const { data: profile, error: profileError } =
-        await supabase
-          .from('profiles')
-          .select('role')
-          .eq('id', data.user.id)
-          .maybeSingle()
-
-      if (profileError) {
-        console.error('Failed to load user role:', profileError)
-        setLoading(false)
-        return setError('Unable to determine your account role. Please try again.')
-      }
-
-      const role =
-        (profile?.role as string) ||
-        (data.user.user_metadata?.role as string) ||
-        'buyer'
-
-      const urlParams = new URLSearchParams(window.location.search)
-      const targetDashboard = resolveRoleDashboard(role)
-      const rawRedirect = urlParams.get('redirect') || urlParams.get('next')
-      let safeRedirectUrl = targetDashboard
-
-      if (rawRedirect && !rawRedirect.includes('\\')) {
-        try {
-          const parsed = new URL(rawRedirect, window.location.origin)
-          if (parsed.origin === window.location.origin) {
-            safeRedirectUrl = parsed.pathname + parsed.search + parsed.hash
-          }
-        } catch {
-          // fallback to targetDashboard
+    try {
+      const cleanEmail = email.trim().toLowerCase()
+      const { data, error: err } = await supabase.auth.signInWithPassword({ email: cleanEmail, password })
+      if (err) {
+        setShowResetOption(true)
+        if (err.message === 'Invalid login credentials') {
+          return setError('Incorrect email or password. If you originally signed up with Google, please use "Sign in with Google" below.')
         }
+        return setError(err.message)
       }
-      
-      // Set active role auth cookie so middleware grants immediate access
-      document.cookie = `printhive_auth_role=${role}; path=/; max-age=604800`
-      document.cookie = `printhive_guest_role=${role}; path=/; max-age=604800`
 
-      // Direct login redirect to user role dashboard (or explicit safe next target)
-      window.location.href = safeRedirectUrl
+      if (data.user) {
+        const isAdmin = isPlatformOwner(data.user.email)
+        let role = 'buyer'
+
+        if (isAdmin) {
+          role = 'admin'
+        } else {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('role')
+            .eq('id', data.user.id)
+            .maybeSingle()
+
+          role = (profile?.role as string) || (data.user.user_metadata?.role as string) || 'buyer'
+        }
+
+        const urlParams = new URLSearchParams(window.location.search)
+        const targetDashboard = isAdmin ? '/dashboard/admin' : resolveRoleDashboard(role)
+        const rawRedirect = urlParams.get('redirect') || urlParams.get('next')
+        let safeRedirectUrl = targetDashboard
+
+        if (rawRedirect && !rawRedirect.includes('\\')) {
+          try {
+            const parsed = new URL(rawRedirect, window.location.origin)
+            if (parsed.origin === window.location.origin) {
+              safeRedirectUrl = parsed.pathname + parsed.search + parsed.hash
+            }
+          } catch {
+            // fallback to targetDashboard
+          }
+        }
+        
+        // Set active role auth cookie so middleware and layout grant immediate access
+        document.cookie = `printhive_auth_role=${role}; path=/; max-age=604800`
+
+        // Direct login redirect to user role dashboard (or explicit safe next target)
+        window.location.href = safeRedirectUrl
+      }
+    } catch (unexpectedErr: any) {
+      console.error('Login error:', unexpectedErr)
+      setError('Cannot connect to authentication service. Please check your internet connection or try again.')
+    } finally {
+      setLoading(false)
     }
   }
 

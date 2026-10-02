@@ -4,7 +4,6 @@ import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/utils/supabase/client'
-import SellerCardPreview from '@/components/SellerCardPreview'
 
 const CATEGORIES = [
   'Home Décor',
@@ -241,7 +240,7 @@ export default function NewProductForm() {
     nav: { background: 'var(--bg-card)', padding: '0 32px', height: 68, display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid var(--border-color)' },
     logo: { fontSize: 20, fontWeight: 900, color: 'var(--text-main)', letterSpacing: '-0.5px' },
     logoAccent: { color: '#ea580c' },
-    body: { maxWidth: 1100, margin: '0 auto', padding: '36px 24px' },
+    body: { maxWidth: 840, margin: '0 auto', padding: '36px 24px' },
     card: { background: 'var(--bg-card)', borderRadius: 20, border: '1px solid var(--border-color)', padding: 28, boxShadow: '0 8px 30px rgba(0,0,0,0.04)', marginBottom: 24 },
     label: { fontSize: 13, fontWeight: 800, color: 'var(--text-main)', marginBottom: 6, display: 'block', textTransform: 'uppercase' as const, letterSpacing: 0.5 },
   }
@@ -305,8 +304,8 @@ export default function NewProductForm() {
           </div>
         )}
 
-        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 28, alignItems: 'start' }}>
-          {/* LEFT FORM COLUMNS */}
+        <div>
+          {/* FORM FIELDS CONTAINER */}
           <div>
             {/* STEP 1: MEDIA UPLOAD */}
             <div style={s.card}>
@@ -502,16 +501,7 @@ export default function NewProductForm() {
             </button>
           </div>
 
-          {/* RIGHT SIDE: INTERACTIVE 3D & MINI-GAME PRODUCT CARD PREVIEW */}
-          <SellerCardPreview
-            name={name}
-            category={category}
-            price={price}
-            stock={stock}
-            description={description}
-            previewUrl={previewUrl}
-            cloudinaryUrl={cloudinaryUrl}
-          />
+          </div>
         </div>
       </div>
     </div>

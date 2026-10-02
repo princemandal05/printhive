@@ -39,10 +39,7 @@ export default function AdminLoginPage() {
     setLoading(true)
 
     try {
-      // 2. Clear any lingering guest or demo cookies
-      document.cookie = 'printhive_guest_role=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT'
-
-      // 3. Authenticate against Supabase with real credentials
+      // 2. Authenticate against Supabase with real credentials
       const { data, error: authError } = await supabase.auth.signInWithPassword({
         email: cleanEmail,
         password,
@@ -53,18 +50,17 @@ export default function AdminLoginPage() {
         return setError(authError?.message === 'Invalid login credentials' ? 'Invalid master credentials. Verification rejected.' : (authError?.message || 'Authentication failed.'))
       }
 
-      // 4. Double check authenticated user matches owner email
+      // 3. Double check authenticated user matches owner email
       if (!isPlatformOwner(data.user.email)) {
         await supabase.auth.signOut()
         setLoading(false)
         return setError('Security Alert: Unauthorized account detected. Sign in terminated.')
       }
 
-      // 5. Establish secure administrative session cookies
+      // 4. Establish secure administrative session cookies
       document.cookie = 'printhive_auth_role=admin; path=/; max-age=604800'
-      document.cookie = 'printhive_guest_role=admin; path=/; max-age=604800'
 
-      // 6. Direct transition to Admin Operations Command Center
+      // 5. Direct transition to Admin Operations Command Center
       window.location.href = '/dashboard/admin'
     } catch (err: unknown) {
       const e = err as Error
@@ -191,7 +187,7 @@ export default function AdminLoginPage() {
         >
           <Lock size={15} color="#EA580C" style={{ flexShrink: 0, marginTop: 2 }} />
           <span>
-            Strict Owner Access: Authorized administrator credentials required. All guest and demo bypasses are disabled.
+            Strict Owner Access: Authorized administrator credentials required.
           </span>
         </div>
 

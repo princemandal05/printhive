@@ -45,37 +45,33 @@ export default function ProfilePage() {
     async function loadUserProfile() {
       try {
         const { data: { user: currentUser } } = await supabase.auth.getUser()
-        
-        // Read role cookie fallback
-        const guestRole = document.cookie.split('; ').find(row => row.startsWith('printhive_guest_role='))?.split('=')[1]
+
+        if (!currentUser) {
+          window.location.href = '/login?next=/profile'
+          return
+        }
+
         const authRole = document.cookie.split('; ').find(row => row.startsWith('printhive_auth_role='))?.split('=')[1]
-        
-        const activeRole = authRole || guestRole || 'buyer'
+        const activeRole = authRole || 'buyer'
         setRole(activeRole)
 
-        if (currentUser) {
-          setUser(currentUser)
-          setEmail(currentUser.email || '')
-          setFullName(currentUser.user_metadata?.full_name || currentUser.email?.split('@')[0] || '')
+        setUser(currentUser)
+        setEmail(currentUser.email || '')
+        setFullName(currentUser.user_metadata?.full_name || currentUser.email?.split('@')[0] || '')
 
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', currentUser.id)
-            .maybeSingle()
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', currentUser.id)
+          .maybeSingle()
 
-          if (profile) {
-            if (profile.full_name) setFullName(profile.full_name)
-            if (profile.avatar_url) setAvatarUrl(profile.avatar_url)
-            if (profile.role) setRole(profile.role)
-            if (profile.phone) setPhone(profile.phone)
-            if (profile.bio) setBio(profile.bio)
-            if (profile.address) setAddress(profile.address)
-          }
-        } else if (guestRole) {
-          setEmail(`guest_${guestRole}@printhive.demo`)
-          setFullName(`Guest ${guestRole.replace('_', ' ').toUpperCase()}`)
-          setAvatarUrl('https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=250&q=80')
+        if (profile) {
+          if (profile.full_name) setFullName(profile.full_name)
+          if (profile.avatar_url) setAvatarUrl(profile.avatar_url)
+          if (profile.role) setRole(profile.role)
+          if (profile.phone) setPhone(profile.phone)
+          if (profile.bio) setBio(profile.bio)
+          if (profile.address) setAddress(profile.address)
         }
       } catch (err) {
         console.warn('Profile load note:', err)
