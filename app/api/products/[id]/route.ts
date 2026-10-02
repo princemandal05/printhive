@@ -66,26 +66,21 @@ export async function PATCH(
       updateData.price = p
     }
 
-    if (stock_quantity !== undefined) {
-      const sq = Number(stock_quantity)
+    const rawStock = stock_quantity !== undefined ? stock_quantity : body.stock
+    if (rawStock !== undefined) {
+      const sq = Number(rawStock)
       if (!Number.isFinite(sq) || sq < 0 || !Number.isInteger(sq)) {
-        return NextResponse.json({ error: 'stock_quantity must be a non-negative integer' }, { status: 400 })
+        return NextResponse.json({ error: 'stock must be a non-negative integer' }, { status: 400 })
       }
-      updateData.stock_quantity = sq
+      updateData.stock = sq
     }
 
     if (images !== undefined) {
-      if (!Array.isArray(images)) {
-        return NextResponse.json({ error: 'images must be an array of image URLs' }, { status: 400 })
+      if (Array.isArray(images) && images.length > 0 && typeof images[0] === 'string') {
+        updateData.image_url = images[0]
       }
-      updateData.images = images
-    }
-
-    if (materials !== undefined) {
-      if (!Array.isArray(materials)) {
-        return NextResponse.json({ error: 'materials must be an array of strings' }, { status: 400 })
-      }
-      updateData.materials = materials
+    } else if (typeof body.image_url === 'string' && body.image_url.trim()) {
+      updateData.image_url = body.image_url.trim()
     }
 
     if (description !== undefined) {

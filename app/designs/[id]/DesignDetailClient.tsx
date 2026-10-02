@@ -68,20 +68,86 @@ export default function DesignDetailClient({ design, reviews }: { design: Design
     alert(`Added "${design.title}" 3D model file to cart!`)
   }
 
+  const previewImg = (design as any).thumbnail_url || (design as any).preview_url || 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=600&q=80'
+  const has3DModel = Boolean(design.file_url)
+  const [viewMode, setViewMode] = useState<'3d' | 'photo'>(has3DModel ? '3d' : 'photo')
+
   return (
     <section className="container section" style={{ padding: '40px 20px', maxWidth: 1200, margin: '0 auto', color: 'var(--text-main)' }}>
       <div className="grid grid-cols-2 gap-8" style={{ display: 'grid', gridTemplateColumns: '1.1fr 0.9fr', gap: 32 }}>
-        {/* Interactive 3D WebGL Viewport */}
+        {/* Interactive 3D WebGL / Photo Viewport */}
         <div>
           <div style={{ marginBottom: 20 }}>
-            <ThreeViewer
-              title={design.title}
-              color={getColorHex(color)}
-              height={440}
-              modelUrl={design.file_url}
-              format={design.file_format}
-              fileName={design.file_name}
-            />
+            {has3DModel && (
+              <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
+                <button
+                  type="button"
+                  onClick={() => setViewMode('3d')}
+                  style={{
+                    padding: '8px 16px',
+                    borderRadius: 10,
+                    fontSize: 13,
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    background: viewMode === '3d' ? '#ea580c' : 'var(--bg-card-hover)',
+                    color: viewMode === '3d' ? '#fff' : 'var(--text-sub)',
+                    border: '1px solid var(--border-color)',
+                  }}
+                >
+                  🧊 3D Orbit Model
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setViewMode('photo')}
+                  style={{
+                    padding: '8px 16px',
+                    borderRadius: 10,
+                    fontSize: 13,
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    background: viewMode === 'photo' ? '#ea580c' : 'var(--bg-card-hover)',
+                    color: viewMode === 'photo' ? '#fff' : 'var(--text-sub)',
+                    border: '1px solid var(--border-color)',
+                  }}
+                >
+                  🖼️ Preview Image
+                </button>
+              </div>
+            )}
+
+            {viewMode === '3d' && has3DModel ? (
+              <ThreeViewer
+                title={design.title}
+                color={getColorHex(color)}
+                height={440}
+                modelUrl={design.file_url}
+                format={design.file_format}
+                fileName={design.file_name}
+              />
+            ) : (
+              <div
+                style={{
+                  height: 440,
+                  borderRadius: 16,
+                  overflow: 'hidden',
+                  background: 'var(--bg-card)',
+                  border: '1px solid var(--border-color)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <img
+                  src={previewImg}
+                  alt={design.title}
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'cover',
+                  }}
+                />
+              </div>
+            )}
           </div>
 
           {/* Slicing Estimates Summary Card */}

@@ -32,7 +32,7 @@ export default function DesignersDirectoryPage() {
         // Query profiles with designer role or who published designs
         const { data: profiles, error: profErr } = await supabase
           .from('profiles')
-          .select('id, full_name, role, avatar_url, bio, specialty')
+          .select('id, full_name, role, avatar_url, city')
           .or('role.eq.designer,role.eq.seller')
 
         // Query designs count grouped by designer

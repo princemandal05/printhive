@@ -22,8 +22,8 @@ export default function CartPage() {
         const ids = cart.map(i => i.id).filter(Boolean)
         if (ids.length === 0) return
 
-        const { data: dbProducts } = await supabase.from('products').select('id, image_url, title, name').in('id', ids)
-        const { data: dbDesigns } = await supabase.from('designs').select('id, thumbnail_url, preview_url, title').in('id', ids)
+        const { data: dbProducts } = await supabase.from('products').select('id, image_url, title').in('id', ids)
+        const { data: dbDesigns } = await supabase.from('designs').select('id, thumbnail_url, title').in('id', ids)
 
         const map: Record<string, string> = {}
         dbProducts?.forEach((p) => {
@@ -32,9 +32,8 @@ export default function CartPage() {
           }
         })
         dbDesigns?.forEach((d) => {
-          const img = d.thumbnail_url || d.preview_url
-          if (img) {
-            map[d.id] = img
+          if (d.thumbnail_url) {
+            map[d.id] = d.thumbnail_url
           }
         })
         setLiveImages(map)

@@ -100,10 +100,16 @@ export default function AdminCommandCenter() {
         setUsers(formattedUsers)
       }
 
+      // Build quick profile name lookup map
+      const profileNameMap: Record<string, string> = {}
+      ;(dbProfiles || []).forEach((p: any) => {
+        profileNameMap[p.id] = p.full_name || p.email?.split('@')[0] || 'Seller'
+      })
+
       // 2. Fetch real products
       const { data: dbProducts, error: productsErr } = await supabase
         .from('products')
-        .select('id, title, name, seller, seller_name, created_at, status')
+        .select('id, title, seller_id, created_at, status')
         .order('created_at', { ascending: false })
 
       if (productsErr) {
@@ -113,8 +119,8 @@ export default function AdminCommandCenter() {
       } else {
         const formattedProducts: ProductApproval[] = (dbProducts || []).map((prod: any) => ({
           id: prod.id,
-          name: prod.title || prod.name || '3D Printed Product',
-          seller: prod.seller || prod.seller_name || 'Store Seller',
+          name: prod.title || '3D Printed Product',
+          seller: prod.seller_id ? (profileNameMap[prod.seller_id] || prod.seller_id.slice(0, 8)) : 'Store Seller',
           submitted: prod.created_at ? new Date(prod.created_at).toISOString().split('T')[0] : '2026-08-01',
           status: prod.status === 'rejected' ? 'rejected' : prod.status === 'pending' ? 'pending' : 'approved',
         }))
@@ -873,13 +879,13 @@ export default function AdminCommandCenter() {
 
                 <div style={{ background: 'rgba(2, 6, 23, 0.6)', borderRadius: 12, padding: '12px 16px', border: '1px solid rgba(255, 255, 255, 0.06)' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontSize: 12, fontWeight: 800, color: '#94A3B8' }}>Demo Access Protection</span>
+                    <span style={{ fontSize: 12, fontWeight: 800, color: '#94A3B8' }}>Role-Based Access Control</span>
                     <span style={{ fontSize: 11, fontWeight: 800, color: '#10B981', display: 'flex', alignItems: 'center', gap: 4 }}>
-                      <CheckCircle2 size={13} /> DISABLED FOR ADMIN
+                      <CheckCircle2 size={13} /> ENFORCED (STRICT)
                     </span>
                   </div>
                   <div style={{ fontSize: 12, color: '#CBD5E1', marginTop: 4 }}>
-                    All guest role switchers forbid administrative access; unauthenticated callers are redirected.
+                    Admin dashboard requires exclusive platform owner credentials; unauthenticated callers are redirected to admin login.
                   </div>
                 </div>
               </div>

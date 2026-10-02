@@ -23,14 +23,14 @@ export async function GET(request: Request) {
     // 1. Search products
     const { data: products } = await supabase
       .from('products')
-      .select('id, title, name, price, image_url, category, seller, rating')
-      .or(`title.ilike.%${q}%,name.ilike.%${q}%,category.ilike.%${q}%,description.ilike.%${q}%`)
+      .select('id, title, price, image_url, category')
+      .or(`title.ilike.%${q}%,category.ilike.%${q}%,description.ilike.%${q}%`)
       .limit(6)
 
     // 2. Search 3D designs
     const { data: designs } = await supabase
       .from('designs')
-      .select('id, title, price, thumbnail_url, preview_url, category, tags, rating')
+      .select('id, title, price, thumbnail_url, tags')
       .or(`title.ilike.%${q}%,description.ilike.%${q}%`)
       .limit(6)
 
@@ -47,12 +47,10 @@ export async function GET(request: Request) {
       results: {
         products: (products || []).map((p: any) => ({
           id: p.id,
-          title: p.title || p.name || '3D Product',
+          title: p.title || '3D Product',
           price: p.price,
           image: p.image_url,
           category: p.category,
-          seller: p.seller,
-          rating: p.rating,
           type: 'product',
           url: `/shop/${p.id}`,
         })),
@@ -60,9 +58,8 @@ export async function GET(request: Request) {
           id: d.id,
           title: d.title,
           price: d.price,
-          image: d.thumbnail_url || d.preview_url,
-          category: d.category || (Array.isArray(d.tags) ? d.tags[0] : '3D Design'),
-          rating: d.rating,
+          image: d.thumbnail_url,
+          category: Array.isArray(d.tags) ? d.tags[0] : '3D Design',
           type: 'design',
           url: `/designs/${d.id}`,
         })),

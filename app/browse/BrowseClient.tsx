@@ -436,7 +436,7 @@ export default function BrowseClient({ designs = [] }: { designs: DesignRow[] })
         setLoading(true)
         const { data, error } = await supabase
           .from('designs')
-          .select('id, title, description, file_url, thumbnail_url, price, tags, is_public, designer_id, created_at, rating, rating_count, materials, estimated_print_time')
+          .select('id, title, description, file_url, thumbnail_url, price, tags, is_public, designer_id, created_at')
           .or('is_public.is.null,is_public.eq.true')
           .order('created_at', { ascending: false })
 

@@ -81,9 +81,9 @@ export async function GET(request: NextRequest) {
         cookieStore.set('printhive_signup_role', '', { maxAge: 0, path: '/' })
         cookieStore.set('printhive_next_redirect', '', { maxAge: 0, path: '/' })
 
-        // Set active role cookies
+        // Set active role cookie
         cookieStore.set('printhive_auth_role', userRole, { maxAge: 604800, path: '/' })
-        cookieStore.set('printhive_guest_role', userRole, { maxAge: 604800, path: '/' })
+        cookieStore.set('printhive_guest_role', '', { maxAge: 0, path: '/' })
 
         const rawTarget = next || decodedNext
         const targetPath = (rawTarget && rawTarget.startsWith('/') && !rawTarget.startsWith('//') && !rawTarget.includes(':'))

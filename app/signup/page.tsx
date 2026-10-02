@@ -98,10 +98,9 @@ export default function SignupPage() {
       return
     }
 
-    // Set role cookies on client side to ensure immediate access
+    // Set role cookie on client side to ensure immediate access
     const registeredRole = body.role || role || 'buyer'
     document.cookie = `printhive_auth_role=${registeredRole}; path=/; max-age=604800`
-    document.cookie = `printhive_guest_role=${registeredRole}; path=/; max-age=604800`
 
     const urlParams = new URLSearchParams(window.location.search)
     const targetDashboard = DASHBOARD_PATH[registeredRole] || '/dashboard/buyer'

@@ -18,7 +18,7 @@ export default async function BrowsePage() {
       role = profile?.role
     } else {
       const cookieStore = await cookies()
-      role = cookieStore.get('printhive_guest_role')?.value
+      role = cookieStore.get('printhive_auth_role')?.value
     }
 
     if (role === 'seller') {

@@ -138,7 +138,7 @@ export async function POST(request: Request) {
     if (hasSession) {
       const cookieStore = await cookies()
       cookieStore.set('printhive_auth_role', cleanRole, { maxAge: 604800, path: '/' })
-      cookieStore.set('printhive_guest_role', cleanRole, { maxAge: 604800, path: '/' })
+      cookieStore.set('printhive_guest_role', '', { maxAge: 0, path: '/' })
     }
 
     return NextResponse.json({

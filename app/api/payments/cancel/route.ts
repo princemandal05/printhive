@@ -29,7 +29,7 @@ export async function POST(request: Request) {
     // Fetch order and verify ownership
     const { data: order, error: orderErr } = await adminSupabase
       .from('orders')
-      .select('id, buyer_id, user_id, status')
+      .select('id, buyer_id, status')
       .eq('id', targetOrderId)
       .maybeSingle()
 
@@ -39,7 +39,7 @@ export async function POST(request: Request) {
 
     const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).maybeSingle()
     const isAdmin = profile?.role === 'admin'
-    const isOwner = (order.buyer_id || order.user_id) === user.id
+    const isOwner = order.buyer_id === user.id
 
     if (!isAdmin && !isOwner) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
@@ -50,7 +50,6 @@ export async function POST(request: Request) {
       .from('orders')
       .update({
         status: 'cancelled',
-        payment_status: 'failed',
         updated_at: new Date().toISOString(),
       })
       .eq('id', targetOrderId)

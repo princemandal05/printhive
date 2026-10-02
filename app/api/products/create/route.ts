@@ -45,19 +45,17 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'stock_quantity must be a finite non-negative integer' }, { status: 400 })
     }
 
-    const sellerName = profile?.full_name || user.email?.split('@')[0] || 'Seller'
+    const imageUrl = (Array.isArray(images) && images[0]) || (typeof body.image_url === 'string' ? body.image_url : null) || 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=600&q=80'
 
     const { data: product, error: insertError } = await supabase
       .from('products')
       .insert({
         seller_id: user.id,
-        seller_name: sellerName,
         title: title.trim(),
         category: category ? String(category) : 'General',
         price: parsedPrice,
-        stock_quantity: parsedStock,
-        images: Array.isArray(images) ? images : [],
-        materials: Array.isArray(materials) ? materials : ['PLA'],
+        stock: parsedStock,
+        image_url: imageUrl,
         description: description ? String(description) : '',
       })
       .select('*')

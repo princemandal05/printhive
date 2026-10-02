@@ -94,10 +94,6 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).maybeSingle()
           const role = profile?.role || 'buyer'
           key = `user_${user.id}_${role}`
-        } else if (typeof document !== 'undefined') {
-          const guestMatch = document.cookie.match(/printhive_guest_role=([^;]+)/)
-          const guestRole = guestMatch ? guestMatch[1] : 'public'
-          key = `guest_${guestRole}`
         }
 
         loadPartition(key)

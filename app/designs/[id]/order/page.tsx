@@ -56,10 +56,10 @@ function OrderPageContent() {
     if (!designId) return
     async function loadDesign() {
       try {
-        const { data: d } = await supabase.from('designs').select('title, thumbnail_url, preview_url').eq('id', designId).maybeSingle()
+        const { data: d } = await supabase.from('designs').select('title, thumbnail_url').eq('id', designId).maybeSingle()
         if (d) {
           if (d.title) setDesignTitle(d.title)
-          if (d.thumbnail_url || d.preview_url) setDesignThumbnail(d.thumbnail_url || d.preview_url)
+          if (d.thumbnail_url) setDesignThumbnail(d.thumbnail_url)
         }
       } catch { }
     }
