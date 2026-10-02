@@ -78,7 +78,7 @@ export async function POST(request: Request) {
     }
 
     const designerName = profile?.full_name || user.email?.split('@')[0] || 'Designer'
-    const designerRating = Number(profile?.rating || 0)
+    const designerRating = Number((profile as any)?.rating || 0)
 
     const noteText = note ? String(note) : ''
     const candidatePayloads = [

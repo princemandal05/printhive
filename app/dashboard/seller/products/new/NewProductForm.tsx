@@ -500,8 +500,6 @@ export default function NewProductForm() {
               {submitting ? 'Publishing Product Listing…' : '🚀 Publish Product Listing Live'}
             </button>
           </div>
-
-          </div>
         </div>
       </div>
     </div>
