@@ -26,6 +26,7 @@ import {
   ChevronRight,
   Award,
   Sparkles,
+  Camera,
 } from 'lucide-react'
 
 type Product = {
@@ -89,6 +90,7 @@ export default function ProductDetailsPage() {
   const [selectedQuality, setSelectedQuality] = useState(QUALITY_PRESETS[0])
   const [selectedColor, setSelectedColor] = useState(COLORS[2]) // Terracotta
   const [toastMsg, setToastMsg] = useState('')
+  const [viewMode, setViewMode] = useState<'photo' | '3d'>('photo')
 
   useEffect(() => {
     if (!productId) return
@@ -120,6 +122,20 @@ export default function ProductDetailsPage() {
           else if (profile?.email) sellerName = profile.email.split('@')[0]
         }
 
+        let fileUrl = (dbProduct as any).file_url || (dbProduct as any).model_url || ''
+        if (!fileUrl && dbProduct.design_id) {
+          try {
+            const { data: dRow } = await supabase
+              .from('designs')
+              .select('file_url')
+              .eq('id', dbProduct.design_id)
+              .maybeSingle()
+            if (dRow?.file_url) fileUrl = dRow.file_url
+          } catch {
+            // fallback
+          }
+        }
+
         const mapped: Product = {
           id: dbProduct.id,
           name: dbProduct.title || dbProduct.name || '3D Printed Product',
@@ -131,7 +147,7 @@ export default function ProductDetailsPage() {
           stock: Number(dbProduct.stock ?? 10),
           description: dbProduct.description || 'Precision engineered 3D printed model manufactured on-demand using industrial FDM and SLA additive manufacturing printers with guaranteed dimensional accuracy.',
           image: dbProduct.image_url || 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=600&q=80',
-          file_url: (dbProduct as any).file_url || (dbProduct as any).model_url || '',
+          file_url: fileUrl,
           specifications: {
             material: 'PLA+ / PETG / ABS',
             technology: 'Precision FDM Additive',
@@ -145,6 +161,7 @@ export default function ProductDetailsPage() {
 
         if (isMounted) {
           setProduct(mapped)
+          setViewMode(fileUrl ? '3d' : 'photo')
         }
 
         // Fetch related products
@@ -290,23 +307,84 @@ export default function ProductDetailsPage() {
         <div style={{ display: 'grid', gridTemplateColumns: '1.15fr 0.85fr', gap: 36, marginBottom: 56 }}>
           {/* LEFT: INTERACTIVE 3D WEBGL WORKSPACE & MESH GEOMETRY */}
           <div>
-            {/* Main 3D Canvas / High-Res Viewport */}
+            {/* Main Product Image / 3D Canvas Viewport */}
             <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 24, overflow: 'hidden', padding: 16, marginBottom: 20, boxShadow: '0 4px 20px rgba(0,0,0,0.02)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                <span style={{ fontSize: 11, fontWeight: 800, color: '#ea580c', textTransform: 'uppercase', letterSpacing: 0.6, display: 'flex', alignItems: 'center', gap: 4 }}>
-                  <Sparkles size={13} /> Three.js WebGL 3D Inspector
+                <span style={{ fontSize: 11, fontWeight: 800, color: '#ea580c', textTransform: 'uppercase', letterSpacing: 0.6, display: 'flex', alignItems: 'center', gap: 6 }}>
+                  {viewMode === '3d' && product.file_url ? (
+                    <>
+                      <Sparkles size={13} /> Three.js WebGL 3D Inspector
+                    </>
+                  ) : (
+                    <>
+                      <Camera size={13} /> Product Manufacturing Gallery
+                    </>
+                  )}
                 </span>
-                <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-sub)', background: 'var(--bg-card-hover)', padding: '2px 8px', borderRadius: 6 }}>
-                  Filament: {selectedColor.name}
-                </span>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  {product.file_url && (
+                    <div style={{ display: 'inline-flex', background: 'var(--bg-card-hover)', borderRadius: 8, padding: 2, border: '1px solid var(--border-color)' }}>
+                      <button
+                        type="button"
+                        onClick={() => setViewMode('photo')}
+                        style={{
+                          padding: '3px 10px',
+                          borderRadius: 6,
+                          border: 'none',
+                          background: viewMode === 'photo' ? '#ea580c' : 'transparent',
+                          color: viewMode === 'photo' ? '#fff' : 'var(--text-sub)',
+                          fontSize: 11,
+                          fontWeight: 800,
+                          cursor: 'pointer',
+                        }}
+                      >
+                        Photo
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setViewMode('3d')}
+                        style={{
+                          padding: '3px 10px',
+                          borderRadius: 6,
+                          border: 'none',
+                          background: viewMode === '3d' ? '#ea580c' : 'transparent',
+                          color: viewMode === '3d' ? '#fff' : 'var(--text-sub)',
+                          fontSize: 11,
+                          fontWeight: 800,
+                          cursor: 'pointer',
+                        }}
+                      >
+                        3D View
+                      </button>
+                    </div>
+                  )}
+
+                  <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-sub)', background: 'var(--bg-card-hover)', padding: '3px 10px', borderRadius: 8, border: '1px solid var(--border-color)' }}>
+                    {viewMode === '3d' && product.file_url ? `Filament: ${selectedColor.name}` : `${product.category}`}
+                  </span>
+                </div>
               </div>
 
-              <ThreeViewer
-                title={product.name}
-                color={selectedColor.hex}
-                height={460}
-                modelUrl={product.file_url}
-              />
+              {viewMode === '3d' && product.file_url ? (
+                <ThreeViewer
+                  title={product.name}
+                  color={selectedColor.hex}
+                  height={460}
+                  modelUrl={product.file_url}
+                />
+              ) : (
+                <div style={{ width: '100%', height: 460, borderRadius: 16, overflow: 'hidden', background: 'var(--bg-card-hover)', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
+                  <img
+                    src={product.image}
+                    alt={product.name}
+                    style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 16 }}
+                  />
+                  <div style={{ position: 'absolute', bottom: 14, left: 14, background: 'rgba(15, 23, 42, 0.75)', backdropFilter: 'blur(8px)', color: '#fff', padding: '6px 14px', borderRadius: 99, fontSize: 11.5, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6, border: '1px solid rgba(255,255,255,0.1)' }}>
+                    <span>📷</span> Verified Product Listing Photo
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* MESH & PRINTABILITY DIAGNOSTICS */}
