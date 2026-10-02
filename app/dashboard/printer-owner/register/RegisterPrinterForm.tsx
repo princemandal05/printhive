@@ -44,9 +44,15 @@ export default function RegisterPrinterForm() {
   const [cloudinaryPublicId, setCloudinaryPublicId] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [statusMsg, setStatusMsg] = useState('')
+  const [authNotice, setAuthNotice] = useState(false)
 
   useEffect(() => {
-    async function initUserLocation() {
+    async function checkAuthAndLocation() {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) {
+        setAuthNotice(true)
+      }
+
       const geo = await detectIpLocation()
       if (geo && geo.lat && geo.lng) {
         setLat(geo.lat)
@@ -56,7 +62,7 @@ export default function RegisterPrinterForm() {
         }
       }
     }
-    initUserLocation()
+    checkAuthAndLocation()
   }, [])
 
   const toggleMaterial = (m: string) => {
@@ -78,7 +84,11 @@ export default function RegisterPrinterForm() {
   const handlePrinterPhotoSuccess = (meta: CloudinaryMetadata) => {
     setPrinterImageUrl(meta.secure_url)
     setCloudinaryPublicId(meta.cloudinary_public_id)
-    setStatusMsg('✅ Printer hub machine photo uploaded to Cloudinary!')
+    setStatusMsg('✅ Printer hub machine photo uploaded successfully!')
+  }
+
+  const handlePrinterPhotoError = (err: string) => {
+    setStatusMsg(`⚠️ Photo note: ${err}`)
   }
 
   const handleSubmit = async () => {
@@ -192,8 +202,17 @@ export default function RegisterPrinterForm() {
           </p>
         </div>
 
+        {authNotice && (
+          <div style={{ background: '#FFFBEB', color: '#92400E', padding: '14px 20px', borderRadius: 14, fontSize: 14, marginBottom: 20, fontWeight: 700, border: '1px solid #FCD34D', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
+            <span>⚠️ You are not signed in. Please sign in so this printer hub is connected to your account.</span>
+            <Link href="/login?next=/dashboard/printer-owner/register" style={{ background: '#ea580c', color: '#fff', padding: '6px 16px', borderRadius: 9999, fontSize: 13, textDecoration: 'none', fontWeight: 800 }}>
+              Sign In
+            </Link>
+          </div>
+        )}
+
         {statusMsg && (
-          <div style={{ background: '#ECFDF5', color: '#065F46', padding: '14px 20px', borderRadius: 14, fontSize: 14, marginBottom: 24, fontWeight: 700, border: '1px solid #A7F3D0' }}>
+          <div style={{ background: statusMsg.startsWith('❌') || statusMsg.startsWith('⚠️') ? '#FEF2F2' : '#ECFDF5', color: statusMsg.startsWith('❌') || statusMsg.startsWith('⚠️') ? '#991B1B' : '#065F46', padding: '14px 20px', borderRadius: 14, fontSize: 14, marginBottom: 24, fontWeight: 700, border: statusMsg.startsWith('❌') || statusMsg.startsWith('⚠️') ? '1px solid #FECACA' : '1px solid #A7F3D0' }}>
             {statusMsg}
           </div>
         )}
@@ -318,8 +337,10 @@ export default function RegisterPrinterForm() {
               <div style={{ marginTop: 18 }}>
                 <CloudinaryUploader
                   acceptType="image"
+                  uploadType="image"
                   label="Machine Hub Photo (.jpg, .png, .webp)"
                   onUploadSuccess={handlePrinterPhotoSuccess}
+                  onUploadError={handlePrinterPhotoError}
                   currentUrl={printerImageUrl}
                 />
               </div>

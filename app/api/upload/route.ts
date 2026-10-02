@@ -44,13 +44,24 @@ export async function POST(request: Request) {
   try {
     const { createClient } = await import('@/utils/supabase/server')
     const supabase = await createClient()
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
 
-    if (authError || !user) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized: Authentication required to upload files' },
-        { status: 401 }
-      )
+    let user = null
+    const authHeader = request.headers.get('authorization')
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      const token = authHeader.substring(7).trim()
+      if (token) {
+        const { data } = await supabase.auth.getUser(token)
+        if (data?.user) {
+          user = data.user
+        }
+      }
+    }
+
+    if (!user) {
+      const { data: { user: cookieUser } } = await supabase.auth.getUser()
+      if (cookieUser) {
+        user = cookieUser
+      }
     }
 
     const formData = await request.formData()
@@ -65,6 +76,15 @@ export async function POST(request: Request) {
 
     const isImage = ALLOWED_IMAGE_EXTENSIONS.includes(ext)
     const isModel = ALLOWED_MODEL_EXTENSIONS.includes(ext)
+
+    if (isModel && !user) {
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized: Authentication required to upload 3D models' },
+        { status: 401 }
+      )
+    }
+
+    const userId = user?.id || `guest-${Date.now().toString(36)}`
 
     if (!isImage && !isModel) {
       return NextResponse.json(
@@ -100,7 +120,7 @@ export async function POST(request: Request) {
       }
     }
 
-    const publicId = `${user.id.slice(0, 8)}-${Date.now()}-${crypto.randomUUID().slice(0, 8)}`
+    const publicId = `${userId.slice(0, 8)}-${Date.now()}-${crypto.randomUUID().slice(0, 8)}`
     const isDev = process.env.NODE_ENV === 'development'
 
     // Validate Cloudinary environment credentials (FAIL-CLOSED: NO HARDCODED SECRETS)
