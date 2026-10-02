@@ -171,6 +171,9 @@ export default function Navbar() {
           setProfile(null)
           setUserRole(null)
           setDashboardHref(null)
+          if (typeof document !== 'undefined') {
+            document.cookie = 'printhive_guest_role=; path=/; max-age=0; expires=Thu, 01 Jan 1970 00:00:01 GMT'
+          }
         }
       } catch (sessionErr) {
         console.error('Navbar loadSession error:', sessionErr)
