@@ -28,11 +28,11 @@ jobs:
 
       - name: Run Secret-Free Next.js Build Validation (Pull Request)
         if: github.event_name == 'pull_request'
-        run: npx next build
+        run: npx next build --webpack
 
       - name: Run Secret-Mapped Next.js Production Build Validation (Push to Main)
         if: github.event_name == 'push'
-        run: npx next build
+        run: npx next build --webpack
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
